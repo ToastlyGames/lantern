@@ -548,48 +548,75 @@ function bakeGround(m){
 }
 
 // ===== Lanternhold realtime connection: one socket to the Lobby (friends, parties, invites, feed) and one to the current
-// room (a Hold world or a dungeon instance). Tickets come from /api/rt-ticket; sockets reconnect on their own. =====
+// room (a Hold world or a dungeon instance). Tickets come from /api/rt-ticket.
+// Staying connected: a heartbeat every 20 s keeps quiet connections from being cut, a watchdog replaces any socket that has
+// gone silent, and waking the phone or getting back online checks both sockets at once. =====
 (function(){
 const HL={},HR={};
 const emit=(H,t,m)=>{for(const f of H[t]||[])try{f(m);}catch(e){console.error(e);}};
 let base=null,lobby=null,room=null,roomId=null,stopped=true,lq=[],retryL=0,retryR=0,available=null,hero=null;
+let busyL=false,busyR=false,lastL=0,lastR=0,timerL=null,timerR=null;
+const PING_MS=20000,DEAD_MS=50000;
 async function ticket(){
   try{const r=await fetch('/api/rt-ticket',{headers:{'X-LH':'1'},credentials:'same-origin',cache:'no-store'});
     if(!r.ok)return null;const j=await r.json();if(!j||!j.url||!j.ticket){available=false;return null;}available=true;base=j.url;return j;}
   catch(e){return null;}}
-const backoff=n=>Math.min(30000,1000*2**n)*(0.7+Math.random()*0.6);
+const backoff=n=>Math.min(15000,1000*2**n)*(0.7+Math.random()*0.6);
+function laterL(ms){clearTimeout(timerL);timerL=setTimeout(openLobby,ms);}
+function laterR(id,ms){clearTimeout(timerR);timerR=setTimeout(()=>openRoom(id),ms);}
 async function openLobby(){
-  if(stopped)return;const t=await ticket();if(stopped)return;
-  if(!t){if(available===false){emit(HL,'off',{});return;}setTimeout(openLobby,backoff(retryL++));return;}
-  const ws=new WebSocket(base+'/lobby?t='+encodeURIComponent(t.ticket));lobby=ws;
-  ws.onopen=()=>{retryL=0;const q=lq;lq=[];for(const m of q)ws.send(m);emit(HL,'open',{});};
-  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t)emit(HL,m.t,m);};
+  if(stopped||busyL||(lobby&&lobby.readyState<=1))return;busyL=true;clearTimeout(timerL);
+  const t=await ticket();busyL=false;if(stopped||(lobby&&lobby.readyState<=1))return;
+  if(!t){if(available===false){emit(HL,'off',{});return;}laterL(backoff(retryL++));return;}
+  const ws=new WebSocket(base+'/lobby?t='+encodeURIComponent(t.ticket));lobby=ws;lastL=Date.now();
+  ws.onopen=()=>{retryL=0;lastL=Date.now();const q=lq;lq=[];for(const m of q)ws.send(m);emit(HL,'open',{});};
+  ws.onmessage=e=>{if(lobby!==ws)return;lastL=Date.now();let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t&&m.t!=='pong')emit(HL,m.t,m);};
   ws.onclose=e=>{if(lobby!==ws)return;lobby=null;emit(HL,'close',{code:e.code});if(stopped)return;
     if(e.code===4000){stopped=true;emit(HL,'kicked',{reason:'You signed in somewhere else.'});return;}
-    setTimeout(openLobby,backoff(retryL++));};
+    laterL(backoff(retryL++));};
 }
 async function openRoom(id){
-  if(stopped||roomId!==id)return;const t=await ticket();if(stopped||roomId!==id)return;
-  if(!t){setTimeout(()=>openRoom(id),backoff(retryR++));return;}
-  const ws=new WebSocket(base+'/room/'+id+'?t='+encodeURIComponent(t.ticket));room=ws;
-  ws.onopen=()=>{retryR=0;};
-  ws.onmessage=e=>{if(room!==ws)return;let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t)emit(HR,m.t,m);};
+  if(stopped||roomId!==id||busyR||(room&&room.readyState<=1))return;busyR=true;clearTimeout(timerR);
+  const t=await ticket();busyR=false;if(stopped||roomId!==id||(room&&room.readyState<=1))return;
+  if(!t){laterR(id,backoff(retryR++));return;}
+  const ws=new WebSocket(base+'/room/'+id+'?t='+encodeURIComponent(t.ticket));room=ws;lastR=Date.now();
+  ws.onopen=()=>{retryR=0;lastR=Date.now();};
+  ws.onmessage=e=>{if(room!==ws)return;lastR=Date.now();let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t&&m.t!=='pong')emit(HR,m.t,m);};
   ws.onclose=e=>{if(room!==ws)return;room=null;if(stopped||roomId!==id)return;
     if(e.code===4003){roomId=null;emit(HR,'denied',{});return;}
     if(e.code===4009){roomId=null;emit(HR,'full',{});return;}
     if(e.code===4000)return;
-    emit(HR,'drop',{});setTimeout(()=>openRoom(id),backoff(retryR++));};
+    emit(HR,'drop',{});laterR(id,backoff(retryR++));};
 }
+// A socket that has heard nothing (not even a pong) for 50 s is dead even if the browser still calls it open: replace it.
+function kill(ws){try{ws.onclose&&ws.onclose({code:1006});}catch(e){}try{ws.close();}catch(e){}}
+function watchdog(){
+  if(stopped)return;const now=Date.now();
+  if(lobby&&lobby.readyState===1){if(now-lastL>DEAD_MS)kill(lobby);else if(now-lastL>PING_MS)try{lobby.send('{"t":"ping"}');}catch(e){}}
+  else if(!lobby&&!busyL&&!timerL)openLobby();
+  if(roomId){if(room&&room.readyState===1){if(now-lastR>DEAD_MS)kill(room);else if(now-lastR>PING_MS)try{room.send('{"t":"ping"}');}catch(e){}}
+    else if(!room&&!busyR)openRoom(roomId);}
+}
+setInterval(watchdog,5000);
+// Back from the background or back online: ask both sockets to answer within 4 s, otherwise reconnect right away.
+function probe(){
+  if(stopped)return;retryL=0;retryR=0;const t0=Date.now();
+  if(lobby&&lobby.readyState===1){try{lobby.send('{"t":"ping"}');}catch(e){}const w=lobby;setTimeout(()=>{if(lobby===w&&lastL<t0)kill(w);},4000);}else{clearTimeout(timerL);timerL=null;openLobby();}
+  if(roomId){if(room&&room.readyState===1){try{room.send('{"t":"ping"}');}catch(e){}const w=room;setTimeout(()=>{if(room===w&&lastR<t0)kill(w);},4000);}else{clearTimeout(timerR);openRoom(roomId);}}
+}
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')probe();});
+addEventListener('online',probe);addEventListener('pageshow',probe);
 window.NET={
   onL(t,f){(HL[t]=HL[t]||[]).push(f);},onR(t,f){(HR[t]=HR[t]||[]).push(f);},
   start(name){if(!stopped)return;stopped=false;hero=name;openLobby();},
-  stop(){stopped=true;roomId=null;try{lobby&&lobby.close();}catch(e){}try{room&&room.close();}catch(e){}lobby=null;room=null;},
+  stop(){stopped=true;roomId=null;clearTimeout(timerL);clearTimeout(timerR);try{lobby&&lobby.close();}catch(e){}try{room&&room.close();}catch(e){}lobby=null;room=null;},
   live(){return !stopped&&available!==false;},lobbyOpen(){return !!(lobby&&lobby.readyState===1);},
   roomOpen(){return !!(room&&room.readyState===1);},room(){return roomId;},
   lsend(o){const s=JSON.stringify(o);if(lobby&&lobby.readyState===1)lobby.send(s);else if(lq.length<50)lq.push(s);},
   send(o){if(room&&room.readyState===1)room.send(JSON.stringify(o));},
-  join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;openRoom(id);},
-  leave(){const old=room;roomId=null;room=null;try{old&&old.close(1000,'leave');}catch(e){}}
+  join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;busyR=false;openRoom(id);},
+  leave(){const old=room;roomId=null;room=null;clearTimeout(timerR);try{old&&old.close(1000,'leave');}catch(e){}},
+  _kill(which){kill(which==='lobby'?lobby:room);}   // tests only
 };
 })();
 
@@ -1278,7 +1305,8 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;ptSet($('gold'),fmt(S.gold),{font:'big',px:14,color:'#ffcd75'});
-  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?' · World '+MP.room.slice(1):''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
   const pg=dv?(run.pack.gold||0):0;$('goldRun').hidden=!pg;if(pg)ptSet($('goldRun'),'+'+fmt(pg)+' in pack',{font:'small',px:9,color:'#a7f070'});
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -1455,7 +1483,7 @@ function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim
   if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
 // ---- lobby messages ----
 if(window.NET){
-  NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(scene==='hold'&&!MP.room)MP.toHold();MP.loadFriends();refreshSocial();});
+  NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(MP.room)NET.lsend({t:'where',room:MP.room,floor:MP.inInst()&&run?run.floor:undefined});else if(scene==='hold')MP.toHold();MP.loadFriends();refreshSocial();});
   NET.onL('off',()=>{});
   NET.onL('world',m=>{if(scene==='hold')NET.join(m.room);});
   NET.onL('online',m=>{MP.online=m.n;refreshSocial();});
