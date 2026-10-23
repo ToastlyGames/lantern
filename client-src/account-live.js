@@ -1,14 +1,14 @@
-// ===== Lanternhold accounts (live): wallet sign-in verified by the server, unique names, server-side saves =====
+// ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
 (function(){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const RH={chainId:'0x1237',chainName:'Robinhood Chain',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://rpc.mainnet.chain.robinhood.com'],blockExplorerUrls:['https://robinhoodchain.blockscout.com']};
-const RESERVED=new Set(['admin','moderator','mod','lanternhold','robinhood','support','system','official','gm','staff'].concat(NAMES.map(n=>n.replace(/^@/,'').toLowerCase())));
 const NAME_RE=/^[A-Za-z0-9_]{3,16}$/;
 const BAD=['fuck','shit','bitch','cunt','dick','cock','pussy','nigg','fag','rape','nazi','hitler','porn','slut','whore','penis','vagina','retard','kkk','anus','molest','pedo'];
 const clean=n=>{const t=n.toLowerCase().replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/_/g,'');return !BAD.some(w=>t.includes(w));};
 const short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
 const box=$('acct'),body=$('acctBody');
+const inAppBrowser=()=>/(MetaMask|Trust|CoinbaseWallet|Rabby|Rainbow|Phantom|OKApp|Bitget|FBAN|FBAV|Instagram|Twitter|Line\/)/i.test(navigator.userAgent)||(!!window.ethereum&&/Mobi/i.test(navigator.userAgent));
 
 // ---------- server API ----------
 async function api(path,opt){opt=opt||{};
@@ -16,27 +16,24 @@ async function api(path,opt){opt=opt||{};
       headers:Object.assign({'X-LH':'1'},opt.body?{'Content-Type':'application/json'}:{}),body:opt.body?JSON.stringify(opt.body):undefined});
     let j={};try{j=await r.json();}catch(e){}return {status:r.status,ok:r.ok,data:j};}
   catch(e){return {status:0,ok:false,data:{error:'offline'}};}}
-const online=()=>!!(ACC.me&&ACC.pid&&ACC.pid!=='guest');
-function localNames(){try{return JSON.parse(localStorage.getItem('lanternhold.names')||'{}');}catch(e){return {};}}
+const online=()=>!!(ACC.me&&ACC.me.hero&&ACC.pid);
 async function nameStatus(name){
   if(!NAME_RE.test(name))return {ok:false,msg:'3–16 letters, numbers or _'};
   if(!clean(name))return {ok:false,msg:'Please pick a different name'};
-  const key=name.toLowerCase();if(RESERVED.has(key))return {ok:false,msg:'That name is taken'};
-  if(ACC.pid==='guest'){const ln=localNames();if(ln[key]&&ln[key]!==ACC.pid)return {ok:false,msg:'Taken on this device'};return {ok:true,msg:'Available on this device',warn:true};}
   const r=await api('name?name='+encodeURIComponent(name));if(!r.ok)return {ok:true,msg:'Couldn’t check right now',warn:true};return r.data;
 }
-async function claimName(name,wallet,look){
+async function claimName(name,look){
   const st=await nameStatus(name);if(!st.ok)return st;
-  if(ACC.pid==='guest'){const ln=localNames();ln[name.toLowerCase()]='guest';try{localStorage.setItem('lanternhold.names',JSON.stringify(ln));}catch(e){}return {ok:true,local:true};}
   const r=await api('hero',{method:'POST',body:{name,look}});
-  if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Connect your wallet again.':'Couldn’t reach the server. Try again.')};
+  if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Sign in again.':'Couldn’t reach the server. Try again.')};
   ACC.me=r.data;return {ok:true};
 }
+
 // ---------- saving to the server ----------
-// Throttled: at most one save every 10–14 s while playing (random spread so players don't all save at the same moment),
-// immediately on key moments (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
+// At most one save every 10–14 s while playing (each player gets their own spacing), immediately on key moments
+// (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
 let cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
-const SAVE_GAP=10000+Math.random()*4000; // this player's spacing between saves (each player gets a different one)
+const SAVE_GAP=10000+Math.random()*4000;
 const strip=S=>{const d=JSON.parse(JSON.stringify(S));delete d.name;delete d.look;delete d.wallet;delete d.savedAt;return d;};
 function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.stringify(d);if(j===lastSent&&!cloudPending)return;cloudPending={d,j};
   if(now){clearTimeout(cloudTimer);cloudTimer=null;return flushCloud();}
@@ -49,106 +46,129 @@ async function flushCloud(){if(cloudBusy||!cloudPending||!online()||stopped)retu
   if(r.ok){ACC.rev=r.data.rev;lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);
   else if(r.status===422)return stop('Some progress couldn’t be verified and was rolled back.',2500);
-  else if(r.status===401)return stop('Your sign-in expired. Please connect your wallet again.',2500);
+  else if(r.status===401)return stop('Your sign-in expired. Please sign in again.',2500);
   else if(r.status===403){stopped=true;notice('This account can’t save progress right now.');return;}
   else{if(!cloudPending)cloudPending=p;if(!offlineWarned&&r.status===0){offlineWarned=true;notice('Connection lost. Progress will sync when you’re back online.');}
-    // back off when the server is busy or unreachable: 5 s, 10 s, 20 s… up to 60 s, with random spread
     if(r.status===429)return retry(2000+Math.random()*1500);
     fails++;return retry(Math.min(60000,5000*2**(fails-1))*(0.75+Math.random()*0.5));}
   if(cloudPending&&!cloudTimer)retry(2500+Math.random()*1000);}
 function notice(t){const el=document.getElementById('toast');if(!el)return;el.textContent=t;el.className='toast bad';el.hidden=false;setTimeout(()=>el.hidden=true,4000);}
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushCloud();});addEventListener('pagehide',()=>flushCloud());
-function loadGuest(){let local=null;try{const r=localStorage.getItem('lanternhold.p.guest');if(r)local=JSON.parse(r);}catch(e){}return local;}
 
 // ---------- wallets (EIP-6963 discovery, injected fallback) ----------
 const wallets=[];
-addEventListener('eip6963:announceProvider',e=>{const d=e.detail;if(d&&d.info&&d.provider&&!wallets.find(w=>w.info.uuid===d.info.uuid)){wallets.push(d);if(ACC.screen==='welcome')render();}});
+addEventListener('eip6963:announceProvider',e=>{const d=e.detail;if(d&&d.info&&d.provider&&!wallets.find(w=>w.info.uuid===d.info.uuid)){wallets.push(d);if(ACC.screen==='welcome'&&!box.hidden)render();}});
 dispatchEvent(new Event('eip6963:requestProvider'));
 function allWallets(){const l=wallets.slice();if(!l.length&&window.ethereum)l.push({info:{uuid:'injected',name:window.ethereum.isMetaMask?'MetaMask':'Browser wallet',icon:''},provider:window.ethereum});return l;}
 const hexUtf8=s=>'0x'+Array.from(new TextEncoder().encode(s)).map(b=>b.toString(16).padStart(2,'0')).join('');
+// If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
+// you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
+async function pickAccount(pv){
+  let known=[];try{known=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+  if(known.length){
+    try{const perms=await pv.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]});
+      let now=[];try{now=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+      const cav=(perms||[]).flatMap(p=>(p&&p.caveats)||[]).find(c=>c&&c.type==='restrictReturnedAccounts');
+      const pick=now[0]||(cav&&Array.isArray(cav.value)&&cav.value[0]);if(pick)return String(pick);}
+    catch(e){if(e&&e.code===4001)throw e;}
+  }
+  const accts=await pv.request({method:'eth_requestAccounts'});return String(accts&&accts[0]||'');
+}
+// Watch the wallet a player signed in with: switching or disconnecting its account signs them out.
+const LW='lanternhold.wallet';let watched=null;
+const signedInWithWallet=()=>{try{return localStorage.getItem('lanternhold.via')==='wallet';}catch(e){return false;}};
+const setVia=v=>{try{localStorage.setItem('lanternhold.via',v);}catch(e){}};
+function rememberWallet(w){try{localStorage.setItem(LW,JSON.stringify({rdns:w.info.rdns||'',name:w.info.name||''}));}catch(e){}watchWallet(w.provider);}
+function savedWalletProvider(){let m=null;try{m=JSON.parse(localStorage.getItem(LW)||'null');}catch(e){}const l=allWallets();
+  return ((m&&l.find(w=>(m.rdns&&w.info.rdns===m.rdns)||(!m.rdns&&w.info.name===m.name)))||l[0]||{}).provider||null;}
+function watchWallet(pv){if(!pv||pv===watched||typeof pv.on!=='function')return;
+  if(watched&&watched.removeListener)try{watched.removeListener('accountsChanged',onAccounts);}catch(e){}
+  watched=pv;try{pv.on('accountsChanged',onAccounts);}catch(e){}}
+let switching=false;
+async function onAccounts(accts){const me=ACC.me&&ACC.me.wallet;if(!me||switching||ACC.screen==='signing'||!signedInWithWallet())return;
+  const now=String(accts&&accts[0]||'').toLowerCase();if(now===me)return;
+  switching=true;try{await flushCloud();}catch(e){}if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});ACC.me=null;
+  try{sessionStorage.setItem('lanternhold.notice',now?'You switched wallets, so you were signed out. Connect again to sign in with '+short(now)+'.':'Your wallet disconnected, so you were signed out.');}catch(e){}
+  location.reload();}
+// Signs a Sign-In with Ethereum message. endpoint: 'auth/verify' to sign in, 'auth/link-wallet' to add the wallet to this account.
+async function signWithWallet(w,endpoint,onStage){
+  const pv=w.provider;
+  const raw=await pickAccount(pv),addr=raw.toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(addr))throw {message:'No valid account was shared'};
+  try{const c=await pv.request({method:'eth_chainId'});
+    if(parseInt(c,16)!==4663){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});}
+      catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902)await pv.request({method:'wallet_addEthereumChain',params:[RH]});}}}catch(e){}
+  onStage&&onStage('Sign the message in your wallet. It’s free and doesn’t send a transaction.');
+  const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
+  const now=new Date(),exp=new Date(now.getTime()+10*60000);
+  const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
+  const sig=await pv.request({method:'personal_sign',params:[hexUtf8(msg),raw]});if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
+  const v=await api(endpoint,{method:'POST',body:{message:msg,signature:sig}});
+  if(!v.ok)throw {message:v.data.msg||(v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')')};
+  return {me:v.data,addr};
+}
 async function connectWallet(w){
-  const pv=w.provider;ACC.err='';go('signing',{wname:w.info.name});
-  try{
-    const accts=await pv.request({method:'eth_requestAccounts'});const addr=(accts&&accts[0]||'').toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(addr))throw {message:'No valid account was shared'};
-    let onChain=false;
-    try{const c=await pv.request({method:'eth_chainId'});onChain=parseInt(c,16)===4663;
-      if(!onChain){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});onChain=true;}
-        catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902){await pv.request({method:'wallet_addEthereumChain',params:[RH]});onChain=true;}}}}catch(e){}
-    ACC.stage='Sign the message in your wallet to log in. It’s free and doesn’t send a transaction.';render();
-    const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':n.status===404?'The game server wasn’t found (404). The site may still be deploying.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
-    const now=new Date(),exp=new Date(now.getTime()+10*60000),raw=accts[0];
-    // EIP-4361 (Sign-In with Ethereum); the server checks every field and the signature
-    const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
-    const sig=await pv.request({method:'personal_sign',params:[hexUtf8(msg),raw]});if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
-    const v=await api('auth/verify',{method:'POST',body:{message:msg,signature:sig}});
-    if(!v.ok)throw {message:v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')'};
-    ACC.me=v.data;ACC.wallet={addr,name:w.info.name,onChain};await enter('w_'+addr);
-  }catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
+  ACC.err='';go('signing',{wname:w.info.name,stage:''});
+  try{const r=await signWithWallet(w,'auth/verify',t=>{ACC.stage=t;render();});
+    ACC.me=r.me;setVia('wallet');rememberWallet(w);enter();}
+  catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
 }
 
 // ---------- flow ----------
-const ACC={screen:'welcome',pid:null,wallet:null,err:'',stage:'',draft:null,edit:false};
-function session(){if(ACC.me&&ACC.me.hero)return {pid:'w_'+ACC.me.wallet,name:ACC.me.hero.name,addr:ACC.me.wallet};try{const s=JSON.parse(localStorage.getItem('lanternhold.session')||'null');if(!s||s.pid!=='guest'||typeof s.name!=='string')return null;return s;}catch(e){return null;}}
-function setSession(o){if(o&&o.pid!=='guest')return;try{o?localStorage.setItem('lanternhold.session',JSON.stringify(Object.assign({at:Date.now()},o))):localStorage.removeItem('lanternhold.session');}catch(e){}}
-async function enter(pid){
-  ACC.pid=pid;
-  if(pid==='guest'){const data=loadGuest();if(data&&data.name){setSession({pid,name:data.name});finish(data,false);return;}
-    ACC.base=data;ACC.ownName=null;ACC.draft={name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})};go('creator');return;}
-  const me=ACC.me;if(me&&me.hero&&me.save){finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
-  ACC.ownName=null;ACC.base=null;ACC.draft={name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})};
-  go('account');
+const ACC={screen:'welcome',pid:null,err:'',stage:'',draft:null,edit:false,cfg:{}};
+const newDraft=()=>({name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})});
+function enter(){
+  const me=ACC.me;if(!me){go('welcome');return;}
+  if(me.hero&&me.save){ACC.pid='h_'+me.hero.name.toLowerCase();finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
+  ACC.draft=newDraft();go('creator');
 }
-function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();const admin=!!(ACC.me&&ACC.me.hero&&ACC.me.hero.admin&&ACC.pid!=='guest');
-  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.wallet,online:online(),admin});}
+function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
+  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin});
+  if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
 
-// ---------- preview ----------
+// ---------- hero preview ----------
 let pvT=null;
 function startPreview(){stopPreview();let t=0;const dirs=['down','right','up','left'];pvT=setInterval(()=>{const c=$('pv');if(!c){stopPreview();return;}t++;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,c.width,c.height);
   const d=dirs[Math.floor(t/12)%4],fr=1+(t>>2)%2;g.fillStyle='rgba(0,0,0,.3)';g.fillRect(8,20,8,1);g.drawImage(heroImg(ACC.draft.look,d,fr),4,5);},110);}
 function stopPreview(){clearInterval(pvT);pvT=null;}
 function bigHero(look){const c=document.createElement('canvas');c.width=16;c.height=16;c.getContext('2d').drawImage(heroImg(look,'down',0),0,0);return c.toDataURL();}
 
-const steps=n=>`<ol class="steps">${['Wallet','Account','Hero'].map((s,i)=>`<li class="${i<n?'done':i===n?'on':''}">${s}</li>`).join('')}</ol>`;
+const who=me=>me.wallet?'Wallet '+short(me.wallet):me.google?'Google · '+esc(me.google):'Signed in';
 function render(){
   const s=ACC.screen;let h='';
   if(s==='welcome'){
-    const ses=session(),list=allWallets();
-    h=`<img class="logoHero" alt="" src="${bigHero(DEFAULT_LOOK)}"><h1>Lanternhold</h1><p class="tag">Farm your Hold. Press oil for your lantern. Delve into the dark and bring the loot home.</p>
-    ${ACC.me&&!ACC.me.hero?`<button class="btn big" id="mk">Create your hero</button><p class="sub">Signed in as ${short(ACC.me.wallet)} · <button class="link inl" id="signout">Sign out</button></p><div class="or"><span>or</span></div>`:''}
-    ${ses?`<button class="btn big" id="cont">Continue as ${esc(ses.name)}</button><p class="sub">${ses.addr?'Wallet '+short(ses.addr)+' · saved to your account':'Guest profile on this device'}</p><div class="or"><span>or use another account</span></div>`:''}
-    ${list.length>1?list.map((w,i)=>`<button class="btn wal" data-w="${i}">${w.info.icon&&/^data:image\//.test(w.info.icon)?`<img alt="" src="${esc(w.info.icon)}">`:'<span class="wi"></span>'}Connect ${esc(w.info.name)}</button>`).join('')
-      :`<button class="btn wal ${ses?'alt':''}" id="wal" ${list.length?'data-w="0"':''}><span class="wi"></span>Connect wallet</button>`}
-    <button class="btn alt goog" disabled><span class="gi">G</span>Continue with Google<em>At launch</em></button>
+    const me=ACC.me,list=allWallets(),g=ACC.cfg.google;
+    const signin=`${list.length>1?list.map((w,i)=>`<button class="btn wal" data-w="${i}">${w.info.icon&&/^data:image\//.test(w.info.icon)?`<img alt="" src="${esc(w.info.icon)}">`:'<span class="wi"></span>'}Connect ${esc(w.info.name)}</button>`).join('')
+        :`<button class="btn wal" id="wal" ${list.length?'data-w="0"':''}><span class="wi"></span>Connect wallet</button>`}
+      <button class="btn alt goog" id="goog" ${g?'':'disabled'}><span class="gi">G</span>Continue with Google${g?'':'<em>Soon</em>'}</button>
+      ${g&&inAppBrowser()?'<p class="fine">Google sign-in doesn’t work inside wallet apps. Use Safari or Chrome for Google, or connect your wallet here.</p>':''}`;
+    h=`<img class="logoHero" alt="" src="${bigHero(me&&me.hero?me.hero.look:DEFAULT_LOOK)}"><h1>Lanternhold</h1><p class="tag">Season 0 · Beta. Farm your Hold, delve into the dark with friends, and bring the loot home.</p>
+    ${me&&me.hero?`<button class="btn big" id="cont">Continue as ${esc(me.hero.name)}</button><p class="sub">${who(me)} · <button class="link inl" id="signout">Sign out</button></p>`
+      :me?`<button class="btn big" id="mk">Create your hero</button><p class="sub">${who(me)} · <button class="link inl" id="signout">Sign out</button></p>`
+      :signin}
+    ${ACC.note?`<p class="${ACC.noteOk?'note':'err'}" role="status">${esc(ACC.note)}</p>`:''}
     ${ACC.err?`<p class="err" role="alert">${ACC.err}</p>`:''}
-    <button class="link" id="guest">Play as a guest</button>
-    <p class="fine">EVM wallets on Robinhood Chain. Signing in is a free signature, never a transaction.<br>Guest progress stays on this device only. Connect a wallet to keep it on any device.</p>`;
+    ${me?'':'<p class="fine">Sign in with an EVM wallet on Robinhood Chain (a free signature, never a transaction) or with Google. Your hero and progress are saved to your account.</p>'}`;
   }else if(s==='nowallet'){
     h=`<h2>No wallet found</h2><p class="lead">This browser doesn’t have an EVM wallet. To sign in with your wallet:</p>
     <ol class="how"><li>Open your wallet app (Robinhood Wallet, MetaMask, Rabby…)</li><li>Use its built-in browser to open this page</li><li>Tap <b>Connect wallet</b> again</li></ol>
-    <p class="lead small">On a computer, install a wallet extension and reload. You can also play as a guest. Guest progress stays on this device.</p>
-    <div class="row"><button class="btn alt" id="back">Back</button><button class="btn" id="guest">Play as guest</button></div>`;
+    <p class="lead small">On a computer, install a wallet extension and reload.${ACC.cfg.google?' Or sign in with Google instead. You can connect a wallet later from the game.':''}</p>
+    <div class="row"><button class="btn alt" id="back">Back</button>${ACC.cfg.google?'<button class="btn" id="goog">Continue with Google</button>':''}</div>`;
   }else if(s==='signing'){
-    h=`${steps(0)}<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><button class="btn alt" id="back">Cancel</button>`;
-  }else if(s==='account'){
-    const w=ACC.wallet;
-    h=`${steps(1)}<h2>Create your account</h2><p class="lead">Your wallet is your login. Your progress is saved to it, so you can pick up on any device.</p>
-    <div class="acctRow ok"><span class="wi"></span><span><b>${esc(w.name)}</b><small>${short(w.addr)} · ${w.onChain?'Robinhood Chain':'Not on Robinhood Chain yet'}</small></span><i>✓</i></div>
-    <div class="acctRow"><span class="gi">G</span><span><b>Link Google account</b><small>Optional backup login, arriving at launch</small></span><em>Soon</em></div>
-    <button class="btn big" id="next">Create your hero</button><button class="link" id="out">Use a different wallet</button>`;
+    h=`<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><button class="btn alt" id="back">Cancel</button>`;
   }else if(s==='creator'){
     const d=ACC.draft,L=d.look;
     const sw=(k,arr)=>`<div class="swrow" role="radiogroup" aria-label="${k}">${arr.map((c,i)=>`<button class="sw" role="radio" aria-checked="${L[k]===i}" aria-label="${k} ${i+1}" data-k="${k}" data-i="${i}" style="--c:${c}"></button>`).join('')}</div>`;
-    h=`${ACC.edit||ACC.pid==='guest'?'':steps(2)}<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
+    h=`<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
     <div class="creator"><div class="pvWrap"><canvas id="pv" width="24" height="24"></canvas><button class="btn alt sm" id="rnd">Shuffle</button></div>
     <div class="opts">
-      ${ACC.edit||ACC.ownName?`<p class="lead"><b>${esc(d.name)}</b><br><small>${ACC.ownName&&!ACC.edit?'Your account’s hero name.':'Names are permanent.'}</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">${ACC.pid==='guest'?'Guest names are saved on this device only.':'Names are permanent and unique.'}</small></label>`}
+      ${ACC.edit?`<p class="lead"><b>${esc(d.name)}</b><br><small>Names are permanent.</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">Names are permanent and unique. Other players will see it.</small></label>`}
       <h3>Skin</h3>${sw('skin',LOOKS.skin)}<h3>Hair</h3>${sw('hair',LOOKS.hair)}
       <h3>Hair style</h3><div class="chips">${LOOKS.style.map((s,i)=>`<button class="chip" aria-pressed="${L.style===i}" data-st="${i}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}</div>
       <h3>Clothes</h3>${sw('cloth',LOOKS.cloth)}
     </div></div>
     ${ACC.err?`<p class="err" role="alert">${ACC.err}</p>`:''}
-    <div class="row">${ACC.edit?'<button class="btn alt" id="cancelEd">Cancel</button><button class="btn" id="saveEd">Save look</button>':`<button class="btn alt" id="back2">Back</button><button class="btn" id="claim" ${d.name?'':'disabled'}>${ACC.ownName?'Play':'Claim name &amp; play'}</button>`}</div>`;
+    <div class="row">${ACC.edit?'<button class="btn alt" id="cancelEd">Cancel</button><button class="btn" id="saveEd">Save look</button>':`<button class="btn alt" id="back2">Back</button><button class="btn" id="claim" ${d.name?'':'disabled'}>Claim name &amp; play</button>`}</div>`;
   }
   body.innerHTML=h;wire();
 }
@@ -156,10 +176,11 @@ function wire(){
   const on=(id,f)=>{const e=$(id);if(e)e.onclick=f;};
   body.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const w=allWallets()[+b.dataset.w];if(w)connectWallet(w);});
   const wb=$('wal');if(wb&&!wb.dataset.w)wb.onclick=()=>{const l=allWallets();if(l.length)connectWallet(l[0]);else go('nowallet');};
-  on('guest',()=>{ACC.wallet=null;enter('guest');});on('back',()=>go('welcome',{err:''}));on('out',()=>{ACC.wallet=null;go('welcome');});
-  on('cont',()=>{const s=session();if(!s)return;ACC.wallet=s.addr?{addr:s.addr,name:'Wallet',onChain:true}:null;enter(s.pid);});
-  on('signout',async()=>{await api('auth/logout',{method:'POST'});ACC.me=null;render();});
-  on('next',()=>go('creator'));on('mk',()=>{ACC.wallet={addr:ACC.me.wallet,name:'Wallet',onChain:true};enter('w_'+ACC.me.wallet);});on('back2',()=>go(ACC.pid==='guest'?'welcome':'account',{err:''}));
+  on('goog',()=>{if(!ACC.cfg.google)return;setVia('google');location.href='/api/auth/google/start';});
+  on('back',()=>go('welcome',{err:''}));
+  on('cont',enter);on('mk',enter);
+  on('signout',async()=>{await api('auth/logout',{method:'POST'});ACC.me=null;ACC.err='';ACC.note='';render();});
+  on('back2',()=>go('welcome',{err:''}));
   body.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ACC.draft.look[b.dataset.k]=+b.dataset.i;body.querySelectorAll(`[data-k="${b.dataset.k}"]`).forEach(x=>x.setAttribute('aria-checked',x===b));});
   body.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ACC.draft.look.style=+b.dataset.st;body.querySelectorAll('[data-st]').forEach(x=>x.setAttribute('aria-pressed',x===b));});
   on('rnd',()=>{const L=ACC.draft.look,r=a=>(Math.random()*a.length)|0;L.skin=r(LOOKS.skin);L.hair=r(LOOKS.hair);L.cloth=r(LOOKS.cloth);L.style=r(LOOKS.style);const n=$('nm');if(n)ACC.draft.name=n.value;render();});
@@ -168,31 +189,46 @@ function wire(){
       t=setTimeout(async()=>{const r=await nameStatus(v);if(v!==ACC.draft.name)return;s.textContent=r.msg;s.className=r.ok?(r.warn?'warn':'good'):'bad';},350);};
     nm.onkeydown=e=>{if(e.key==='Enter')$('claim').click();};}
   on('claim',async()=>{const b=$('claim');const name=ACC.draft.name;b.disabled=true;b.textContent='Claiming…';
-    const r=await claimName(name,ACC.wallet&&ACC.wallet.addr,ACC.draft.look);
+    const r=await claimName(name,ACC.draft.look);
     if(!r.ok){ACC.err=esc(r.msg);b.disabled=false;b.textContent='Claim name & play';render();const n=$('nm');if(n)n.focus();return;}
-    ACC.err='';
-    if(ACC.pid==='guest'){const data=Object.assign({},ACC.base||{},{name,look:ACC.draft.look,wallet:null});setSession({pid:'guest',name});finish(data,true);return;}
-    const me=ACC.me;finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),true,me.save.rev);});
+    ACC.err='';const me=ACC.me;finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),true,me.save.rev);});
   on('cancelEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.resume();});
-  on('saveEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.setLook(ACC.draft.look);
-    if(online())api('hero',{method:'PATCH',body:{look:ACC.draft.look}});});
+  on('saveEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.setLook(ACC.draft.look);api('hero',{method:'PATCH',body:{look:ACC.draft.look}});});
   if($('pv'))startPreview();
 }
-// ---------- chat: polled from /api/chat every 3 s, only while the chat panel is open ----------
-window.CHATNET={
-  why(){return online()?null:'Connect a wallet to chat with other players.';},
-  join(ch,cb){let after=0,stop=false,t=null;
-    const tick=async()=>{if(stop)return;const r=await api('chat?ch='+encodeURIComponent(ch)+'&after='+after);if(stop)return;
-      if(r.ok&&Array.isArray(r.data.messages)){for(const m of r.data.messages)after=Math.max(after,m.id);
-        cb(r.data.messages.map(m=>({id:'c'+m.id,name:m.name,text:m.text,at:Date.parse(m.at)||Date.now(),me:!!m.me})));}
-      t=setTimeout(tick,document.visibilityState==='hidden'?15000:3000);};
-    tick();return ()=>{stop=true;clearTimeout(t);};},
-  async send(ch,text){const r=await api('chat',{method:'POST',body:{ch,text}});
-    if(r.ok)return {ok:true,msg:{id:'c'+r.data.id,name:r.data.name,text:r.data.text,at:Date.now()}};
-    return {ok:false,msg:r.status===429?'Slow down a little.':r.status===403?'You can’t chat right now.':r.status===401?'Your sign-in expired. Connect your wallet again.':'Message not sent. Try again.'};}
-};
-window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=false;go('welcome',{err:''});},editLook(name,look){document.documentElement.classList.add('pre');ACC.edit=true;ACC.draft={name,look:Object.assign({},look)};box.hidden=false;go('creator');},
-  async logout(){setSession(null);await flushCloud();if(ACC.pid!=='guest')await api('auth/logout',{method:'POST'});location.reload();},cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online};
+
+// ---------- in-game account links: wallet, Google, X ----------
+window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=false;go('welcome',{err:''});},
+  editLook(name,look){document.documentElement.classList.add('pre');ACC.edit=true;ACC.draft={name,look:Object.assign({},look)};box.hidden=false;go('creator');},
+  xInfo(){return ACC.me&&ACC.me.hero?{enabled:!!ACC.me.xEnabled,username:ACC.me.hero.x||null}:null;},
+  async xLink(){try{await flushCloud();}catch(e){}location.href='/api/x/start';},
+  async xUnlink(){const r=await api('x/unlink',{method:'POST'});if(r.ok&&ACC.me&&ACC.me.hero)ACC.me.hero.x=null;return r.ok;},
+  links(){const m=ACC.me||{};return {wallet:m.wallet||null,google:m.google||null,googleEnabled:!!m.googleEnabled,hasWallet:allWallets().length>0};},
+  // Google players add a wallet (or a wallet player re-signs): the wallet signs a message for this account.
+  async linkWallet(){const l=allWallets();if(!l.length)return {ok:false,msg:'No wallet found in this browser. Open the game in your wallet app’s browser to connect it.'};
+    try{const r=await signWithWallet(l[0],'auth/link-wallet');ACC.me=Object.assign(ACC.me,{wallet:r.me.wallet});rememberWallet(l[0]);return {ok:true,addr:r.addr};}
+    catch(e){return {ok:false,msg:e&&e.code===4001?'You declined in your wallet.':(e&&e.message)||'Couldn’t connect the wallet.'};}},
+  async linkGoogle(){try{await flushCloud();}catch(e){}location.href='/api/auth/google/start?link=1';},
+  async logout(){await flushCloud();if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});location.reload();},
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api};
+
+// ---------- start ----------
 render();
-api('me').then(r=>{if(r.ok&&r.data.wallet){ACC.me=r.data;if(ACC.screen==='welcome')render();}});
+{const q=new URLSearchParams(location.search),x=q.get('x'),g=q.get('g');
+  if(x){const u=(q.get('u')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,15);
+    const msg={linked:`X account @${u} is now linked to your hero.`,taken:`@${u} is already linked to another hero.`,declined:'You didn’t approve the link on X, so nothing changed.',expired:'That link request expired. Try again from your bag’s Hero tab.',off:'X linking isn’t switched on yet.',error:'Couldn’t link your X account. Try again in a moment.'}[x];
+    if(msg){ACC.note=msg;ACC.noteOk=x==='linked';}}
+  if(g){const msg={linked:'Google is now linked. You can sign in with it as well as your wallet.',taken:'That Google account already has its own hero.',has:'This account already has a Google account linked.',declined:'Google sign-in was cancelled.',expired:'That sign-in took too long. Try again.',off:'Google sign-in isn’t switched on yet.',banned:'This account is banned.',signin:'Sign in first, then link Google from your bag’s Hero tab.',error:'Google sign-in didn’t work. Try again in a moment.'}[g];
+    if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
+  if(x||g)history.replaceState(null,'',location.pathname);}
+try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}
+api('config').then(r=>{if(r.ok){ACC.cfg=r.data;if(ACC.screen==='welcome'&&!box.hidden)render();}});
+api('me').then(async r=>{if(!(r.ok&&r.data.account))return render();
+  if(r.data.wallet&&signedInWithWallet()){
+    await new Promise(res=>setTimeout(res,300)); // let wallets announce themselves
+    const pv=savedWalletProvider();let now=[];if(pv)try{now=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+    const cur=String(now[0]||'').toLowerCase();
+    if(cur&&cur!==r.data.wallet){await api('auth/logout',{method:'POST'});ACC.err=esc('Your wallet is now on '+short(cur)+', not '+short(r.data.wallet)+', so you were signed out. Connect to sign in with the wallet you have open.');return render();}
+    watchWallet(pv);}
+  ACC.me=r.data;render();});
 })();
