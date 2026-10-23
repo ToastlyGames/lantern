@@ -547,6 +547,52 @@ function bakeGround(m){
   m.ground=cv;
 }
 
+// ===== Lanternhold realtime connection: one socket to the Lobby (friends, parties, invites, feed) and one to the current
+// room (a Hold world or a dungeon instance). Tickets come from /api/rt-ticket; sockets reconnect on their own. =====
+(function(){
+const HL={},HR={};
+const emit=(H,t,m)=>{for(const f of H[t]||[])try{f(m);}catch(e){console.error(e);}};
+let base=null,lobby=null,room=null,roomId=null,stopped=true,lq=[],retryL=0,retryR=0,available=null,hero=null;
+async function ticket(){
+  try{const r=await fetch('/api/rt-ticket',{headers:{'X-LH':'1'},credentials:'same-origin',cache:'no-store'});
+    if(!r.ok)return null;const j=await r.json();if(!j||!j.url||!j.ticket){available=false;return null;}available=true;base=j.url;return j;}
+  catch(e){return null;}}
+const backoff=n=>Math.min(30000,1000*2**n)*(0.7+Math.random()*0.6);
+async function openLobby(){
+  if(stopped)return;const t=await ticket();if(stopped)return;
+  if(!t){if(available===false){emit(HL,'off',{});return;}setTimeout(openLobby,backoff(retryL++));return;}
+  const ws=new WebSocket(base+'/lobby?t='+encodeURIComponent(t.ticket));lobby=ws;
+  ws.onopen=()=>{retryL=0;const q=lq;lq=[];for(const m of q)ws.send(m);emit(HL,'open',{});};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t)emit(HL,m.t,m);};
+  ws.onclose=e=>{if(lobby!==ws)return;lobby=null;emit(HL,'close',{code:e.code});if(stopped)return;
+    if(e.code===4000){stopped=true;emit(HL,'kicked',{reason:'You signed in somewhere else.'});return;}
+    setTimeout(openLobby,backoff(retryL++));};
+}
+async function openRoom(id){
+  if(stopped||roomId!==id)return;const t=await ticket();if(stopped||roomId!==id)return;
+  if(!t){setTimeout(()=>openRoom(id),backoff(retryR++));return;}
+  const ws=new WebSocket(base+'/room/'+id+'?t='+encodeURIComponent(t.ticket));room=ws;
+  ws.onopen=()=>{retryR=0;};
+  ws.onmessage=e=>{if(room!==ws)return;let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t)emit(HR,m.t,m);};
+  ws.onclose=e=>{if(room!==ws)return;room=null;if(stopped||roomId!==id)return;
+    if(e.code===4003){roomId=null;emit(HR,'denied',{});return;}
+    if(e.code===4009){roomId=null;emit(HR,'full',{});return;}
+    if(e.code===4000)return;
+    emit(HR,'drop',{});setTimeout(()=>openRoom(id),backoff(retryR++));};
+}
+window.NET={
+  onL(t,f){(HL[t]=HL[t]||[]).push(f);},onR(t,f){(HR[t]=HR[t]||[]).push(f);},
+  start(name){if(!stopped)return;stopped=false;hero=name;openLobby();},
+  stop(){stopped=true;roomId=null;try{lobby&&lobby.close();}catch(e){}try{room&&room.close();}catch(e){}lobby=null;room=null;},
+  live(){return !stopped&&available!==false;},lobbyOpen(){return !!(lobby&&lobby.readyState===1);},
+  roomOpen(){return !!(room&&room.readyState===1);},room(){return roomId;},
+  lsend(o){const s=JSON.stringify(o);if(lobby&&lobby.readyState===1)lobby.send(s);else if(lq.length<50)lq.push(s);},
+  send(o){if(room&&room.readyState===1)room.send(JSON.stringify(o));},
+  join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;openRoom(id);},
+  leave(){const old=room;roomId=null;room=null;try{old&&old.close(1000,'leave');}catch(e){}}
+};
+})();
+
 // ===== Lanternhold: game =====
 (function(){
 const $=id=>document.getElementById(id);
@@ -688,16 +734,16 @@ function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
 function enterHold(){FISHING=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
-  if(!npcs.length)spawnNpcs();updateHud();}
-function startDelve(from){run={seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
+  updateHud();MP.toHold();}
+function startDelve(from,seed){run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
   const sc=1+.12*(f-1);
-  ents=map.spawns.map(s=>makeEnemy(s.type,s.x,s.y,sc));drops=[];fx=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
-  if(f>S.deepest){S.deepest=f;save();}updateHud();
+  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
+  if(f>S.deepest){S.deepest=f;save();if(f>=3)MP.feed('deep',String(f));}updateHud();MP.floorEntered(f);
   if(map.pack.boss&&f===map.pack.to)setTimeout(()=>toast(map.pack.bossName+' awaits','bad'),400);
 }
-function makeEnemy(type,x,y,sc){const d=ENEMIES[type];return {type,d,x,y,hp:Math.round(d.hp*(sc||1)),max:Math.round(d.hp*(sc||1)),dmgSc:sc||1,vx:0,vy:0,t:rand()*2,cd:1+rand(),st:'idle',flash:0,kb:{x:0,y:0},r:d.big?11:5,dead:false,spawnT:d.boss?0:0};}
+function makeEnemy(type,x,y,sc){const d=ENEMIES[type];return {id:MP.nextEid++,type,d,x,y,hp:Math.round(d.hp*(sc||1)),max:Math.round(d.hp*(sc||1)),dmgSc:sc||1,vx:0,vy:0,t:rand()*2,cd:1+rand(),st:'idle',flash:0,kb:{x:0,y:0},r:d.big?11:5,dead:false,spawnT:d.boss?0:0};}
 
 // ---------- collision ----------
 function lineOfSight(x0,y0,x1,y1){const d=Math.hypot(x1-x0,y1-y0),n=Math.ceil(d/6);for(let i=1;i<n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;if(solidAt(map,Math.floor(x/T),Math.floor(y/T)))return false;}return true;}
@@ -717,12 +763,11 @@ function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openBag();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
   if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('sell');
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
-  if(a.id==='chest'){const o=a.o;o.open=true;o.act=null;sfx('chest');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);
-    dropGear(o.x,o.y-4,'chest');puff(o.x,o.y-6,'#ffcd75',10);return;}
-  if(a.id==='glowcap'){const o=a.o;o.gone=true;o.light=null;spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);return;}
+  if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
+  if(a.id==='stairs'&&MP.client())return MP.askDown();
   if(a.id==='stairs'){const next=run.floor+1,pk=packOf(next);
     if(!pk||pk.locked){openSheet(`<h2>The way is sealed</h2><p class="lead">Below floor ${run.floor} lies ${pk?pk.name:'something older'}. It opens in Season ${pk?pk.season:1}.</p><p class="lead">Light the Return Flame to bring your haul home.</p><div class="row"><button class="btn" id="sx">Keep exploring</button></div>`);$('sx').onclick=closeSheet;return;}
-    sfx('stairs');enterFloor(next);toast('Floor '+next+(packOf(next).id!==map.pack.id?' · '+BIOMES[packOf(next).id].name:''));}
+    sfx('stairs');enterFloor(next);MP.floorOut(next);toast('Floor '+next+(packOf(next).id!==map.pack.id?' · '+BIOMES[packOf(next).id].name:''));}
 }
 
 // ---------- combat ----------
@@ -731,21 +776,27 @@ function hitBox(){const d=P.dir,cx=P.x+(d==='left'?-11:d==='right'?11:0),cy=P.y-
 function resolveSwing(){
   const b=hitBox(),dmg=dmgOf();
   for(const e of ents){if(e.dead)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
-    const d=Math.round(dmg*(.9+rand()*.2));e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[PID||'me']=(e.dmgBy[PID||'me']||0)+d;e.flash=.12;const a=Math.atan2(e.y-P.y,e.x-P.x),kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};
-    floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');if(e.hp<=0)killEnemy(e);}}
+    const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;
+    if(MP.client()){e.hp-=d;NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
+    applyHit(e,d,a,MP.me());}}
   for(const o of map.objs){if(o.type!=='ore'||o.gone)continue;const ox=o.tile[0]*T,oy=o.tile[1]*T;
-    if(ox+T>b.x&&ox<b.x+b.w&&oy+T>b.y&&oy<b.y+b.h){o.hp--;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');
-      if(o.hp<=0){o.gone=true;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,2,3],['gem',.06,1,1]]);puff(ox+8,oy+12,'#ffcd75',10);}break;}}
+    if(ox+T>b.x&&ox<b.x+b.w&&oy+T>b.y&&oy<b.y+b.h){puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);
+      if(MP.client()){NET.send({t:'mine',o:i});break;}mineOre(o,i,MP.me());break;}}
 }
-// Loot goes to whoever dealt the most damage; everyone who hit it gets the full XP. (Solo today; ready for parties.)
+// Loot goes to whoever dealt the most damage; everyone who hit it gets the full XP. In a party, the host decides and tells everyone.
 const lootOwner=e=>{let best=null,bd=-1;for(const [who,d] of Object.entries(e.dmgBy||{}))if(d>bd){bd=d;best=who;}return best;};
-function killEnemy(e){e.dead=true;run.kills++;S.kills++;const me=PID||'me',mine=lootOwner(e)===me||!e.dmgBy;if(e.dmgBy&&e.dmgBy[me])gainXp(Math.round(e.d.xp*e.dmgSc));puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
+function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit=e.dmgBy?Object.keys(e.dmgBy):[me],xp=Math.round(e.d.xp*e.dmgSc);
+  if(MP.shared())NET.send({t:'kill',e:e.id,top,hit,xp,x:Math.round(e.x),y:Math.round(e.y),ty:e.type});
+  onKilled(e,top,hit,xp);}
+function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
+  if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   if(mine)spawnLoot(e.x,e.y-4,e.d.drops);if(mine&&e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null);
-  if(e.d.boss){sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
+  if(!mine&&hit.includes(me)&&OTH.get(top))floatText(e.x,e.y-24,'loot: '+OTH.get(top).name,'#c2d3e0');
+  if(e.d.boss){if(hit.includes(me))MP.feed('boss',map.pack.bossName);sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
     setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
-function gainXp(n){S.xp+=n;while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;P.hp=maxHp();toast('Level '+S.lvl+'! Max HP '+maxHp(),'good');sfx('level');buzz(60);puff(P.x,P.y-8,'#ffcd75',16);}}
+function gainXp(n){S.xp+=n;while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;P.hp=maxHp();toast('Level '+S.lvl+'! Max HP '+maxHp(),'good');if(S.lvl%5===0)MP.feed('level',String(S.lvl));sfx('level');buzz(60);puff(P.x,P.y-8,'#ffcd75',16);}}
 function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
   shake=!SET.shake?0:3;if(src){const a=Math.atan2(P.y-src.y,P.x-src.x);for(let i=0;i<6;i++)moveBody(P,Math.cos(a)*1.5,Math.sin(a)*1.5,4);}
   if(P.hp<=0)die();}
@@ -763,7 +814,7 @@ function dropGear(x,y,src,boss){for(const id of gearDrops(src,run?run.floor:1,bo
 function spawnLoot(x,y,table){for(const [id,ch,a,b] of table){if(rand()>=(id==='gold'?ch:ch*(1+A('luck')/100)))continue;const n=ri(a,b);
   if(id==='gold'){const piles=Math.min(4,Math.ceil(n/6));for(let i=0;i<piles;i++)drops.push(mkDrop(x,y,'gold',Math.ceil(n/piles)));}
   else drops.push(mkDrop(x,y,id,n));}}
-function rareFound(id){const it=ITEMS[id],R=RARITY[it.rarity];sfx('rare');buzz([30,40,30]);toast(R.n+': '+it.n,'rare r-'+it.rarity);puff(P.x,P.y-10,R.c,it.rarity==='legendary'?30:12);}
+function rareFound(id){const it=ITEMS[id],R=RARITY[it.rarity];sfx('rare');buzz([30,40,30]);toast(R.n+': '+it.n,'rare r-'+it.rarity);puff(P.x,P.y-10,R.c,it.rarity==='legendary'?30:12);if(RORDER.indexOf(it.rarity)>=RORDER.indexOf('rare'))MP.feed('loot',it.n);}
 function mkDrop(x,y,id,n){const a=rand()*Math.PI*2,s=30+rand()*40;return {x,y,id,n,vx:Math.cos(a)*s,vy:Math.sin(a)*s,z:0,vz:70,t:0};}
 function puff(x,y,col,n){if(reduceMotion)n=Math.min(n,3);for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=20+rand()*50;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,t:0,life:.4+rand()*.3,col});}}
 
@@ -793,7 +844,7 @@ function summary(title,lead,got,lost,head){openSheet(`<h2>${title}</h2><p class=
 // ---------- skills ----------
 const lvlOf=sk=>levelFor(S.skills[sk]||0);
 function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf(sk);S.skills[sk]=Math.min(200e6,(S.skills[sk]||0)+n);const after=lvlOf(sk);
-  if(after>before){toast(SKILLS[sk].n+' level '+after+'!','good');sfx('level');buzz(60);puff(P.x,P.y-10,SKILLS[sk].c,16);floatText(P.x,P.y-34,SKILLS[sk].n+' '+after+'!',SKILLS[sk].c);}return n;}
+  if(after>before){toast(SKILLS[sk].n+' level '+after+'!','good');if(after%10===0||after===99)MP.feed('skill',SKILLS[sk].n+' '+after);sfx('level');buzz(60);puff(P.x,P.y-10,SKILLS[sk].c,16);floatText(P.x,P.y-34,SKILLS[sk].n+' '+after+'!',SKILLS[sk].c);}return n;}
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
@@ -869,6 +920,7 @@ function closeSheet(){$('sheet').hidden=true;paused=false;updateHud();}
 $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 function iconImg(id){return `<img class="ic" alt="" src="${iconOf(id).toDataURL()}">`;}
 function openGate(){
+  if(MP.party&&MP.party.leader!==MP.id&&netOn())return MP.gateMember();
   const lifts=[1];if(S.lift>=6)lifts.push(6);
   openSheet(`<h2>The Delve Gate</h2><p class="lead">Your lantern starts full. It burns oil as you go, faster on deeper floors. At empty, Shades come for you.</p>
   <div class="kit"><span>${iconImg('oil')} Oil Flasks <b>${S.bank.oil||0}</b></span><span>${iconImg('bread')} Bread <b>${S.bank.bread||0}</b></span><span>${iconImg('pondfin')} Fish <b>${S.bank.pondfin||0}</b></span><span>${iconImg('stew')} Stew <b>${S.bank.stew||0}</b></span></div>
@@ -879,7 +931,7 @@ function openGate(){
   <div class="item locked">${iconImg('ember_ore')}<span><b>Floors 11–15 · Emberforge Halls</b><small>Season 1 expansion</small></span></div></div>
   <p class="lead small">Deepest floor: ${S.deepest||'none yet'}. Light the Return Flame (hold the flame button for 2 seconds) to come home with your loot. Dying loses about half of what you carry.</p>
   <div class="row"><button class="btn alt" id="sx">Not yet</button></div>`);
-  $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>startDelve(+b.dataset.go));
+  $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>MP.delve(+b.dataset.go));
   if($('toBank'))$('toBank').onclick=openBank;if($('pack'))$('pack').onclick=()=>{for(const id of ['oil','bread','stew','pondfin'])withdraw(id,0);save();sfx('pick');openGate();};
 }
 function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)],p=l>=99?1:(xp-a)/(b-a);
@@ -909,11 +961,7 @@ function openCraft(kind){
     sfx('cook');
     save();openCraft(kind);});
 }
-// market: sell, shop, and listings from other players (simulated in the demo)
-let listings=[];
-function refreshListings(){const pool=['copper_ore','iron_ore','slime_gel','bone','lampseed','glowcap_spore','gem','oil','stew','ember_ore','raw_pondfin','pondfin','pondfin','tin_lantern','copper_lantern','cape_tattered'];
-  listings=Array.from({length:5},()=>{const id=pool[ri(0,pool.length-1)],n=ITEMS[id].rarity?1:ri(1,id==='gem'||id==='ember_ore'?2:6);return {id,n,price:Math.round(ITEMS[id].v*n*(1.1+rand()*.6)),who:NAMES[ri(0,NAMES.length-1)]};});}
-refreshListings();setInterval(refreshListings,45000);
+// market: sell to the Hold and buy from its shop. Player-to-player trading comes later.
 function openSettings(){
   const tog=(k,l,on)=>`<div class="setrow"><span>${l}</span><button class="btn alt sm" data-tog="${k}" aria-pressed="${!!on}">${on?'On':'Off'}</button></div>`;
   openSheet(`<h2>Settings</h2><p class="lead small">Saved automatically to your hero, so they load on any device you sign in from.</p>
@@ -935,9 +983,8 @@ function openMarket(tab){
     return `<div class="recipe"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n}</b><small>×${n} · ${fmt(ITEMS[id].v)} gold each${ITEMS[id].relic?' · Relic':''}${rTag(id)?' · '+rTag(id):''}</small></span><button class="btn sm${arm?' warn':''}" data-sell="${id}" data-from="${from}">${arm?'Sure?':'Sell 1'}</button>${n>1?`<button class="btn sm alt" data-sellall="${id}" data-from="${from}">All</button>`:''}</div></div>`;}).join('');
   const bagR=rows(S.bank,'bag'),bankR=rows(S.vault,'bank');
   const body=tab==='sell'?`<h3>From your bag</h3>${bagR||'<p class="lead small">Nothing in your bag to sell.</p>'}<h3>From your bank</h3>${bankR||'<p class="lead small">Nothing in your bank to sell.</p>'}<p class="lead small">Gear you're wearing isn't listed. Take it off in your bag to sell it.</p>`
-   :tab==='shop'?SHOP.map(s=>`<div class="recipe"><div class="rh">${iconImg(s.id)}<span><b>${ITEMS[s.id].n}</b><small>Hold shop · ${s.price} gold</small></span><button class="btn sm" data-buy="${s.id}" data-n="1" ${S.gold>=s.price?'':'disabled'}>Buy 1</button><button class="btn sm alt" data-buy="${s.id}" data-n="5" ${S.gold>=s.price*5?'':'disabled'}>×5</button></div></div>`).join('')
-   :listings.map((l,i)=>`<div class="recipe"><div class="rh">${iconImg(l.id)}<span><b>${ITEMS[l.id].n} ×${l.n}</b><small>${l.who} · ${l.price} gold</small></span><button class="btn sm" data-list="${i}" ${S.gold>=l.price?'':'disabled'}>Buy</button></div></div>`).join('')+'<p class="lead small">Player listings are simulated in the demo.</p>';
-  openSheet(`<h2>Market Board</h2><div class="tabs"><button class="tab" aria-selected="${tab==='sell'}" data-tab="sell">Sell</button><button class="tab" aria-selected="${tab==='shop'}" data-tab="shop">Shop</button><button class="tab" aria-selected="${tab==='players'}" data-tab="players">Players</button></div><p class="lead">You have ${iconImg('gold')} <b>${fmt(S.gold)}</b> gold.</p><div class="list">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+   :tab==='shop'?SHOP.map(s=>`<div class="recipe"><div class="rh">${iconImg(s.id)}<span><b>${ITEMS[s.id].n}</b><small>Hold shop · ${s.price} gold</small></span><button class="btn sm" data-buy="${s.id}" data-n="1" ${S.gold>=s.price?'':'disabled'}>Buy 1</button><button class="btn sm alt" data-buy="${s.id}" data-n="5" ${S.gold>=s.price*5?'':'disabled'}>×5</button></div></div>`).join('')+'<p class="lead small">Trading between players arrives in a later update.</p>':'';
+  openSheet(`<h2>Market Board</h2><div class="tabs"><button class="tab" aria-selected="${tab==='sell'}" data-tab="sell">Sell</button><button class="tab" aria-selected="${tab==='shop'}" data-tab="shop">Shop</button></div><p class="lead">You have ${iconImg('gold')} <b>${fmt(S.gold)}</b> gold.</p><div class="list">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;const q=s=>$('sheet').querySelectorAll(s);
   q('[data-tab]').forEach(b=>b.onclick=()=>openMarket(b.dataset.tab));
   const sellFrom=(from,id,n)=>{const st=from==='bank'?S.vault:S.bank;n=Math.min(n,st[id]||0);if(!n)return 0;st[id]-=n;if(st[id]<=0)delete st[id];S.gold+=ITEMS[id].v*n;sfx('coin');save();return n;};
@@ -945,22 +992,29 @@ function openMarket(tab){
   q('[data-sell]').forEach(b=>b.onclick=()=>{const id=b.dataset.sell,from=b.dataset.from,key=from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;return openMarket('sell');}sellArm=null;if(sellFrom(from,id,1))toast('Sold '+ITEMS[id].n+' for '+fmt(ITEMS[id].v)+' gold');openMarket('sell');});
   q('[data-sellall]').forEach(b=>b.onclick=()=>{const id=b.dataset.sellall,from=b.dataset.from,key='all:'+from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;b.textContent='Sure?';b.classList.add('warn');return;}sellArm=null;const n=sellFrom(from,id,1e9);if(n)toast('Sold '+n+' '+ITEMS[id].n);openMarket('sell');});
   q('[data-buy]').forEach(b=>b.onclick=()=>{const s=SHOP.find(x=>x.id===b.dataset.buy),n=+b.dataset.n||1;if(S.gold<s.price*n)return;S.gold-=s.price*n;give(S.bank,s.id,n);save();toast('Bought '+n+' '+ITEMS[s.id].n);openMarket('shop');});
-  q('[data-list]').forEach(b=>b.onclick=()=>{const l=listings[+b.dataset.list];if(!l||S.gold<l.price)return;S.gold-=l.price;give(S.bank,l.id,l.n);listings.splice(+b.dataset.list,1);save();toast('Bought from '+l.who,'good');openMarket('players');});
 }
 const rc=id=>ITEMS[id]&&ITEMS[id].rarity?RARITY[ITEMS[id].rarity]:null;
 const rTag=id=>{const R=rc(id);return R?`<em class="rt" style="color:${R.c}">${R.n}</em>`:'';};
 const lanStat=k=>{const L=LANTERNS[k];return (L.burn>=1?'Standard burn time':`Oil lasts ${Math.round((1/L.burn-1)*100)}% longer`)+(L.light>1?' · +'+Math.round((L.light-1)*100)+'% light':'');};
 const capeStat=k=>Object.entries(CAPES[k].attr).map(([a,v])=>ATTR_TXT[a](v)).join(' · ');
-let bagTab='hero';
+let bagTab='hero',xArm=false;
+// Linked X account (live game only: the account script provides ACC.xInfo; the demo has none, so the row is hidden)
+// Ways to sign in: a wallet and/or Google. Either can be added from here.
+function linkRows(){const L=window.ACC&&ACC.links&&ACC.links();if(!L)return '';const out=[];
+  out.push(`<div class="gear xrow"><i class="ic xic" aria-hidden="true">◆</i><span><small>Wallet</small><b>${L.wallet?L.wallet.slice(0,6)+'…'+L.wallet.slice(-4):'Not connected'}</b><small>${L.wallet?'Signs you in · Robinhood Chain':'Needed later for Season 1 rewards'}</small></span>${L.wallet?'':'<button class="btn sm" id="wLn">Connect</button>'}</div>`);
+  if(L.googleEnabled||L.google)out.push(`<div class="gear xrow"><i class="ic xic" aria-hidden="true">G</i><span><small>Google</small><b>${L.google?chatEsc(L.google):'Not linked'}</b><small>${L.google?'Signs you in':'A second way to sign in'}</small></span>${L.google?'':'<button class="btn alt sm" id="gLn">Link</button>'}</div>`);
+  return out.join('');}
+function xRow(){const x=window.ACC&&ACC.xInfo&&ACC.xInfo();if(!x)return '';const u=x.username;
+  return `<div class="gear xrow"><i class="ic xic" aria-hidden="true">X</i><span><small>X account</small><b>${u?`<a href="https://x.com/${chatEsc(u)}" target="_blank" rel="noopener noreferrer">@${chatEsc(u)}</a>`:'Not linked'}</b><small>${u?'Linked to this hero':x.enabled?'Approve on X to prove it’s yours':'Coming soon'}</small></span>${u?`<button class="btn alt sm${xArm?' warn':''}" id="xUn">${xArm?'Sure?':'Unlink'}</button>`:x.enabled?'<button class="btn sm" id="xLn">Link X</button>':''}</div>`;}
 function openBag(tab){bagTab=tab||bagTab;
   const hc=document.createElement('canvas');hc.width=16;hc.height=16;hc.getContext('2d').drawImage(heroImg(myLook(),'down',0),0,0);
-  const wl=S.wallet?S.wallet.slice(0,6)+'…'+S.wallet.slice(-4):'Guest · this device only';
+  const LK=window.ACC&&ACC.links?ACC.links():{},wa=LK.wallet||S.wallet,wl=wa?wa.slice(0,6)+'…'+wa.slice(-4):LK.google?'Google account':'Signed in';
   const img=c=>`<img class="ic" alt="" src="${c.toDataURL()}">`;
   const row=(icon,label,name,stat,btn,id)=>`<div class="gear" ${id?`style="--rc:${(rc(id)||{}).c||'transparent'}"`:''}>${icon}<span><small>${label}</small><b>${name}</b><small>${stat}</small></span>${btn||''}</div>`;
   const bl=S.gear.blade,ml=S.gear.mail,ln=S.gear.lantern,cp=S.gear.cape;
   const owned=t=>allKeys().filter(id=>ITEMS[id][t]).length;
   let body='';
-  if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>
+  if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
    <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span><span>Damage <b>${Math.round(dmgOf())}</b></span><span>Defense <b>${defOf()}</b></span></div>
    <div class="gears">
     ${row(iconImg(gearId('blade',bl)),'Blade',ITEMS[gearId('blade',bl)].n,'Damage '+GEAR.blade[bl].dmg,`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
@@ -990,7 +1044,9 @@ function openBag(tab){bagTab=tab||bagTab;
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
   if($('adm'))$('adm').onclick=openAdmin;
-  if($('setO'))$('setO').onclick=openSettings;if($('gd'))$('gd').onclick=openGuide;
+  if($('setO'))$('setO').onclick=openSettings;if($('gLn'))$('gLn').onclick=()=>{$('gLn').disabled=true;ACC.linkGoogle();};
+  if($('wLn'))$('wLn').onclick=async()=>{const b=$('wLn');b.disabled=true;b.textContent='Check wallet…';const r=await ACC.linkWallet();toast(r.ok?'Wallet connected: '+r.addr.slice(0,6)+'…'+r.addr.slice(-4):r.msg,r.ok?'good':'bad');openBag('hero');};if($('xLn'))$('xLn').onclick=()=>{$('xLn').disabled=true;$('xLn').textContent='Opening X…';ACC.xLink();};
+  if($('xUn'))$('xUn').onclick=async()=>{if(!xArm){xArm=true;return openBag('hero');}xArm=false;const ok=await ACC.xUnlink();toast(ok?'X account unlinked':'Couldn’t unlink. Try again.',ok?'good':'bad');openBag('hero');};if($('gd'))$('gd').onclick=openGuide;
   if($('out'))$('out').onclick=()=>{save();ACC.flush();ACC.logout();};
   if($('reset'))$('reset').onclick=()=>{if($('reset').dataset.c){S=normalize({name:S.name,look:S.look,wallet:S.wallet});save();P.hp=maxHp();enterHold();closeSheet();toast('Progress reset');}else{$('reset').dataset.c=1;$('reset').textContent='Tap again to reset';}};
 }
@@ -1135,24 +1191,14 @@ function openGuide(){openSheet(`<h2>Goals</h2><p class="lead small">Finish goals
 $('guide').addEventListener('click',()=>{if(started)openGuide();});
 
 // ---------- simulated town ----------
-const FEED=['reached Fishing 20','found a Crystal Lantern','burnt 3 Pondfin','looted a Mossweave Cape','reached Farming 15','found Emberite on floor 9','beat Mother Slime','listed 6 Iron Ore','reached floor 8','crafted an Iron Blade','harvested 4 Lampseed','fell on floor 7','cooked Glowcap Stew','minted a Slime Crown relic'];
-function spawnNpcs(){const r=rng(42);npcs=NAMES.slice(0,6).map((n,i)=>({name:n,look:{skin:(r()*6)|0,hair:(r()*10)|0,cloth:(r()*10)|0,style:(r()*4)|0,armor:[null,'copper','iron','copper','ember',null][i],cape:[null,'moss',null,'angler','knight',null][i]},x:(4+i*3)*T,y:(11+(i%2))*T+8,dir:'down',tx:0,ty:0,wait:r()*3,tier:['none','copper','iron','copper','ember','none'][i],moving:false,anim:0,say:'',sayT:0}));}
-const waypoints=()=>{const p=[];for(let x=2;x<24;x++){p.push([x*T+8,11*T+8]);p.push([x*T+8,12*T+8]);}for(let y=5;y<22;y++)p.push([12*T+8+(y%2)*16,y*T+8]);return p;};
-const WP=waypoints();
-const CHAT=['fishing lvl 12 finally','pondfin heals 35 btw','just found a crystal lantern!!','cooking 30 = no more burnt fish','anyone seen a wispheart lantern?','anyone farming lampseed?','floor 6 spiders are rough','selling iron ore at the board','gl on the knight!','lantern ran dry on F7 lol','who wants to party at season 1?'];
-let feedT=0;
-function updateNpcs(dt){for(const n of npcs){if(n.sayT>0)n.sayT-=dt;if(n.wait>0){n.wait-=dt;n.moving=false;if(n.wait<=0){const w=WP[ri(0,WP.length-1)];n.tx=w[0];n.ty=w[1];}continue;}
-  const dx=n.tx-n.x,dy=n.ty-n.y,d=Math.hypot(dx,dy);if(d<2){n.wait=1+rand()*4;if(rand()<.25&&!npcs.some(m=>m.sayT>0)){n.say=CHAT[ri(0,CHAT.length-1)];n.sayT=3.5;}continue;}
-  const s=36*dt,mx=dx/d*s,my=dy/d*s;const ox=n.x,oy=n.y;moveBody(n,mx,0,4);moveBody(n,0,my,4);if(Math.hypot(n.x-ox,n.y-oy)<.1){n.wait=.5;}
-  n.moving=true;n.anim+=dt;n.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
-  feedT-=dt;if(feedT<=0){feedT=7;$('feed').textContent=NAMES[ri(0,NAMES.length-1)]+' '+FEED[ri(0,FEED.length-1)];}}
-
 // ---------- update ----------
 function update(dt){
-  time+=dt;
+  time+=dt;MP.tick(dt);
+  if(paused&&!(scene==='delve'&&MP.shared()))return;
   // movement
   let mx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0),my=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
   if(stick.on){mx=stick.x;my=stick.y;}
+  if(paused){mx=0;my=0;aPressed=false;retHeld=false;}
   const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l;}
   P.moving=l>.15&&P.chan<=0;
   if(P.moving){const sp=(scene==='hold'?72:62)*dt*(1+A('spd')/100);moveBody(P,mx*sp,0,4);moveBody(P,0,my*sp,4);P.anim+=dt;
@@ -1162,7 +1208,7 @@ function update(dt){
   // context
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();}
-  if(scene==='hold'){updateNpcs(dt);updateFishing(dt);}
+  if(scene==='hold'){updateFishing(dt);}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -1170,7 +1216,7 @@ function update(dt){
     if(A('regen')&&P.hp>0)P.hp=Math.min(maxHp(),P.hp+A('regen')*dt);
     if(run.oil<=0){run.shadeT-=dt;if(run.shadeT<=0){run.shadeT=5;const a=rand()*Math.PI*2;let sx=P.x+Math.cos(a)*70,sy=P.y+Math.sin(a)*70;
       for(let k=0;k<10&&blocked(sx,sy,4);k++){const b=rand()*Math.PI*2;sx=P.x+Math.cos(b)*60;sy=P.y+Math.sin(b)*60;}
-      if(!blocked(sx,sy,4)){ents.push(makeEnemy('shade',sx,sy,1+.1*run.floor));toast('A Shade stirs in the dark','bad');}}}
+      if(!blocked(sx,sy,4)){if(MP.client())NET.send({t:'shade',x:Math.round(sx),y:Math.round(sy)});else ents.push(makeEnemy('shade',sx,sy,1+.1*run.floor));toast('A Shade stirs in the dark','bad');}}}
     // return flame
     if(retHeld&&P.hp>0){P.chan+=dt;if(P.chan>=2){retHeld=false;returnHome();return;}}else P.chan=0;
     updateEnemies(dt);
@@ -1187,10 +1233,11 @@ function update(dt){
   updateHud();
 }
 function updateEnemies(dt){
+  if(MP.client())return followEnemies(dt);
   for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;
     e.kb.x*=.82;e.kb.y*=.82;moveBody(e,e.kb.x*dt,e.kb.y*dt,e.r>6?8:4);
-    const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd;let vx=0,vy=0;
-    e.losT=(e.losT||0)-dt;if(e.losT<=0){e.losT=.25;e.los=d<(e.d.boss?400:130)&&lineOfSight(e.x,e.y-6,P.x,P.y-6);if(e.los)e.mem=3;}
+    const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd;let vx=0,vy=0;
+    e.losT=(e.losT||0)-dt;if(e.losT<=0){e.losT=.25;e.los=d<(e.d.boss?400:130)&&lineOfSight(e.x,e.y-6,TG.x,TG.y-6);if(e.los)e.mem=3;}
     e.mem=(e.mem||0)-dt;const sees=e.d.ai==='flutter'?d<130:(e.los||e.mem>0);
     switch(e.d.ai){
       case 'hop':e.cd-=dt;if(e.st==='hop'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=.6+rand()*.5;}}else if(e.cd<=0&&sees){e.st='hop';e.cd=.35;e.vx=ux*sp*2.4;e.vy=uy*sp*2.4;}break;
@@ -1213,7 +1260,7 @@ function updateEnemies(dt){
     const ox=e.x,oy=e.y;moveBody(e,vx*dt,vy*dt,e.r>6?8:4);
     if((vx||vy)&&Math.hypot(e.x-ox,e.y-oy)<Math.hypot(vx,vy)*dt*.2&&!(e.side>0)){e.side=.5;e.sd=rand()<.5?1:-1;}
     // contact
-    const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<e.r+6){let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;hurtPlayer(dmg,e);}
+    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<e.r+6)hurtPlayer(dmg,e);if(OTH.size)MP.contact(e,dmg);
   }
   ents=ents.filter(e=>!e.dead);
 }
@@ -1231,7 +1278,7 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;ptSet($('gold'),fmt(S.gold),{font:'big',px:14,color:'#ffcd75'});
-  $('where').textContent=scene==='hold'?'The Hold':'F'+run.floor+' · '+BIOMES[map.biome].name;
+  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?' · World '+MP.room.slice(1):''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
   const pg=dv?(run.pack.gold||0):0;$('goldRun').hidden=!pg;if(pg)ptSet($('goldRun'),'+'+fmt(pg)+' in pack',{font:'small',px:9,color:'#a7f070'});
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -1262,7 +1309,7 @@ function render(){
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.y,f:()=>drawObj(o)});
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const n of npcs)if(scene==='hold')list.push({y:n.y,f:()=>drawHero(n.x,n.y,n.dir,n.moving,n.anim,n.look,n.name,n)});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o)});
   for(const d of drops)list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
@@ -1305,7 +1352,7 @@ function drawAura(x,y,cols,seed){const t=time+seed,X=Math.round(x),Y=Math.round(
   g.globalAlpha=1;}
 function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const fr=moving?1+Math.floor(anim*8)%2:0,img=heroImg(look,dir,fr);
-  const au=look?auraColors(look,me?S.gear.lantern:null):[];if(au.length)drawAura(x,y,au,(npc?npc.name.length:0));
+  const au=look?auraColors(look,me?S.gear.lantern:look.lan||null):[];if(au.length)drawAura(x,y,au,(npc?npc.name.length:0));
   g.fillStyle='rgba(0,0,0,.3)';g.fillRect(Math.round(x-4),Math.round(y),8,1);
   const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17);
   spr(img,x-8,y-15);
@@ -1343,6 +1390,7 @@ function drawLight(cx,cy){
   for(const o of map.objs){if(!o.light||o.gone)continue;if(Math.abs(o.x-P.x)>VW||Math.abs(o.y-P.y)>VH)continue;
     const yy=o.onWall?o.tile[1]*T+6:o.y-6;hole(o.x,yy,o.light.r+(o.light.c==='warm'?Math.sin(time*7+o.x)*2:o.light.c==='lava'?Math.sin(time*2.5+o.x)*2.5:0));}
   for(const e of ents)if(e.d.light)hole(e.x,e.y-8,22);
+  for(const o of OTH.values())hole(o.x,o.y-8,46+Math.sin(time*9+o.x)*1.5);
   if(auraColors(myLook(),S.gear.lantern).length)hole(P.x,P.y-6,26+Math.sin(time*3)*2);
   if(map.stairs&&!map.stairs.hidden)hole(map.stairs.tx*T+8,map.stairs.ty*T+8,26);
   lg.globalAlpha=1;lg.globalCompositeOperation='source-over';
@@ -1355,8 +1403,194 @@ function drawLight(cx,cy){
 }
 
 // ---------- loop ----------
+// ===================== MULTIPLAYER (Season 0) =====================
+// Other players (OTH) arrive through the realtime server (net.js). In a dungeon instance one player is the host:
+// their game runs the monsters and sends snapshots; everyone else follows them and sends their hits to the host.
+// Loot goes to whoever dealt the most damage; XP goes to everyone who hit. Without the realtime server the game runs solo.
+const OTH=new Map();
+const MP={id:null,room:null,host:null,party:null,online:0,status:new Map(),friends:null,nextEid:1,sent:'',lookKey:'',lookT:0,sendT:0,enT:0,chatLog:[],chatCb:null,invites:[],prompt:null,wantWorld:null};
+const netOn=()=>!!(window.NET&&NET.live());
+MP.me=()=>MP.id||'me';
+MP.inInst=()=>!!(MP.room&&MP.room[0]==='d');
+MP.shared=()=>MP.inInst()&&OTH.size>0;
+MP.client=()=>MP.inInst()&&!!MP.host&&MP.host!==MP.id;          // someone else runs the monsters
+MP.isLeader=()=>!MP.party||MP.party.leader===MP.id;
+MP.feed=(k,a)=>{if(netOn())NET.lsend({t:'feed',k,a});};
+MP.toHold=()=>{if(!netOn())return;if(MP.inInst()||NET.room()&&NET.room()[0]==='d')NET.leave();MP.room=null;MP.host=null;OTH.clear();
+  if(NET.lobbyOpen()||NET.live())NET.lsend({t:'world',want:MP.wantWorld||undefined});MP.wantWorld=null;};
+MP.floorEntered=f=>{if(netOn()&&MP.inInst())NET.lsend({t:'where',room:MP.room,floor:f});};
+// ---- starting a delve ----
+MP.delve=floor=>{if(!netOn()||!NET.lobbyOpen())return startDelve(floor);closeSheet();toast('Opening the way…');NET.lsend({t:'delve',floor});};
+MP.enterInst=(room,floor,seed)=>{closeSheet();MP.prompt=null;hidePrompt();if(scene==='delve')NET.leave();OTH.clear();MP.room=null;MP.host=null;startDelve(floor,seed);NET.join(room);};
+MP.gateMember=()=>{const p=MP.party,lead=(p.members.find(m=>m.id===p.leader)||{}).name||'Your leader';
+  openSheet(`<h2>The Delve Gate</h2><p class="lead">You’re in <b>${chatEsc(lead)}</b>’s party. The party leader opens the way, and the whole party shares one dungeon.</p>
+  ${p.inst?`<button class="btn big" id="jp">Join your party on floor ${p.inst.floor}</button>`:'<p class="lead small">When your leader enters the Depths, you’ll be asked to join.</p>'}
+  <div class="row"><button class="btn alt" id="lv">Leave party &amp; delve alone</button><button class="btn alt" id="sx">Not yet</button></div>`);
+  $('sx').onclick=closeSheet;if($('jp'))$('jp').onclick=()=>MP.enterInst(p.inst.room,p.inst.floor,p.inst.seed);$('lv').onclick=()=>{NET.lsend({t:'leave'});closeSheet();setTimeout(openGate,400);};};
+// ---- shared objects (chests, glowcaps, ore): the host decides who gets them ----
+function objTaken(o,by){const mine=by===MP.me();
+  if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
+  else if(o.type==='glowcap'){o.gone=true;o.light=null;o.act=null;if(mine)spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);}
+  else if(o.type==='ore'){o.gone=true;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine)spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,2,3],['gem',.06,1,1]]);puff(ox+8,oy+12,'#ffcd75',10);}}
+function mineOre(o,i,who){if(o.gone)return;o.hp--;if(o.hp<=0){objTaken(o,who);MP.objOut(i,o,who);}else MP.objOut(i,o,null);}
+MP.objOut=(i,o,by)=>{if(MP.shared())NET.send({t:'obj',o:i,open:o.open?1:0,gone:o.gone?1:0,hp:o.hp,by});};
+function applyHit(e,d,a,who){e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
+function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
+MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OTH.values()){if(Math.hypot(o.x-e.x,(o.y-4)-(e.y-e.r))<e.r+6&&now-(e.hc[o.id]||0)>700){e.hc[o.id]=now;NET.send({t:'hurt',to:o.id,d:Math.round(dmg),x:Math.round(e.x),y:Math.round(e.y)});}}};
+MP.askDown=()=>{const h=OTH.get(MP.host);toast((h?h.name:'Your host')+' leads the way down. Wait at the stairs.');if(!MP.downT||time-MP.downT>4){MP.downT=time;NET.send({t:'down'});}};
+MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
+// followers: monsters come from the host's snapshots and glide to their new spots
+function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
+// ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
+MP.tick=dt=>{
+  for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>80||Math.abs(dy)>80){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
+    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;}
+  if(!netOn()||!NET.roomOpen()||!MP.room)return;
+  MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
+  MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
+  if(scene==='delve'&&MP.inInst()&&MP.host===MP.id&&OTH.size){MP.enT-=dt;if(MP.enT<=0){MP.enT=.1;
+    NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100)])});}}
+};
+function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m});
+  if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
+// ---- lobby messages ----
+if(window.NET){
+  NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(scene==='hold'&&!MP.room)MP.toHold();MP.loadFriends();refreshSocial();});
+  NET.onL('off',()=>{});
+  NET.onL('world',m=>{if(scene==='hold')NET.join(m.room);});
+  NET.onL('online',m=>{MP.online=m.n;refreshSocial();});
+  NET.onL('status',m=>{for(const s of m.list)MP.status.set(s.id,s);refreshSocial();});
+  NET.onL('party',m=>{const had=!!MP.party;MP.party=m.party;refreshSocial();if(!m.party&&had&&MP.inInst()&&MP.host!==MP.id){} });
+  NET.onL('invited',m=>{MP.invites=MP.invites.filter(i=>i.from!==m.from);MP.invites.push({from:m.from,name:m.name,at:Date.now()});showPrompt();sfx('rare');buzz(40);});
+  NET.onL('note',m=>toast(m.text,m.bad?'bad':''));
+  NET.onL('go',m=>MP.enterInst(m.room,m.floor,m.seed));
+  NET.onL('partyDelve',m=>{if(scene==='hold'){MP.prompt={kind:'delve',room:m.room,floor:m.floor,seed:m.seed,by:m.by};showPrompt();sfx('rare');}else toast(m.by+' led the party into floor '+m.floor+'. Head home to join them.');});
+  NET.onL('pchat',m=>{const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
+  NET.onL('feed',m=>{if(!SET.feed)return;const f=$('feed');f.textContent='★ '+m.text;f.classList.add('real');clearTimeout(MP.feedT);MP.feedT=setTimeout(()=>{f.textContent='';},9000);});
+  NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
+  NET.onL('kicked',m=>{OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
+  // ---- room messages ----
+  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);MP.sent='';MP.lookKey='';MP.sendT=0;MP.lookT=0;
+    MP.chatLog=(m.chat||[]).map(c=>({id:m.room+':'+c.n,name:c.name,text:c.text,at:c.at,me:c.id===MP.id}));if(MP.chatCb)MP.chatCb(MP.chatLog);
+    NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
+    if(m.room[0]==='d'){
+      if(run&&m.floor&&m.floor!==run.floor)enterFloor(m.floor);
+      if(MP.host!==MP.id){ents=[];NET.send({t:'sync'});}
+      else MP.nextEid=Math.max(MP.nextEid,...ents.map(e=>e.id+1),1);
+    }});
+  NET.onR('+',m=>{addOther(m.p);if(scene==='hold'||OTH.size===1)sfx('pick');});
+  NET.onR('-',m=>{const o=OTH.get(m.id);OTH.delete(m.id);if(o&&MP.inInst())toast(o.name+' left the dungeon');});
+  NET.onR('S',m=>{for(const [id,x,y,d,mv] of m.p){const o=OTH.get(id);if(!o)continue;o.tx=x;o.ty=y;o.dir=d;o.moving=!!mv;}});
+  NET.onR('L',m=>{const o=OTH.get(m.id);if(o)o.look=m.look||DEFAULT_LOOK;});
+  NET.onR('say',m=>{const msg={id:MP.room+':'+m.n,name:m.name,text:m.text,at:m.at,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatLog.length>60)MP.chatLog.shift();if(MP.chatCb)MP.chatCb([msg]);
+    const o=OTH.get(m.id);if(o){o.say=m.text.length>26?m.text.slice(0,25)+'...':m.text;o.sayT=4.5;}});
+  NET.onR('slow',()=>chatSys('Slow down a little.'));
+  NET.onR('full',()=>{MP.room=null;NET.lsend({t:'world'});});
+  NET.onR('denied',()=>{if(scene==='delve'){toast('That dungeon is closed. Heading home.','bad');returnHome();}});
+  NET.onR('host',m=>{MP.host=m.id;if(m.id===MP.id){MP.nextEid=Math.max(1000,...ents.map(e=>(e.id||0)+1000));for(const e of ents){e.tx=null;e.st=e.st||'idle';e.cd=e.cd||1;e.kb=e.kb||{x:0,y:0};}if(scene==='delve')toast('You’re now leading this dungeon');}});
+  // host → everyone
+  NET.onR('en',m=>{if(!MP.client()||scene!=='delve'||m.f!==run.floor)return;const seen=new Set();
+    for(const [id,type,x,y,hp,max,fl,sc] of m.e){if(!ENEMIES[type])continue;seen.add(id);let e=ents.find(q=>q.id===id);
+      if(!e){e=makeEnemy(type,x,y,(sc||100)/100);e.id=id;ents.push(e);}e.tx=x;e.ty=y;e.hp=hp;e.max=max;if(fl)e.flash=Math.max(e.flash,.1);}
+    for(const e of ents)if(!seen.has(e.id))e.dead=true;});
+  NET.onR('kill',m=>{if(!MP.client()||scene!=='delve')return;let e=ents.find(q=>q.id===m.e);
+    if(!e){if(!ENEMIES[m.ty])return;e=makeEnemy(m.ty,m.x,m.y,1);}e.x=m.x;e.y=m.y;e.dead=true;onKilled(e,m.top,m.hit||[],m.xp|0);});
+  NET.onR('obj',m=>{if(scene!=='delve'||!map.objs)return;const o=map.objs[m.o];if(!o)return;if(m.hp!=null)o.hp=m.hp;
+    if((m.gone&&!o.gone)||(m.open&&!o.open))objTaken(o,m.by);o.req=0;});
+  NET.onR('objs',m=>{if(scene!=='delve'||m.f!==run.floor)return;for(const [i,op,gn,hp] of m.s){const o=map.objs[i];if(!o)continue;if(op){o.open=true;o.act=null;}if(gn){o.gone=true;o.light=null;o.act=null;}if(hp!=null)o.hp=hp;}
+    if(m.bd&&map.stairs&&map.stairs.hidden){map.stairs.hidden=false;bakeGround(map);}});
+  NET.onR('floor',m=>{if(scene!=='delve'||m.f===run.floor)return;sfx('stairs');enterFloor(m.f);toast('Floor '+m.f+' · '+BIOMES[packOf(m.f).id].name);});
+  NET.onR('hurt',m=>{if(scene==='delve')hurtPlayer(m.d,{x:m.x,y:m.y});});
+  // player → host
+  NET.onR('hit',m=>{if(MP.client()||scene!=='delve')return;const e=ents.find(q=>q.id===m.e&&!q.dead);if(!e)return;applyHit(e,Math.max(1,Math.min(e.max,m.d|0)),+m.a||0,m.from);});
+  NET.onR('act',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||(o.type!=='chest'&&o.type!=='glowcap')||o.open||o.gone)return;objTaken(o,m.from);MP.objOut(m.o,o,m.from);});
+  NET.onR('mine',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||o.type!=='ore')return;mineOre(o,m.o,m.from);});
+  NET.onR('shade',m=>{if(MP.client()||scene!=='delve')return;if(ents.filter(e=>e.type==='shade'&&!e.dead).length>=8)return;if(!blocked(m.x,m.y,4))ents.push(makeEnemy('shade',m.x,m.y,1+.1*run.floor));});
+  NET.onR('down',m=>{const o=OTH.get(m.from);if(o)toast(o.name+' is waiting at the stairs');});
+  NET.onR('sync',m=>{if(MP.client()||scene!=='delve')return;const s=[];map.objs.forEach((o,i)=>{if(o.open||o.gone||(o.type==='ore'&&o.hp<3))s.push([i,o.open?1:0,o.gone?1:0,o.hp]);});
+    NET.send({t:'objs',to:m.from,f:run.floor,s,bd:map.stairs&&!map.stairs.hidden&&map.pack.boss&&run.floor===map.pack.to?1:0});MP.enT=0;});
+}
+// ---- chat goes through the current room (and /p for party chat) ----
+window.CHATNET={
+  why(){if(!netOn())return 'Chat isn’t available right now.';if(!MP.room)return 'Connecting to the world…';return null;},
+  join(ch,cb){MP.chatCb=cb;cb(MP.chatLog.slice());return ()=>{if(MP.chatCb===cb)MP.chatCb=null;};},
+  async send(ch,text){const pm=text.match(/^\/p\s+(.+)/i);if(pm){if(!MP.party)return {ok:false,msg:'You’re not in a party. Invite someone from the Social menu.'};NET.lsend({t:'pchat',text:pm[1]});return {ok:true,party:true};}
+    if(!NET.roomOpen())return {ok:false,msg:'Reconnecting… try again in a moment.'};NET.send({t:'say',text});return {ok:true};}
+};
+// ---- friends ----
+MP.loadFriends=async()=>{if(!window.ACC||!ACC.api)return;const r=await ACC.api.call(null,'friends');if(!r.ok)return;MP.friends=r.data;
+  NET.lsend({t:'watch',ids:r.data.friends.map(f=>f.name.toLowerCase())});refreshSocial();};
+MP.friendDo=async(action,name)=>{const r=await ACC.api.call(null,'friends',{method:'POST',body:{action,name}});
+  if(!r.ok){toast(r.data.msg||'That didn’t work.','bad');return false;}MP.friends=r.data.list;NET.lsend({t:'watch',ids:r.data.list.friends.map(f=>f.name.toLowerCase())});
+  if(action==='add'){toast(r.data.state==='friends'?'You’re now friends with '+name:'Friend request sent to '+name,'good');NET.lsend({t:'nudge',to:name.toLowerCase(),k:'friend'});}
+  if(action==='accept'){toast('You’re now friends with '+name,'good');NET.lsend({t:'nudge',to:name.toLowerCase(),k:'friend'});}
+  refreshSocial();return true;};
+// ---- prompts: party invites and "your party went into the Depths" ----
+function showPrompt(){socBadge();const el=$('invite');MP.invites=MP.invites.filter(i=>Date.now()-i.at<85000);const inv=MP.invites[0],pd=MP.prompt;
+  if(!inv&&!pd){el.hidden=true;return;}el.hidden=false;
+  if(inv){el.innerHTML=`<span><b>${chatEsc(inv.name)}</b> invited you to their party</span><button class="btn sm" id="invY">Join</button><button class="btn alt sm" id="invN">No thanks</button>`;
+    $('invY').onclick=()=>{NET.lsend({t:'accept',from:inv.from});MP.invites.shift();showPrompt();};$('invN').onclick=()=>{NET.lsend({t:'decline',from:inv.from});MP.invites.shift();showPrompt();};
+    clearTimeout(MP.invT);MP.invT=setTimeout(showPrompt,86000);return;}
+  el.innerHTML=`<span><b>${chatEsc(pd.by)}</b> led your party into floor ${pd.floor}</span><button class="btn sm" id="invY">Join them</button><button class="btn alt sm" id="invN">Later</button>`;
+  $('invY').onclick=()=>MP.enterInst(pd.room,pd.floor,pd.seed);$('invN').onclick=()=>{MP.prompt=null;showPrompt();};}
+function hidePrompt(){if(!MP.invites.length&&!MP.prompt)$('invite').hidden=true;else showPrompt();}
+// ---- the Social menu: friends, party, players nearby ----
+let socTab='friends',socOpen=false;
+const where=s=>!s||!s.on?'Offline':s.room&&s.room[0]==='w'?'World '+s.room.slice(1):s.room&&s.room[0]==='d'?'In the Depths'+(s.floor?' · floor '+s.floor:''):'Online';
+function socBadge(){const n=((MP.friends&&MP.friends.incoming.length)||0)+MP.invites.length,el=$('socN');if(!el)return;el.hidden=!n;el.textContent=n;}
+function refreshSocial(){socBadge();if(socOpen&&!$('sheet').hidden&&$('socialSheet'))openSocial(socTab,true);}
+function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true;if(!keep&&netOn())NET.lsend({t:'online'});const inp=$('fadd'),typed=keep&&inp?inp.value:'';
+  if(!netOn()){openSheet(`<h2>Social</h2><p class="lead">Friends and parties need the game’s realtime server, which isn’t reachable right now.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;return;}
+  const F=MP.friends||{friends:[],incoming:[],outgoing:[]},p=MP.party,inParty=id=>!!(p&&p.members.some(m=>m.id===id)),myWorld=MP.room&&MP.room[0]==='w'?MP.room:null;
+  const onlineN=F.friends.filter(f=>(MP.status.get(f.name.toLowerCase())||{}).on).length;
+  const row=(name,sub,btns,dot)=>`<div class="srow">${dot!=null?`<i class="dot ${dot?'on':''}"></i>`:''}<span><b>${chatEsc(name)}</b><small>${sub}</small></span><span class="sbtns">${btns}</span></div>`;
+  let body='';
+  if(socTab==='friends'){
+    body=`<div class="addf"><input id="fadd" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hero name" value="${chatEsc(typed)}" aria-label="Add a friend by hero name"><button class="btn sm" id="faddB">Add friend</button></div>`
+     +(F.incoming.length?`<h3>Friend requests</h3>`+F.incoming.map(n=>row(n,'wants to be friends',`<button class="btn sm" data-fa="accept" data-n="${chatEsc(n)}">Accept</button><button class="btn alt sm" data-fa="decline" data-n="${chatEsc(n)}">Decline</button>`)).join(''):'')
+     +`<h3>Friends <small>${onlineN} online</small></h3>`+(F.friends.length?F.friends.slice().sort((a,b)=>((MP.status.get(b.name.toLowerCase())||{}).on?1:0)-((MP.status.get(a.name.toLowerCase())||{}).on?1:0)).map(f=>{const id=f.name.toLowerCase(),s=MP.status.get(id)||{},b=[];
+        if(s.on&&!inParty(id)&&MP.isLeader())b.push(`<button class="btn sm" data-inv="${id}">Invite</button>`);
+        if(s.on&&s.room&&s.room[0]==='w'&&s.room!==myWorld&&scene==='hold')b.push(`<button class="btn alt sm" data-jw="${s.room}">Join world</button>`);
+        b.push(`<button class="btn alt sm${MP.rmArm===f.name?' warn':''}" data-fa="remove" data-n="${chatEsc(f.name)}">${MP.rmArm===f.name?'Sure?':'Remove'}</button>`);
+        return row(f.name,where(s)+(f.x?' · @'+chatEsc(f.x):''),b.join(''),!!s.on);}).join(''):'<p class="lead small">No friends yet. Add one by hero name above, or from Nearby.</p>')
+     +(F.outgoing.length?`<h3>Waiting for an answer</h3>`+F.outgoing.map(n=>row(n,'request sent',`<button class="btn alt sm" data-fa="cancel" data-n="${chatEsc(n)}">Cancel</button>`)).join(''):'');
+  }else if(socTab==='party'){
+    body=p?p.members.map(m=>{const me=m.id===MP.id,b=[];if(MP.party.leader===MP.id&&!me){b.push(`<button class="btn alt sm" data-lead="${m.id}">Make leader</button>`);b.push(`<button class="btn alt sm" data-kick="${m.id}">Remove</button>`);}
+        return row((m.id===p.leader?'♛ ':'')+m.name+(me?' (you)':''),m.on?where(m):'Offline',b.join(''),m.on);}).join('')
+      +`<p class="lead small">${p.members.length}/4 · ${p.leader===MP.id?'You lead: when you enter the Depths, your party is asked to join you in the same dungeon.':'Your leader opens the way into the Depths for the whole party.'} Start a chat message with <b>/p</b> to talk to your party only.</p>`
+      +(p.inst&&MP.room!==p.inst.room?`<button class="btn big" id="jp">Join your party on floor ${p.inst.floor}</button>`:'')
+      +`<div class="row"><button class="btn alt" id="lvP">Leave party</button></div>`
+      :`<p class="lead">You’re not in a party. Parties of up to 4 delve together in one shared dungeon. Invite friends from the Friends tab, or players around you from Nearby.</p>`;
+  }else{
+    const near=[...OTH.values()];
+    body=near.length?near.map(o=>{const fr=F.friends.some(f=>f.name.toLowerCase()===o.id),pend=F.outgoing.some(n=>n.toLowerCase()===o.id),b=[];
+        if(!fr&&!pend)b.push(`<button class="btn alt sm" data-fadd="${chatEsc(o.name)}">Add friend</button>`);
+        if(!inParty(o.id)&&MP.isLeader())b.push(`<button class="btn sm" data-inv="${o.id}">Invite</button>`);
+        return row(o.name,fr?'Friend':pend?'Request sent':'Here with you',b.join(''),true);}).join('')
+      :'<p class="lead small">No one else is here right now.</p>';
+  }
+  const pn=p?p.members.length:0;
+  openSheet(`<div id="socialSheet"></div><h2>Social</h2><p class="lead small">${MP.online||1} player${MP.online===1?'':'s'} online${MP.room&&MP.room[0]==='w'?' · you’re in World '+MP.room.slice(1):''}</p>
+   <div class="tabs"><button class="tab" aria-selected="${socTab==='friends'}" data-st2="friends">Friends${F.incoming.length?' ('+F.incoming.length+')':''}</button><button class="tab" aria-selected="${socTab==='party'}" data-st2="party">Party${pn?' '+pn+'/4':''}</button><button class="tab" aria-selected="${socTab==='here'}" data-st2="here">Nearby ${OTH.size}</button></div>
+   <div class="list social">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+  const q=s=>$('sheet').querySelectorAll(s);$('sx').onclick=()=>{socOpen=false;closeSheet();};
+  q('[data-st2]').forEach(b=>b.onclick=()=>{MP.rmArm=null;openSocial(b.dataset.st2);});
+  const add=async()=>{const v=($('fadd').value||'').trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(v)){toast('Type a hero name (3–16 letters, numbers or _)','bad');return;}if(await MP.friendDo('add',v))$('fadd').value='';};
+  if($('faddB')){$('faddB').onclick=add;$('fadd').onkeydown=e=>{if(e.key==='Enter')add();e.stopPropagation();};if(keep&&typed)$('fadd').focus();}
+  q('[data-fa]').forEach(b=>b.onclick=()=>{const a=b.dataset.fa,n=b.dataset.n;if(a==='remove'&&MP.rmArm!==n){MP.rmArm=n;return openSocial('friends');}MP.rmArm=null;MP.friendDo(a,n);});
+  q('[data-fadd]').forEach(b=>b.onclick=()=>MP.friendDo('add',b.dataset.fadd));
+  q('[data-inv]').forEach(b=>b.onclick=()=>{NET.lsend({t:'invite',to:b.dataset.inv});b.disabled=true;b.textContent='Invited';});
+  q('[data-jw]').forEach(b=>b.onclick=()=>{MP.wantWorld=b.dataset.jw;socOpen=false;closeSheet();NET.lsend({t:'world',want:b.dataset.jw});toast('Travelling to World '+b.dataset.jw.slice(1));});
+  q('[data-kick]').forEach(b=>b.onclick=()=>NET.lsend({t:'kick',id:b.dataset.kick}));
+  q('[data-lead]').forEach(b=>b.onclick=()=>NET.lsend({t:'lead',id:b.dataset.lead}));
+  if($('lvP'))$('lvP').onclick=()=>NET.lsend({t:'leave'});
+  if($('jp'))$('jp').onclick=()=>{socOpen=false;if(scene==='delve'){toast('Return home first, then join your party.');return;}MP.enterInst(p.inst.room,p.inst.floor,p.inst.seed);};
+}
+{const p=new Px(16,16);p.ell(5.5,6,2.6,2.6,PAL.white);p.ell(11,6.5,2.2,2.2,PAL.silver);p.ell(5.5,12.5,4.2,2.6,PAL.white);p.ell(11.5,12.5,3.2,2.3,PAL.silver);p.outline();$('socIc').src=p.canvas().toDataURL();}
+$('socB').onclick=()=>{if(!$('sheet').hidden&&$('socialSheet')){socOpen=false;closeSheet();}else openSocial();};
+
 let last=0;
-function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(!paused&&started)update(dt);else if(!started){time+=dt;updateNpcs(dt);}render();requestAnimationFrame(frame);}
+function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(started)update(dt);else time+=dt;render();requestAnimationFrame(frame);}
 let started=false;
 fit();applySet();enterHold();requestAnimationFrame(frame);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
@@ -1381,18 +1615,18 @@ function applyAdmin(on){ADMIN=!!on;const H='partyhat_helm';
 let chatOpen=false,chatCh=null,chatLeaveFn=null,chatMsgs=[],chatSeen=new Set(),chatLast=0;
 const CHAT_BAD=['fuck','shit','bitch','cunt','dick','cock','pussy','nigg','fag','rape','nazi','hitler','porn','slut','whore','penis','vagina','retard','kkk','molest','pedo'];
 const chatClean=t=>{t=String(t).replace(/[\u0000-\u001f\u007f<>]/g,'').replace(/\s+/g,' ').trim().slice(0,140);for(const w of CHAT_BAD)t=t.replace(new RegExp('\\b'+w+'\\w*','gi'),m=>m[0]+'*'.repeat(m.length-1));return t;};
-const chatChannel=()=>scene==='delve'&&run?'f'+run.floor:'hold';
-const chatPlace=ch=>ch==='hold'?'the Hold':'Floor '+ch.slice(1);
+const chatChannel=()=>MP.room||(scene==='delve'?'solo':'hold');
+const chatPlace=ch=>ch[0]==='w'?'World '+ch.slice(1):ch[0]==='d'||ch==='solo'?'your dungeon':'the Hold';
 const chatEsc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function chatRender(){const L=$('chatLog');if(!L)return;const atEnd=L.scrollHeight-L.scrollTop-L.clientHeight<30;
-  L.innerHTML=chatMsgs.slice(-80).map(m=>m.sys?`<p class="sys">${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}"><b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
+  L.innerHTML=chatMsgs.slice(-80).map(m=>m.sys?`<p class="sys">${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}${m.party?' pty':''}">${m.party?'<i>Party</i> ':''}<b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
   if(atEnd||chatMsgs.length<3)L.scrollTop=L.scrollHeight;$('chatWhere').textContent=chatPlace(chatCh||chatChannel());}
 function chatSys(text,at){chatMsgs.push({id:'s'+Math.random(),sys:true,text,at:at===undefined?Date.now():at});chatRender();}
 function chatAdd(list){let n=0;for(const m of list||[]){if(!m||chatSeen.has(m.id))continue;chatSeen.add(m.id);m.text=chatClean(m.text);if(!m.text)continue;m.me=m.me||(!!S.name&&m.name===S.name);chatMsgs.push(m);n++;}
   if(!n)return;chatMsgs.sort((a,b)=>a.at-b.at);if(chatMsgs.length>150)chatMsgs=chatMsgs.slice(-150);if(chatOpen)chatRender();}
 function chatLeave(){if(chatLeaveFn){try{chatLeaveFn();}catch(e){}}chatLeaveFn=null;}
 function chatJoin(){const ch=chatChannel();chatLeave();chatCh=ch;chatMsgs=[];chatSeen.clear();
-  chatSys('Chatting with players in '+chatPlace(ch)+'. Be kind.',0);
+  chatSys('Chatting with players in '+chatPlace(ch)+'. Start with /p to talk to your party only. Be kind.',0);
   const net=window.CHATNET,why=net&&net.why&&net.why();
   if(!net||why){chatSys(why||'Chat is offline right now.');$('chatIn').disabled=true;return;}
   $('chatIn').disabled=false;chatLeaveFn=net.join(ch,chatAdd);}
@@ -1403,7 +1637,7 @@ async function chatSend(){const i=$('chatIn'),t=chatClean(i.value);if(!t)return;
   if(now-chatLast<1500){chatSys('Slow down a little.');return;}chatLast=now;i.value='';
   const net=window.CHATNET;if(!net||(net.why&&net.why()))return chatSys('Chat is offline right now.');
   const r=await net.send(chatCh||chatChannel(),t);
-  if(r&&r.ok){chatAdd([Object.assign({me:true},r.msg)]);P.say=t;P.sayUntil=time+4.5;}else chatSys((r&&r.msg)||'Message not sent. Try again.');}
+  if(r&&r.ok){if(r.msg)chatAdd([Object.assign({me:true},r.msg)]);if(!r.party){P.say=t;P.sayUntil=time+4.5;}}else chatSys((r&&r.msg)||'Message not sent. Try again.');}
 setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
 {const p=new Px(16,16);p.rows(2,3,['.aaaaaaaaaa.','abbbbbbbbbba','abbbbbbbbbba','abccbccbccba','abbbbbbbbbba','abbbbbbbbbba','.aaaaabbaaa.','.....abba...','......aa....'],{a:PAL.ink,b:PAL.white,c:PAL.slate});
   $('chatIc').src=p.canvas().toDataURL();}
@@ -1411,20 +1645,20 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;}};
 })();
 
-// ===== Lanternhold accounts (live): wallet sign-in verified by the server, unique names, server-side saves =====
+// ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
 (function(){
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const RH={chainId:'0x1237',chainName:'Robinhood Chain',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},rpcUrls:['https://rpc.mainnet.chain.robinhood.com'],blockExplorerUrls:['https://robinhoodchain.blockscout.com']};
-const RESERVED=new Set(['admin','moderator','mod','lanternhold','robinhood','support','system','official','gm','staff'].concat(NAMES.map(n=>n.replace(/^@/,'').toLowerCase())));
 const NAME_RE=/^[A-Za-z0-9_]{3,16}$/;
 const BAD=['fuck','shit','bitch','cunt','dick','cock','pussy','nigg','fag','rape','nazi','hitler','porn','slut','whore','penis','vagina','retard','kkk','anus','molest','pedo'];
 const clean=n=>{const t=n.toLowerCase().replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/_/g,'');return !BAD.some(w=>t.includes(w));};
 const short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
 const box=$('acct'),body=$('acctBody');
+const inAppBrowser=()=>/(MetaMask|Trust|CoinbaseWallet|Rabby|Rainbow|Phantom|OKApp|Bitget|FBAN|FBAV|Instagram|Twitter|Line\/)/i.test(navigator.userAgent)||(!!window.ethereum&&/Mobi/i.test(navigator.userAgent));
 
 // ---------- server API ----------
 async function api(path,opt){opt=opt||{};
@@ -1432,27 +1666,24 @@ async function api(path,opt){opt=opt||{};
       headers:Object.assign({'X-LH':'1'},opt.body?{'Content-Type':'application/json'}:{}),body:opt.body?JSON.stringify(opt.body):undefined});
     let j={};try{j=await r.json();}catch(e){}return {status:r.status,ok:r.ok,data:j};}
   catch(e){return {status:0,ok:false,data:{error:'offline'}};}}
-const online=()=>!!(ACC.me&&ACC.pid&&ACC.pid!=='guest');
-function localNames(){try{return JSON.parse(localStorage.getItem('lanternhold.names')||'{}');}catch(e){return {};}}
+const online=()=>!!(ACC.me&&ACC.me.hero&&ACC.pid);
 async function nameStatus(name){
   if(!NAME_RE.test(name))return {ok:false,msg:'3–16 letters, numbers or _'};
   if(!clean(name))return {ok:false,msg:'Please pick a different name'};
-  const key=name.toLowerCase();if(RESERVED.has(key))return {ok:false,msg:'That name is taken'};
-  if(ACC.pid==='guest'){const ln=localNames();if(ln[key]&&ln[key]!==ACC.pid)return {ok:false,msg:'Taken on this device'};return {ok:true,msg:'Available on this device',warn:true};}
   const r=await api('name?name='+encodeURIComponent(name));if(!r.ok)return {ok:true,msg:'Couldn’t check right now',warn:true};return r.data;
 }
-async function claimName(name,wallet,look){
+async function claimName(name,look){
   const st=await nameStatus(name);if(!st.ok)return st;
-  if(ACC.pid==='guest'){const ln=localNames();ln[name.toLowerCase()]='guest';try{localStorage.setItem('lanternhold.names',JSON.stringify(ln));}catch(e){}return {ok:true,local:true};}
   const r=await api('hero',{method:'POST',body:{name,look}});
-  if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Connect your wallet again.':'Couldn’t reach the server. Try again.')};
+  if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Sign in again.':'Couldn’t reach the server. Try again.')};
   ACC.me=r.data;return {ok:true};
 }
+
 // ---------- saving to the server ----------
-// Throttled: at most one save every 10–14 s while playing (random spread so players don't all save at the same moment),
-// immediately on key moments (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
+// At most one save every 10–14 s while playing (each player gets their own spacing), immediately on key moments
+// (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
 let cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
-const SAVE_GAP=10000+Math.random()*4000; // this player's spacing between saves (each player gets a different one)
+const SAVE_GAP=10000+Math.random()*4000;
 const strip=S=>{const d=JSON.parse(JSON.stringify(S));delete d.name;delete d.look;delete d.wallet;delete d.savedAt;return d;};
 function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.stringify(d);if(j===lastSent&&!cloudPending)return;cloudPending={d,j};
   if(now){clearTimeout(cloudTimer);cloudTimer=null;return flushCloud();}
@@ -1465,106 +1696,129 @@ async function flushCloud(){if(cloudBusy||!cloudPending||!online()||stopped)retu
   if(r.ok){ACC.rev=r.data.rev;lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);
   else if(r.status===422)return stop('Some progress couldn’t be verified and was rolled back.',2500);
-  else if(r.status===401)return stop('Your sign-in expired. Please connect your wallet again.',2500);
+  else if(r.status===401)return stop('Your sign-in expired. Please sign in again.',2500);
   else if(r.status===403){stopped=true;notice('This account can’t save progress right now.');return;}
   else{if(!cloudPending)cloudPending=p;if(!offlineWarned&&r.status===0){offlineWarned=true;notice('Connection lost. Progress will sync when you’re back online.');}
-    // back off when the server is busy or unreachable: 5 s, 10 s, 20 s… up to 60 s, with random spread
     if(r.status===429)return retry(2000+Math.random()*1500);
     fails++;return retry(Math.min(60000,5000*2**(fails-1))*(0.75+Math.random()*0.5));}
   if(cloudPending&&!cloudTimer)retry(2500+Math.random()*1000);}
 function notice(t){const el=document.getElementById('toast');if(!el)return;el.textContent=t;el.className='toast bad';el.hidden=false;setTimeout(()=>el.hidden=true,4000);}
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushCloud();});addEventListener('pagehide',()=>flushCloud());
-function loadGuest(){let local=null;try{const r=localStorage.getItem('lanternhold.p.guest');if(r)local=JSON.parse(r);}catch(e){}return local;}
 
 // ---------- wallets (EIP-6963 discovery, injected fallback) ----------
 const wallets=[];
-addEventListener('eip6963:announceProvider',e=>{const d=e.detail;if(d&&d.info&&d.provider&&!wallets.find(w=>w.info.uuid===d.info.uuid)){wallets.push(d);if(ACC.screen==='welcome')render();}});
+addEventListener('eip6963:announceProvider',e=>{const d=e.detail;if(d&&d.info&&d.provider&&!wallets.find(w=>w.info.uuid===d.info.uuid)){wallets.push(d);if(ACC.screen==='welcome'&&!box.hidden)render();}});
 dispatchEvent(new Event('eip6963:requestProvider'));
 function allWallets(){const l=wallets.slice();if(!l.length&&window.ethereum)l.push({info:{uuid:'injected',name:window.ethereum.isMetaMask?'MetaMask':'Browser wallet',icon:''},provider:window.ethereum});return l;}
 const hexUtf8=s=>'0x'+Array.from(new TextEncoder().encode(s)).map(b=>b.toString(16).padStart(2,'0')).join('');
+// If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
+// you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
+async function pickAccount(pv){
+  let known=[];try{known=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+  if(known.length){
+    try{const perms=await pv.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]});
+      let now=[];try{now=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+      const cav=(perms||[]).flatMap(p=>(p&&p.caveats)||[]).find(c=>c&&c.type==='restrictReturnedAccounts');
+      const pick=now[0]||(cav&&Array.isArray(cav.value)&&cav.value[0]);if(pick)return String(pick);}
+    catch(e){if(e&&e.code===4001)throw e;}
+  }
+  const accts=await pv.request({method:'eth_requestAccounts'});return String(accts&&accts[0]||'');
+}
+// Watch the wallet a player signed in with: switching or disconnecting its account signs them out.
+const LW='lanternhold.wallet';let watched=null;
+const signedInWithWallet=()=>{try{return localStorage.getItem('lanternhold.via')==='wallet';}catch(e){return false;}};
+const setVia=v=>{try{localStorage.setItem('lanternhold.via',v);}catch(e){}};
+function rememberWallet(w){try{localStorage.setItem(LW,JSON.stringify({rdns:w.info.rdns||'',name:w.info.name||''}));}catch(e){}watchWallet(w.provider);}
+function savedWalletProvider(){let m=null;try{m=JSON.parse(localStorage.getItem(LW)||'null');}catch(e){}const l=allWallets();
+  return ((m&&l.find(w=>(m.rdns&&w.info.rdns===m.rdns)||(!m.rdns&&w.info.name===m.name)))||l[0]||{}).provider||null;}
+function watchWallet(pv){if(!pv||pv===watched||typeof pv.on!=='function')return;
+  if(watched&&watched.removeListener)try{watched.removeListener('accountsChanged',onAccounts);}catch(e){}
+  watched=pv;try{pv.on('accountsChanged',onAccounts);}catch(e){}}
+let switching=false;
+async function onAccounts(accts){const me=ACC.me&&ACC.me.wallet;if(!me||switching||ACC.screen==='signing'||!signedInWithWallet())return;
+  const now=String(accts&&accts[0]||'').toLowerCase();if(now===me)return;
+  switching=true;try{await flushCloud();}catch(e){}if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});ACC.me=null;
+  try{sessionStorage.setItem('lanternhold.notice',now?'You switched wallets, so you were signed out. Connect again to sign in with '+short(now)+'.':'Your wallet disconnected, so you were signed out.');}catch(e){}
+  location.reload();}
+// Signs a Sign-In with Ethereum message. endpoint: 'auth/verify' to sign in, 'auth/link-wallet' to add the wallet to this account.
+async function signWithWallet(w,endpoint,onStage){
+  const pv=w.provider;
+  const raw=await pickAccount(pv),addr=raw.toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(addr))throw {message:'No valid account was shared'};
+  try{const c=await pv.request({method:'eth_chainId'});
+    if(parseInt(c,16)!==4663){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});}
+      catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902)await pv.request({method:'wallet_addEthereumChain',params:[RH]});}}}catch(e){}
+  onStage&&onStage('Sign the message in your wallet. It’s free and doesn’t send a transaction.');
+  const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
+  const now=new Date(),exp=new Date(now.getTime()+10*60000);
+  const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
+  const sig=await pv.request({method:'personal_sign',params:[hexUtf8(msg),raw]});if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
+  const v=await api(endpoint,{method:'POST',body:{message:msg,signature:sig}});
+  if(!v.ok)throw {message:v.data.msg||(v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')')};
+  return {me:v.data,addr};
+}
 async function connectWallet(w){
-  const pv=w.provider;ACC.err='';go('signing',{wname:w.info.name});
-  try{
-    const accts=await pv.request({method:'eth_requestAccounts'});const addr=(accts&&accts[0]||'').toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(addr))throw {message:'No valid account was shared'};
-    let onChain=false;
-    try{const c=await pv.request({method:'eth_chainId'});onChain=parseInt(c,16)===4663;
-      if(!onChain){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});onChain=true;}
-        catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902){await pv.request({method:'wallet_addEthereumChain',params:[RH]});onChain=true;}}}}catch(e){}
-    ACC.stage='Sign the message in your wallet to log in. It’s free and doesn’t send a transaction.';render();
-    const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':n.status===404?'The game server wasn’t found (404). The site may still be deploying.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
-    const now=new Date(),exp=new Date(now.getTime()+10*60000),raw=accts[0];
-    // EIP-4361 (Sign-In with Ethereum); the server checks every field and the signature
-    const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
-    const sig=await pv.request({method:'personal_sign',params:[hexUtf8(msg),raw]});if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
-    const v=await api('auth/verify',{method:'POST',body:{message:msg,signature:sig}});
-    if(!v.ok)throw {message:v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')'};
-    ACC.me=v.data;ACC.wallet={addr,name:w.info.name,onChain};await enter('w_'+addr);
-  }catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
+  ACC.err='';go('signing',{wname:w.info.name,stage:''});
+  try{const r=await signWithWallet(w,'auth/verify',t=>{ACC.stage=t;render();});
+    ACC.me=r.me;setVia('wallet');rememberWallet(w);enter();}
+  catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
 }
 
 // ---------- flow ----------
-const ACC={screen:'welcome',pid:null,wallet:null,err:'',stage:'',draft:null,edit:false};
-function session(){if(ACC.me&&ACC.me.hero)return {pid:'w_'+ACC.me.wallet,name:ACC.me.hero.name,addr:ACC.me.wallet};try{const s=JSON.parse(localStorage.getItem('lanternhold.session')||'null');if(!s||s.pid!=='guest'||typeof s.name!=='string')return null;return s;}catch(e){return null;}}
-function setSession(o){if(o&&o.pid!=='guest')return;try{o?localStorage.setItem('lanternhold.session',JSON.stringify(Object.assign({at:Date.now()},o))):localStorage.removeItem('lanternhold.session');}catch(e){}}
-async function enter(pid){
-  ACC.pid=pid;
-  if(pid==='guest'){const data=loadGuest();if(data&&data.name){setSession({pid,name:data.name});finish(data,false);return;}
-    ACC.base=data;ACC.ownName=null;ACC.draft={name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})};go('creator');return;}
-  const me=ACC.me;if(me&&me.hero&&me.save){finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
-  ACC.ownName=null;ACC.base=null;ACC.draft={name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})};
-  go('account');
+const ACC={screen:'welcome',pid:null,err:'',stage:'',draft:null,edit:false,cfg:{}};
+const newDraft=()=>({name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})});
+function enter(){
+  const me=ACC.me;if(!me){go('welcome');return;}
+  if(me.hero&&me.save){ACC.pid='h_'+me.hero.name.toLowerCase();finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
+  ACC.draft=newDraft();go('creator');
 }
-function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();const admin=!!(ACC.me&&ACC.me.hero&&ACC.me.hero.admin&&ACC.pid!=='guest');
-  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.wallet,online:online(),admin});}
+function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
+  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin});
+  if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
 
-// ---------- preview ----------
+// ---------- hero preview ----------
 let pvT=null;
 function startPreview(){stopPreview();let t=0;const dirs=['down','right','up','left'];pvT=setInterval(()=>{const c=$('pv');if(!c){stopPreview();return;}t++;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,c.width,c.height);
   const d=dirs[Math.floor(t/12)%4],fr=1+(t>>2)%2;g.fillStyle='rgba(0,0,0,.3)';g.fillRect(8,20,8,1);g.drawImage(heroImg(ACC.draft.look,d,fr),4,5);},110);}
 function stopPreview(){clearInterval(pvT);pvT=null;}
 function bigHero(look){const c=document.createElement('canvas');c.width=16;c.height=16;c.getContext('2d').drawImage(heroImg(look,'down',0),0,0);return c.toDataURL();}
 
-const steps=n=>`<ol class="steps">${['Wallet','Account','Hero'].map((s,i)=>`<li class="${i<n?'done':i===n?'on':''}">${s}</li>`).join('')}</ol>`;
+const who=me=>me.wallet?'Wallet '+short(me.wallet):me.google?'Google · '+esc(me.google):'Signed in';
 function render(){
   const s=ACC.screen;let h='';
   if(s==='welcome'){
-    const ses=session(),list=allWallets();
-    h=`<img class="logoHero" alt="" src="${bigHero(DEFAULT_LOOK)}"><h1>Lanternhold</h1><p class="tag">Farm your Hold. Press oil for your lantern. Delve into the dark and bring the loot home.</p>
-    ${ACC.me&&!ACC.me.hero?`<button class="btn big" id="mk">Create your hero</button><p class="sub">Signed in as ${short(ACC.me.wallet)} · <button class="link inl" id="signout">Sign out</button></p><div class="or"><span>or</span></div>`:''}
-    ${ses?`<button class="btn big" id="cont">Continue as ${esc(ses.name)}</button><p class="sub">${ses.addr?'Wallet '+short(ses.addr)+' · saved to your account':'Guest profile on this device'}</p><div class="or"><span>or use another account</span></div>`:''}
-    ${list.length>1?list.map((w,i)=>`<button class="btn wal" data-w="${i}">${w.info.icon&&/^data:image\//.test(w.info.icon)?`<img alt="" src="${esc(w.info.icon)}">`:'<span class="wi"></span>'}Connect ${esc(w.info.name)}</button>`).join('')
-      :`<button class="btn wal ${ses?'alt':''}" id="wal" ${list.length?'data-w="0"':''}><span class="wi"></span>Connect wallet</button>`}
-    <button class="btn alt goog" disabled><span class="gi">G</span>Continue with Google<em>At launch</em></button>
+    const me=ACC.me,list=allWallets(),g=ACC.cfg.google;
+    const signin=`${list.length>1?list.map((w,i)=>`<button class="btn wal" data-w="${i}">${w.info.icon&&/^data:image\//.test(w.info.icon)?`<img alt="" src="${esc(w.info.icon)}">`:'<span class="wi"></span>'}Connect ${esc(w.info.name)}</button>`).join('')
+        :`<button class="btn wal" id="wal" ${list.length?'data-w="0"':''}><span class="wi"></span>Connect wallet</button>`}
+      <button class="btn alt goog" id="goog" ${g?'':'disabled'}><span class="gi">G</span>Continue with Google${g?'':'<em>Soon</em>'}</button>
+      ${g&&inAppBrowser()?'<p class="fine">Google sign-in doesn’t work inside wallet apps. Use Safari or Chrome for Google, or connect your wallet here.</p>':''}`;
+    h=`<img class="logoHero" alt="" src="${bigHero(me&&me.hero?me.hero.look:DEFAULT_LOOK)}"><h1>Lanternhold</h1><p class="tag">Season 0 · Beta. Farm your Hold, delve into the dark with friends, and bring the loot home.</p>
+    ${me&&me.hero?`<button class="btn big" id="cont">Continue as ${esc(me.hero.name)}</button><p class="sub">${who(me)} · <button class="link inl" id="signout">Sign out</button></p>`
+      :me?`<button class="btn big" id="mk">Create your hero</button><p class="sub">${who(me)} · <button class="link inl" id="signout">Sign out</button></p>`
+      :signin}
+    ${ACC.note?`<p class="${ACC.noteOk?'note':'err'}" role="status">${esc(ACC.note)}</p>`:''}
     ${ACC.err?`<p class="err" role="alert">${ACC.err}</p>`:''}
-    <button class="link" id="guest">Play as a guest</button>
-    <p class="fine">EVM wallets on Robinhood Chain. Signing in is a free signature, never a transaction.<br>Guest progress stays on this device only. Connect a wallet to keep it on any device.</p>`;
+    ${me?'':'<p class="fine">Sign in with an EVM wallet on Robinhood Chain (a free signature, never a transaction) or with Google. Your hero and progress are saved to your account.</p>'}`;
   }else if(s==='nowallet'){
     h=`<h2>No wallet found</h2><p class="lead">This browser doesn’t have an EVM wallet. To sign in with your wallet:</p>
     <ol class="how"><li>Open your wallet app (Robinhood Wallet, MetaMask, Rabby…)</li><li>Use its built-in browser to open this page</li><li>Tap <b>Connect wallet</b> again</li></ol>
-    <p class="lead small">On a computer, install a wallet extension and reload. You can also play as a guest. Guest progress stays on this device.</p>
-    <div class="row"><button class="btn alt" id="back">Back</button><button class="btn" id="guest">Play as guest</button></div>`;
+    <p class="lead small">On a computer, install a wallet extension and reload.${ACC.cfg.google?' Or sign in with Google instead. You can connect a wallet later from the game.':''}</p>
+    <div class="row"><button class="btn alt" id="back">Back</button>${ACC.cfg.google?'<button class="btn" id="goog">Continue with Google</button>':''}</div>`;
   }else if(s==='signing'){
-    h=`${steps(0)}<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><button class="btn alt" id="back">Cancel</button>`;
-  }else if(s==='account'){
-    const w=ACC.wallet;
-    h=`${steps(1)}<h2>Create your account</h2><p class="lead">Your wallet is your login. Your progress is saved to it, so you can pick up on any device.</p>
-    <div class="acctRow ok"><span class="wi"></span><span><b>${esc(w.name)}</b><small>${short(w.addr)} · ${w.onChain?'Robinhood Chain':'Not on Robinhood Chain yet'}</small></span><i>✓</i></div>
-    <div class="acctRow"><span class="gi">G</span><span><b>Link Google account</b><small>Optional backup login, arriving at launch</small></span><em>Soon</em></div>
-    <button class="btn big" id="next">Create your hero</button><button class="link" id="out">Use a different wallet</button>`;
+    h=`<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><button class="btn alt" id="back">Cancel</button>`;
   }else if(s==='creator'){
     const d=ACC.draft,L=d.look;
     const sw=(k,arr)=>`<div class="swrow" role="radiogroup" aria-label="${k}">${arr.map((c,i)=>`<button class="sw" role="radio" aria-checked="${L[k]===i}" aria-label="${k} ${i+1}" data-k="${k}" data-i="${i}" style="--c:${c}"></button>`).join('')}</div>`;
-    h=`${ACC.edit||ACC.pid==='guest'?'':steps(2)}<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
+    h=`<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
     <div class="creator"><div class="pvWrap"><canvas id="pv" width="24" height="24"></canvas><button class="btn alt sm" id="rnd">Shuffle</button></div>
     <div class="opts">
-      ${ACC.edit||ACC.ownName?`<p class="lead"><b>${esc(d.name)}</b><br><small>${ACC.ownName&&!ACC.edit?'Your account’s hero name.':'Names are permanent.'}</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">${ACC.pid==='guest'?'Guest names are saved on this device only.':'Names are permanent and unique.'}</small></label>`}
+      ${ACC.edit?`<p class="lead"><b>${esc(d.name)}</b><br><small>Names are permanent.</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">Names are permanent and unique. Other players will see it.</small></label>`}
       <h3>Skin</h3>${sw('skin',LOOKS.skin)}<h3>Hair</h3>${sw('hair',LOOKS.hair)}
       <h3>Hair style</h3><div class="chips">${LOOKS.style.map((s,i)=>`<button class="chip" aria-pressed="${L.style===i}" data-st="${i}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}</div>
       <h3>Clothes</h3>${sw('cloth',LOOKS.cloth)}
     </div></div>
     ${ACC.err?`<p class="err" role="alert">${ACC.err}</p>`:''}
-    <div class="row">${ACC.edit?'<button class="btn alt" id="cancelEd">Cancel</button><button class="btn" id="saveEd">Save look</button>':`<button class="btn alt" id="back2">Back</button><button class="btn" id="claim" ${d.name?'':'disabled'}>${ACC.ownName?'Play':'Claim name &amp; play'}</button>`}</div>`;
+    <div class="row">${ACC.edit?'<button class="btn alt" id="cancelEd">Cancel</button><button class="btn" id="saveEd">Save look</button>':`<button class="btn alt" id="back2">Back</button><button class="btn" id="claim" ${d.name?'':'disabled'}>Claim name &amp; play</button>`}</div>`;
   }
   body.innerHTML=h;wire();
 }
@@ -1572,10 +1826,11 @@ function wire(){
   const on=(id,f)=>{const e=$(id);if(e)e.onclick=f;};
   body.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{const w=allWallets()[+b.dataset.w];if(w)connectWallet(w);});
   const wb=$('wal');if(wb&&!wb.dataset.w)wb.onclick=()=>{const l=allWallets();if(l.length)connectWallet(l[0]);else go('nowallet');};
-  on('guest',()=>{ACC.wallet=null;enter('guest');});on('back',()=>go('welcome',{err:''}));on('out',()=>{ACC.wallet=null;go('welcome');});
-  on('cont',()=>{const s=session();if(!s)return;ACC.wallet=s.addr?{addr:s.addr,name:'Wallet',onChain:true}:null;enter(s.pid);});
-  on('signout',async()=>{await api('auth/logout',{method:'POST'});ACC.me=null;render();});
-  on('next',()=>go('creator'));on('mk',()=>{ACC.wallet={addr:ACC.me.wallet,name:'Wallet',onChain:true};enter('w_'+ACC.me.wallet);});on('back2',()=>go(ACC.pid==='guest'?'welcome':'account',{err:''}));
+  on('goog',()=>{if(!ACC.cfg.google)return;setVia('google');location.href='/api/auth/google/start';});
+  on('back',()=>go('welcome',{err:''}));
+  on('cont',enter);on('mk',enter);
+  on('signout',async()=>{await api('auth/logout',{method:'POST'});ACC.me=null;ACC.err='';ACC.note='';render();});
+  on('back2',()=>go('welcome',{err:''}));
   body.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ACC.draft.look[b.dataset.k]=+b.dataset.i;body.querySelectorAll(`[data-k="${b.dataset.k}"]`).forEach(x=>x.setAttribute('aria-checked',x===b));});
   body.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ACC.draft.look.style=+b.dataset.st;body.querySelectorAll('[data-st]').forEach(x=>x.setAttribute('aria-pressed',x===b));});
   on('rnd',()=>{const L=ACC.draft.look,r=a=>(Math.random()*a.length)|0;L.skin=r(LOOKS.skin);L.hair=r(LOOKS.hair);L.cloth=r(LOOKS.cloth);L.style=r(LOOKS.style);const n=$('nm');if(n)ACC.draft.name=n.value;render();});
@@ -1584,31 +1839,46 @@ function wire(){
       t=setTimeout(async()=>{const r=await nameStatus(v);if(v!==ACC.draft.name)return;s.textContent=r.msg;s.className=r.ok?(r.warn?'warn':'good'):'bad';},350);};
     nm.onkeydown=e=>{if(e.key==='Enter')$('claim').click();};}
   on('claim',async()=>{const b=$('claim');const name=ACC.draft.name;b.disabled=true;b.textContent='Claiming…';
-    const r=await claimName(name,ACC.wallet&&ACC.wallet.addr,ACC.draft.look);
+    const r=await claimName(name,ACC.draft.look);
     if(!r.ok){ACC.err=esc(r.msg);b.disabled=false;b.textContent='Claim name & play';render();const n=$('nm');if(n)n.focus();return;}
-    ACC.err='';
-    if(ACC.pid==='guest'){const data=Object.assign({},ACC.base||{},{name,look:ACC.draft.look,wallet:null});setSession({pid:'guest',name});finish(data,true);return;}
-    const me=ACC.me;finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),true,me.save.rev);});
+    ACC.err='';const me=ACC.me;finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),true,me.save.rev);});
   on('cancelEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.resume();});
-  on('saveEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.setLook(ACC.draft.look);
-    if(online())api('hero',{method:'PATCH',body:{look:ACC.draft.look}});});
+  on('saveEd',()=>{ACC.edit=false;box.hidden=true;stopPreview();window.LH.setLook(ACC.draft.look);api('hero',{method:'PATCH',body:{look:ACC.draft.look}});});
   if($('pv'))startPreview();
 }
-// ---------- chat: polled from /api/chat every 3 s, only while the chat panel is open ----------
-window.CHATNET={
-  why(){return online()?null:'Connect a wallet to chat with other players.';},
-  join(ch,cb){let after=0,stop=false,t=null;
-    const tick=async()=>{if(stop)return;const r=await api('chat?ch='+encodeURIComponent(ch)+'&after='+after);if(stop)return;
-      if(r.ok&&Array.isArray(r.data.messages)){for(const m of r.data.messages)after=Math.max(after,m.id);
-        cb(r.data.messages.map(m=>({id:'c'+m.id,name:m.name,text:m.text,at:Date.parse(m.at)||Date.now(),me:!!m.me})));}
-      t=setTimeout(tick,document.visibilityState==='hidden'?15000:3000);};
-    tick();return ()=>{stop=true;clearTimeout(t);};},
-  async send(ch,text){const r=await api('chat',{method:'POST',body:{ch,text}});
-    if(r.ok)return {ok:true,msg:{id:'c'+r.data.id,name:r.data.name,text:r.data.text,at:Date.now()}};
-    return {ok:false,msg:r.status===429?'Slow down a little.':r.status===403?'You can’t chat right now.':r.status===401?'Your sign-in expired. Connect your wallet again.':'Message not sent. Try again.'};}
-};
-window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=false;go('welcome',{err:''});},editLook(name,look){document.documentElement.classList.add('pre');ACC.edit=true;ACC.draft={name,look:Object.assign({},look)};box.hidden=false;go('creator');},
-  async logout(){setSession(null);await flushCloud();if(ACC.pid!=='guest')await api('auth/logout',{method:'POST'});location.reload();},cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online};
+
+// ---------- in-game account links: wallet, Google, X ----------
+window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=false;go('welcome',{err:''});},
+  editLook(name,look){document.documentElement.classList.add('pre');ACC.edit=true;ACC.draft={name,look:Object.assign({},look)};box.hidden=false;go('creator');},
+  xInfo(){return ACC.me&&ACC.me.hero?{enabled:!!ACC.me.xEnabled,username:ACC.me.hero.x||null}:null;},
+  async xLink(){try{await flushCloud();}catch(e){}location.href='/api/x/start';},
+  async xUnlink(){const r=await api('x/unlink',{method:'POST'});if(r.ok&&ACC.me&&ACC.me.hero)ACC.me.hero.x=null;return r.ok;},
+  links(){const m=ACC.me||{};return {wallet:m.wallet||null,google:m.google||null,googleEnabled:!!m.googleEnabled,hasWallet:allWallets().length>0};},
+  // Google players add a wallet (or a wallet player re-signs): the wallet signs a message for this account.
+  async linkWallet(){const l=allWallets();if(!l.length)return {ok:false,msg:'No wallet found in this browser. Open the game in your wallet app’s browser to connect it.'};
+    try{const r=await signWithWallet(l[0],'auth/link-wallet');ACC.me=Object.assign(ACC.me,{wallet:r.me.wallet});rememberWallet(l[0]);return {ok:true,addr:r.addr};}
+    catch(e){return {ok:false,msg:e&&e.code===4001?'You declined in your wallet.':(e&&e.message)||'Couldn’t connect the wallet.'};}},
+  async linkGoogle(){try{await flushCloud();}catch(e){}location.href='/api/auth/google/start?link=1';},
+  async logout(){await flushCloud();if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});location.reload();},
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api};
+
+// ---------- start ----------
 render();
-api('me').then(r=>{if(r.ok&&r.data.wallet){ACC.me=r.data;if(ACC.screen==='welcome')render();}});
+{const q=new URLSearchParams(location.search),x=q.get('x'),g=q.get('g');
+  if(x){const u=(q.get('u')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,15);
+    const msg={linked:`X account @${u} is now linked to your hero.`,taken:`@${u} is already linked to another hero.`,declined:'You didn’t approve the link on X, so nothing changed.',expired:'That link request expired. Try again from your bag’s Hero tab.',off:'X linking isn’t switched on yet.',error:'Couldn’t link your X account. Try again in a moment.'}[x];
+    if(msg){ACC.note=msg;ACC.noteOk=x==='linked';}}
+  if(g){const msg={linked:'Google is now linked. You can sign in with it as well as your wallet.',taken:'That Google account already has its own hero.',has:'This account already has a Google account linked.',declined:'Google sign-in was cancelled.',expired:'That sign-in took too long. Try again.',off:'Google sign-in isn’t switched on yet.',banned:'This account is banned.',signin:'Sign in first, then link Google from your bag’s Hero tab.',error:'Google sign-in didn’t work. Try again in a moment.'}[g];
+    if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
+  if(x||g)history.replaceState(null,'',location.pathname);}
+try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}
+api('config').then(r=>{if(r.ok){ACC.cfg=r.data;if(ACC.screen==='welcome'&&!box.hidden)render();}});
+api('me').then(async r=>{if(!(r.ok&&r.data.account))return render();
+  if(r.data.wallet&&signedInWithWallet()){
+    await new Promise(res=>setTimeout(res,300)); // let wallets announce themselves
+    const pv=savedWalletProvider();let now=[];if(pv)try{now=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+    const cur=String(now[0]||'').toLowerCase();
+    if(cur&&cur!==r.data.wallet){await api('auth/logout',{method:'POST'});ACC.err=esc('Your wallet is now on '+short(cur)+', not '+short(r.data.wallet)+', so you were signed out. Connect to sign in with the wallet you have open.');return render();}
+    watchWallet(pv);}
+  ACC.me=r.data;render();});
 })();
