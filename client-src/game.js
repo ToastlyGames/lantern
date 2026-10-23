@@ -106,7 +106,7 @@ window.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyR')retHel
 const pad=$('pad'),knob=$('knob');let padId=null,padC={x:0,y:0};
 pad.addEventListener('pointerdown',e=>{padId=e.pointerId;pad.setPointerCapture(e.pointerId);const r=pad.getBoundingClientRect();padC={x:r.left+r.width/2,y:r.top+r.height/2};moveStick(e);});
 pad.addEventListener('pointermove',e=>{if(e.pointerId===padId)moveStick(e);});
-['pointerup','pointercancel'].forEach(t=>pad.addEventListener(t,e=>{if(e.pointerId!==padId)return;padId=null;stick={x:0,y:0,on:false};knob.style.transform='';}));
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,e=>{if(e.pointerId!==padId)return;padId=null;stick={x:0,y:0,on:false};knob.style.transform='';}));
 function moveStick(e){const dx=e.clientX-padC.x,dy=e.clientY-padC.y,l=Math.hypot(dx,dy),max=40,k=Math.min(1,l/max);
   stick={x:l?dx/l*k:0,y:l?dy/l*k:0,on:true};knob.style.transform=`translate(${stick.x*max}px,${stick.y*max}px)`;}
 $('bA').addEventListener('pointerdown',e=>{e.preventDefault();aPressed=true;});
@@ -124,6 +124,12 @@ cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||
     if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
   aPressed=true;});
 
+// No pinch or double-tap zoom while playing: iOS ignores user-scalable=no, so block its gesture events and multi-finger moves,
+// and if the page somehow ends up zoomed anyway, snap it straight back to normal.
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault();},{passive:false});
+if(window.visualViewport){const vm=document.querySelector('meta[name=viewport]'),base=vm&&vm.content;
+  visualViewport.addEventListener('resize',()=>{if(vm&&visualViewport.scale>1.01){vm.content=base.replace('maximum-scale=1','maximum-scale=1.0001');setTimeout(()=>{vm.content=base;},60);}});}
 addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,#acctBody,.sel'))e.preventDefault();});
 addEventListener('dragstart',e=>{if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS')e.preventDefault();});
 const bRet=$('bRet');bRet.addEventListener('pointerdown',e=>{e.preventDefault();retHeld=true;try{bRet.setPointerCapture(e.pointerId);}catch(_){}});
