@@ -683,7 +683,8 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;ptSet($('gold'),fmt(S.gold),{font:'big',px:14,color:'#ffcd75'});
-  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?' · World '+MP.room.slice(1):''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
   const pg=dv?(run.pack.gold||0):0;$('goldRun').hidden=!pg;if(pg)ptSet($('goldRun'),'+'+fmt(pg)+' in pack',{font:'small',px:9,color:'#a7f070'});
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -860,7 +861,7 @@ function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim
   if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
 // ---- lobby messages ----
 if(window.NET){
-  NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(scene==='hold'&&!MP.room)MP.toHold();MP.loadFriends();refreshSocial();});
+  NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(MP.room)NET.lsend({t:'where',room:MP.room,floor:MP.inInst()&&run?run.floor:undefined});else if(scene==='hold')MP.toHold();MP.loadFriends();refreshSocial();});
   NET.onL('off',()=>{});
   NET.onL('world',m=>{if(scene==='hold')NET.join(m.room);});
   NET.onL('online',m=>{MP.online=m.n;refreshSocial();});
