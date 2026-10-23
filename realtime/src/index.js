@@ -25,7 +25,7 @@ async function verifyTicket(token, secret) {
     if (JSON.parse(new TextDecoder().decode(b64uDecode(h))).alg !== 'HS256') return null;
     const c = JSON.parse(new TextDecoder().decode(b64uDecode(p)));
     if (c.iss !== 'lanternhold-rt' || !(c.exp > Date.now() / 1000) || !/^[a-z0-9_]{3,16}$/.test(c.sub) || typeof c.n !== 'string' || c.n.toLowerCase() !== c.sub) return null;
-    return { id: c.sub, name: c.n, adm: !!c.adm };
+    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null };
   } catch { return null; }
 }
 export function cleanText(t) {
@@ -283,7 +283,7 @@ export class Room {
   join(who, ws) {
     const old = this.players.get(who.id);
     if (old) { try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now() };
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now() };
     this.players.set(who.id, p);
     if (this.inst && !this.host()) this.pick();
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
@@ -304,7 +304,7 @@ export class Room {
       if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
       return;
     }
-    if (t === 'look') { p.look = cleanLook(m.look, p.adm); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
+    if (t === 'look') { p.look = cleanLook(m.look, p.hat); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
     if (t === 'say') {
       const now = Date.now(); if (now - (p.lastSay || 0) < 1200) return send(p.ws, { t: 'slow' }); p.lastSay = now;
       const text = cleanText(m.text); if (!text) return;
@@ -328,9 +328,10 @@ export class Room {
     if (rows.length) this.all({ t: 'S', p: rows });
   }
 }
-function cleanLook(l, adm) {
+const ADMIN_HATS = ['partyhat', 'greenhat'];
+function cleanLook(l, hat) {
   if (!l || typeof l !== 'object') return null;
   const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null;
   const helm = s(l.helm);
-  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: helm === 'partyhat' && !adm ? null : helm, lan: s(l.lan), blade: s(l.blade) };
+  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade) };
 }
