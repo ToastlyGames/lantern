@@ -227,6 +227,12 @@ Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run
 
 ### Troubleshooting
 
+- **First, open `https://YOUR-SITE/api/health`.** It checks every setting and the database, and names anything wrong. Secret values are never shown.
+- **"Couldn't reach the server" or "isn't set up correctly" when signing in:**
+  - `SUPABASE_URL` must be the **Project URL**, like `https://abcd1234efgh5678ijkl.supabase.co`. Find it in Supabase → Project Settings → API (or Data API). The server now also accepts the bare project ID, a missing `https://` or a trailing `/rest/v1`.
+  - "Permission denied" in the health page: run `supabase/schema.sql` again. New Supabase projects no longer give the server key access to tables automatically, and the script now grants it.
+  - Every time you change an environment variable in Vercel, **redeploy**. Changes don't apply until you do.
+
 - **"Sign-in failed" right after deploying:** check that `APP_DOMAIN` exactly matches the address bar (no `https://`, no trailing `/`) and that you redeployed after setting it.
 - **Every request gives 500:** an environment variable is missing or misspelled. The Vercel **Logs** tab names the one at fault.
 - **Desktop wallet extension isn't detected:** some extensions inject scripts that a strict Content-Security-Policy blocks. Wallet in-app browsers aren't affected. If needed, add the extension's origin to `script-src` in `vercel.json`.

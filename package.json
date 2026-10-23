@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Lanternhold: pixel dungeon MMO on Robinhood Chain. Static client + Vercel serverless API + Supabase Postgres.",
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
