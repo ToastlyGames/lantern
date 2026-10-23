@@ -12,7 +12,7 @@ writeFileSync(new URL('../lib/gamedata.js', import.meta.url),
   '\nexport { ITEMS, GEAR, HELM_ATTR, RARITY, RORDER, LANTERNS, CAPES, ATTR_TXT, SKILLS, XP_TABLE, levelFor, FISH, WATERS, CROPS, RECIPES, SHOP, ENEMIES, PACKS, NAMES };\n');
 
 // 2) client: one script file (so the page can use a strict Content-Security-Policy), styles inline
-const js = ['font.js', 'art.js', 'data.js', 'world.js', 'game.js', 'account-live.js'].map(src).join('\n');
+const js = ['font.js', 'art.js', 'data.js', 'world.js', 'net.js', 'game.js', 'account-live.js'].map(src).join('\n');
 const hash = createHash('sha256').update(js).digest('hex').slice(0, 10);
 mkdirSync(new URL('../public/', import.meta.url), { recursive: true });
 writeFileSync(new URL('../public/game.js', import.meta.url), js);

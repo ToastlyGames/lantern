@@ -2,11 +2,45 @@
 //   npm run build && npm test
 import { spawn } from 'node:child_process';
 import { privateKeyToAccount, generatePrivateKey } from 'viem/accounts';
+import http from 'node:http';
+import { createHash } from 'node:crypto';
+
+// A stand-in for X's OAuth server: checks the client credentials and the PKCE verifier like the real one.
+const XPORT = 4005, xSeen = { challenge: null, revoked: 0 };
+const xMock = http.createServer(async (req, res) => {
+  let body = ''; for await (const c of req) body += c;
+  const f = new URLSearchParams(body), j = (st, o) => { res.writeHead(st, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(o)); };
+  if (req.url === '/2/oauth2/token') {
+    if (req.headers.authorization !== 'Basic ' + Buffer.from('test-client:test-secret').toString('base64')) return j(401, { error: 'unauthorized_client' });
+    const ok = createHash('sha256').update(f.get('code_verifier') || '').digest('base64url') === xSeen.challenge;
+    if (!ok || !/^good/.test(f.get('code'))) return j(400, { error: 'invalid_grant' });
+    return j(200, { access_token: 'tok-' + f.get('code'), token_type: 'bearer' });
+  }
+  if (req.url === '/2/users/me') return /^Bearer tok-good/.test(req.headers.authorization || '') ? j(200, { data: { id: '4242', name: 'Lantern Fan', username: 'lanternfan' } }) : j(401, {});
+  if (req.url === '/2/oauth2/revoke') { xSeen.revoked++; return j(200, { revoked: true }); }
+  j(404, {});
+}).listen(XPORT);
+
+// A stand-in for Google's sign-in: checks the client secret and PKCE, returns an ID token for the "user" named by the code.
+const GPORT = 4007, gSeen = { challenge: null };
+const gMock = http.createServer(async (req, res) => {
+  let body = ''; for await (const c of req) body += c;
+  const f = new URLSearchParams(body), j = (st, o) => { res.writeHead(st, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(o)); };
+  if (req.url === '/token') {
+    if (f.get('client_secret') !== 'g-secret' || f.get('client_id') !== 'g-client') return j(401, { error: 'invalid_client' });
+    if (createHash('sha256').update(f.get('code_verifier') || '').digest('base64url') !== gSeen.challenge) return j(400, { error: 'invalid_grant' });
+    const who = f.get('code'), aud = who === 'wrongaud' ? 'someone-else' : 'g-client';
+    const claims = { iss: 'https://accounts.google.com', aud, sub: '1000' + (who.match(/\d+/) || ['1'])[0].padStart(5, '0'), email: who + '@gmail.com', email_verified: true, exp: Math.floor(Date.now() / 1000) + 3600 };
+    return j(200, { id_token: 'x.' + Buffer.from(JSON.stringify(claims)).toString('base64url') + '.sig', access_token: 'a' });
+  }
+  j(404, {});
+}).listen(GPORT);
 
 const PORT = 3999, BASE = `http://localhost:${PORT}`;
 // TEST_SUPABASE_URL + TEST_SUPABASE_KEY run the same tests against a real Supabase/PostgREST database instead of memory.
 const PG = process.env.TEST_SUPABASE_URL ? { SUPABASE_URL: process.env.TEST_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: process.env.TEST_SUPABASE_KEY, LH_DEV_HOOKS: '1', LH_MEMORY_DB: '' } : { LH_MEMORY_DB: '1', SUPABASE_URL: '' };
-const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_OFFLINE: '1', ...PG }, stdio: ['ignore', 'pipe', 'inherit'] });
+const XENV = { GOOGLE_CLIENT_ID: 'g-client', GOOGLE_CLIENT_SECRET: 'g-secret', GOOGLE_AUTH_URL: `http://localhost:${GPORT}/auth`, GOOGLE_TOKEN_URL: `http://localhost:${GPORT}/token`, RT_URL: 'https://rt.example.workers.dev', RT_SECRET: 'r'.repeat(40), X_CLIENT_ID: 'test-client', X_CLIENT_SECRET: 'test-secret', X_API_BASE: `http://localhost:${XPORT}`, X_AUTH_URL: `http://localhost:${XPORT}/authorize` };
+const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_OFFLINE: '1', ...XENV, ...PG }, stdio: ['ignore', 'pipe', 'inherit'] });
 await new Promise(r => srv.stdout.once('data', r));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, failN = 0;
@@ -14,11 +48,11 @@ const ok = (cond, name) => { if (cond) { pass++; console.log('  ✓', name); } e
 
 class Client {
   constructor(key) { this.acct = privateKeyToAccount(key || generatePrivateKey()); this.cookie = ''; }
-  async req(path, { method = 'GET', body, headers = {} } = {}) {
-    const r = await fetch(BASE + '/api/' + path, { method, headers: { 'X-LH': '1', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(this.cookie ? { cookie: this.cookie } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
+  async req(path, { method = 'GET', body, headers = {}, manual } = {}) {
+    const r = await fetch(BASE + '/api/' + path, { redirect: manual ? 'manual' : 'follow', method, headers: { 'X-LH': '1', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(this.cookie ? { cookie: this.cookie } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
     const sc = r.headers.get('set-cookie'); if (sc) this.cookie = sc.split(';')[0];
     let data = {}; try { data = await r.json(); } catch { }
-    return { status: r.status, data };
+    return { status: r.status, data, location: r.headers.get('location') };
   }
   async message({ nonce, domain = `localhost:${PORT}`, chainId = 4663, issued = new Date(), expires } = {}) {
     if (!nonce) nonce = (await this.req('auth/nonce')).data.nonce;
@@ -95,27 +129,91 @@ try {
   const rich = JSON.parse(JSON.stringify(tm.save.data)); rich.gold = 9_999_999;
   ok((await t.req('save', { method: 'POST', body: { data: rich, rev: tm.save.rev } })).status === 200, 'admin saves skip the plausibility check');
 
-  console.log('Chat');
-  { const x = new Client(); await x.signIn(); await x.req('hero', { method: 'POST', body: { name: 'Chatty' } });
-    const y = new Client(); await y.signIn(); await y.req('hero', { method: 'POST', body: { name: 'Listener' } });
-    let r = await x.req('chat', { method: 'POST', body: { ch: 'hold', text: '  hello   <b>world</b>  ' } });
-    ok(r.status === 200 && r.data.name === 'Chatty' && r.data.text === 'hello bworld/b', 'message posted, cleaned, signed with the hero name');
-    ok((await x.req('chat', { method: 'POST', body: { ch: 'hold', text: 'again' } })).status === 429, 'chat slow-mode (1.2 s)');
-    await sleep(1300);
-    r = await x.req('chat', { method: 'POST', body: { ch: 'hold', text: 'grapes are not a shitty snack' } });
-    ok(r.data.text === 'grapes are not a s***** snack', 'offensive words masked, harmless words untouched');
-    await x.req('chat', { method: 'POST', body: { ch: 'f3', text: 'deep down' } }).catch(() => {});
-    await sleep(1300); await x.req('chat', { method: 'POST', body: { ch: 'f3', text: 'floor three' } });
-    let l = await y.req('chat?ch=hold&after=0');
-    ok(l.status === 200 && l.data.messages.length === 2 && l.data.messages.every(m => m.me === false && m.name === 'Chatty'), 'players in the Hold see Hold messages only');
-    const last = l.data.messages[1].id;
-    ok((await y.req('chat?ch=hold&after=' + last)).data.messages.length === 0, 'polling with after= returns only new messages');
-    ok((await x.req('chat?ch=hold&after=0')).data.messages.every(m => m.me === true), 'your own messages are marked as yours');
-    ok((await y.req('chat?ch=f3&after=0')).data.messages.length >= 1, 'floor channels are separate');
-    ok((await y.req('chat?ch=lobby&after=0')).status === 400 && (await y.req('chat', { method: 'POST', body: { ch: 'f99', text: 'x' } })).status === 400, 'unknown channels refused');
-    ok((await new Client().req('chat?ch=hold')).status === 401, 'chat needs a signed-in player');
-    await fetch(BASE + '/__dev/ban?name=chatty'); await sleep(1300);
-    ok((await x.req('chat', { method: 'POST', body: { ch: 'hold', text: 'hi' } })).status === 403, 'banned players cannot chat'); }
+  console.log('X account linking');
+  { const x = new Client(); await x.signIn(); await x.req('hero', { method: 'POST', body: { name: 'Xer' } });
+    let r = await x.req('x/start', { manual: true });
+    const loc = new URL(r.location || 'http://none'); xSeen.challenge = loc.searchParams.get('code_challenge');
+    ok(r.status === 302 && loc.pathname === '/authorize' && loc.searchParams.get('code_challenge_method') === 'S256' && loc.searchParams.get('redirect_uri') === `http://localhost:${PORT}/api/x/callback` && /users\.read/.test(loc.searchParams.get('scope')), 'start sends the player to X with PKCE and the right callback');
+    const state = loc.searchParams.get('state');
+    ok((await new Client().req('x/start', { manual: true })).status === 401, 'linking needs a signed-in player');
+    r = await new Client().req('x/callback?state=' + 'z'.repeat(32) + '&code=good', { manual: true });
+    ok(r.location === '/?x=expired', 'a made-up state is refused');
+    // the callback works without the game's cookie (X may open in another browser or the X app)
+    r = await new Client().req(`x/callback?state=${state}&code=good-1`, { manual: true });
+    ok(r.location === '/?x=linked&u=lanternfan' && xSeen.revoked === 1, 'approved on X: hero linked, X token revoked straight away');
+    ok((await x.req('me')).data.hero.x === 'lanternfan', 'the hero shows the linked @username');
+    ok((await new Client().req(`x/callback?state=${state}&code=good-1`, { manual: true })).location === '/?x=expired', 'each approval can only be used once');
+    const y = new Client(); await y.signIn(); await y.req('hero', { method: 'POST', body: { name: 'Yer' } });
+    r = await y.req('x/start', { manual: true }); const l2 = new URL(r.location); xSeen.challenge = l2.searchParams.get('code_challenge');
+    r = await y.req(`x/callback?state=${l2.searchParams.get('state')}&code=good-2`, { manual: true });
+    ok(r.location === '/?x=taken&u=lanternfan' && !(await y.req('me')).data.hero.x, 'one X account can only be linked to one hero');
+    r = await y.req('x/start', { manual: true }); const l3 = new URL(r.location); xSeen.challenge = 'not-the-right-challenge';
+    ok((await y.req(`x/callback?state=${l3.searchParams.get('state')}&code=good-3`, { manual: true })).location === '/?x=error', 'wrong PKCE verifier is refused by X');
+    r = await y.req('x/start', { manual: true }); const l4 = new URL(r.location);
+    ok((await y.req(`x/callback?state=${l4.searchParams.get('state')}&error=access_denied`, { manual: true })).location === '/?x=declined', 'declining on X is handled');
+    ok((await x.req('x/unlink', { method: 'POST' })).status === 200 && !(await x.req('me')).data.hero.x, 'unlink removes it'); }
+
+  console.log('Google sign-in and linking');
+  const google = async (c, who, q = '') => { const r = await c.req('auth/google/start' + q, { manual: true }); const u = new URL(r.location, BASE); if (u.pathname.startsWith('/?')) return r.location;
+    gSeen.challenge = u.searchParams.get('code_challenge'); return (await c.req(`auth/google/callback?state=${u.searchParams.get('state')}&code=${who}`, { manual: true })).location; };
+  ok((await new Client().req('config')).data.google === true, 'config says Google sign-in is on');
+  { const g = new Client();
+    const r0 = await g.req('auth/google/start', { manual: true }), u0 = new URL(r0.location);
+    ok(u0.searchParams.get('code_challenge_method') === 'S256' && u0.searchParams.get('redirect_uri') === `http://localhost:${PORT}/api/auth/google/callback` && /openid/.test(u0.searchParams.get('scope')), 'Google sign-in uses PKCE and the right redirect');
+    ok(await google(g, 'player7') === '/?g=in' && g.cookie.startsWith('lh_s='), 'signing in with Google starts a session');
+    let me = (await g.req('me')).data;
+    ok(me.google === 'player7@gmail.com' && me.wallet === null && me.hero === null, 'new Google account: no wallet, no hero yet');
+    ok((await g.req('hero', { method: 'POST', body: { name: 'Googler' } })).status === 201, 'Google players can create a hero');
+    const g2 = new Client(); await google(g2, 'player7');
+    ok((await g2.req('me')).data.hero.name === 'Googler', 'signing in with the same Google account loads the same hero');
+    // connect a wallet in game
+    const w = new Client();
+    const linkMsg = async (c) => { const message = await w.message(); return { message, signature: await w.acct.signMessage({ message }) }; };
+    let r = await g.req('auth/link-wallet', { method: 'POST', body: await linkMsg(g) });
+    ok(r.status === 200 && r.data.wallet === w.acct.address.toLowerCase(), 'a Google player can connect a wallet');
+    const viaWallet = new Client(); viaWallet.acct = w.acct; await viaWallet.signIn();
+    ok((await viaWallet.req('me')).data.hero.name === 'Googler', 'that wallet now signs in to the same hero');
+    r = await g.req('auth/link-wallet', { method: 'POST', body: await linkMsg(g) });
+    ok(r.status === 409, 'an account can only have one wallet');
+    const other = new Client(); await google(other, 'player8');
+    const theirs = new Client(); await theirs.signIn(); await theirs.req('hero', { method: 'POST', body: { name: 'Walleteer' } });
+    const msg2 = await theirs.message(); r = await other.req('auth/link-wallet', { method: 'POST', body: { message: msg2, signature: await theirs.acct.signMessage({ message: msg2 }) } });
+    ok(r.status === 409 && r.data.error === 'wallet_in_use', 'a wallet that already has its own hero can’t be linked to another account');
+    // wallet player links Google
+    ok(await google(theirs, 'player9', '?link=1') === '/?g=linked' && (await theirs.req('me')).data.google === 'player9@gmail.com', 'a wallet player can link Google');
+    const viaGoogle = new Client(); await google(viaGoogle, 'player9');
+    ok((await viaGoogle.req('me')).data.hero.name === 'Walleteer', 'then Google signs in to the same hero');
+    ok(await google(theirs, 'player11', '?link=1') === '/?g=has', 'an account can only link one Google account');
+    const fresh = new Client(); await fresh.signIn();
+    ok(await google(fresh, 'player7', '?link=1') === '/?g=taken', 'a Google account already in use can’t be linked again');
+    ok(await google(new Client(), 'wrongaud') === '/?g=error', 'an ID token meant for another app is refused');
+    ok((await new Client().req('auth/google/callback?state=' + 'q'.repeat(30) + '&code=player7', { manual: true })).location === '/?g=expired', 'made-up state refused'); }
+
+  console.log('Friends');
+  { const a = new Client(); await a.signIn(); await a.req('hero', { method: 'POST', body: { name: 'Frienda' } });
+    const b = new Client(); await b.signIn(); await b.req('hero', { method: 'POST', body: { name: 'Friendb' } });
+    let r = await a.req('friends', { method: 'POST', body: { action: 'add', name: 'friendb' } });
+    ok(r.status === 200 && r.data.state === 'requested' && r.data.list.outgoing[0] === 'Friendb', 'friend request sent (any capitalisation)');
+    ok((await b.req('friends')).data.incoming[0] === 'Frienda', 'the other player sees the request');
+    r = await b.req('friends', { method: 'POST', body: { action: 'accept', name: 'Frienda' } });
+    ok(r.data.state === 'friends' && r.data.list.friends[0].name === 'Frienda' && (await a.req('friends')).data.friends[0].name === 'Friendb', 'accepted: both are friends');
+    ok((await a.req('friends', { method: 'POST', body: { action: 'add', name: 'Frienda' } })).data.error === 'self', 'can’t friend yourself');
+    ok((await a.req('friends', { method: 'POST', body: { action: 'add', name: 'Nobodyhere' } })).status === 404, 'unknown name refused');
+    r = await a.req('friends', { method: 'POST', body: { action: 'remove', name: 'Friendb' } });
+    ok(r.data.list.friends.length === 0 && (await b.req('friends')).data.friends.length === 0, 'removing a friend removes it for both');
+    const c = new Client(); await c.signIn(); await c.req('hero', { method: 'POST', body: { name: 'Friendc' } });
+    await c.req('friends', { method: 'POST', body: { action: 'add', name: 'Frienda' } });
+    r = await a.req('friends', { method: 'POST', body: { action: 'add', name: 'Friendc' } });
+    ok(r.data.state === 'friends', 'adding someone who already asked you makes you friends straight away');
+    ok((await new Client().req('friends')).status === 401, 'friends need a signed-in player'); }
+
+  console.log('Realtime ticket');
+  { const { jwtVerify } = await import('jose');
+    const t = new Client(); await t.signIn();
+    ok((await t.req('rt-ticket')).status === 404, 'no ticket before you have a hero');
+    await t.req('hero', { method: 'POST', body: { name: 'Ticketed' } });
+    const r = await t.req('rt-ticket'); const { payload } = await jwtVerify(r.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' });
+    ok(r.data.url === 'wss://rt.example.workers.dev' && payload.sub === 'ticketed' && payload.n === 'Ticketed' && payload.exp - payload.iat <= 120, 'ticket names the hero, expires in 2 minutes, signed with RT_SECRET'); }
 
   console.log('Bans');
   const c = new Client(); await c.signIn(); await c.req('hero', { method: 'POST', body: { name: 'Banme' } });
@@ -139,6 +237,6 @@ try {
   me = (await a2.req('me')).data;
   ok(me.hero.name === 'Lampwright' && me.save.data.gold === 160, 'signing in again (new device) loads the same hero and progress');
 } catch (e) { failN++; console.error(e); }
-srv.kill();
+srv.kill(); xMock.close(); gMock.close();
 console.log(`\n${pass} passed, ${failN} failed`);
 process.exit(failN ? 1 : 0);

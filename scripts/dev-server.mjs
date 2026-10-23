@@ -15,6 +15,8 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const cache = new Map();
 const vercel = JSON.parse(await readFile(join(root, 'vercel.json'), 'utf8'));
 const pageHeaders = vercel.headers.find(h => h.source === '/(.*)').headers.filter(h => h.key !== 'Strict-Transport-Security');
+// local realtime server (wrangler dev) is plain ws:// on localhost
+for (const h of pageHeaders) if (h.key === 'Content-Security-Policy') h.value = h.value.replace("connect-src 'self'", "connect-src 'self' ws://127.0.0.1:8787 ws://localhost:8787");
 
 async function route(path) {
   const file = join(root, 'api', normalize(path).replace(/^(\.\.[/\\])+/, '') + '.js');
