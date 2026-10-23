@@ -77,6 +77,8 @@ export class Lobby {
     this.parties = new Map();    // partyId -> { id, leader, members: [id], inst: { room, floor, seed } | null }
     this.invites = new Map();    // toId -> Map(fromId -> at)
     this.feedQ = []; this.feedT = null; this.lastFeedAt = 0;
+    // Players send a heartbeat every 20 s. A connection silent for 75 s is dead (phone locked, network gone): close it.
+    this.sweep = setInterval(() => { const now = Date.now(); for (const u of this.users.values()) if (u.on && now - (u.seen || now) > 75000) { try { u.ws.close(4001, 'silent'); } catch { } this.dropSilent(u); } }, 15000);
     ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get('parties');
       if (saved) for (const p of saved) this.parties.set(p.id, p);
@@ -90,6 +92,7 @@ export class Lobby {
     this.connect(who, server);
     return new Response(null, { status: 101, webSocket: client });
   }
+  dropSilent(u) { if (u.drop) u.drop(); }
   online() { let n = 0; for (const u of this.users.values()) if (u.on) n++; return n; }
   partyOf(id) { const u = this.users.get(id); return u && u.party ? this.parties.get(u.party) : null; }
   view(p) { return p ? { id: p.id, leader: p.leader, inst: p.inst, members: p.members.map(m => { const u = this.users.get(m); return { id: m, name: u ? u.name : m, on: !!(u && u.on), room: u && u.on ? u.room : null, floor: u && u.on ? u.floor : null }; }) } : null; }
@@ -109,8 +112,10 @@ export class Lobby {
     send(ws, { t: 'hello', you: u.id, online: this.online(), party: this.view(this.partyOf(u.id)) });
     const p = this.partyOf(u.id); if (p) this.pushParty(p);
     this.notifyWatchers(u.id);
-    ws.addEventListener('message', ev => { if (u.ws !== ws || !allow(u)) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(u, m); });
-    const gone = () => { if (u.ws !== ws) return; u.on = false; u.room = null; this.notifyWatchers(u.id); const p2 = this.partyOf(u.id); if (p2) { this.pushParty(p2); this.checkInst(p2); }
+    u.seen = Date.now();
+    ws.addEventListener('message', ev => { if (u.ws !== ws) return; u.seen = Date.now(); if (ev.data === '{"t":"ping"}') return send(ws, '{"t":"pong"}'); if (!allow(u)) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(u, m); });
+    u.drop = () => gone();
+    const gone = () => { if (u.ws !== ws || !u.on) return; u.on = false; u.room = null; this.notifyWatchers(u.id); const p2 = this.partyOf(u.id); if (p2) { this.pushParty(p2); this.checkInst(p2); }
       u.offT = setTimeout(() => { if (!u.on) { this.leaveParty(u, true); this.users.delete(u.id); } }, OFFLINE_GRACE_MS); };
     ws.addEventListener('close', gone); ws.addEventListener('error', gone);
   }
@@ -249,6 +254,8 @@ export class Room {
     this.ctx = ctx; this.env = env; this.players = new Map(); this.chat = []; this.flushT = null; this.seq = 0;
     this.cfg = null;   // dungeon instances only: { allowed: [ids], host, seed, floor }
     ctx.blockConcurrencyWhile(async () => { this.cfg = (await ctx.storage.get('cfg')) || null; });
+    // Remove players whose connection went silent (no heartbeat for 75 s), so nobody is left standing frozen on others' screens.
+    this.sweep = setInterval(() => { const now = Date.now(); for (const p of [...this.players.values()]) if (now - (p.seen || now) > 75000) { try { p.ws.close(4001, 'silent'); } catch { } p.drop && p.drop(); } }, 15000);
   }
   async fetch(req) {
     const url = new URL(req.url);
@@ -282,9 +289,11 @@ export class Room {
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
       players: [...this.players.values()].filter(x => x.id !== who.id).map(x => this.pub(x)), chat: this.chat });
     if (!old) this.all({ t: '+', p: this.pub(p) }, who.id);
-    ws.addEventListener('message', ev => { if (this.players.get(who.id) !== p || !allow(p)) return; if (typeof ev.data !== 'string' || ev.data.length > 6000) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(p, m); });
+    p.seen = Date.now();
+    ws.addEventListener('message', ev => { if (this.players.get(who.id) !== p) return; p.seen = Date.now(); if (ev.data === '{"t":"ping"}') return send(ws, '{"t":"pong"}'); if (!allow(p)) return; if (typeof ev.data !== 'string' || ev.data.length > 6000) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(p, m); });
     const gone = () => { if (this.players.get(who.id) !== p) return; this.players.delete(who.id); this.all({ t: '-', id: who.id });
       if (this.inst && this.cfg.host === who.id) this.pick(); };
+    p.drop = gone;
     ws.addEventListener('close', gone); ws.addEventListener('error', gone);
   }
   onMessage(p, m) {
