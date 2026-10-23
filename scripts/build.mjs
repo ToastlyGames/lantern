@@ -1,7 +1,7 @@
 // Builds the static client into public/ and the shared game data the server validates against.
 //   client-src/*.js + head/body html  →  public/index.html + public/game.js
 //   client-src/data.js                →  lib/gamedata.js (same item/gear/skill tables on the server)
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 const src = f => readFileSync(new URL('../client-src/' + f, import.meta.url), 'utf8');
 
@@ -18,4 +18,6 @@ mkdirSync(new URL('../public/', import.meta.url), { recursive: true });
 writeFileSync(new URL('../public/game.js', import.meta.url), js);
 const head = src('head.html').replace('/*FONTFACE*/', src('fontface.css'));
 writeFileSync(new URL('../public/index.html', import.meta.url), head + src('body.html') + `<script src="/game.js?v=${hash}"></script></body></html>`);
+// 3) favicons and the home-screen manifest
+for (const f of readdirSync(new URL('../client-src/icons/', import.meta.url))) copyFileSync(new URL('../client-src/icons/' + f, import.meta.url), new URL('../public/' + f, import.meta.url));
 console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js');

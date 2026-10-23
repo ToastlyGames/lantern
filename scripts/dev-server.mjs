@@ -11,7 +11,7 @@ process.env.SESSION_SECRET ||= 'dev-only-secret-change-me-0123456789abcdef';
 process.env.LH_INSECURE_COOKIE ||= '1';
 if (!process.env.SUPABASE_URL) process.env.LH_MEMORY_DB = '1';
 const PORT = Number(process.env.PORT || 3000);
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 const cache = new Map();
 const vercel = JSON.parse(await readFile(join(root, 'vercel.json'), 'utf8'));
 const pageHeaders = vercel.headers.find(h => h.source === '/(.*)').headers.filter(h => h.key !== 'Strict-Transport-Security');
