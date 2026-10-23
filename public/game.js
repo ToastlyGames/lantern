@@ -104,6 +104,7 @@ function heroFrame(dir,step,look){
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
   if(look.helm==='partyhat'){p.rect(5,1,6,2,'#3b5dc9');p.set(6,1,'#73eff7').set(9,2,'#73eff7');p.rect(4,3,8,1,'#29366f');}
+  if(look.helm==='greenhat'){p.rect(5,1,6,2,'#38b764');p.set(6,1,'#a7f070').set(9,2,'#a7f070');p.rect(4,3,8,1,'#257179');}
   p.outline();
   return p.canvas();
 }
@@ -126,7 +127,7 @@ function capeLayer(k,dir,step,front){const key=[k,dir,step,front].join('|');if(k
   if(!any){return CAPE_CACHE[key]=null;}p.outline();return CAPE_CACHE[key]=p.canvas();}
 // Auras: legendary and one-of-one gear make the wearer glow.
 function auraColors(look,lantern){const out=[];const C=look.cape&&CAPES[look.cape];if(C&&(C.r==='legendary'))out.push(C.aura||'#ffcd75');
-  if(look.helm==='partyhat')out.push('#73eff7');const L=lantern&&LANTERNS[lantern];if(L&&L.r==='legendary')out.push(L.aura||'#b8f7ff');return out;}
+  if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&L.r==='legendary')out.push(L.aura||'#b8f7ff');return out;}
 const HERO_CACHE={};
 function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
 // lantern carried by the hero (drawn separately so its glow can pulse)
@@ -305,6 +306,7 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'copper_helm':case 'iron_helm':case 'ember_helm':{const C={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[id.split('_')[0]];
       p.ell(8,8,6,5,C[0]);p.rect(2,8,12,5,C[0]);p.rect(2,12,12,1,C[1]);p.rect(5,9,6,2,PAL.ink);p.rect(7,9,2,4,C[0]);p.rect(6,4,4,1,C[2]);p.rect(7,2,2,3,C[1]);break;}
     case 'partyhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#3b5dc9',s:'#73eff7',c:'#29366f'});p.set(7,1,PAL.yellow);break;
+    case 'greenhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#38b764',s:'#a7f070',c:'#257179'});p.set(7,1,PAL.yellow);break;
     case 'traveler_garb':p.rect(4,4,8,10,PAL.teal);p.rect(2,4,3,4,PAL.moss).rect(11,4,3,4,PAL.moss);p.rect(6,4,4,2,PAL.ink);p.rect(4,11,8,1,PAL.bark);p.rect(7,6,2,5,PAL.green);break;
     case 'copper_blade':case 'iron_blade':case 'ember_blade':{const t=id.split('_')[0];return swordSprite(t==='ember'?'ember':t);}
     case 'copper_mail':case 'iron_mail':case 'ember_mail':{const t=id.split('_')[0],C=TIER_COLORS[t==='ember'?'ember':t];
@@ -338,6 +340,7 @@ function buildArt(){
   ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
+  ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
   ART.press=pressSprite();ART.board=boardSprite();ART.gate=gateSprite();ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
@@ -361,15 +364,17 @@ const ITEMS={
   raw_pondfin:{n:'Raw Pondfin',v:5},pondfin:{n:'Cooked Pondfin',v:12,heal:35,food:true},burnt_fish:{n:'Burnt Fish',v:0},
   copper_helm:{n:'Copper Helm',v:40,gear:'helm',tier:'copper'},iron_helm:{n:'Iron Helm',v:120,gear:'helm',tier:'iron'},ember_helm:{n:'Ember Helm',v:420,gear:'helm',tier:'ember'},
   partyhat_helm:{n:'Blue Party Hat',v:0,gear:'helm',tier:'partyhat',rarity:'unique',bound:true},
+  greenhat_helm:{n:'Green Party Hat',v:0,gear:'helm',tier:'greenhat',rarity:'unique',bound:true},
   relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true}
 };
 const GEAR={
   blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25}},
   mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7}},
-  helm:{copper:{def:1},iron:{def:2},ember:{def:4},partyhat:{def:25}}
+  helm:{copper:{def:1},iron:{def:2},ember:{def:4},partyhat:{def:25},greenhat:{def:25}}
 };
 // Helmets can carry attributes like capes. The Blue Party Hat is one of one: admin only, never drops, can't be sold or dropped.
-const HELM_ATTR={partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
+const HELM_ATTR={partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
+const ADMIN_HATS={partyhat:'Blue Party Hat',greenhat:'Green Party Hat'};
 // ---------- rarity ----------
 const RARITY={unique:{n:'One of One',c:'#73eff7',w:0},common:{n:'Common',c:'#c2d3e0',w:62},uncommon:{n:'Uncommon',c:'#a7f070',w:26},rare:{n:'Rare',c:'#41a6f6',w:9},xrare:{n:'Extremely Rare',c:'#c77dff',w:2.6},legendary:{n:'Legendary',c:'#ffcd75',w:.4}};
 const RORDER=['common','uncommon','rare','xrare','legendary','unique'];
@@ -669,7 +674,7 @@ const has=(id,n)=>avail(id)>=(n||1);
 const give=(bag,id,n)=>{bag[id]=(bag[id]||0)+n;};
 const take=(id,n)=>{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}n-=k;if(n>0&&atHold()&&S.vault[id]){S.vault[id]-=n;if(S.vault[id]<=0)delete S.vault[id];}};
 const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0);
-let ADMIN=false;
+let ADMIN=false,HAT='partyhat';
 const LAN=()=>LANTERNS[S.gear.lantern]||LANTERNS.basic;
 const maxHp=()=>60+8*(S.lvl-1)+A('hp');
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
@@ -746,6 +751,8 @@ cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||
     if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
   aPressed=true;});
 
+addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,#acctBody,.sel'))e.preventDefault();});
+addEventListener('dragstart',e=>{if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS')e.preventDefault();});
 const bRet=$('bRet');bRet.addEventListener('pointerdown',e=>{e.preventDefault();retHeld=true;try{bRet.setPointerCapture(e.pointerId);}catch(_){}});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bRet.addEventListener(t,()=>{retHeld=false;}));
 $('bBag').addEventListener('click',()=>openBag());
@@ -1108,7 +1115,7 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag('it
     take(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n);sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag('items');};}
 function openAdmin(){if(!ADMIN)return;
   const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock the lift to floor 6'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?[['f5','Jump to Mother Slime (F5)'],['f10','Jump to the Ossuary Knight (F10)']]:[]);
-  openSheet(`<h2>Admin powers</h2><p class="lead small">Only the Blue Party Hat's owner sees this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
+  openSheet(`<h2>Admin powers</h2><p class="lead small">Only party hat owners see this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openBag('hero');
   $('sheet').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const k=b.dataset.ad;
     if(k==='kit'){grantKit();S.gold-=100000;}
@@ -1384,8 +1391,8 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   g.fillStyle='rgba(0,0,0,.3)';g.fillRect(Math.round(x-4),Math.round(y),8,1);
   const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17);
   spr(img,x-8,y-15);
-  const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17);if(look&&look.helm==='partyhat')spr(ART.partyhat,x-5,y-25);
-  if(name&&(me||SET.names))ptDraw(g,name,x,y-(look&&look.helm==='partyhat'?34:24),{color:me?'#ffcd75':'#c2d3e0',bg:'rgba(26,28,44,.6)'});
+  const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25);
+  if(name&&(me||SET.names))ptDraw(g,name,x,y-(look&&ADMIN_HATS[look.helm]?34:24),{color:me?'#ffcd75':'#c2d3e0',bg:'rgba(26,28,44,.6)'});
   if(npc&&npc.sayT>0)ptDraw(g,npc.say,x,y-34,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
 }
 function drawPlayer(){
@@ -1395,7 +1402,7 @@ function drawPlayer(){
   if(d==='up')spr(lan,P.x+lx,P.y+ly);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);
-  if(P.say&&time<P.sayUntil)ptDraw(g,P.say.length>26?P.say.slice(0,25)+'...':P.say,P.x,P.y-(S.gear.helm==='partyhat'?(scene==='hold'?44:34):(scene==='hold'?34:24)),{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
+  if(P.say&&time<P.sayUntil)ptDraw(g,P.say.length>26?P.say.slice(0,25)+'...':P.say,P.x,P.y-(ADMIN_HATS[S.gear.helm]?(scene==='hold'?44:34):(scene==='hold'?34:24)),{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
   if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();
@@ -1625,7 +1632,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 setInterval(()=>{if(started)save();},10000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started)save();});addEventListener('pagehide',()=>{if(started)save();});
 // Admin loadout: the best gear equipped, one of every lantern, cape and top-tier piece in the bank, both relics, max bank space.
-function grantKit(){const old=S.gear,eq={blade:'ember',mail:'ember',lantern:'wisp',cape:'mother',helm:'partyhat'};
+function grantKit(){const old=S.gear,eq={blade:'ember',mail:'ember',lantern:'wisp',cape:'mother',helm:HAT};
   for(const sl of ['blade','mail','lantern','cape','helm']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
   S.gear=Object.assign({},eq);S.bankBuys=BANK_BUYS.length;S.gold+=100000;
   const has=id=>(S.bank[id]||0)+(S.vault[id]||0)>0;
@@ -1634,9 +1641,12 @@ function grantKit(){const old=S.gear,eq={blade:'ember',mail:'ember',lantern:'wis
   for(const id of ['ember_blade','ember_mail','ember_helm','relic_crown','relic_sigil'])if(!has(id))give(S.vault,id,1);
   for(const id of ['pondfin','stew','oil'])give(S.bank,id,20);
   S.quick=['stew','pondfin','oil','bread',null];S.flags.kit=true;P.hp=maxHp();save(true);}
-function applyAdmin(on){ADMIN=!!on;const H='partyhat_helm';
-  if(!ADMIN){delete S.bank[H];delete S.vault[H];if(S.gear.helm==='partyhat')S.gear.helm=null;S.flags.god=false;return;}
-  if(S.gear.helm!=='partyhat'&&!S.bank[H]&&!S.vault[H]){S.gear.helm&&give(S.bank,gearId('helm',S.gear.helm),1);S.gear.helm='partyhat';setTimeout(()=>{toast('The Blue Party Hat is yours. One of one.','rare r-unique');sfx('rare');},2200);}
+function applyAdmin(on,hat){ADMIN=!!on;HAT=ADMIN_HATS[hat]?hat:'partyhat';
+  // Admin hats are one of one: strip any hat that isn't this hero's own (all of them for a regular hero).
+  for(const h of Object.keys(ADMIN_HATS))if(!ADMIN||h!==HAT){delete S.bank[h+'_helm'];delete S.vault[h+'_helm'];if(S.gear.helm===h)S.gear.helm=null;}
+  if(!ADMIN){S.flags.god=false;return;}
+  const H=HAT+'_helm';
+  if(S.gear.helm!==HAT&&!S.bank[H]&&!S.vault[H]){S.gear.helm&&give(S.bank,gearId('helm',S.gear.helm),1);S.gear.helm=HAT;setTimeout(()=>{toast('The '+ADMIN_HATS[HAT]+' is yours. One of one.','rare r-unique');sfx('rare');},2200);}
   if(!S.flags.kit){grantKit();setTimeout(()=>{toast('Admin loadout ready: top gear equipped, every lantern and cape in your bank.','rare r-legendary');sfx('rare');},4200);}}
 // ---------- chat: talk with players on the same map (the Hold, or the same Depths floor) ----------
 // The network side is window.CHATNET, provided by the account script: join(channel, onMessages) -> leave(), send(channel, text) -> {ok,msg}|{ok:false,msg}.
@@ -1671,7 +1681,7 @@ setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
   $('chatIc').src=p.canvas().toDataURL();}
 $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('chatGo').onclick=()=>{chatSend();if(!(window.matchMedia&&matchMedia('(hover:hover)').matches))$('chatIn').focus();};
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
-window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
+window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
 if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;}};
 })();
@@ -1800,7 +1810,7 @@ function enter(){
   ACC.draft=newDraft();go('creator');
 }
 function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
-  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin});
+  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin,hat:ACC.me.hero.hat});
   if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
 
