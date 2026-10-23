@@ -2,6 +2,9 @@
 // Reports which settings are present and whether the database is reachable. Never shows secret values.
 import { db, supabaseUrl, supabaseKey } from '../lib/db.js';
 import { send, appDomain } from '../lib/http.js';
+import { xEnabled, callbackUrl } from '../lib/x.js';
+import { googleEnabled, googleCallback } from '../lib/google.js';
+import { rtEnabled, rtUrl } from '../lib/rt.js';
 
 // The role inside an older-style JWT key (anon / service_role); new sb_ keys aren't JWTs.
 function keyRole(k) { try { return JSON.parse(Buffer.from(k.split('.')[1], 'base64url').toString()).role || null; } catch { return null; } }
@@ -26,5 +29,10 @@ export default async function handler(req, res) {
     } catch (e) { database = 'could not connect: ' + String(e && e.message || e).slice(0, 160); }
   }
   const ok = Object.values(env).every(v => v.startsWith('ok')) && database === 'ok';
-  send(res, ok ? 200 : 500, { ok, host, env, database, node: process.version });
+  let rtReach = null;
+  if (rtEnabled()) { try { const r = await fetch(rtUrl().replace(/^ws/, 'http') + '/health', { signal: AbortSignal.timeout(4000) }); rtReach = r.ok ? 'ok' : 'HTTP ' + r.status; } catch (e) { rtReach = 'unreachable'; } }
+  const realtime = rtEnabled() && rtReach !== 'ok' ? 'NOT REACHABLE (' + rtReach + '): check RT_URL and that the Cloudflare worker is deployed' : rtEnabled() ? 'ok: players, chat and parties go through ' + rtUrl() : !process.env.RT_URL ? 'MISSING: set RT_URL to your Cloudflare realtime address (see README)' : 'MISSING: set RT_SECRET (the same 64 random characters as on Cloudflare)';
+  const google = googleEnabled() ? 'ok: Google sign-in is on. Redirect URI to register in Google Cloud: ' + googleCallback(appDomain(req)) : 'off (optional): add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to turn on Google sign-in';
+  const x = xEnabled() ? 'ok: X linking is on. Callback URL to register at developer.x.com: ' + callbackUrl(appDomain(req)) : 'off (optional): add X_CLIENT_ID and X_CLIENT_SECRET to turn on X linking';
+  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, node: process.version });
 }
