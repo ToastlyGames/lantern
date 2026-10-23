@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node -e \"console.log('Nothing to build: the realtime server deploys as-is with wrangler deploy.')\"",
     "dev": "wrangler dev --port 8787",
     "deploy": "wrangler deploy",
     "test": "node test/rt-test.mjs"
