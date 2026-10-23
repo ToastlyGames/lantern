@@ -1,6 +1,6 @@
 // POST /api/auth/verify { message, signature }: checks the Sign-In with Ethereum signature and starts a session.
 import { db } from '../../lib/db.js';
-import { guard, send, fail, body } from '../../lib/http.js';
+import { guard, send, fail, body, appDomain } from '../../lib/http.js';
 import { parseSiwe, checkFields, signatureValid } from '../../lib/siwe.js';
 import { makeSession, sessionCookie } from '../../lib/session.js';
 import { mePayload } from '../../lib/me.js';
@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   try {
     const b = await body(req);
     const msg = parseSiwe(b && b.message);
-    const problem = checkFields(msg, { domain: process.env.APP_DOMAIN || req.headers.host });
+    const problem = checkFields(msg, { domain: appDomain(req) });
     if (problem) return fail(res, 400, 'bad_message', { detail: problem });
     if (!(await db().consumeNonce(msg.nonce))) return fail(res, 400, 'bad_message', { detail: 'nonce already used or expired' });
     if (!(await signatureValid(msg.address, b.message, b.signature))) return fail(res, 401, 'bad_signature');
