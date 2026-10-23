@@ -1,0 +1,31 @@
+<body>
+<canvas id="cv"></canvas>
+<div id="hud">
+  <div id="vit" class="px card">
+    <div class="top"><span id="lvl">Lv 1</span><span id="where">The Hold</span></div>
+    <div class="bar" aria-label="Health"><i id="hpFill"></i><canvas class="pt" id="hpTxt"></canvas></div>
+    <div class="lbl" id="oilRow" hidden><span>OIL</span><div class="bar" aria-label="Lantern oil"><i id="oilFill"></i><canvas class="pt" id="oilTxt"></canvas></div></div>
+  </div>
+  <div id="side"><div id="goldC" class="px card" aria-label="Gold"><img id="goldIc" alt=""><canvas class="pt" id="gold"></canvas></div><canvas class="pt" id="goldRun" hidden></canvas><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button></div>
+</div>
+<button id="guide" class="px" hidden></button>
+<div id="feed"></div>
+<div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd> / <kbd>Click</kbd> attack · <kbd>B</kbd> bag · <kbd>Scroll</kbd> zoom<br><kbd>1</kbd>–<kbd>5</kbd> quick slots · hold <kbd>R</kbd> return</div>
+<div id="ctl">
+  <div id="pad" aria-label="Move"><div id="knob"></div></div>
+  <div id="acts">
+    <div id="quick" aria-label="Quick slots"></div>
+    <div id="mini">
+      <button class="rb" id="bBag" aria-label="Bag"><img id="icBag" alt=""><span class="cnt" id="packW" hidden><canvas class="pt" id="packN"></canvas></span></button>
+    </div>
+    <button class="rb" id="bRet" aria-label="Hold to light the Return Flame" hidden><span id="retRing"></span><img id="icRet" alt=""></button>
+    <button class="rb" id="bA" aria-label="Action"><span id="bAl"></span></button>
+  </div>
+</div>
+<button id="chatB" class="px card" aria-label="Chat" aria-pressed="false"><img id="chatIc" alt=""></button>
+<section id="chat" hidden aria-label="Chat"><header><span>Chat · <b id="chatWhere">the Hold</b></span><button id="chatX" aria-label="Close chat">×</button></header>
+  <div id="chatLog" aria-live="polite"></div>
+  <div class="chatRow"><input id="chatIn" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="Say something…" aria-label="Message"><button id="chatGo" class="btn sm">Send</button></div></section>
+<div id="toast" class="toast" role="status" hidden></div>
+<div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
+<div id="acct"><div id="acctBody"></div></div>
