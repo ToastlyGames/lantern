@@ -18,18 +18,18 @@ export default async function handler(req, res) {
     if (st.banned) return fail(res, 403, 'banned');
     if (!st.hero) return fail(res, 404, 'no_hero');
     if (!st.save) return fail(res, 404, 'no_save');
-    const admin = !!st.hero.is_admin, cur = st.save;
-    if (b.rev !== cur.rev) return fail(res, 409, 'stale', { save: { data: sanitize(cur.data, { admin }), rev: cur.rev } });
+    const admin = !!st.hero.is_admin, hat = st.hero.hat, cur = st.save;
+    if (b.rev !== cur.rev) return fail(res, 409, 'stale', { save: { data: sanitize(cur.data, { admin, hat }), rev: cur.rev } });
     const dt = Math.max(0, cur.age_ms) / 1000;
     if (dt < 2) return fail(res, 429, 'too_fast', { retryAfter: 2 });
-    const prev = sanitize(cur.data, { admin }), next = sanitize(b.data, { admin });
+    const prev = sanitize(cur.data, { admin, hat }), next = sanitize(b.data, { admin, hat });
     const check = plausible(prev, next, dt, { admin });
     if (!check.ok) {
       await d.reject(s.accountId, check.reason);
       return fail(res, 422, 'rejected', { reason: check.reason, save: { data: prev, rev: cur.rev } });
     }
     const rev = await d.casSave(s.accountId, cur.rev, next);
-    if (rev === null) { const now = await d.state(s.accountId); return fail(res, 409, 'stale', { save: { data: sanitize(now.save.data, { admin }), rev: now.save.rev } }); }
+    if (rev === null) { const now = await d.state(s.accountId); return fail(res, 409, 'stale', { save: { data: sanitize(now.save.data, { admin, hat }), rev: now.save.rev } }); }
     send(res, 200, { rev });
   } catch (e) { console.error(e); fail(res, 500, 'server_error'); }
 }
