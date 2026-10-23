@@ -48,6 +48,12 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === '/' || url.pathname === '/health') return new Response('Lanternhold realtime: ok', { headers: { 'content-type': 'text/plain' } });
+    // Setup check used by the game's /api/health: is the ticket (RT_SECRET) accepted, and is the site's address allowed?
+    if (url.pathname === '/check') {
+      const list = String(env.ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean), o = url.searchParams.get('origin') || '';
+      const who = await verifyTicket(url.searchParams.get('t'), env.RT_SECRET);
+      return Response.json({ secretSet: !!env.RT_SECRET, ticket: !!who, origin: !list.length || list.includes(o), allowedOrigins: list });
+    }
     if (req.headers.get('Upgrade') !== 'websocket') return new Response('Expected a WebSocket', { status: 426 });
     const allowed = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
     const origin = req.headers.get('Origin') || '';
