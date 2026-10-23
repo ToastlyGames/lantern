@@ -152,3 +152,12 @@ begin
 exception when others then
   raise notice 'pg_cron unavailable (%). Run "select lh_cleanup_chat();" now and then instead.', sqlerrm;
 end $$;
+
+-- ============ Permissions (safe to re-run) ============
+-- Supabase no longer gives the API roles access to new tables automatically (rolled out to new projects from
+-- May 2026, and to every project from 30 October 2026). Without these grants even the server key gets
+-- "permission denied", and sign-in fails. Only the server key (service_role) gets access; the public keys get none.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on table accounts, heroes, saves, nonces, save_flags, chat_messages to service_role;
+grant usage, select on all sequences in schema public to service_role;
+revoke all on table accounts, heroes, saves, nonces, save_flags, chat_messages from anon, authenticated;
