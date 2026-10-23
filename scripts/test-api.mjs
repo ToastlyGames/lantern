@@ -128,6 +128,21 @@ try {
   await sleep(2100);
   const rich = JSON.parse(JSON.stringify(tm.save.data)); rich.gold = 9_999_999;
   ok((await t.req('save', { method: 'POST', body: { data: rich, rev: tm.save.rev } })).status === 200, 'admin saves skip the plausibility check');
+  ok(tm.hero.hat === 'partyhat', 'admin hat defaults to blue');
+  const k = new Client(); await k.signIn(); await k.req('hero', { method: 'POST', body: { name: 'Kush' } });
+  await fetch(BASE + '/__dev/admin?name=kush&hat=greenhat');
+  let km = (await k.req('me')).data;
+  ok(km.hero.admin === true && km.hero.hat === 'greenhat' && km.save.data.gear.helm === 'greenhat', 'second admin gets the Green Party Hat');
+  await sleep(2100);
+  const swap = JSON.parse(JSON.stringify(km.save.data)); swap.gear.helm = 'partyhat'; swap.bank.partyhat_helm = 1;
+  await k.req('save', { method: 'POST', body: { data: swap, rev: km.save.rev } });
+  km = (await k.req('me')).data;
+  ok(km.save.data.gear.helm === 'greenhat' && !km.save.data.bank.partyhat_helm, 'green-hat admin cannot take the Blue Party Hat');
+  await sleep(2100);
+  const g2 = JSON.parse(JSON.stringify(me.save.data)); g2.gear.helm = 'greenhat'; g2.bank.greenhat_helm = 1;
+  r = await a.req('save', { method: 'POST', body: { data: g2, rev: me.save.rev } });
+  me = (await a.req('me')).data;
+  ok(me.save.data.gear.helm === null && !me.save.data.bank.greenhat_helm, 'Green Party Hat stripped from a non-admin save');
 
   console.log('X account linking');
   { const x = new Client(); await x.signIn(); await x.req('hero', { method: 'POST', body: { name: 'Xer' } });
