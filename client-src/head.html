@@ -17,6 +17,11 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{font-synthesis:none;letter-spacing:.02em;margin:0;height:100%;background:var(--deep);color:var(--text);overflow:hidden;font-family:"Jersey 10",ui-monospace,Menlo,monospace;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-text-size-adjust:100%;overscroll-behavior:none}
+/* no long-press image menu (share / copy / save) or text selection on game controls */
+html,body,button,img,canvas,.rb,#side,#hud{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+img,canvas{-webkit-user-drag:none;user-drag:none}
+button img,button canvas,button span{pointer-events:none}
+input,textarea,#acctBody,.sel{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 button{font-family:inherit;touch-action:manipulation}
 canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 #cv{position:fixed;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;display:block}

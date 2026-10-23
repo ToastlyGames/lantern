@@ -122,7 +122,7 @@ function enter(){
   ACC.draft=newDraft();go('creator');
 }
 function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
-  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin});
+  box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin,hat:ACC.me.hero.hat});
   if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
 
