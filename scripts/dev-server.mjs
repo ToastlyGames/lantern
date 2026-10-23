@@ -37,6 +37,14 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname === '/__dev/admin' && process.env.LH_MEMORY_DB === '1') { // test hook: make a hero an admin
     const { db } = await import('../lib/db.js'); db()._makeAdmin(url.searchParams.get('name')); res.end('ok'); return;
   }
+  if (url.pathname.startsWith('/__dev/') && process.env.LH_DEV_HOOKS === '1' && process.env.SUPABASE_URL) { // same test hooks against a real database (tests only)
+    const { createClient } = await import('@supabase/supabase-js');
+    const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const key = url.searchParams.get('name');
+    if (url.pathname === '/__dev/admin') { await sb.from('heroes').update({ is_admin: true }).eq('name_key', key); return res.end('ok'); }
+    if (url.pathname === '/__dev/ban') { const { data } = await sb.from('heroes').select('account_id').eq('name_key', key); for (const h of data || []) await sb.from('accounts').update({ banned: true }).eq('id', h.account_id); return res.end('ok'); }
+    if (url.pathname === '/__dev/flags') { const { data } = await sb.from('save_flags').select('account_id,reason'); return res.end(JSON.stringify((data || []).map(f => ({ accountId: f.account_id, reason: f.reason })))); }
+  }
   if (url.pathname === '/__dev/ban' && process.env.LH_MEMORY_DB === '1') {
     const { db } = await import('../lib/db.js'); db()._ban(url.searchParams.get('name')); res.end('ok'); return;
   }

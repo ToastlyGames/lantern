@@ -4,7 +4,9 @@ import { spawn } from 'node:child_process';
 import { privateKeyToAccount, generatePrivateKey } from 'viem/accounts';
 
 const PORT = 3999, BASE = `http://localhost:${PORT}`;
-const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_MEMORY_DB: '1', LH_OFFLINE: '1', SUPABASE_URL: '' }, stdio: ['ignore', 'pipe', 'inherit'] });
+// TEST_SUPABASE_URL + TEST_SUPABASE_KEY run the same tests against a real Supabase/PostgREST database instead of memory.
+const PG = process.env.TEST_SUPABASE_URL ? { SUPABASE_URL: process.env.TEST_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: process.env.TEST_SUPABASE_KEY, LH_DEV_HOOKS: '1', LH_MEMORY_DB: '' } : { LH_MEMORY_DB: '1', SUPABASE_URL: '' };
+const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_OFFLINE: '1', ...PG }, stdio: ['ignore', 'pipe', 'inherit'] });
 await new Promise(r => srv.stdout.once('data', r));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, failN = 0;
