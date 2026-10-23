@@ -1491,7 +1491,7 @@ async function connectWallet(w){
       if(!onChain){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});onChain=true;}
         catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902){await pv.request({method:'wallet_addEthereumChain',params:[RH]});onChain=true;}}}}catch(e){}
     ACC.stage='Sign the message in your wallet to log in. It’s free and doesn’t send a transaction.';render();
-    const n=await api('auth/nonce');if(!n.ok)throw {message:'Couldn’t reach the server'};
+    const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':n.status===404?'The game server wasn’t found (404). The site may still be deploying.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
     const now=new Date(),exp=new Date(now.getTime()+10*60000),raw=accts[0];
     // EIP-4361 (Sign-In with Ethereum); the server checks every field and the signature
     const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
