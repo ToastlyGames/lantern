@@ -1,0 +1,15 @@
+{
+  "name": "lanternhold-realtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "test": "node test/rt-test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.147.0",
+    "ws": "8.18.3",
+    "jose": "6.2.12"
+  }
+}

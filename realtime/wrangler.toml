@@ -1,0 +1,19 @@
+# Lanternhold realtime server: deploy with Cloudflare (Workers & Pages → Import a repository, root directory "realtime").
+name = "lanternhold-realtime"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+# ALLOWED_ORIGINS (your game's address) and the RT_SECRET secret are set in the Cloudflare dashboard
+# (Settings → Variables and Secrets). keep_vars stops deploys from erasing them.
+keep_vars = true
+
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Lobby", "Room"]
