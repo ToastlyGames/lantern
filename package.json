@@ -1,0 +1,21 @@
+{
+  "name": "lanternhold",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lanternhold: pixel dungeon MMO on Robinhood Chain. Static client + Vercel serverless API + Supabase Postgres.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev-server.mjs",
+    "test": "node scripts/test-api.mjs",
+    "loadtest": "node scripts/load-test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
+    "jose": "6.2.12",
+    "viem": "2.57.1"
+  }
+}
