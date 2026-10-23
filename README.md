@@ -1,121 +1,174 @@
-# Lanternhold: live build
+# Lanternhold: Season 0 (Beta)
 
-This is the version of Lanternhold that goes on the internet. It keeps every player's hero and progress in a real database, so the same profile loads on any phone or computer that signs in with the same wallet.
+This is the live, multiplayer version of Lanternhold. Every player is real: they sign in with a wallet or Google, share the Hold with other players, chat, add friends, form parties and delve into dungeon instances together.
 
-- **Game page:** `public/`, a static site built from `client-src/`.
-- **Server:** `api/`, small Vercel functions. They check wallet sign-ins, give out sessions, reserve hero names and save progress.
-- **Database:** Supabase (Postgres), set up from `supabase/schema.sql`.
+It runs on three services:
+- **Vercel:** the game page (`public/`, built from `client-src/`) and the API (`api/`). The API handles sign-in, heroes, saves, friends, and X and Google linking.
+- **Supabase (Postgres):** accounts, heroes, saves and friends. It's set up from `supabase/schema.sql`.
+- **Cloudflare (Workers + Durable Objects):** the realtime server in `realtime/`. It carries live positions, chat, the friends online list, parties, invites and dungeon instances.
 
-No accounts or passwords are stored. A player proves they own their wallet by signing a free message (Sign-In with Ethereum, Robinhood Chain id 4663). Signing costs no gas and moves no funds.
+No passwords are stored. Wallet players sign a free message (Sign-In with Ethereum, Robinhood Chain 4663) that costs no gas. Google players sign in with Google.
 
-## Season 0 launch checklist
+## Already live? Updating to Season 0
 
-Work through this in order. The detailed steps are in "Setup" below.
+1. **Database:** run the new `supabase/schema.sql` in the Supabase SQL Editor. It's safe to run again. It adds Google accounts, friends and the new permissions.
+2. **Code:** replace the files in your GitHub repo with this folder, including the new `realtime/` folder, then commit and push.
+3. **Realtime server:** set up Cloudflare (step 3 below) and copy its address.
+4. **Vercel:** add `RT_URL` and `RT_SECRET`. Google is optional: add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` too (step 5). Then **redeploy**.
+5. **Check:** open `https://YOUR-SITE/api/health`. Every line should say ok, including `realtime`.
 
-1. **Database.** Create a Supabase project on the **Pro** plan in **East US (North Virginia)**. Run all of `supabase/schema.sql` in the SQL Editor. If you already ran an older copy, run the new one again: it's safe to repeat and adds the speed-ups and chat.
-2. **Code.** Upload this whole folder to a **private** GitHub repo. If you're updating, replace the old files.
-3. **Hosting.** Import the repo into Vercel on the **Pro** plan and add the environment variables:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `SESSION_SECRET` (64 random characters)
+## Season 0 launch checklist (fresh setup)
 
-   Deploy. Then add `APP_DOMAIN` (the site address without `https://`) and **redeploy**.
-4. **Your admin hero.** Open the site in your wallet's browser, sign in and create the hero **Test**. Run `supabase/import-test-hero.sql`. Sign out and back in: Test gets the Blue Party Hat, admin powers and the top-gear loadout.
-5. **Load test.** Run `npm run loadtest -- --url https://YOUR-SITE --players 1000 --minutes 3 --confirm`. Then run `supabase/cleanup-load-test.sql` to remove the test heroes.
-6. **Phone check:**
-   - sign in, plant Wheat, fish, forge, delve a few floors and send a chat message;
-   - open the site on a second device with the same wallet and confirm everything loaded.
-7. **Optional:**
-   - a custom domain (update `APP_DOMAIN` and redeploy);
+1. **Database:** create a Supabase project on **Pro** in **East US (North Virginia)** and run all of `supabase/schema.sql` (step 1).
+2. **Code:** upload this folder to a **private** GitHub repo (step 2).
+3. **Realtime server:** deploy `realtime/` on Cloudflare, add the `RT_SECRET` secret and `ALLOWED_ORIGINS` (step 3).
+4. **Website and API:** import the repo into Vercel on **Pro**, add the environment variables and deploy. Then add `APP_DOMAIN` and redeploy (step 4).
+5. **Google sign-in** (recommended): create a Google OAuth client and add its keys (step 5).
+6. **Your admin hero:** sign in, create your hero, then run `supabase/link-admin-hero.sql` (step 6).
+7. **Health check:** `/api/health` says `"ok": true`.
+8. **Two-device check:** sign in on your phone and on a computer with **two different accounts**:
+   - see each other in the Hold and chat;
+   - add each other as friends;
+   - invite each other to a party;
+   - delve together.
+9. **Optional:**
+   - X linking (see "Linking an X account");
+   - a custom domain;
    - a Vercel Firewall rate limit on `/api/auth/`.
 
 **What's in Season 0:**
-- **Sign-in:** wallet sign-in on Robinhood Chain, or guest play.
-- **Heroes:** unique hero names, a look you design and progress saved on the server.
-- **Skills:** Farming, Fishing, Cooking and Smithing, levels 1–99.
-- **The Depths:** floors 1–10, with two bosses.
-- **Loot:** lanterns, capes and helmets from Common to Legendary, with auras.
-- **Storage:** a bank that can be expanded.
-- **Market:** sell from your bag or bank, and buy from the Hold shop.
-- **Social:** chat with players on the same map.
-- **Settings:** zoom, brightness and more, saved to each hero.
-- **Controls:** touch on phones; keyboard plus mouse click and scroll-zoom on computers.
+- **Sign-in:** wallet (Robinhood Chain) or Google. Google players can connect a wallet later, and wallet players can add Google, from the bag's Hero tab. There's no guest play.
+- **A shared world:** everyone signs in to the Hold together and sees other players walk around.
+  - Each "World" holds up to 50 players, and new worlds open as more people join.
+  - Friends can hop to each other's world.
+  - Party members are placed in the same world.
+- **Chat:**
+  - everyone in your world or dungeon can read it;
+  - start a message with `/p` to talk to your party only;
+  - speech bubbles appear over heroes.
+- **Social menu:** the people icon under the settings gear.
+  - **Friends:** add someone by hero name; accept requests; see who's online and where; join their world; invite them to your party.
+  - **Party:** up to 4 players. See your members, leave the party, or (as leader) promote or remove someone.
+  - **Nearby:** everyone around you, with Add friend and Invite.
+- **Dungeon instances:** every delve is a private instance.
+  - Alone, you face it alone.
+  - In a party, the leader opens the way and everyone is asked to join the same dungeon. You see each other and fight the same monsters.
+  - A chest or ore vein taken by one player is gone for everyone.
+  - Loot goes to whoever did the most damage, and XP to everyone who hit the monster.
+  - The leader takes the party down the stairs.
+- **World feed:** real events from real players, like rare loot, bosses beaten and milestones reached.
+- **Kept from before:**
+  - the four skills (Farming, Fishing, Cooking, Smithing) up to level 99;
+  - floors 1–10 with two bosses;
+  - loot rarities and auras, the bank and the market;
+  - settings saved to the hero;
+  - touch controls on phones, and keyboard, click and scroll controls on computers.
 
 **Not in Season 0 (coming next):**
 - the token (it needs server-decided rewards and an audited claim contract; see "Before the Season 1 token");
-- seeing other players move live;
-- real player-to-player trading;
+- player-to-player trading;
 - floors 11–15.
 
 ---
 
-## Setup (about 30 minutes, best on a computer)
+## Setup
 
 ### 1. Supabase: the database
 
-1. Go to **supabase.com**, sign up and click **New project**. Pick a strong database password (you won't need it again).
-   For **Region**, choose **East US (North Virginia)**. The game's server runs in Washington D.C. (`iad1`), right next to it, so every save is a few milliseconds away from the database instead of a cross-country trip. If you pick another region, see "Matching regions" below.
-2. When the project is ready, open **SQL Editor → New query**. Paste the whole of `supabase/schema.sql` and press **Run**. You should see "Success. No rows returned".
-   The file is safe to run again. If you already set up the database from an earlier version, just run it again to add the speed-ups.
-3. Open **Project Settings → API** (or **API Keys**) and copy two values:
-   - **Project URL**, for example `https://abcd1234.supabase.co`. This becomes `SUPABASE_URL`.
-   - **service_role** key (on newer dashboards, a **secret** key starting `sb_secret_`). This becomes `SUPABASE_SERVICE_ROLE_KEY`.
-
-   ⚠️ The service key can do anything in your database. Only ever paste it into Vercel's environment variables. Never put it in the game files, GitHub or chat.
+1. Go to **supabase.com** and create a project. For **Region**, choose **East US (North Virginia)**, next to the game's server in Washington D.C. (`iad1`).
+2. Open **SQL Editor → New query**, paste the whole of `supabase/schema.sql` and press **Run**. It's safe to run again whenever you update.
+3. In **Project Settings → API** (or **Data API / API Keys**), copy:
+   - the **Project URL**, like `https://abcd1234efgh5678ijkl.supabase.co`. This becomes `SUPABASE_URL`.
+   - the **service_role** key (a **secret** key starting `sb_secret_` on newer dashboards). This becomes `SUPABASE_SERVICE_ROLE_KEY`. ⚠️ Only ever paste this into Vercel's environment variables.
 
 ### 2. GitHub: where the code lives
 
-1. Create a free account at **github.com** and click **New repository**. Name it `lanternhold` and choose **Private**.
-2. Unzip `lanternhold-live.zip` on your computer.
-3. Get the files into the repo by either method:
-   - **Easiest:** install **GitHub Desktop**, then choose File → Add local repository and pick the unzipped folder. Commit, then **Publish** (keep it private).
-   - **In the browser:** on the new repo page, click "uploading an existing file" and drag in everything inside the folder.
+Create a **private** repo, then add this folder with **GitHub Desktop** (File → Add local repository → Commit → Publish). Keep the folder structure, including `api/`, `lib/`, `client-src/`, `realtime/` and `supabase/`.
 
-   Keep the folder structure (`api/`, `lib/`, `client-src/` and so on). There is no `node_modules` folder; Vercel installs it.
+### 3. Cloudflare: the realtime server (about 10 minutes)
 
-### 3. Vercel: the website and server
+1. Sign up at **dash.cloudflare.com**. The free plan works for testing: about 2 million player messages a day. For launch, switch to **Workers Paid** ($5 a month) under **Workers & Pages → Plans**.
+2. Open **Workers & Pages → Create → Import a repository**, connect GitHub and pick your repo. Set:
+   - **Project name:** `lanternhold-realtime`
+   - **Root directory:** `realtime`
+   - **Build command:** leave empty
+   - **Deploy command:** `npx wrangler deploy`
 
-1. Go to **vercel.com**, sign up with GitHub and click **Add New → Project**. Import the `lanternhold` repo.
-2. Vercel reads `vercel.json` by itself. Leave the build settings as they are.
-3. Open **Environment Variables** and add:
+   Then click **Deploy**. Every push to GitHub redeploys it automatically.
+3. Open the worker's **Settings → Variables and Secrets** and add two entries:
+   - a **Secret** named `RT_SECRET`: 64 random characters. Make a new one; don't reuse `SESSION_SECRET`.
+   - a **Text** variable named `ALLOWED_ORIGINS`: your game's address with `https://`, like `https://lanternhold.vercel.app`. Separate several addresses with commas.
+4. Copy the worker's address from its overview page, like `https://lanternhold-realtime.yourname.workers.dev`. Opening it should show "Lanternhold realtime: ok".
+
+### 4. Vercel: the website and API
+
+1. On **vercel.com**, choose **Add New → Project** and import the repo. Leave the build settings as they are.
+2. Add these **Environment Variables**:
 
    | Name | Value |
    |---|---|
    | `SUPABASE_URL` | the Project URL from step 1 |
    | `SUPABASE_SERVICE_ROLE_KEY` | the service_role / secret key from step 1 |
-   | `SESSION_SECRET` | 64 random characters (see below) |
+   | `SESSION_SECRET` | 64 random characters |
+   | `RT_URL` | the Cloudflare worker address from step 3 |
+   | `RT_SECRET` | **the same** 64 characters you put in Cloudflare's `RT_SECRET` |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from step 5 (optional) |
 
-   To make `SESSION_SECRET`, run `openssl rand -hex 32` in a terminal, or use any password generator set to 64 characters of letters and numbers. If you change it later, everyone is signed out (their progress is safe).
-4. Click **Deploy**. When it finishes you get an address such as `lanternhold.vercel.app`.
-5. Go back to **Settings → Environment Variables** and add `APP_DOMAIN` = that address **without** `https://`, for example `lanternhold.vercel.app`. Then open **Deployments → ⋯ → Redeploy**.
+3. **Deploy**. Then add `APP_DOMAIN` = your site address without `https://` (like `lanternhold.vercel.app`) and **redeploy**.
+4. If you use a **custom domain**:
+   - update `APP_DOMAIN`;
+   - add the new address to Cloudflare's `ALLOWED_ORIGINS`;
+   - add it to the Google redirect URI and the X callback URL;
+   - redeploy.
 
-   `APP_DOMAIN` makes sure wallet sign-in messages and requests only count for your own site.
+   If you also give the worker a custom domain, add it to `connect-src` in `vercel.json` (by default only `*.workers.dev` is allowed).
 
-### 4. First sign-in and your Test hero
+### 5. Google sign-in (recommended, free, about 10 minutes)
 
-1. Open your site in a wallet's built-in browser (MetaMask, Coinbase Wallet, Rabby and others), or on desktop Chrome with a wallet extension.
-2. Connect your wallet, sign the message and create the hero **Test**.
-3. In Supabase, open **SQL Editor**, paste `supabase/import-test-hero.sql` and run it. This does two things:
-   - marks Test as the game's only admin, so the server lets it keep the **Blue Party Hat** and admin powers;
-   - copies the progress from your demo save onto Test.
-4. Reload the game. Test loads with the party hat.
+1. Go to **console.cloud.google.com** and create a project called "Lanternhold".
+2. Open **Google Auth Platform**:
+   - **Branding:** set the app name, support email and your site address.
+   - **Audience:** choose **External**, then **Publish app**, so anyone can sign in. The game only asks for basic sign-in (your Google ID and email), so Google doesn't need to review it.
+3. Open **Clients → Create client → Web application**. Under **Authorized redirect URIs**, add `https://YOUR-SITE/api/auth/google/callback`. `/api/health` prints the exact address.
+4. Copy the **Client ID** and **Client secret** into Vercel as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then redeploy.
 
-Only the database can make someone an admin; nothing in the game page can. To check who is an admin, run `select name from heroes where is_admin;`.
+Google blocks sign-in inside in-app browsers, such as wallet apps, X and Instagram. The game says so, and tells Google players to use Safari or Chrome. Wallet players keep using their wallet's browser.
 
-### 5. Optional: your own domain
+### 6. Your admin hero
 
-In Vercel, open **Settings → Domains**, add for example `play.lanternhold.gg` and follow the DNS steps. Then change `APP_DOMAIN` to that domain and redeploy.
+1. Sign in with your wallet and create your hero.
+2. In Supabase's SQL Editor, run `supabase/link-admin-hero.sql`. It's set to `0x2f62…dcA2`; edit the address for a different wallet. It makes that hero the game's only admin, with the Blue Party Hat, and copies your demo progress the first time.
+3. Sign out and back in to get the admin loadout.
+4. To rename the hero to Lantern, run `supabase/rename-hero-lantern.sql`.
+
+Only the database can make an admin. To list admins, run `select name from heroes where is_admin;`.
 
 ---
 
+## How multiplayer works
+
+- **The lobby:** one Cloudflare "Lobby" knows who's online.
+  - It picks your world: your party's world if they're in one, otherwise the busiest world with space, so the Hold feels lively.
+  - It delivers friend status, party invites and the world feed.
+  - Each hero can only be online on one device. Signing in elsewhere closes the first device.
+- **Worlds:** each world is a separate room of up to 50 players.
+  - Positions are sent up to 10 times a second, only while you move, and sent on to everyone in batches.
+  - Chat is filtered and rate-limited by the server, and names always come from the sign-in, never from the player's device.
+- **Dungeon instances** are private rooms that only your party can join.
+  - **The host:** the leader's game is the host. It runs the monsters and sends them to everyone 10 times a second.
+  - **Other players:** their attacks go to the host, which applies the damage, decides who gets the loot and tells everyone. Chests, glowcaps and ore are handled the same way, so each can only be taken once.
+  - **If the host leaves**, the player who has been there longest takes over the monsters without a break. Members who join late land on the party's current floor with the dungeon as it is.
+- **Saves:** heroes still save to Supabase exactly as before.
+- **Fallback:** if the realtime server can't be reached, the game still works solo, and Social and chat explain why they're unavailable.
+
+## How saving works
 ## How saving works
 
 - While you play, the game saves to the server every 10–14 seconds, but only if something changed. It also saves right away when you return to the Hold, when you die and when you sign out.
 - Each save carries a revision number. If a second device saves an old copy over newer progress, the server refuses it and that device reloads the newest progress. Two devices can never overwrite each other.
 - The server checks every save. It cleans out unknown items and invalid values, then refuses "impossible" jumps such as millions of gold in a few seconds, piles of new legendaries, or skill levels gained too fast. Refused saves are logged in the `save_flags` table so you can review them (`select * from save_flags order by at desc;`).
 - The Blue Party Hat is removed from any save that isn't an admin hero.
-- Guests can still play without a wallet, but their progress stays only on that device.
-- To ban someone, run `update accounts set banned = true where wallet = '0x…';`. They can no longer load or save their hero.
+- To ban someone, run `update accounts set banned = true where id = (select account_id from heroes where name_key = lower('TheirName'));`. They can no longer load their hero, save, chat or join the realtime server (their next ticket is refused).
 
 ## Costs and plans
 
@@ -123,17 +176,22 @@ In Vercel, open **Settings → Domains**, add for example `play.lanternhold.gg` 
 - **Supabase:** the free plan has a 500 MB database and **pauses a project after a week of inactivity**. **Pro** is $25 a month and never pauses. It includes $10 of compute credit, which covers the default Micro database, plus 250 GB of egress and unlimited API requests. For 1,000 players at once, switch to **Small** compute (about $15 a month, so about $5 more after the credit) for headroom. Do this under **Project Settings → Compute and Disk**.
 - **Storage:** a save is roughly 0.5–2 KB, so even 100,000 players fit in a few hundred MB.
 
-**What 1,000 players costs** (from the load test numbers):
+- **Cloudflare (realtime):** Workers Paid is $5 a month. Durable Objects cost $0.15 per million incoming messages, where 20 game messages count as one billed request. Outgoing messages are free, and so is bandwidth. You also pay for time while a room has players in it: about $4 a month for a room that's busy around the clock.
+
+**What 1,000 players costs** (from the load tests):
 
 | | 1,000 players online 24/7 | A realistic month (1,000 at peak, ~250 on average) |
 |---|---|---|
-| Requests | ~148 million | ~37 million |
-| Vercel usage | ~$90 requests + ~$8 CPU + ~$15 memory | ~$22 + ~$2 + ~$15 |
-| Vercel plan | $20 | $20 (credit covers part of the usage) |
-| Supabase | $25 + $5 (Small) | $25 + $5 (Small) |
-| **About** | **$160 / month** | **$70–90 / month** |
+| Vercel (plan + saves) | ~$130 | ~$60 |
+| Supabase (Pro + Small) | $30 | $30 |
+| Cloudflare: messages | ~$95 | ~$25 |
+| Cloudflare: room time | ~$100 (20 busy worlds) | ~$25 |
+| Cloudflare plan | $5 | $5 |
+| **About** | **$360 / month** | **$145 / month** |
 
-The main cost is the number of requests. If you want to spend less, make players save less often by raising `SAVE_GAP` in `client-src/account-live.js`, for example to 20 seconds. That roughly halves the request bill, and a crash can then lose up to 20 seconds of play instead of 10. Returning home and dying always save immediately either way.
+Ways to spend less:
+- **Save less often:** raise `SAVE_GAP` in `client-src/account-live.js`.
+- **Send positions less often:** raise `MP.sendT=.1` in `client-src/game.js` from 0.1 to 0.15 seconds. That cuts realtime messages by a third, and movement still looks smooth because other players glide between updates.
 
 ## Built for 1,000+ players at once
 
@@ -149,7 +207,11 @@ The main cost is the number of requests. If you want to spend less, make players
   - refused saves are rate-limited like normal ones, so a cheater can't flood the review log;
   - the new database functions can only be called with the server key.
 
-**Load test, 1,000 players** (`npm run loadtest`, real wallet signatures, simulated 15 ms database calls):
+**Realtime load test** (`realtime/test/rt-load.mjs`, run on one machine against the local Cloudflare runtime):
+- 600 players across 12 full worlds walked around for 45 seconds, sending 2,900 position updates a second. Positions reached other players in 160 ms typically, including the 100 ms batching. No connections dropped.
+- 1,000 players across 20 worlds: no dropped connections. Delays were higher (250 ms typical) because the test players, the server and every world ran on one computer. On Cloudflare each world runs separately.
+
+**Save load test, 1,000 players** (`npm run loadtest`, real wallet signatures, simulated 15 ms database calls):
 - 1,000 players signed in and created heroes in **9 seconds**.
 - During 2 minutes of play, about 57 requests a second came in. **7,551 saves** were made with **0 failures**. A save took **33 ms** typically and 49 ms for the slowest 1 in 100.
 - The server code used about **1.6 ms of CPU per request**, about 9% of one CPU core for all 1,000 players.
@@ -176,19 +238,27 @@ This creates throwaway heroes named `lt_xxxx_1…`. Afterwards, run `supabase/cl
 ## Chat
 
 Players tap the chat button at the bottom of the screen (or press **T** on a computer) to open a see-through chat panel. Tapping it again closes it.
-- **Channels:** each map has its own channel. The Hold is one, and each Depths floor (Floor 1–15) is another, so players on the same floor talk to each other.
-- **Rules the server enforces:**
-  - only signed-in heroes can chat, and messages carry the hero's name;
+- **Who sees it:** everyone in your world, or everyone in your dungeon instance. Start a message with `/p` to talk to your party only.
+- **Server rules:**
+  - names come from the sign-in, so they can't be faked;
   - messages are up to 140 characters, with offensive words masked;
-  - each player can send one message every 1.2 seconds;
-  - banned accounts can't post.
-- **Storage:** messages live in the `chat_messages` table. Messages older than 2 days are deleted every hour (pg_cron).
-- **Reading chat:** to read what's been said, run `select name, text, at from chat_messages where channel = 'hold' order by id desc limit 50;`.
-- **Cost:** the game checks for new messages every 3 seconds, but only while that player has chat open. A closed chat costs nothing. If 200 of 1,000 players keep chat open, that adds about 65 small requests a second.
+  - each player can send one message every 1.2 seconds.
+- **History:** messages aren't stored. A world keeps its last 30 messages in memory so newcomers see the recent conversation. (The old `chat_messages` table from the previous build is no longer used.)
 
-## What is still simulated
+## Linking an X account
 
-The other players you see walking around town and the market listings are still played by the game itself, as in the demo. Chat is real. Seeing each other move live and real player-to-player trading are the next big steps. They need a realtime channel (Supabase Realtime is a good fit) and server-side trade escrow.
+Players can link their X account to their hero from the bag's **Hero** tab (**Link X**). They approve it on X itself, so nobody can claim someone else's account. One X account can be linked to only one hero, and players can unlink it any time. The game keeps only the X account's id and @username. X's access token is thrown away straight after reading those.
+
+**To turn it on (about 10 minutes):**
+1. Go to **developer.x.com**, sign in with the X account that will own the app, and create a **Project** and an **App**. X's API is now pay-per-use with no free tier, so add a few dollars of credit. Each link is one profile lookup, about $0.01.
+2. In the app's **User authentication settings**, turn on **OAuth 2.0** and set:
+   - App type: **Web App** (a confidential client)
+   - Callback URL: `https://YOUR-SITE/api/x/callback`. Use your real address; `/api/health` prints the exact one.
+   - Website URL: `https://YOUR-SITE`
+3. Copy the **OAuth 2.0 Client ID** and **Client Secret** into Vercel's Environment Variables as `X_CLIENT_ID` and `X_CLIENT_SECRET`, then redeploy.
+4. Open `/api/health`. The `x` line should say "ok: X linking is on".
+
+Until it's on, the Hero tab shows "X account · Coming soon". If you change your domain later, update the callback URL on X as well.
 
 ## Before the Season 1 token
 
@@ -211,14 +281,21 @@ Requires Node 20 or newer.
 npm install
 npm run build      # client-src/ → public/index.html + public/game.js, and lib/gamedata.js
 npm run dev        # http://localhost:3000, in-memory database (no Supabase needed)
-npm test           # 46 API tests with real wallet signatures
-npm run loadtest   # 1,000 simulated players against a local server (see "Built for 1,000+ players")
+npm test           # 72 API tests (wallet signatures, Google and X with stand-in servers, friends, saves)
+npm run loadtest   # 1,000 simulated players saving against a local server
+
+cd realtime && npm install
+npm run dev        # the realtime server on ws://127.0.0.1:8787 (secret in realtime/.dev.vars)
+npm test           # 45 realtime tests: tickets, worlds, chat, friends, parties, instances, host handover
+node test/rt-load.mjs --players 600 --seconds 60
 ```
+
+To play locally with other players, run both servers. Start the realtime server first, then start the game with `RT_URL=ws://127.0.0.1:8787 RT_SECRET=<the secret from realtime/.dev.vars> npm run dev`, and open http://localhost:3000 in two browsers.
 
 Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run dev` to use a real database instead.
 
 - Edit game code in `client-src/`, never in `public/`, which is generated. Item and skill tables live in `client-src/data.js`, and the build copies them to the server so both always agree.
-- API routes: `api/auth/nonce`, `api/auth/verify`, `api/auth/logout`, `api/me`, `api/name`, `api/hero`, `api/save`.
+- API routes: `api/auth/nonce`, `api/auth/verify`, `api/auth/logout`, `api/auth/google/start`, `api/auth/google/callback`, `api/auth/link-wallet`, `api/me`, `api/config`, `api/name`, `api/hero`, `api/save`, `api/friends`, `api/rt-ticket`, `api/x/start`, `api/x/callback`, `api/x/unlink`, `api/health`.
 - Security:
   - sessions are signed cookies (HttpOnly, Secure, SameSite=Lax, 7 days);
   - every write needs the `X-LH` header and a same-origin request;
@@ -227,6 +304,13 @@ Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run
 
 ### Troubleshooting
 
+- **Players can't see each other, or Social says the realtime server isn't reachable:**
+  - `/api/health` shows the `realtime` line;
+  - `RT_URL` must be the worker's address;
+  - `RT_SECRET` must be identical in Vercel and Cloudflare;
+  - `ALLOWED_ORIGINS` in Cloudflare must contain your site address exactly, with `https://` and no trailing `/`;
+  - after changing any of these, redeploy Vercel.
+- **Google sign-in shows "redirect_uri_mismatch":** add the exact redirect URI from `/api/health` in Google Cloud → Clients.
 - **First, open `https://YOUR-SITE/api/health`.** It checks every setting and the database, and names anything wrong. Secret values are never shown.
 - **"Couldn't reach the server" or "isn't set up correctly" when signing in:**
   - `SUPABASE_URL` must be the **Project URL**, like `https://abcd1234efgh5678ijkl.supabase.co`. Find it in Supabase → Project Settings → API (or Data API). The server now also accepts the bare project ID, a missing `https://` or a trailing `/rest/v1`.

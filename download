@@ -1,5 +1,5 @@
-node_modules/
-.env
-.env.*
-!.env.example
-.vercel/
+node_modules
+.env*
+.vercel
+.wrangler
+.dev.vars
