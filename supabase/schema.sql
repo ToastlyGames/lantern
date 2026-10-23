@@ -46,6 +46,10 @@ create table if not exists heroes (
 alter table heroes add column if not exists x_id text;
 alter table heroes add column if not exists x_username text;
 alter table heroes add column if not exists x_linked_at timestamptz;
+alter table heroes add column if not exists admin_hat text not null default 'partyhat';
+do $$ begin
+  alter table heroes add constraint heroes_admin_hat_check check (admin_hat in ('partyhat','greenhat'));
+exception when duplicate_object then null; end $$;
 create unique index if not exists heroes_x_id_key on heroes (x_id);
 
 -- short-lived codes while a player is away on x.com approving the link (deleted when used, or after a day)
@@ -124,7 +128,7 @@ create or replace function lh_state(p_account uuid) returns json language sql st
     'google', case when a.google_sub is null then null else coalesce(a.email, 'linked') end,
     'banned', a.banned,
     'hero', case when h.account_id is null then null
-                 else json_build_object('name', h.name, 'look', h.look, 'is_admin', h.is_admin, 'x', h.x_username) end,
+                 else json_build_object('name', h.name, 'look', h.look, 'is_admin', h.is_admin, 'hat', h.admin_hat, 'x', h.x_username) end,
     'save', case when s.account_id is null then null
                  else json_build_object('data', s.data, 'rev', s.rev,
                                         'age_ms', (extract(epoch from (now() - s.updated_at)) * 1000)::bigint) end)
