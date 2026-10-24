@@ -334,6 +334,48 @@ function gateSprite(f){const W=64,H=56,p=new Px(W,H),r=rng(41),cx=32;
 function lanternPost(f){const p=new Px(14,30);p.rect(6,8,2,22,PAL.bark);p.rect(6,8,1,22,PAL.wood);p.rect(4,28,6,2,'#4b3226');
   p.rect(2,7,10,2,PAL.bark);p.rect(2,9,1,2,'#3a3f55');p.rect(1,11,4,1,'#3a3f55');p.rect(1,12,4,5,f?'#ffe2a0':'#ffcd75');p.rect(2,13,2,3,PAL.white);p.rect(1,17,4,1,'#3a3f55');
   p.outline();return p.canvas();}
+// ---- Tallow, the Hold's first merchant: wide-brim hat, teal coat, red scarf, a pack piled high and a lantern on a staff ----
+function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT='#4b3226',HAT2='#3a2519',COAT='#257179',COAT2='#1b5560',SC='#b13e53',BEARD='#c2c7cf',BEARD2='#94a0ad',B=f?1:0;
+  // backpack behind (pot, bedroll, a tiny lantern)
+  p.rect(14,9+B,9,12,'#6b3e26');p.rect(14,9+B,9,1,'#8a5a3a');p.rect(15,6+B,8,3,'#a0663b');p.rect(15,6+B,8,1,'#d9a066');p.ell(21,7.5+B,2,1.6,'#566c86');p.set(21,6+B,'#94b0c2');
+  p.rect(22,13+B,2,3,f?'#ffe2a0':'#ffcd75');p.set(22,12+B,'#3a3f55');
+  // staff with a hanging lantern (sways)
+  p.rect(2,6,1,23,'#8a5a3a');p.rect(2,6,3,1,'#6b3e26');const lx=f?3:4;p.set(lx,7,'#3a3f55');p.rect(lx-1,8,3,4,'#ffcd75');p.set(lx,9,'#fff3c4');p.rect(lx-1,12,3,1,'#3a3f55');
+  // boots and coat
+  p.rect(8,26,3,3,'#3a2519').rect(13,26,3,3,'#3a2519');p.rect(7,14+B,10,13-B,COAT);p.rect(7,14+B,1,13-B,COAT2);p.rect(16,14+B,1,13-B,COAT2);p.rect(11,16+B,1,10-B,COAT2);
+  p.set(10,18+B,'#f7c64a').set(10,21+B,'#f7c64a').set(10,24,'#f7c64a');p.rect(7,22,10,1,'#6b3e26');p.set(12,22,'#f7c64a');
+  // arms: one on the staff, one on the belt
+  p.rect(4,15+B,3,2,COAT);p.set(3,15+B,SK).set(3,16+B,SK);p.rect(17,16+B,2,4,COAT);p.set(17,20+B,SK);
+  // scarf
+  p.rect(8,13+B,8,2,SC);p.rect(13,15+B,2,4,SC);p.set(14,19+B,'#8f2d3f');
+  // head: face, bushy grey beard, gold earring
+  p.rect(9,7+B,6,6,SK);p.rect(9,11+B,6,1,SK2);p.set(10,9+B,'#1a1c2c').set(13,9+B,'#1a1c2c');p.set(11,10+B,SK2);
+  p.rect(9,11+B,6,3,BEARD);p.rect(10,14+B,4,1,BEARD);p.set(9,13+B,BEARD2).set(14,13+B,BEARD2);p.rect(10,11+B,4,1,BEARD2);p.set(15,10+B,'#f7c64a');
+  // wide-brim hat with a gold band and a red feather
+  p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
+  p.outline();return p.canvas();}
+// Tallow's cart: a striped awning over crates of bread, oil and seed
+function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
+  p.rect(3,6,2,24,W2).rect(35,6,2,24,W2);
+  for(let x=1;x<39;x++){const c=Math.floor((x-1)/4)%2?A2:A;p.rect(x,2,1,6,c);if(x%4===2)p.set(x,8,c);}p.rect(1,1,38,1,'#8f2d3f');
+  p.rect(2,18,36,8,W);p.rect(2,18,36,1,'#a0663b');p.rect(2,25,36,1,W2);for(let x=6;x<38;x+=8)p.rect(x,19,1,6,W2);
+  // goods on the counter
+  p.ell(9,16,3,1.8,'#d9a066');p.set(8,15,'#ffcd75');p.ell(14,16,2.4,1.6,'#c98a4a');
+  for(const x of [19,22,25]){p.rect(x,13,2,4,'#ef7d57');p.rect(x,12,2,1,'#566c86');p.set(x,14,'#ffcd75');}
+  p.rect(29,13,6,5,'#8a6f30');p.rect(29,13,6,1,'#c2a26b');p.set(31,12,'#a7f070').set(33,12,'#38b764');
+  // wheels
+  p.ell(8,29,3.5,3.5,'#3a2519');p.ell(8,29,2,2,W);p.ell(32,29,3.5,3.5,'#3a2519');p.ell(32,29,2,2,W);
+  p.outline();return p.canvas();}
+// the east road's signpost
+function signSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#6b3e26');p.rect(8,8,1,16,'#8a5a3a');
+  p.rect(1,2,14,7,'#a0663b');p.rect(1,2,14,1,'#d9a066');p.rect(1,8,14,1,'#6b3e26');p.rect(15,3,1,5,'#a0663b');p.set(16,4,'#a0663b').set(16,5,'#a0663b').set(16,6,'#a0663b').set(17,5,'#a0663b');
+  p.rect(3,5,8,1,'#4b3226');p.set(10,4,'#4b3226').set(10,6,'#4b3226');p.set(12,4,'#ffcd75').set(13,5,'#ffcd75');p.outline();return p.canvas();}
+// the barricade across the opening in the trees (the way to Season 1's new area)
+function barricadeSprite(){const p=new Px(20,64),W='#8a5a3a',W2='#6b3e26';
+  for(const y0 of [6,34]){p.line(2,y0,17,y0+22,W);p.line(3,y0,18,y0+22,W2);p.line(17,y0,2,y0+22,W);p.line(18,y0,3,y0+22,W2);}
+  for(const y of [12,40]){p.rect(1,y,18,3,W);p.rect(1,y,18,1,'#a0663b');}
+  p.rect(5,24,10,8,'#b13e53');p.rect(5,24,10,1,'#e43b44');p.rect(7,27,6,1,'#f4f4f4');p.rect(7,29,6,1,'#f4f4f4');
+  p.line(0,30,4,26,'#c2a26b');p.line(15,26,19,30,'#c2a26b');p.outline();return p.canvas();}
 function fenceSprite(){const p=new Px(16,16);p.rect(0,6,16,2,PAL.wood).rect(0,11,16,2,PAL.wood);p.rect(2,3,2,12,PAL.bark).rect(12,3,2,12,PAL.bark);p.outline();return p.canvas();}
 function flowerSprite(c){const p=new Px(16,16);[[4,6],[11,9],[6,12]].forEach(([x,y])=>{p.set(x,y+1,PAL.fern);p.rect(x-1,y,3,1,c);p.rect(x,y-1,1,3,c);p.set(x,y,PAL.yellow);});return p.canvas();}
 function wellSprite(){const p=new Px(32,32);p.ell(16,22,10,6,PAL.slate);p.ell(16,21,8,4,PAL.blue);p.rect(5,6,2,16,PAL.bark).rect(25,6,2,16,PAL.bark);
@@ -414,7 +456,7 @@ function buildArt(){
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};
@@ -488,8 +530,9 @@ const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'}};
 const WATERS={hold:{n:'Hold Lake',fish:['pondfin']}};
 // ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
-// Expansions add new trees (with higher levels) per area. Logs will feed a future skill.
-const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:150,regrow:90,item:'logs'}};
+// Expansions add new trees per area: the higher the level, the fewer logs and the longer the regrow. Logs feed a future skill.
+// Keep logs/regrow in step with TREE_TYPES in realtime/src/index.js (the server keeps the shared count).
+const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,item:'logs'}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
@@ -529,6 +572,52 @@ const PACKS=[
 const packOf=f=>PACKS.find(p=>f>=p.from&&f<=p.to);
 const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@runa_k','@tallowtom','@vexa','@gravelgus','@sora_lamps','@bram_b'];
 
+// ===== The Bulletin: build version + update history shown on the board in the Hold. =====
+// EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
+// scripts/build.mjs also writes CHANGELOG.md from this list.
+const BUILD={version:'0.7.0',season:'Season 0 (Beta)',date:'2026-10-24'};
+const CHANGELOG=[
+  {v:'0.7.0',date:'2026-10-24',title:'Tallow arrives, and the road east',notes:[
+    'Meet Tallow, the Hold\'s first merchant. Find his cart by the crossroads to buy supplies and sell your goods.',
+    'The Market Board is now the Bulletin: the current build and every update we ship, newest first.',
+    'Oak trees now hold 300 logs and grow back in 20 seconds, so several players can chop together.',
+    'The east road now ends at a barricade and a sign. Something is coming in Season 1.']},
+  {v:'0.6.0',date:'2026-10-24',title:'The Depths, rebuilt',notes:[
+    'A new stone archway for the Delve Gate, with lantern posts and stairs into the dark.',
+    'Dungeon floors are now flagstones and brick walls, with cobwebs, bones, banners, chains, puddles and glowing mushrooms.',
+    'Smooth lantern and torch light, sparks from the torches and dust drifting through your light.']},
+  {v:'0.5.1',date:'2026-10-24',title:'Name tags',notes:[
+    'Combat levels next to names, in green, yellow or red depending on how they compare to yours.',
+    'A gold crown marks admins.',
+    'Player names are off by default: turn them on with Settings → Player names. Tags are now small, sharp text.']},
+  {v:'0.5.0',date:'2026-10-24',title:'Life at the Hold',notes:[
+    'Proper axe swings with arms, a step bob when walking, swaying trees, chimney smoke, butterflies and a glinting lake.',
+    'Switch worlds from Social → Worlds.',
+    'Cooking takes time now: Cook all works through a stack with a progress bar.',
+    'A round favicon.']},
+  {v:'0.4.1',date:'2026-10-24',title:'lanternhold.fun',notes:[
+    'The game moved to lanternhold.fun.',
+    'Wallet sign-in is now two approvals (connect, then one free signature), with stronger protection against copycat sites.']},
+  {v:'0.4.0',date:'2026-10-23',title:'Woodcutting and goals',notes:[
+    'New skill: Woodcutting. Trees in the Hold are shared by everyone in your world.',
+    '48 goals in any order, including 9 secrets, and two Goal Relics you can only get from goals.',
+    'Hero and Skills got their own buttons. Your gold now shows in your bag.']},
+  {v:'0.3.0',date:'2026-10-23',title:'Sharing the world',notes:[
+    'See other players\' fishing rods.',
+    'Party loot in dungeons is visible to the whole party.',
+    'Items dropped from your bag land on the ground for others to find after 30 seconds.']},
+  {v:'0.2.0',date:'2026-10-23',title:'Admins and mobile fixes',notes:[
+    'Admin party hats.',
+    'No more long-press menus or pinch-zoom on game buttons on phones.',
+    'A sturdier realtime server that stays up all day.']},
+  {v:'0.1.1',date:'2026-10-22',title:'Staying connected',notes:[
+    'Players stay connected and visible to each other through phone sleeps and network blips.',
+    'The lantern favicon.']},
+  {v:'0.1.0',date:'2026-10-21',title:'Season 0 begins',notes:[
+    'Every player is real: sign in with a wallet or Google.',
+    'One shared Hold per world, chat, friends, parties and shared party dungeons.']}
+];
+
 // ===== Maps: the Hold (handmade) and the Depths (procedural) =====
 const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5;
 function newMap(w,h,kind,fill){return {w,h,kind,t:new Uint8Array(w*h).fill(fill),solid:new Uint8Array(w*h),objs:[],lights:[],seed:0};}
@@ -543,20 +632,28 @@ function buildHold(){
   const W=26,H=24,m=newMap(W,H,'hold',GRASS);
   for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(x<1||y<1||x>=W-1||y>=H-1)setSolid(m,x,y,1);
   for(let y=5;y<H-1;y++){setT(m,12,y,PATH);setT(m,13,y,PATH);}
-  for(let x=1;x<W-1;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
+  for(let x=1;x<W;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
   for(let x=14;x<17;x++)setT(m,x,13,PATH);
   // pond
   [[18,19],[19,19],[20,19],[21,19],[17,20],[18,20],[19,20],[20,20],[21,20],[22,20],[18,21],[19,21],[20,21],[21,21],[22,21],[19,22],[20,22],[21,22]].forEach(([x,y])=>{setT(m,x,y,WATER);setSolid(m,x,y,1);});
   // border + inner trees
   const tree=(tx,ty)=>addObj(m,{type:'tree',x:tx*T+8,y:ty*T+15,spr:'tree',block:[[tx,ty]]});
-  for(let x=0;x<W;x+=2){tree(x,0);tree(x+1,H-1);}for(let y=1;y<H;y+=2){tree(0,y);tree(W-1,y);}
+  // the east road ends at an opening in the trees (rows 11–12), closed with a barricade until Season 1's new area
+  for(let x=0;x<W;x+=2){tree(x,0);tree(x+1,H-1);}for(let y=1;y<H;y+=2){tree(0,y);if(y!==11&&y!==13)tree(W-1,y);}
   // the inner trees can be cut (Woodcutting); border trees are the edge of the world
   m.trees=[];[[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind='oak';o.chop=true;o.ti=m.trees.length;o.logs=TREES.oak.logs;o.until=0;m.trees.push(o);});
   // buildings
   addObj(m,{type:'gate',x:13*T,y:5*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
-  addObj(m,{type:'board',x:17*T,y:10*T+2,spr:'board',block:[[16,9],[17,9]],act:{x:17*T,y:10*T+8,label:'Market',id:'market'}});
+  // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
+  addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
+  // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
+  addObj(m,{type:'stall',x:19*T+8,y:9*T+14,spr:'stall',block:[[18,9],[19,9]]});
+  addObj(m,{type:'npc',name:'Tallow',x:20*T+12,y:10*T+12,act:{x:20*T+12,y:11*T+2,label:'Trade',id:'market'}});
+  // the east road: a sign and a barricaded opening in the trees
+  addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
+  addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
   addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
   addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
   addObj(m,{type:'well',x:9*T,y:10*T,spr:'well',block:[[8,9],[9,9]]});
@@ -910,7 +1007,7 @@ function nearestAct(){
 }
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('sell');
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -1059,7 +1156,7 @@ function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   c.sw+=dt;if(c.sw>=.85){c.sw=0;sfx('hit');puff(o.x+(P.x<o.x?-4:4),o.y-6,PAL.wood,3);o.shake=.25;}
   c.t+=dt;if(c.t<chopEvery())return;c.t=0;
   const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
-  if(roomUp())NET.send({t:'chop',i:o.ti,ok:ok?1:0});
+  if(roomUp())NET.send({t:'chop',i:o.ti,k:o.kind,ok:ok?1:0});
   else if(ok){o.logs--;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
 function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
   floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
@@ -1237,14 +1334,15 @@ function openSettings(){
   q('[data-tog]').forEach(b=>b.onclick=()=>{const k=b.dataset.tog;if(k==='sound'){muted=!muted;try{localStorage.setItem('lanternhold.mute',muted?'1':'0');}catch(e){}}else SET[k]=!SET[k];saveSet();openSettings();});
   $('sdef').onclick=()=>{Object.assign(SET,SET_DEF,{shake:!reduceMotion});muted=false;try{localStorage.setItem('lanternhold.mute','0');}catch(e){}saveSet(true);openSettings();};}
 let sellArm=null;
-function openMarket(tab){
+const TALLOW_HI=['Lanterns, oil, a bite to eat. What\'ll it be?','Ah, a delver! Mind the dark down there.','Sell me your spoils. Fair prices, mostly.','Back again? My cart\'s always open.'];
+function openMarket(tab,hello){if(hello)MP.tallowHi=TALLOW_HI[ri(0,TALLOW_HI.length-1)];
   const ok=id=>ITEMS[id]&&!ITEMS[id].bound&&!ITEMS[id].keep,byV=(a,b)=>ITEMS[b].v-ITEMS[a].v;
   const rows=(store,from)=>Object.keys(store).filter(id=>ok(id)&&store[id]>0).sort(byV).map(id=>{const n=store[id],arm=sellArm===from+':'+id;
     return `<div class="recipe"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n}</b><small>×${n} · ${fmt(ITEMS[id].v)} gold each${ITEMS[id].relic?' · Relic':''}${rTag(id)?' · '+rTag(id):''}</small></span><button class="btn sm${arm?' warn':''}" data-sell="${id}" data-from="${from}">${arm?'Sure?':'Sell 1'}</button>${n>1?`<button class="btn sm alt" data-sellall="${id}" data-from="${from}">All</button>`:''}</div></div>`;}).join('');
   const bagR=rows(S.bank,'bag'),bankR=rows(S.vault,'bank');
   const body=tab==='sell'?`<h3>From your bag</h3>${bagR||'<p class="lead small">Nothing in your bag to sell.</p>'}<h3>From your bank</h3>${bankR||'<p class="lead small">Nothing in your bank to sell.</p>'}<p class="lead small">Gear you're wearing isn't listed. Take it off in your bag to sell it.</p>`
-   :tab==='shop'?SHOP.map(s=>`<div class="recipe"><div class="rh">${iconImg(s.id)}<span><b>${ITEMS[s.id].n}</b><small>Hold shop · ${s.price} gold</small></span><button class="btn sm" data-buy="${s.id}" data-n="1" ${S.gold>=s.price?'':'disabled'}>Buy 1</button><button class="btn sm alt" data-buy="${s.id}" data-n="5" ${S.gold>=s.price*5?'':'disabled'}>×5</button></div></div>`).join('')+'<p class="lead small">Trading between players arrives in a later update.</p>':'';
-  openSheet(`<h2>Market Board</h2><div class="tabs"><button class="tab" aria-selected="${tab==='sell'}" data-tab="sell">Sell</button><button class="tab" aria-selected="${tab==='shop'}" data-tab="shop">Shop</button></div><p class="lead">You have ${iconImg('gold')} <b>${fmt(S.gold)}</b> gold.</p><div class="list">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+   :tab==='shop'?SHOP.map(s=>`<div class="recipe"><div class="rh">${iconImg(s.id)}<span><b>${ITEMS[s.id].n}</b><small>${s.price} gold each</small></span><button class="btn sm" data-buy="${s.id}" data-n="1" ${S.gold>=s.price?'':'disabled'}>Buy 1</button><button class="btn sm alt" data-buy="${s.id}" data-n="5" ${S.gold>=s.price*5?'':'disabled'}>×5</button></div></div>`).join('')+'<p class="lead small">Trading between players arrives in a later update. Tallow\'s stock grows with each season.</p>':'';
+  openSheet(`<div class="npchd"><img alt="" src="${ART.merchant[0].toDataURL()}"><span><b>Tallow</b><small>Travelling merchant</small><em>“${chatEsc(MP.tallowHi||TALLOW_HI[0])}”</em></span></div><div class="tabs"><button class="tab" aria-selected="${tab==='shop'}" data-tab="shop">Buy</button><button class="tab" aria-selected="${tab==='sell'}" data-tab="sell">Sell</button></div><p class="lead">You have ${iconImg('gold')} <b>${fmt(S.gold)}</b> gold.</p><div class="list">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;const q=s=>$('sheet').querySelectorAll(s);
   q('[data-tab]').forEach(b=>b.onclick=()=>openMarket(b.dataset.tab));
   const sellFrom=(from,id,n)=>{const st=from==='bank'?S.vault:S.bank;n=Math.min(n,st[id]||0);if(!n)return 0;st[id]-=n;if(st[id]<=0)delete st[id];S.gold+=ITEMS[id].v*n;bump('sold',ITEMS[id].v*n);sfx('coin');save();return n;};
@@ -1333,7 +1431,7 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();r
    <ul class="info">${itemInfo(id).map(t=>`<li>${t}</li>`).join('')}</ul>
    ${itemSlot(id)?`<button class="btn big" id="eqIt">Equip${S.gear[itemSlot(id)]?' (swap with '+ITEMS[gearId(itemSlot(id),S.gear[itemSlot(id)])].n+')':''}</button>`:''}
    ${it.food||it.oil?`<h3>Quick slot</h3><div class="qslots">${S.quick.map((q,j)=>`<button class="qs ${q===id?'on':''}" data-qset="${j}" aria-label="Put in quick slot ${j+1}">${q?`<img alt="" src="${iconOf(q).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>`:''}
-   ${it.keep?'<p class="lead small" style="color:#ff77a8">Goal Relic. Earned only through goals. It can’t be sold, traded or dropped.</p>':`   <h3>Drop</h3><p class="lead small">It lands at your feet. Tap <b>Pick up</b> to take it back. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes. To get gold instead, sell at the Market Board.</p>
+   ${it.keep?'<p class="lead small" style="color:#ff77a8">Goal Relic. Earned only through goals. It can’t be sold, traded or dropped.</p>':`   <h3>Drop</h3><p class="lead small">It lands at your feet. Tap <b>Pick up</b> to take it back. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes. To get gold instead, sell it to Tallow.</p>
    ${n>1?`<div class="qty"><span>How many?</span><button class="btn alt sm" id="dm" aria-label="Fewer">−</button><output id="dn">${dropQty}</output><button class="btn alt sm" id="dp" aria-label="More">+</button><button class="btn alt sm" id="dx">All</button></div>`:''}
    <button class="btn big danger" id="drop">${dropArm?`Tap again to drop ${dropQty} ${it.n}`:`Drop ${dropQty>1?dropQty+' ':''}${it.n}`}</button>
 `}
@@ -1482,7 +1580,7 @@ const GOALS=[
   {id:'rare',cat:'depths',t:'Find a Rare lantern or cape',hint:'Chests and bosses drop them most.',done:()=>ownsRarity('rare'),gold:100},
   {id:'party',cat:'depths',t:'Delve with a party',hint:'Invite a friend from the Social button, then enter the Gate.',done:()=>!!S.flags.partied,gold:40},
   {id:'friend',cat:'hold',t:'Make a friend',hint:'Social button → Friends → add a name.',done:()=>!!S.flags.friend,gold:20},
-  {id:'sell',cat:'hold',t:'Earn 5,000 gold at the Market',hint:'Sell what you don’t need at the Market Board.',...cn(()=>C('sold'),5000),gold:75},
+  {id:'sell',cat:'hold',t:'Earn 5,000 gold trading with Tallow',hint:'Sell what you don’t need to Tallow, the merchant by the crossroads.',...cn(()=>C('sold'),5000),gold:75},
   {id:'expand',cat:'hold',t:'Buy more bank space',hint:'At the Bank.',done:()=>S.bankBuys>=1,gold:50},
   {id:'rich',cat:'hold',t:'Hold 25,000 gold at once',hint:'Saving up for something?',done:()=>S.gold>=25000,prog:()=>[Math.min(25000,S.gold),25000],gold:250},
   // secrets: hidden until found
@@ -1520,6 +1618,17 @@ function updateGuide(dt){guideT-=dt;if(guideT>0)return;guideT=.8;checkBankGrowth
   const nx=nextGoal(),d=goalsDone(),land=document.documentElement.classList.contains('land');
   const t=nx?(land?`Goals ${d}/${GOALS.length}`:`Goals ${d}/${GOALS.length} · ${nx.t}`):`Goals ${d}/${GOALS.length}`;el.hidden=false;if(el.textContent!==t)el.textContent=t;}
 let goalTab='start';
+// ---- the Bulletin: current build and every update, newest first (data in changelog.js) ----
+const SEENV='lanternhold.seenBuild';
+const bulletinNew=()=>{try{return localStorage.getItem(SEENV)!==BUILD.version;}catch(e){return false;}};
+function openBulletin(){try{localStorage.setItem(SEENV,BUILD.version);}catch(e){}
+  openSheet(`<h2>The Bulletin</h2><div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
+   <p class="lead small">Every update we ship is posted here, newest first.</p>
+   <div class="changelog">${CHANGELOG.map((e,i)=>`<section class="${i===0?'latest':''}"><h3>v${e.v} · ${chatEsc(e.title)} <small>${e.date}</small></h3><ul>${e.notes.map(n=>`<li>${chatEsc(n)}</li>`).join('')}</ul></section>`).join('')}</div>
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
+   <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
+   <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
 function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
   const list=GOALS.filter(g=>g.cat===goalTab).map(g=>{const ok=!!S.goals[g.id],hid=g.secret&&!ok,pr=!ok&&g.prog?g.prog():null;
     return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
@@ -1639,9 +1748,9 @@ const TAGS=[];const tagBox=$('tags'),tagPool=[];
 function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
-    const e=tagEl(n++),key=t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0);
+    const e=tagEl(n++),key=t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
     if(e._k!==key){e._k=key;e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
-      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.children[0].style.display=t.adm?'':'none';
+      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';
       const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
     const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
   for(let i=n;i<tagPool.length;i++)if(!tagPool[i].hidden)tagPool[i].hidden=true;}
@@ -1699,7 +1808,13 @@ function drawObj(o){
   else if(o.type==='forge')spr(ART.forge[Math.floor(time*4)%2],o.x-24,o.y-40);
   else if(o.type==='kitchen')spr(ART.kitchen[Math.floor(time*3)%2],o.x-16,o.y-32);
   else if(o.type==='press')spr(ART.press,o.x-16,o.y-32);
-  else if(o.type==='board')spr(ART.board,o.x-16,o.y-32);
+  else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
+  else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
+  else if(o.type==='npc'){const fr=Math.floor(time*1.6+Math.sin(time*.7))%2;spr(ART.merchant[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
+    if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
+    if(o.sayT>0){o.sayT-=1/60;ptDraw(g,o.say,o.x,o.y-48,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});}}
+  else if(o.type==='sign')spr(ART.sign,o.x-9,o.y-22);
+  else if(o.type==='barricade')spr(ART.barricade,o.x-10,o.y-60);
   else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
   else if(o.type==='well')spr(ART.well,o.x-16,o.y-32);
   else if(o.type==='fence')spr(ART.fence,o.x-8,o.y-14);
@@ -2067,7 +2182,7 @@ setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
   $('chatIc').src=p.canvas().toDataURL();}
 $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('chatGo').onclick=()=>{chatSend();if(!(window.matchMedia&&matchMedia('(hover:hover)').matches))$('chatIn').focus();};
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
-window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
+window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
 if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET}};
 })();
