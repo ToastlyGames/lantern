@@ -1,7 +1,7 @@
 // GET /api/health: a setup check you can open in a browser (https://your-site/api/health).
 // Reports which settings are present and whether the database is reachable. Never shows secret values.
 import { db, supabaseUrl, supabaseKey } from '../lib/db.js';
-import { send, appDomain } from '../lib/http.js';
+import { send, appDomain, appDomains, reqHost, hostAllowed } from '../lib/http.js';
 import { xEnabled, callbackUrl } from '../lib/x.js';
 import { googleEnabled, googleCallback } from '../lib/google.js';
 import { rtEnabled, rtUrl, rtTicket } from '../lib/rt.js';
@@ -17,7 +17,8 @@ export default async function handler(req, res) {
     SUPABASE_SERVICE_ROLE_KEY: !process.env.SUPABASE_SERVICE_ROLE_KEY ? 'MISSING' : /^sb_publishable_/.test(supabaseKey()) || keyRole(supabaseKey()) === 'anon' ? 'WRONG KEY: this is the public (anon/publishable) key; use the service_role / secret key'
       : /^sb_secret_/.test(supabaseKey()) || keyRole(supabaseKey()) === 'service_role' ? 'ok' : 'set, but it doesn’t look like a Supabase service_role or sb_secret_ key',
     SESSION_SECRET: !process.env.SESSION_SECRET ? 'MISSING' : process.env.SESSION_SECRET.length < 32 ? 'TOO SHORT: use 64 random characters' : 'ok',
-    APP_DOMAIN: !process.env.APP_DOMAIN ? 'not set (add your site address, then redeploy)' : appDomain(req) === host ? 'ok (' + host + ')' : `set to "${appDomain(req)}" but this site is "${host}". Sign-in only works on the address in APP_DOMAIN.`
+    APP_DOMAIN: !process.env.APP_DOMAIN ? 'not set: add your site address (e.g. lanternhold.fun), then redeploy' : hostAllowed(reqHost(req)) ? 'ok (' + appDomains().join(', ') + '); main address: ' + appDomains()[0] + (reqHost(req) !== appDomains()[0] ? '. This address sends players to the main one.' : '')
+      : `this site is "${reqHost(req)}", which isn't in APP_DOMAIN (${appDomains().join(', ')}). Players here are sent to ${appDomains()[0]}. To allow it too, add it to APP_DOMAIN separated by a comma.`
   };
   let database;
   if (!env.SUPABASE_URL.startsWith('ok') || !env.SUPABASE_SERVICE_ROLE_KEY.startsWith('ok')) database = 'skipped: fix the Supabase settings above first, then redeploy';
