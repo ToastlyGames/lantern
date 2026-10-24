@@ -81,7 +81,7 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 #guide{position:fixed;left:calc(var(--sl) + 10px);top:calc(var(--st) + 84px);max-width:min(330px,calc(100vw - 20px));z-index:2;color:#e3e9ef;font-family:inherit;font-size:17px;text-align:left;padding:6px 10px;border-radius:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation}
 #guide::before{content:"";display:inline-block;width:8px;height:8px;background:var(--gold);margin-right:8px;vertical-align:1px;box-shadow:0 0 0 2px var(--ink)}
 .goals{list-style:none;padding:0;margin:0;display:grid;gap:6px;counter-reset:g}.goals li{background:var(--panel2);border:2px solid var(--ink);padding:8px 10px;display:grid;gap:2px;counter-increment:g}
-.goals li b{font-size:20px;font-weight:400}.goals li b::before{content:counter(g) ". ";color:var(--muted)}.goals li.done{opacity:.6}.goals li.done b{text-decoration:line-through}.goals li.on{box-shadow:inset 0 0 0 2px var(--gold)}
+.goals li b{font-size:20px;font-weight:400}.goals li.secret b{color:#c77dff;letter-spacing:.2em}.goals li .xpb{margin-top:3px}.linkb{background:none;border:0;color:var(--gold);font:inherit;text-decoration:underline;padding:0;cursor:pointer}.goals li.done{opacity:.6}.goals li.done b{text-decoration:line-through}.goals li.on{box-shadow:inset 0 0 0 2px var(--gold)}
 .itemhd{display:flex;gap:12px;align-items:center;border-left:4px solid var(--rc,var(--line));padding-left:10px;margin-bottom:6px}.itemhd .big{width:64px;height:64px;image-rendering:pixelated;background:var(--ink);padding:8px}
 .itemhd span{display:grid;gap:2px}.itemhd b{font-size:26px;font-weight:400;color:var(--text)}.itemhd em{font-style:normal;font-size:18px}
 .info{margin:6px 0 4px;padding-left:20px;font-size:18px;line-height:1.35;color:#e3e9ef}
@@ -103,14 +103,17 @@ button.cell{font-family:inherit;color:inherit;border:0;cursor:pointer}
 #bAl{font-size:20px;font-weight:700;text-shadow:1px 1px 0 var(--ink);padding:0 4px;line-height:1.05;text-align:center}
 #bRet{grid-column:1;grid-row:2}
 #retRing{position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(var(--gold) calc(var(--p,0)*360deg),transparent 0);-webkit-mask:radial-gradient(circle,transparent 30px,#000 31px);mask:radial-gradient(circle,transparent 30px,#000 31px);pointer-events:none}
-#mini{display:flex;gap:10px;grid-column:1/3;grid-row:1;justify-self:end}
+#mini{display:flex;flex-direction:column;align-items:center;gap:8px;grid-column:1/3;grid-row:1;justify-self:end}
+.rb.sm{width:42px;height:42px}.rb.sm img{width:22px;height:22px}
 #bBag{width:48px;height:48px}
+.safe{list-style:none;padding:0;margin:10px auto 14px;max-width:360px;text-align:left;font-size:17px;color:var(--muted);display:grid;gap:4px}.safe b{color:var(--text)}
+.goldline{display:flex;align-items:center;gap:8px;font-size:22px;background:var(--ink);padding:8px 10px;border:2px solid var(--line);margin:4px 0 8px}.goldline .ic{width:24px;height:24px}.goldline b{color:#ffcd75}.goldline em{color:#a7f070;font-style:normal;font-size:16px;margin-left:6px}
 /* landscape + short screens */
 .land #feed{top:calc(var(--st) + 10px);left:50%;right:auto;transform:translateX(-50%);max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .land #vit{max-width:240px}
 .short #pad{width:112px;height:112px}.short #knob{left:32px;top:32px}
 .short .rb{width:48px;height:48px}.short #bA{width:70px;height:70px}.short #mini{gap:8px}
-.land.short #acts{grid-template-columns:auto auto auto;grid-template-rows:auto}.land.short #mini{grid-column:1;grid-row:1;flex-direction:column}
+.land.short #acts{grid-template-columns:auto auto auto;grid-template-rows:auto}.land.short #mini{grid-column:1;grid-row:1}
 .land.short #bRet{grid-column:2;grid-row:1}.land.short #bA{grid-column:3;grid-row:1}
 /* mouse + keyboard devices: hide the touch stick, show key hints */
 @media (hover:hover) and (pointer:fine){
@@ -184,6 +187,7 @@ small{font-size:17px;color:var(--muted)}
 /* forge + admin */
 .recipe.locked{opacity:.55}.lockt{color:#ff9a9a}
 .btn.admin{background:linear-gradient(#3b5dc9,#29366f);box-shadow:inset 0 0 0 2px #73eff7}
+.toast.r-mythic{color:#ff77a8;box-shadow:inset 0 0 0 2px #ff77a8,0 0 22px rgba(255,119,168,.6)}
 .toast.r-unique{color:#73eff7;box-shadow:inset 0 0 0 2px #73eff7,0 0 18px rgba(115,239,247,.5)}
 /* bank */
 .unlocks{list-style:none;padding:0;margin:0;display:grid;gap:4px}.unlocks li{display:flex;gap:10px;align-items:center;background:var(--panel2);border:2px solid var(--ink);padding:6px 10px;font-size:18px}
@@ -267,7 +271,8 @@ small{font-size:17px;color:var(--muted)}
   :root #quick .qs:nth-child(5){transform:translate(0,-100px)}
   :root #quick .qs:active{filter:brightness(1.3)}
   :root #bRet{position:absolute;left:calc(40px - 168px - 24px);top:calc(40px - 24px);width:48px;height:48px}
-  :root #mini{position:absolute;left:16px;top:calc(40px - 168px - 24px);display:block}
+  :root #mini{position:absolute;left:16px;bottom:184px;top:auto;display:flex;flex-direction:column;align-items:center;gap:7px;width:48px}
+  .land :root #mini,.land #mini{gap:5px}.land .rb.sm{width:38px;height:38px}
   :root #bBag{width:48px;height:48px}
   .short #acts{transform:scale(.88);transform-origin:100% 100%}
 }
@@ -280,16 +285,18 @@ small{font-size:17px;color:var(--muted)}
     <div class="bar" aria-label="Health"><i id="hpFill"></i><canvas class="pt" id="hpTxt"></canvas></div>
     <div class="lbl" id="oilRow" hidden><span>OIL</span><div class="bar" aria-label="Lantern oil"><i id="oilFill"></i><canvas class="pt" id="oilTxt"></canvas></div></div>
   </div>
-  <div id="side"><div id="goldC" class="px card" aria-label="Gold"><img id="goldIc" alt=""><canvas class="pt" id="gold"></canvas></div><canvas class="pt" id="goldRun" hidden></canvas><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div>
+  <div id="side"><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div>
 </div>
 <button id="guide" class="px" hidden></button>
 <div id="feed"></div>
-<div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd> / <kbd>Click</kbd> attack · <kbd>B</kbd> bag · <kbd>Scroll</kbd> zoom<br><kbd>1</kbd>–<kbd>5</kbd> quick slots · hold <kbd>R</kbd> return</div>
+<div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd> / <kbd>Click</kbd> attack · <kbd>B</kbd> bag · <kbd>H</kbd> hero · <kbd>K</kbd> skills · <kbd>Scroll</kbd> zoom<br><kbd>1</kbd>–<kbd>5</kbd> quick slots · hold <kbd>R</kbd> return</div>
 <div id="ctl">
   <div id="pad" aria-label="Move"><div id="knob"></div></div>
   <div id="acts">
     <div id="quick" aria-label="Quick slots"></div>
     <div id="mini">
+      <button class="rb sm" id="bHero" aria-label="Hero"><img id="icHero" alt=""></button>
+      <button class="rb sm" id="bSkill" aria-label="Skills"><img id="icSkill" alt=""></button>
       <button class="rb" id="bBag" aria-label="Bag"><img id="icBag" alt=""><span class="cnt" id="packW" hidden><canvas class="pt" id="packN"></canvas></span></button>
     </div>
     <button class="rb" id="bRet" aria-label="Hold to light the Return Flame" hidden><span id="retRing"></span><img id="icRet" alt=""></button>
@@ -304,4 +311,4 @@ small{font-size:17px;color:var(--muted)}
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=06b342e232"></script></body></html>
+<script src="/game.js?v=fccadf1314"></script></body></html>
