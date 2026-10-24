@@ -46,18 +46,23 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, failN = 0;
 const ok = (cond, name) => { if (cond) { pass++; console.log('  ✓', name); } else { failN++; console.log('  ✗', name); } };
 
+const STATEMENT = 'Sign in to Lanternhold. This free signature only proves you own this wallet. It is not a transaction, costs no gas, and gives no access to your funds.';
 class Client {
-  constructor(key) { this.acct = privateKeyToAccount(key || generatePrivateKey()); this.cookie = ''; }
+  constructor(key) { this.acct = privateKeyToAccount(key || generatePrivateKey()); this.jar = new Map(); }
+  get cookie() { return [...this.jar].map(([k, v]) => k + '=' + v).join('; '); }
+  set cookie(v) { this.jar.clear(); if (v) for (const p of v.split(';')) { const i = p.indexOf('='); if (i > 0) this.jar.set(p.slice(0, i).trim(), p.slice(i + 1).trim()); } }
   async req(path, { method = 'GET', body, headers = {}, manual } = {}) {
-    const r = await fetch(BASE + '/api/' + path, { redirect: manual ? 'manual' : 'follow', method, headers: { 'X-LH': '1', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(this.cookie ? { cookie: this.cookie } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
-    const sc = r.headers.get('set-cookie'); if (sc) this.cookie = sc.split(';')[0];
+    const r = await fetch(BASE + '/api/' + path, { redirect: manual ? 'manual' : 'follow', method, headers: { 'X-LH': '1', ...(body ? { 'Content-Type': 'application/json' } : {}), ...(this.jar.size ? { cookie: this.cookie } : {}), ...headers }, body: body ? JSON.stringify(body) : undefined });
+    for (const sc of r.headers.getSetCookie ? r.headers.getSetCookie() : []) { const [kv, ...attrs] = sc.split(';'); const i = kv.indexOf('='), k = kv.slice(0, i).trim(), v = kv.slice(i + 1).trim(); if (!v || /max-age=0/i.test(attrs.join(';'))) this.jar.delete(k); else this.jar.set(k, v); }
     let data = {}; try { data = await r.json(); } catch { }
     return { status: r.status, data, location: r.headers.get('location') };
   }
-  async message({ nonce, domain = `localhost:${PORT}`, chainId = 4663, issued = new Date(), expires } = {}) {
-    if (!nonce) nonce = (await this.req('auth/nonce')).data.nonce;
-    expires ||= new Date(issued.getTime() + 600e3);
-    return `${domain} wants you to sign in with your Ethereum account:\n${this.acct.address}\n\nSign in to Lanternhold.\n\nURI: http://${domain}\nVersion: 1\nChain ID: ${chainId}\nNonce: ${nonce}\nIssued At: ${issued.toISOString()}\nExpiration Time: ${expires.toISOString()}`;
+  // the server writes the message; tests can tamper with any part of it to check it gets refused
+  async message({ nonce, domain, chainId, issued, expires, address, statement, extra } = {}) {
+    const n = (await this.req('auth/nonce?address=' + this.acct.address.toLowerCase())).data;
+    if (!nonce && !domain && !chainId && !issued && !address && !statement && !extra) return n.message;
+    nonce ||= n.nonce; domain ||= `localhost:${PORT}`; chainId ||= 4663; issued ||= new Date(); expires ||= new Date(issued.getTime() + 300e3);
+    return `${domain} wants you to sign in with your Ethereum account:\n${address || n.address}\n\n${statement || STATEMENT}\n\nURI: http://${domain}\nVersion: 1\nChain ID: ${chainId}\nNonce: ${nonce}\nIssued At: ${issued.toISOString()}\nExpiration Time: ${expires.toISOString()}${extra || ''}`;
   }
   async signIn(opts) { const message = await this.message(opts); const signature = await this.acct.signMessage({ message }); return this.req('auth/verify', { method: 'POST', body: { message, signature } }); }
 }
@@ -70,7 +75,17 @@ try {
   ok(s1.status === 200 && s1.data.wallet === a.acct.address.toLowerCase() && s1.data.hero === null, 'wallet signature accepted, no hero yet');
   ok(a.cookie.startsWith('lh_s='), 'session cookie set');
   { const c = new Client(); const message = await c.message(); const signature = await new Client().acct.signMessage({ message }); ok((await c.req('auth/verify', { method: 'POST', body: { message, signature } })).status === 401, 'signature from another wallet refused'); }
-  { const c = new Client(); const nonce = (await c.req('auth/nonce')).data.nonce; await c.signIn({ nonce }); ok((await new Client().signIn({ nonce })).status === 400, 'a nonce can only be used once'); }
+  { const c = new Client(); const message = await c.message(); const signature = await c.acct.signMessage({ message });
+    ok((await c.req('auth/verify', { method: 'POST', body: { message, signature } })).status === 200, 'server-written message signs in');
+    ok((await c.req('auth/verify', { method: 'POST', body: { message, signature } })).status === 400, 'the same signed message can’t be used twice'); }
+  { const c = new Client(), thief = new Client(); thief.acct = c.acct; const message = await c.message(); const signature = await c.acct.signMessage({ message });
+    ok((await thief.req('auth/verify', { method: 'POST', body: { message, signature } })).status === 400, 'a signed message only works in the browser that asked for it'); }
+  ok((await new Client().signIn({ statement: 'Sign in to Lanternhold and approve all tokens.' })).status === 400, 'reworded message refused');
+  ok((await new Client().signIn({ extra: '\nResources:\n- https://evil.example' })).status === 400, 'extra lines in the message refused');
+  { const c = new Client(); ok((await c.signIn({ address: c.acct.address.toLowerCase() })).status === 400, 'address must be checksummed (EIP-55)'); }
+  ok((await new Client().signIn({ issued: new Date(Date.now() - 6 * 60e3), expires: new Date(Date.now() + 60e3) })).status === 400, 'message older than 5 minutes refused');
+  { const r = await new Client().req('auth/nonce?address=nope'); ok(r.status === 400, 'nonce needs a real address'); }
+  { const r = await new Client().req('auth/nonce?address=' + privateKeyToAccount(generatePrivateKey()).address.toLowerCase()); ok(r.status === 200 && /^localhost:\d+ wants you to sign in/.test(r.data.message) && /Chain ID: 4663/.test(r.data.message) && r.data.statement === STATEMENT, 'server writes a standard sign-in message for this site'); }
   ok((await new Client().signIn({ domain: 'evil.example' })).status === 400, 'message for another site refused');
   ok((await new Client().signIn({ chainId: 1 })).status === 400, 'message for another chain refused');
   ok((await new Client().signIn({ issued: new Date(Date.now() - 3600e3), expires: new Date(Date.now() - 1800e3) })).status === 400, 'expired message refused');
@@ -119,6 +134,14 @@ try {
   r = await a.req('save', { method: 'POST', body: { data: hat2, rev: me.save.rev } });
   me = (await a.req('me')).data;
   ok(r.status === 200 && me.save.data.gear.helm === null && !me.save.data.bank.partyhat_helm, 'Blue Party Hat stripped from a non-admin save');
+
+  await sleep(2100);
+  { const g = JSON.parse(JSON.stringify(me.save.data)); g.goals = { fish: 1, konami: 1, 'bad key!': 1 }; g.cnt = { logs: 12, burnt: 2, x: -5 }; g.skills.woodcutting = 40; g.bank.logs = 12;
+    r = await a.req('save', { method: 'POST', body: { data: g, rev: me.save.rev } }); me = (await a.req('me')).data;
+    ok(r.status === 200 && me.save.data.goals.fish && me.save.data.goals.konami && !me.save.data.goals['bad key!'] && me.save.data.cnt.logs === 12 && me.save.data.skills.woodcutting === 40 && me.save.data.bank.logs === 12, 'goals, counters, Woodcutting and logs save and load'); }
+  await sleep(2100);
+  { const g = JSON.parse(JSON.stringify(me.save.data)); g.bank.cape_wayfinder = 1; r = await a.req('save', { method: 'POST', body: { data: g, rev: me.save.rev } }); me = (await a.req('me')).data;
+    ok(r.status === 200 && me.save.data.bank.cape_wayfinder === 1, 'a Goal Relic (one item) saves like any rare find'); }
 
   console.log('Admin');
   const t = new Client(); await t.signIn(); await t.req('hero', { method: 'POST', body: { name: 'Test' } });
@@ -183,7 +206,7 @@ try {
     ok((await g2.req('me')).data.hero.name === 'Googler', 'signing in with the same Google account loads the same hero');
     // connect a wallet in game
     const w = new Client();
-    const linkMsg = async (c) => { const message = await w.message(); return { message, signature: await w.acct.signMessage({ message }) }; };
+    const linkMsg = async (c, wal = w) => { const message = (await c.req('auth/nonce?address=' + wal.acct.address.toLowerCase())).data.message; return { message, signature: await wal.acct.signMessage({ message }) }; };
     let r = await g.req('auth/link-wallet', { method: 'POST', body: await linkMsg(g) });
     ok(r.status === 200 && r.data.wallet === w.acct.address.toLowerCase(), 'a Google player can connect a wallet');
     const viaWallet = new Client(); viaWallet.acct = w.acct; await viaWallet.signIn();
@@ -192,7 +215,7 @@ try {
     ok(r.status === 409, 'an account can only have one wallet');
     const other = new Client(); await google(other, 'player8');
     const theirs = new Client(); await theirs.signIn(); await theirs.req('hero', { method: 'POST', body: { name: 'Walleteer' } });
-    const msg2 = await theirs.message(); r = await other.req('auth/link-wallet', { method: 'POST', body: { message: msg2, signature: await theirs.acct.signMessage({ message: msg2 }) } });
+    r = await other.req('auth/link-wallet', { method: 'POST', body: await linkMsg(other, theirs) });
     ok(r.status === 409 && r.data.error === 'wallet_in_use', 'a wallet that already has its own hero can’t be linked to another account');
     // wallet player links Google
     ok(await google(theirs, 'player9', '?link=1') === '/?g=linked' && (await theirs.req('me')).data.google === 'player9@gmail.com', 'a wallet player can link Google');
