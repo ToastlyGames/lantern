@@ -166,21 +166,56 @@ const BIOMES={
   moss:{floor:[PAL.cave,PAL.cave2,PAL.moss],wall:[PAL.dusk,PAL.slate,PAL.fern],accent:PAL.fern,light:'#7fffb0',name:'Mossroot Caverns'},
   crypt:{floor:[PAL.dusk,PAL.cave2,PAL.slate],wall:[PAL.ink,PAL.slate,PAL.silver],accent:PAL.bone,light:'#b7d4ff',name:'Bone Crypts'}
 };
-function floorTile(b,seed){const B=BIOMES[b],p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,B.floor[0]);
-  if(b==='crypt'){for(let y=0;y<16;y+=8){p.rect(0,y,16,1,PAL.ink);const o=(y/8)%2?4:0;for(let x=o;x<16;x+=8)p.rect(x,y,1,8,PAL.ink);}
-    for(let i=0;i<8;i++)p.set(r()*16,r()*16,B.floor[1]);}
-  else{for(let i=0;i<12;i++){const x=r()*15|0,y=r()*15|0;p.rect(x,y,2,1,B.floor[1]);}for(let i=0;i<5;i++)p.set(r()*16,r()*16,B.floor[2]);}
+// ---- dungeon tiles: hand-set flagstones and stone walls, shaded so the Depths read like a real dungeon ----
+const DUN={
+  moss:{mortar:'#1a1e28',stone:['#2c3441','#29303c','#303846','#272e39'],hi:'#37404e',lo:'#20262f',moss:['#2f4a3c','#3a5c44','#4f7a3a'],
+        brick:['#4c5867','#46525f','#52606e'],bhi:'#6a7888',blo:'#2e3641',bmortar:'#1c2129',cap:'#7b8a99'},
+  crypt:{mortar:'#17151f',stone:['#3a3850','#353349','#403e58','#33314a'],hi:'#4c4a66',lo:'#25233a',moss:['#3a3550','#423c5c','#4a4466'],
+        brick:['#504c6c','#4a4665','#565273'],bhi:'#6f6a92',blo:'#2c2a42',bmortar:'#1c1a29',cap:'#7a7598'}};
+function floorTile(b,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*31+7);p.rect(0,0,16,16,D.mortar);
+  const stone=(x,y,w,h)=>{if(w<2||h<2)return;const c=D.stone[r()*D.stone.length|0];p.rect(x,y,w,h,c);
+    p.rect(x,y,w,1,D.hi);p.rect(x,y,1,h,D.hi);p.rect(x,y+h-1,w,1,D.lo);p.rect(x+w-1,y,1,h,D.lo);
+    if(r()<.35){const cx=x+1+(r()*(w-2)|0),cy=y+1+(r()*(h-2)|0);p.set(cx,cy,D.lo).set(cx+1,cy+1,D.lo);}
+    if(r()<.5)p.set(x+1+(r()*(w-2)|0),y+1+(r()*(h-2)|0),D.hi);};
+  if(b==='crypt'){const o=seed%2?4:0;stone(0,0,8,8);stone(8,0,8,8);stone(-o+0,8,8,8);stone(8-o,8,8,8);if(o)stone(12,8,4,8);
+    if(seed%4===1){p.line(3,2,6,6,D.lo).line(6,6,5,10,D.lo);}}
+  else{let y=0;while(y<16){const h=Math.min(16-y,6+(r()*4|0));let x=-(r()*6|0);while(x<16){const w=7+(r()*6|0);stone(Math.max(0,x),y,Math.min(w-1,16-Math.max(0,x)),h-1);x+=w;}y+=h;}
+    for(let i=0;i<3;i++)if(r()<.5){const mx=r()*14|0,my=r()*14|0;p.rect(mx,my,2,1,D.moss[0]).set(mx+1,my+1,D.moss[1]);}}
   return p.canvas();}
-function wallTile(b,face,seed){const B=BIOMES[b],p=new Px(16,16),r=rng(seed);
-  if(face){p.rect(0,0,16,16,B.wall[1]);p.rect(0,0,16,4,B.wall[2]);p.rect(0,13,16,3,B.wall[0]);
-    if(b==='crypt'){for(let y=4;y<13;y+=4){p.rect(0,y,16,1,B.wall[0]);for(let x=(y%8?0:4);x<16;x+=8)p.rect(x,y,1,4,B.wall[0]);}}
-    else{for(let i=0;i<8;i++){const x=r()*14|0,y=4+(r()*8|0);p.rect(x,y,3,1,B.wall[0]);}for(let i=0;i<4;i++)p.set(r()*16,r()*4,PAL.lime);}}
-  else{p.rect(0,0,16,16,B.wall[0]);for(let i=0;i<10;i++)p.set(r()*16,r()*16,B.wall[1]);}
+// wall face = the stone wall you look at, above a floor tile
+function wallTile(b,face,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*17+3);
+  if(face){p.rect(0,0,16,16,D.bmortar);
+    for(let row=0;row<4;row++){const y=row*4,off=(row%2?4:0)-(seed%3);for(let x=-8+off;x<16;x+=8){const c=D.brick[r()*D.brick.length|0],x0=Math.max(0,x),w=Math.min(x+7,16)-x0;if(w<=0)continue;
+        p.rect(x0,y,w,3,c);p.rect(x0,y,w,1,D.bhi);p.rect(x0,y+2,w,1,D.blo);if(r()<.25)p.set(x0+(r()*w|0),y+1,D.blo);}}
+    p.rect(0,0,16,1,D.cap);p.rect(0,15,16,1,'#10121c');p.rect(0,14,16,1,D.blo);
+    if(b==='moss'){for(let i=0;i<4;i++){const x=r()*16|0,len=1+(r()*5|0);for(let k=0;k<len;k++)p.set(x,k,k===len-1?DUN.moss.moss[2]:DUN.moss.moss[k%2]);}}
+  }
+  else{p.rect(0,0,16,16,'#0d0e17');for(let i=0;i<6;i++)p.set(r()*16,r()*16,'#151726');}
   return p.canvas();}
-function stairsTile(){const p=new Px(16,16);p.rect(0,0,16,16,PAL.ink);for(let i=0;i<5;i++){p.rect(1+i,2+i*3,14-2*i,2,i%2?PAL.slate:PAL.silver);}p.rect(6,14,4,2,PAL.night);return p.canvas();}
+function stairsTile(){const p=new Px(16,16);p.rect(0,0,16,16,'#07080e');
+  const steps=[['#5a5f78',14,0],['#4b5068',12,1],['#3c4056',10,2],['#2e3144',8,3],['#212333',6,4]];
+  steps.forEach(([c,w,i])=>{const x=(16-w)/2|0,y=13-i*3;p.rect(x,y,w,2,c);p.rect(x,y,w,1,'#6d7391');p.rect(x,y+2,w,1,'#141520');});
+  p.rect(0,0,1,16,'#2a2d40').rect(15,0,1,16,'#2a2d40');return p.canvas();}
+// ---- dungeon dressing, baked into the floor: cobwebs, bones, skulls, rubble, puddles, mushrooms, banners, chains, roots ----
+function decoSprites(){const D={};
+  {const p=new Px(10,10),c='rgba(220,226,236,.55)';p.line(0,0,9,9,c).line(0,0,9,3,c).line(0,0,3,9,c).line(0,0,7,6,c);p.line(0,4,4,0,c).line(0,7,7,0,c);D.web=p.canvas();}
+  {const p=new Px(10,10),c='rgba(220,226,236,.55)';p.line(9,0,0,9,c).line(9,0,0,3,c).line(9,0,6,9,c).line(9,0,2,6,c);p.line(9,4,5,0,c).line(9,7,2,0,c);D.webR=p.canvas();}
+  {const p=new Px(8,6);p.set(1,4,'#4b5068').set(2,4,'#5a5f78').set(5,3,'#4b5068').set(6,4,'#3c4056').set(3,2,'#5a5f78');D.pebbles=p.canvas();}
+  {const p=new Px(10,8);p.line(1,6,7,3,PAL.bone).line(2,3,8,6,PAL.bone);p.set(1,6,'#b8a880').set(8,6,'#b8a880');D.bones=p.canvas();}
+  {const p=new Px(8,8);p.ell(4,3.5,3,3,PAL.bone);p.rect(2,5,4,2,PAL.bone);p.set(3,3,PAL.ink).set(5,3,PAL.ink).set(3,6,'#8a7e62').set(5,6,'#8a7e62');p.outline('#1a1c2c');D.skull=p.canvas();}
+  {const p=new Px(12,8);p.rect(1,5,4,3,'#3c4056').rect(5,4,3,4,'#4b5068').rect(8,6,3,2,'#3c4056');p.set(2,5,'#5a5f78').set(6,4,'#5a5f78');D.rubble=p.canvas();}
+  {const p=new Px(12,6);p.ell(6,3,5.5,2.4,'#1d2a44');p.ell(6,3,4,1.6,'#24375a');p.set(3,2,'#5f87c4').set(4,2,'#41a6f6');D.puddle=p.canvas();}
+  {const p=new Px(10,8);[[2,5,'#73eff7'],[6,4,'#e86fd0'],[8,6,'#73eff7']].forEach(([x,y,c])=>{p.rect(x,y,1,3,PAL.bone);p.rect(x-1,y-1,3,1,c);p.set(x,y-2,PAL.white);});D.shrooms=p.canvas();}
+  // wall dressings (drawn on wall faces)
+  {const p=new Px(8,14);p.rect(1,0,6,12,'#8f2d3f');p.rect(1,0,6,1,PAL.gold).rect(1,11,6,1,'#5d1f2c');p.set(1,12,'#8f2d3f').set(3,12,'#8f2d3f').set(5,12,'#8f2d3f').set(2,13,'#8f2d3f').set(6,13,'#8f2d3f');
+    p.rect(3,4,2,3,PAL.gold).set(4,3,PAL.gold);p.rect(0,0,8,1,'#3a3f55');D.banner=p.canvas();}
+  {const p=new Px(6,12);for(let y=0;y<11;y+=2){p.set(y%4?2:3,y,'#6d7391').set(y%4?3:2,y+1,'#4b5068');}p.rect(1,10,4,2,'#4b5068');D.chain=p.canvas();}
+  {const p=new Px(8,10);p.line(2,0,3,6,'#6b3e26').line(3,6,2,9,'#6b3e26').line(5,0,6,4,'#4f7a3a');p.set(1,3,'#4f7a3a').set(4,5,'#38b764').set(6,4,'#a7f070').set(2,8,'#38b764');D.roots=p.canvas();}
+  return D;}
 function chestSprite(open){const p=new Px(16,16);p.rect(2,6,12,8,PAL.wood);p.rect(2,6,12,2,PAL.bark);p.rect(2,10,12,1,PAL.bark);p.rect(7,9,2,3,PAL.gold);
   if(open){p.rect(2,3,12,3,PAL.bark);p.rect(4,6,8,2,PAL.yellow);}else p.rect(2,4,12,2,PAL.wood);p.outline();return p.canvas();}
-function torchSprite(f){const p=new Px(8,12);p.rect(3,6,2,6,PAL.wood);p.ell(4,4,2+f*.3,3,PAL.ember);p.ell(4,4.5,1,1.6,PAL.yellow);p.outline();return p.canvas();}
+function torchSprite(f){const p=new Px(8,14);p.rect(2,9,4,1,'#3a3f55').rect(1,8,1,2,'#3a3f55').rect(6,8,1,2,'#3a3f55');p.rect(3,6,2,7,PAL.bark).set(3,6,PAL.wood);
+  p.ell(4,4,2.2+f*.4,3.2,PAL.red);p.ell(4,4.4,1.6,2.4,PAL.ember);p.ell(4,5,1,1.5,PAL.yellow);p.set(f?3:5,1,PAL.ember);p.outline();return p.canvas();}
 function oreSprite(kind){const c={copper:[PAL.orange,PAL.yellow],iron:[PAL.silver,PAL.white],ember:[PAL.ember,PAL.red]}[kind];const p=new Px(16,16);
   [[4,5],[10,4],[7,10],[12,11],[3,12]].forEach(([x,y])=>{p.rect(x,y,2,2,c[0]);p.set(x,y,c[1]);});return p.canvas();}
 // Emberite: a lump of dark basalt split by molten cracks. Two frames so the lava pulses.
@@ -248,11 +283,36 @@ function boardSprite(){const p=new Px(32,32);p.rect(6,20,2,11,PAL.bark).rect(24,
   p.rect(3,4,26,18,PAL.wood);p.rect(4,5,24,16,PAL.tan);
   [[6,7,7,6,PAL.white],[15,6,6,5,PAL.yellow],[22,8,5,7,PAL.white],[8,14,6,5,PAL.yellow],[17,13,8,6,PAL.white]].forEach(([x,y,w,h,c])=>{p.rect(x,y,w,h,c);p.rect(x+1,y+1,w-2,1,PAL.slate);p.set(x+w/2|0,y,PAL.red);});
   p.rect(3,2,26,3,PAL.red);p.outline();return p.canvas();}
-function gateSprite(){const p=new Px(48,40);
-  p.ell(24,26,23,18,PAL.slate);p.ell(24,24,22,16,PAL.silver);p.ell(24,30,13,13,PAL.ink);p.rect(11,30,26,10,PAL.ink);
-  for(let i=0;i<10;i++)p.set(6+((i*13)%36),14+((i*7)%14),PAL.dusk);
-  p.rect(6,22,2,14,PAL.bark).rect(40,22,2,14,PAL.bark);p.rect(5,18,4,5,PAL.yellow).rect(39,18,4,5,PAL.yellow);
-  p.rect(18,34,12,1,PAL.slate).rect(16,37,16,1,PAL.slate);p.outline();return p.canvas();}
+// The Delve Gate: a stone archway over stairs that drop into the dark, a lantern hanging in the arch.
+function gateSprite(f){const W=64,H=56,p=new Px(W,H),r=rng(41),cx=32;
+  const M='#262a3a',S=['#7a869c','#6c778d','#838fa6','#707b92'],HI='#a3aec2',LO='#4f586c';
+  const inArchOuter=(x,y)=>y>=26?x>=2&&x<62:((x+.5-cx)/30)**2+((y+.5-27)/25)**2<=1;
+  const inOpen=(x,y)=>y>=30?x>=15&&x<49:((x+.5-cx)/17)**2+((y+.5-30)/18)**2<=1;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(inArchOuter(x,y)&&!inOpen(x,y))p.set(x,y,M);
+  // bricks: courses of 5 px, staggered; voussoirs radiate around the arch
+  for(let y=0;y<H;y+=5){const off=(y/5)%2?5:0;for(let x=-10+off;x<W;x+=10){const c=S[r()*S.length|0];
+      for(let yy=y;yy<y+4;yy++)for(let xx=x;xx<x+9;xx++){if(!inArchOuter(xx,yy)||inOpen(xx,yy))continue;const ang=Math.atan2(yy-30,xx-cx),dist=Math.hypot(xx-cx,(yy-30)*1.05);
+        if(yy<32&&dist>17&&dist<23){const seg=Math.floor((ang+Math.PI)/(Math.PI/9));p.set(xx,yy,seg%2?S[1]:S[2]);if(Math.abs(((ang+Math.PI)/(Math.PI/9))%1)<.12)p.set(xx,yy,M);continue;}
+        p.set(xx,yy,yy===y?HI:yy===y+3?LO:c);}}}
+  // keystone with a carved lantern
+  p.rect(28,8,8,9,'#9aa6bc');p.rect(28,8,8,1,'#c2cbdb');p.rect(28,16,8,1,LO);p.rect(31,10,2,1,PAL.gold);p.rect(30,11,4,4,PAL.gold);p.rect(31,12,2,2,PAL.yellow);
+  // the dark mouth and the stairs going down into it (warm light on the near steps)
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(inOpen(x,y))p.set(x,y,'#07080e');
+  const steps=[[52,46,'#8a6a52','#b48a64'],[48,42,'#6e5444','#8e6c52'],[44,38,'#56423a','#6e5444'],[40,34,'#3f322e','#53413a'],[37,30,'#2c2427','#3a2f2e']];
+  steps.forEach(([y,w,c,hi],i)=>{const h=i===0?4:3,x0=cx-w/2;if(y+h>H)return;p.rect(x0,y,w,h,c);p.rect(x0,y,w,1,hi);p.rect(x0,y+h-1,w,1,'#1a1418');});
+  // side walls of the stairwell
+  for(let y=30;y<H;y++){p.set(15,y,'#3a3f55');p.set(48,y,'#3a3f55');}
+  // the hanging lantern
+  p.line(cx,14,cx,20,'#4b5068');p.rect(cx-2,20,5,1,'#3a3f55');p.rect(cx-2,21,5,5,f?'#ffd98a':'#ffcd75');p.rect(cx-1,22,3,3,f?PAL.white:'#fff1c4');p.rect(cx-2,26,5,1,'#3a3f55');
+  // moss and ivy creeping over the stones
+  for(let i=0;i<22;i++){const x=2+(r()*60|0),y=8+(r()*46|0);if(p.get(x,y)&&p.get(x,y)!=='#07080e'&&!inOpen(x,y))p.set(x,y,r()<.5?'#4f7a3a':'#38b764');}
+  // plinths at the foot of the arch
+  p.rect(2,50,13,6,'#5d6880');p.rect(2,50,13,1,HI);p.rect(49,50,13,6,'#5d6880');p.rect(49,50,13,1,HI);
+  p.outline();return p.canvas();}
+// lantern post that stands beside the Delve Gate
+function lanternPost(f){const p=new Px(14,30);p.rect(6,8,2,22,PAL.bark);p.rect(6,8,1,22,PAL.wood);p.rect(4,28,6,2,'#4b3226');
+  p.rect(2,7,10,2,PAL.bark);p.rect(2,9,1,2,'#3a3f55');p.rect(1,11,4,1,'#3a3f55');p.rect(1,12,4,5,f?'#ffe2a0':'#ffcd75');p.rect(2,13,2,3,PAL.white);p.rect(1,17,4,1,'#3a3f55');
+  p.outline();return p.canvas();}
 function fenceSprite(){const p=new Px(16,16);p.rect(0,6,16,2,PAL.wood).rect(0,11,16,2,PAL.wood);p.rect(2,3,2,12,PAL.bark).rect(12,3,2,12,PAL.bark);p.outline();return p.canvas();}
 function flowerSprite(c){const p=new Px(16,16);[[4,6],[11,9],[6,12]].forEach(([x,y])=>{p.set(x,y+1,PAL.fern);p.rect(x-1,y,3,1,c);p.rect(x,y-1,1,3,c);p.set(x,y,PAL.yellow);});return p.canvas();}
 function wellSprite(){const p=new Px(32,32);p.ell(16,22,10,6,PAL.slate);p.ell(16,21,8,4,PAL.blue);p.rect(5,6,2,16,PAL.bark).rect(25,6,2,16,PAL.bark);
@@ -327,13 +387,13 @@ function buildArt(){
   ART.soil=soilTile(false);ART.soilWet=soilTile(true);
   ART.floor={};ART.wall={};ART.face={};
   for(const b of Object.keys(BIOMES)){ART.floor[b]=[11,12,13,14].map(s=>floorTile(b,s));ART.wall[b]=[21,22].map(s=>wallTile(b,false,s));ART.face[b]=[31,32,33].map(s=>wallTile(b,true,s));}
-  ART.stairs=stairsTile();ART.chest=[chestSprite(false),chestSprite(true)];ART.torch=[0,1].map(torchSprite);
+  ART.stairs=stairsTile();ART.deco=decoSprites();ART.chest=[chestSprite(false),chestSprite(true)];ART.torch=[0,1].map(torchSprite);
   ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=gateSprite();ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};

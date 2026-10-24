@@ -949,8 +949,17 @@ function render(){TAGS.length=0;
   const boss=ents.find(e=>e.d.boss);if(boss){const dpr=window.devicePixelRatio||1,w=Math.min(140,VW-24),x=(VW-w)/2,y=Math.round(($('vit').getBoundingClientRect().bottom+30)*dpr/SCALE);g.fillStyle='#1a1c2c';g.fillRect(x-1,y-1,w+2,6);g.fillStyle='#5d275d';g.fillRect(x,y,w,4);g.fillStyle='#b13e53';g.fillRect(x,y,Math.round(w*boss.hp/boss.max),4);
     ptDraw(g,map.pack.bossName,VW/2,y-9,{color:'#f4f4f4'});}
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
+  if(scene==='delve'&&!reduceMotion)drawDelveAmbient(camX,camY);
   drawTags();
 }
+// ---- life in the Depths: dust drifting through your lantern light, sparks rising from torches ----
+function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
+  const R=(10+40*run.oil/100)*LAN().light;
+  for(let i=0;i<18;i++){const ph=(t*.05+i*.137)%1,a=i*2.39+t*.15,rr=R*(.2+.75*((i*.618)%1)),x=P.x+Math.cos(a)*rr+Math.sin(t*.7+i)*3,y=P.y-8+Math.sin(a)*rr*.7-ph*10;
+    g.globalAlpha=.35*Math.sin(ph*Math.PI);g.fillStyle=i%3?'#ffe6b0':'#f4f4f4';g.fillRect(Math.round(x),Math.round(y),1,1);}
+  for(const o of map.objs){if(o.type!=='torch'||Math.abs(o.x-P.x)>VW*.7||Math.abs(o.y-P.y)>VH*.7)continue;const [tx,ty]=o.tile;
+    for(let k=0;k<3;k++){const ph=(t*.9+k/3+tx*.31)%1,x=tx*T+8+Math.sin(ph*9+k*2+tx)*2,y=ty*T+4-ph*14;g.globalAlpha=(1-ph)*.9;g.fillStyle=ph<.4?'#ffcd75':'#ff9f3d';g.fillRect(Math.round(x),Math.round(y),1,1);}}
+  g.globalAlpha=1;g.restore();}
 function drawObj(o){
   if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;const sw=reduceMotion?0:Math.sin(time*1.1+o.x*.07+o.y*.03);spr(sw>.55?ART.treeSway[1]:sw<-.75?ART.treeSway[0]:ART.tree,o.x-16+k,o.y-30);
     if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-34,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-33,w,2);}}}
@@ -960,7 +969,7 @@ function drawObj(o){
   else if(o.type==='kitchen')spr(ART.kitchen[Math.floor(time*3)%2],o.x-16,o.y-32);
   else if(o.type==='press')spr(ART.press,o.x-16,o.y-32);
   else if(o.type==='board')spr(ART.board,o.x-16,o.y-32);
-  else if(o.type==='gate')spr(ART.gate,o.x-24,o.y-40);
+  else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
   else if(o.type==='well')spr(ART.well,o.x-16,o.y-32);
   else if(o.type==='fence')spr(ART.fence,o.x-8,o.y-14);
   else if(o.type==='chest')spr(ART.chest[o.open?1:0],o.x-8,o.y-14);
@@ -970,6 +979,9 @@ function drawObj(o){
 function drawAmbient(cx,cy,x0,y0,x1,y1){const t=time;
   const inView=(x,y,m=40)=>x>cx-m&&x<cx+VW+m&&y>cy-m&&y<cy+VH+m;
   for(const o of map.objs){
+    if(o.type==='gate'&&inView(o.x,o.y-30,80)){g.save();g.globalCompositeOperation='lighter';const f=.85+.15*Math.sin(time*9+Math.sin(time*3)),pool=(X,Y,R,a)=>{const gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,`rgba(255,190,100,${a})`);gr.addColorStop(1,'rgba(255,170,80,0)');g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);};
+      pool(o.x-44,o.y-14,22*f,.28*f);pool(o.x+44,o.y-14,22*f,.28*f);pool(o.x,o.y-28,16*f,.32*f);pool(o.x,o.y+2,24,.12*f);g.restore();
+      for(let k=0;k<5;k++){const ph=(t*.4+k/5)%1,x=o.x+Math.sin(ph*7+k*1.7)*14,y=o.y-6-ph*30;g.globalAlpha=(1-ph)*.7;g.fillStyle='#ffcd75';g.fillRect(Math.round(x),Math.round(y),1,1);}g.globalAlpha=1;}
     if(o.type==='forge'&&inView(o.x,o.y-40))for(let i=0;i<8;i++){const ph=(t*.32+i/8)%1,x=o.x+14+Math.sin(ph*4+i)*1.5+ph*7,y=o.y-41-ph*30,r=1+ph*2.6;
       g.globalAlpha=(1-ph)*.5;g.fillStyle=ph<.25?'#566c86':'#94b0c2';g.fillRect(Math.round(x-r/2),Math.round(y-r/2),Math.round(r),Math.round(r));}
     else if(o.type==='kitchen'&&inView(o.x,o.y-20))for(let i=0;i<4;i++){const ph=(t*.45+i/4)%1,x=o.x+Math.sin(ph*6+i*2)*2.5,y=o.y-15-ph*14;
@@ -1035,9 +1047,10 @@ function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=
   if(!e.d.boss&&e.hp<e.max){g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),Math.round(12*e.hp/e.max),2);}
 }
 function drawLight(cx,cy){
-  lg.globalCompositeOperation='source-over';lg.globalAlpha=1;lg.fillStyle=run.oil>0?'rgba(5,6,13,.9)':'rgba(3,3,8,.97)';lg.fillRect(0,0,VW,VH);
+  lg.globalCompositeOperation='source-over';lg.globalAlpha=1;lg.fillStyle=run.oil>0?'rgba(6,6,14,.88)':'rgba(3,3,8,.97)';lg.fillRect(0,0,VW,VH);
   lg.globalCompositeOperation='destination-out';
-  const hole=(x,y,r)=>{for(const [f,a] of [[1,.3],[.84,.55],[.68,.8],[.5,1]]){lg.globalAlpha=a;lg.beginPath();lg.arc(Math.round(x-cx),Math.round(y-cy),Math.max(1,r*f),0,Math.PI*2);lg.fill();}};
+  // smooth light pools (no banding): a radial gradient cut out of the darkness
+  const hole=(x,y,r)=>{r=Math.max(2,r);const X=x-cx,Y=y-cy,gr=lg.createRadialGradient(X,Y,0,X,Y,r);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.45,'rgba(0,0,0,.92)');gr.addColorStop(.75,'rgba(0,0,0,.45)');gr.addColorStop(1,'rgba(0,0,0,0)');lg.globalAlpha=1;lg.fillStyle=gr;lg.fillRect(X-r,Y-r,r*2,r*2);};
   const flick=Math.sin(time*9)*1.5+Math.sin(time*23)*.8;
   hole(P.x,P.y-8,(22+70*(run.oil/100))*LAN().light*(1+A('light')/100)+flick);
   for(const o of map.objs){if(!o.light||o.gone)continue;if(Math.abs(o.x-P.x)>VW||Math.abs(o.y-P.y)>VH)continue;
@@ -1051,8 +1064,11 @@ function drawLight(cx,cy){
   // warm tint around light sources
   g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.08;g.fillStyle='#ef7d57';
   for(const o of map.objs){if(o.light&&o.light.c==='lava'&&!o.gone&&Math.abs(o.x-P.x)<VW){const yy=o.tile[1]*T+8,pu=.5+.5*Math.sin(time*2.5+o.x);const X=Math.round(o.x-cx),Y=Math.round(yy-cy),R=16+pu*4,gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,'rgba(255,110,40,'+(.32+.16*pu)+')');gr.addColorStop(.5,'rgba(255,80,30,'+(.12+.06*pu)+')');gr.addColorStop(1,'rgba(255,60,20,0)');g.globalAlpha=1;g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.globalAlpha=.08;g.fillStyle='#ef7d57';}}
-  for(const o of map.objs){if(o.light&&o.light.c==='warm'&&!o.gone){const yy=o.onWall?o.tile[1]*T+6:o.y-6;g.beginPath();g.arc(Math.round(o.x-cx),Math.round(yy-cy),o.light.r*.6,0,Math.PI*2);g.fill();}}
-  g.fillStyle='#ffcd75';g.beginPath();g.arc(Math.round(P.x-cx),Math.round(P.y-8-cy),10+40*run.oil/100,0,Math.PI*2);g.fill();g.restore();
+  // warm firelight: soft orange pools around torches (flickering) and a golden one around your lantern
+  const glow=(x,y,r,c,a)=>{const X=x-cx,Y=y-cy,gr=g.createRadialGradient(X,Y,0,X,Y,r);gr.addColorStop(0,`rgba(${c},${a})`);gr.addColorStop(.5,`rgba(${c},${a*.4})`);gr.addColorStop(1,`rgba(${c},0)`);g.globalAlpha=1;g.fillStyle=gr;g.fillRect(X-r,Y-r,r*2,r*2);};
+  for(const o of map.objs){if(o.light&&o.light.c==='warm'&&!o.gone){const yy=o.onWall?o.tile[1]*T+6:o.y-6;if(Math.abs(o.x-P.x)>VW||Math.abs(yy-P.y)>VH)continue;const f=.85+.15*Math.sin(time*11+o.x)*Math.sin(time*7.3+o.y);glow(o.x,yy,o.light.r*.9*f,'255,140,60',.22*f);}}
+  {const L=(10+44*run.oil/100)*LAN().light;glow(P.x,P.y-8,L*1.15,'255,205,120',.16+.03*Math.sin(time*9));}
+  g.restore();
 }
 
 // ---------- loop ----------
