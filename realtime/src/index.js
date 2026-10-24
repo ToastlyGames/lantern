@@ -73,7 +73,7 @@ export default {
 // with players connected. (Plain accept() bills every second a socket is open; on the free plan that ran out the daily
 // quota after a night of play and every player vanished until midnight UTC.) Heartbeats are answered by Cloudflare itself
 // without waking the object. Anything the object must remember across a nap lives in each socket's attachment or in storage.
-const PING = '{"t":"ping"}', PONG = '{"t":"pong"}', SWEEP_MS = 30000, SILENT_MS = 75000;
+const PING = '{"t":"ping"}', PONG = '{"t":"pong"}', SWEEP_MS = 20000, SILENT_MS = 75000;
 function autoPong(ctx) { try { ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG)); } catch { } }
 function lastHeard(ctx, ws, seen) { let t = seen || 0; try { const a = ctx.getWebSocketAutoResponseTimestamp(ws); if (a && +a > t) t = +a; } catch { } return t; }
 async function armSweep(ctx) { try { if (!(await ctx.storage.getAlarm())) await ctx.storage.setAlarm(Date.now() + SWEEP_MS); } catch { } }
@@ -169,6 +169,7 @@ export class Lobby {
   onMessage(u, m) {
     switch (m.t) {
       case 'world': return send(u.ws, { t: 'world', room: this.pickWorld(u, typeof m.want === 'string' ? m.want : null) });
+      case 'worlds': { const c = this.worldCounts(); return send(u.ws, { t: 'worlds', cap: WORLD_CAP, list: [...c].sort((a, b) => +a[0].slice(1) - +b[0].slice(1)).slice(0, 100) }); }
       case 'where': {
         const room = typeof m.room === 'string' && ROOM_RE.test(m.room) ? m.room : null;
         u.room = room; u.floor = room && room[0] === 'd' && Number.isInteger(m.floor) && m.floor > 0 && m.floor < 100 ? m.floor : null;
@@ -349,7 +350,7 @@ export class Room {
     this.cfg.host = best ? best.id : this.cfg.host; this.ctx.storage.put('cfg', this.cfg).catch(() => { });
     if (best) this.all({ t: 'host', id: best.id });
   }
-  pub(p) { return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m, fish: p.fish || null }; }
+  pub(p) { return { id: p.id, name: p.name, adm: p.adm ? 1 : 0, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m, fish: p.fish || null }; }
   // ---- items on the ground: dungeon loot (seen by the whole party at once) and items dropped from a bag (the dropper sees
   // them at once, everyone else after 30 s). The server decides who picks each one up, so nothing is ever picked up twice.
   pruneDrops() { const now = Date.now(); let ch = false; for (const [k, d] of this.drops) if (d.exp && now > d.exp) { this.drops.delete(k); ch = true; }
@@ -443,5 +444,5 @@ function cleanLook(l, hat) {
   if (!l || typeof l !== 'object') return null;
   const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null;
   const helm = s(l.helm);
-  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade) };
+  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1 };
 }
