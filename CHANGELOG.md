@@ -1,6 +1,21 @@
 # Lanternhold changelog
 
-Current build: **v0.8.0** · Season 0 (Beta)
+Current build: **v0.8.2** · Season 0 (Beta)
+
+## v0.8.2 · The official contract address
+
+_2026-10-24_
+
+- The Bulletin now has a permanent spot at the top for the official token contract address. Tap it to copy it.
+- Until launch it says the address will be posted there, so you know any address from anywhere else isn't ours.
+- The wiki shows the same address under Official token.
+- The address always sits on one line. On phones it shows the first and last 4 characters, and tapping it still copies the whole address.
+
+## v0.8.1 · Tidy name tags
+
+_2026-10-24_
+
+- Fixed name tags where the level badge could sit on top of a player's name (for example "Lant 34" instead of "Lantern 34") when several players were close together.
 
 ## v0.8.0 · The Lanternhold Wiki
 
