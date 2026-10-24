@@ -313,6 +313,48 @@ function gateSprite(f){const W=64,H=56,p=new Px(W,H),r=rng(41),cx=32;
 function lanternPost(f){const p=new Px(14,30);p.rect(6,8,2,22,PAL.bark);p.rect(6,8,1,22,PAL.wood);p.rect(4,28,6,2,'#4b3226');
   p.rect(2,7,10,2,PAL.bark);p.rect(2,9,1,2,'#3a3f55');p.rect(1,11,4,1,'#3a3f55');p.rect(1,12,4,5,f?'#ffe2a0':'#ffcd75');p.rect(2,13,2,3,PAL.white);p.rect(1,17,4,1,'#3a3f55');
   p.outline();return p.canvas();}
+// ---- Tallow, the Hold's first merchant: wide-brim hat, teal coat, red scarf, a pack piled high and a lantern on a staff ----
+function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT='#4b3226',HAT2='#3a2519',COAT='#257179',COAT2='#1b5560',SC='#b13e53',BEARD='#c2c7cf',BEARD2='#94a0ad',B=f?1:0;
+  // backpack behind (pot, bedroll, a tiny lantern)
+  p.rect(14,9+B,9,12,'#6b3e26');p.rect(14,9+B,9,1,'#8a5a3a');p.rect(15,6+B,8,3,'#a0663b');p.rect(15,6+B,8,1,'#d9a066');p.ell(21,7.5+B,2,1.6,'#566c86');p.set(21,6+B,'#94b0c2');
+  p.rect(22,13+B,2,3,f?'#ffe2a0':'#ffcd75');p.set(22,12+B,'#3a3f55');
+  // staff with a hanging lantern (sways)
+  p.rect(2,6,1,23,'#8a5a3a');p.rect(2,6,3,1,'#6b3e26');const lx=f?3:4;p.set(lx,7,'#3a3f55');p.rect(lx-1,8,3,4,'#ffcd75');p.set(lx,9,'#fff3c4');p.rect(lx-1,12,3,1,'#3a3f55');
+  // boots and coat
+  p.rect(8,26,3,3,'#3a2519').rect(13,26,3,3,'#3a2519');p.rect(7,14+B,10,13-B,COAT);p.rect(7,14+B,1,13-B,COAT2);p.rect(16,14+B,1,13-B,COAT2);p.rect(11,16+B,1,10-B,COAT2);
+  p.set(10,18+B,'#f7c64a').set(10,21+B,'#f7c64a').set(10,24,'#f7c64a');p.rect(7,22,10,1,'#6b3e26');p.set(12,22,'#f7c64a');
+  // arms: one on the staff, one on the belt
+  p.rect(4,15+B,3,2,COAT);p.set(3,15+B,SK).set(3,16+B,SK);p.rect(17,16+B,2,4,COAT);p.set(17,20+B,SK);
+  // scarf
+  p.rect(8,13+B,8,2,SC);p.rect(13,15+B,2,4,SC);p.set(14,19+B,'#8f2d3f');
+  // head: face, bushy grey beard, gold earring
+  p.rect(9,7+B,6,6,SK);p.rect(9,11+B,6,1,SK2);p.set(10,9+B,'#1a1c2c').set(13,9+B,'#1a1c2c');p.set(11,10+B,SK2);
+  p.rect(9,11+B,6,3,BEARD);p.rect(10,14+B,4,1,BEARD);p.set(9,13+B,BEARD2).set(14,13+B,BEARD2);p.rect(10,11+B,4,1,BEARD2);p.set(15,10+B,'#f7c64a');
+  // wide-brim hat with a gold band and a red feather
+  p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
+  p.outline();return p.canvas();}
+// Tallow's cart: a striped awning over crates of bread, oil and seed
+function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
+  p.rect(3,6,2,24,W2).rect(35,6,2,24,W2);
+  for(let x=1;x<39;x++){const c=Math.floor((x-1)/4)%2?A2:A;p.rect(x,2,1,6,c);if(x%4===2)p.set(x,8,c);}p.rect(1,1,38,1,'#8f2d3f');
+  p.rect(2,18,36,8,W);p.rect(2,18,36,1,'#a0663b');p.rect(2,25,36,1,W2);for(let x=6;x<38;x+=8)p.rect(x,19,1,6,W2);
+  // goods on the counter
+  p.ell(9,16,3,1.8,'#d9a066');p.set(8,15,'#ffcd75');p.ell(14,16,2.4,1.6,'#c98a4a');
+  for(const x of [19,22,25]){p.rect(x,13,2,4,'#ef7d57');p.rect(x,12,2,1,'#566c86');p.set(x,14,'#ffcd75');}
+  p.rect(29,13,6,5,'#8a6f30');p.rect(29,13,6,1,'#c2a26b');p.set(31,12,'#a7f070').set(33,12,'#38b764');
+  // wheels
+  p.ell(8,29,3.5,3.5,'#3a2519');p.ell(8,29,2,2,W);p.ell(32,29,3.5,3.5,'#3a2519');p.ell(32,29,2,2,W);
+  p.outline();return p.canvas();}
+// the east road's signpost
+function signSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#6b3e26');p.rect(8,8,1,16,'#8a5a3a');
+  p.rect(1,2,14,7,'#a0663b');p.rect(1,2,14,1,'#d9a066');p.rect(1,8,14,1,'#6b3e26');p.rect(15,3,1,5,'#a0663b');p.set(16,4,'#a0663b').set(16,5,'#a0663b').set(16,6,'#a0663b').set(17,5,'#a0663b');
+  p.rect(3,5,8,1,'#4b3226');p.set(10,4,'#4b3226').set(10,6,'#4b3226');p.set(12,4,'#ffcd75').set(13,5,'#ffcd75');p.outline();return p.canvas();}
+// the barricade across the opening in the trees (the way to Season 1's new area)
+function barricadeSprite(){const p=new Px(20,64),W='#8a5a3a',W2='#6b3e26';
+  for(const y0 of [6,34]){p.line(2,y0,17,y0+22,W);p.line(3,y0,18,y0+22,W2);p.line(17,y0,2,y0+22,W);p.line(18,y0,3,y0+22,W2);}
+  for(const y of [12,40]){p.rect(1,y,18,3,W);p.rect(1,y,18,1,'#a0663b');}
+  p.rect(5,24,10,8,'#b13e53');p.rect(5,24,10,1,'#e43b44');p.rect(7,27,6,1,'#f4f4f4');p.rect(7,29,6,1,'#f4f4f4');
+  p.line(0,30,4,26,'#c2a26b');p.line(15,26,19,30,'#c2a26b');p.outline();return p.canvas();}
 function fenceSprite(){const p=new Px(16,16);p.rect(0,6,16,2,PAL.wood).rect(0,11,16,2,PAL.wood);p.rect(2,3,2,12,PAL.bark).rect(12,3,2,12,PAL.bark);p.outline();return p.canvas();}
 function flowerSprite(c){const p=new Px(16,16);[[4,6],[11,9],[6,12]].forEach(([x,y])=>{p.set(x,y+1,PAL.fern);p.rect(x-1,y,3,1,c);p.rect(x,y-1,1,3,c);p.set(x,y,PAL.yellow);});return p.canvas();}
 function wellSprite(){const p=new Px(32,32);p.ell(16,22,10,6,PAL.slate);p.ell(16,21,8,4,PAL.blue);p.rect(5,6,2,16,PAL.bark).rect(25,6,2,16,PAL.bark);
@@ -393,7 +435,7 @@ function buildArt(){
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};

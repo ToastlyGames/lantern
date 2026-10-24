@@ -12,20 +12,28 @@ function buildHold(){
   const W=26,H=24,m=newMap(W,H,'hold',GRASS);
   for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(x<1||y<1||x>=W-1||y>=H-1)setSolid(m,x,y,1);
   for(let y=5;y<H-1;y++){setT(m,12,y,PATH);setT(m,13,y,PATH);}
-  for(let x=1;x<W-1;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
+  for(let x=1;x<W;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
   for(let x=14;x<17;x++)setT(m,x,13,PATH);
   // pond
   [[18,19],[19,19],[20,19],[21,19],[17,20],[18,20],[19,20],[20,20],[21,20],[22,20],[18,21],[19,21],[20,21],[21,21],[22,21],[19,22],[20,22],[21,22]].forEach(([x,y])=>{setT(m,x,y,WATER);setSolid(m,x,y,1);});
   // border + inner trees
   const tree=(tx,ty)=>addObj(m,{type:'tree',x:tx*T+8,y:ty*T+15,spr:'tree',block:[[tx,ty]]});
-  for(let x=0;x<W;x+=2){tree(x,0);tree(x+1,H-1);}for(let y=1;y<H;y+=2){tree(0,y);tree(W-1,y);}
+  // the east road ends at an opening in the trees (rows 11–12), closed with a barricade until Season 1's new area
+  for(let x=0;x<W;x+=2){tree(x,0);tree(x+1,H-1);}for(let y=1;y<H;y+=2){tree(0,y);if(y!==11&&y!==13)tree(W-1,y);}
   // the inner trees can be cut (Woodcutting); border trees are the edge of the world
   m.trees=[];[[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind='oak';o.chop=true;o.ti=m.trees.length;o.logs=TREES.oak.logs;o.until=0;m.trees.push(o);});
   // buildings
   addObj(m,{type:'gate',x:13*T,y:5*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
-  addObj(m,{type:'board',x:17*T,y:10*T+2,spr:'board',block:[[16,9],[17,9]],act:{x:17*T,y:10*T+8,label:'Market',id:'market'}});
+  // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
+  addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
+  // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
+  addObj(m,{type:'stall',x:19*T+8,y:9*T+14,spr:'stall',block:[[18,9],[19,9]]});
+  addObj(m,{type:'npc',name:'Tallow',x:20*T+12,y:10*T+12,act:{x:20*T+12,y:11*T+2,label:'Trade',id:'market'}});
+  // the east road: a sign and a barricaded opening in the trees
+  addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
+  addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
   addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
   addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
   addObj(m,{type:'well',x:9*T,y:10*T,spr:'well',block:[[8,9],[9,9]]});
