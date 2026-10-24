@@ -516,6 +516,7 @@ function openSettings(){
    <div class="setrow col"><span>Brightness <b id="bv">${SET.bright}%</b></span><input type="range" id="bright" min="60" max="160" step="5" value="${SET.bright}" aria-label="Brightness"></div>
    ${tog('pnames','Player names',SET.pnames)}${tog('feed','World feed in the Hold',SET.feed)}${tog('shake','Screen shake',SET.shake)}
    <h3>Sound and feel</h3>${tog('sound','Sound effects',!muted)}${tog('vib','Vibration',SET.vib)}
+   <h3>Help</h3><div class="setrow"><span>Guides for everything in the game</span><a class="btn alt sm" href="/wiki/" target="_blank" rel="noopener">Open the wiki</a></div>
    <div class="row"><button class="btn alt" id="sdef">Reset to default</button><button class="btn" id="sx">Done</button></div>`);
   const q=s=>$('sheet').querySelectorAll(s);$('sx').onclick=closeSheet;
   q('[data-zoom]').forEach(b=>b.onclick=()=>{SET.zoom=+b.dataset.zoom;saveSet(true);openSettings();});
