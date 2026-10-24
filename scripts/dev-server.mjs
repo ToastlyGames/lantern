@@ -53,7 +53,7 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname === '/__dev/flags' && process.env.LH_MEMORY_DB === '1') {
     const { db } = await import('../lib/db.js'); res.end(JSON.stringify(db()._flags)); return;
   }
-  const file = join(root, 'public', url.pathname === '/' ? 'index.html' : normalize(url.pathname));
+  const file = join(root, 'public', url.pathname === '/' ? 'index.html' : normalize(url.pathname.endsWith('/') ? url.pathname + 'index.html' : url.pathname));
   if (!file.startsWith(join(root, 'public'))) { res.statusCode = 403; return res.end(); }
   try { const b = await readFile(file); for (const h of pageHeaders) res.setHeader(h.key, h.value); res.setHeader('Content-Type', TYPES[extname(file)] || 'application/octet-stream'); res.end(b); }
   catch { res.statusCode = 404; res.end('not found'); }

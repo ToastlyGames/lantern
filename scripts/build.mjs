@@ -3,6 +3,7 @@
 //   client-src/data.js                →  lib/gamedata.js (same item/gear/skill tables on the server)
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { buildWiki } from './wiki.mjs';
 const src = f => readFileSync(new URL('../client-src/' + f, import.meta.url), 'utf8');
 
 // 1) shared data for the server
@@ -24,4 +25,6 @@ for (const f of readdirSync(new URL('../client-src/icons/', import.meta.url))) c
 { const { BUILD, CHANGELOG } = new Function(src('changelog.js') + '\nreturn { BUILD, CHANGELOG };')();
   const md = `# Lanternhold changelog\n\nCurrent build: **v${BUILD.version}** · ${BUILD.season}\n\n` + CHANGELOG.map(e => `## v${e.v} · ${e.title}\n\n_${e.date}_\n\n` + e.notes.map(n => '- ' + n).join('\n')).join('\n\n') + '\n';
   writeFileSync(new URL('../CHANGELOG.md', import.meta.url), md); }
-console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js');
+// 5) the public wiki at /wiki, from docs/WIKI.md + the update history
+buildWiki();
+console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js, public/wiki/');
