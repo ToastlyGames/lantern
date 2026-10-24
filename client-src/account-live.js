@@ -61,18 +61,22 @@ addEventListener('eip6963:announceProvider',e=>{const d=e.detail;if(d&&d.info&&d
 dispatchEvent(new Event('eip6963:requestProvider'));
 function allWallets(){const l=wallets.slice();if(!l.length&&window.ethereum)l.push({info:{uuid:'injected',name:window.ethereum.isMetaMask?'MetaMask':'Browser wallet',icon:''},provider:window.ethereum});return l;}
 const hexUtf8=s=>'0x'+Array.from(new TextEncoder().encode(s)).map(b=>b.toString(16).padStart(2,'0')).join('');
+// Lanternhold only ever asks a wallet for these: which account, and one free sign-in signature. Never a transaction,
+// a token approval, a chain switch or anything else, so a bug or an injected script can't use our wallet code to do more.
+const SAFE_METHODS=new Set(['eth_accounts','eth_requestAccounts','wallet_requestPermissions','personal_sign']);
+const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.reject({message:'Blocked wallet request: '+method});return pv.request(params?{method,params}:{method});};
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 async function pickAccount(pv){
-  let known=[];try{known=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+  let known=[];try{known=(await ask(pv,'eth_accounts'))||[];}catch(e){}
   if(known.length){
-    try{const perms=await pv.request({method:'wallet_requestPermissions',params:[{eth_accounts:{}}]});
-      let now=[];try{now=(await pv.request({method:'eth_accounts'}))||[];}catch(e){}
+    try{const perms=await ask(pv,'wallet_requestPermissions',[{eth_accounts:{}}]);
+      let now=[];try{now=(await ask(pv,'eth_accounts'))||[];}catch(e){}
       const cav=(perms||[]).flatMap(p=>(p&&p.caveats)||[]).find(c=>c&&c.type==='restrictReturnedAccounts');
       const pick=now[0]||(cav&&Array.isArray(cav.value)&&cav.value[0]);if(pick)return String(pick);}
     catch(e){if(e&&e.code===4001)throw e;}
   }
-  const accts=await pv.request({method:'eth_requestAccounts'});return String(accts&&accts[0]||'');
+  const accts=await ask(pv,'eth_requestAccounts');return String(accts&&accts[0]||'');
 }
 // Watch the wallet a player signed in with: switching or disconnecting its account signs them out.
 const LW='lanternhold.wallet';let watched=null;
@@ -91,17 +95,20 @@ async function onAccounts(accts){const me=ACC.me&&ACC.me.wallet;if(!me||switchin
   try{sessionStorage.setItem('lanternhold.notice',now?'You switched wallets, so you were signed out. Connect again to sign in with '+short(now)+'.':'Your wallet disconnected, so you were signed out.');}catch(e){}
   location.reload();}
 // Signs a Sign-In with Ethereum message. endpoint: 'auth/verify' to sign in, 'auth/link-wallet' to add the wallet to this account.
+// At most two wallet pop-ups: pick/connect the account, then one free signature. The server writes the exact message
+// (this site's address, your checksummed address, a one-time code, 5-minute expiry), so the wallet can show it as a
+// verified sign-in request for this site instead of a warning. No network switch is needed just to sign in.
 async function signWithWallet(w,endpoint,onStage){
   const pv=w.provider;
   const raw=await pickAccount(pv),addr=raw.toLowerCase();if(!/^0x[0-9a-f]{40}$/.test(addr))throw {message:'No valid account was shared'};
-  try{const c=await pv.request({method:'eth_chainId'});
-    if(parseInt(c,16)!==4663){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:RH.chainId}]});}
-      catch(e){const code=e&&(e.code||(e.data&&e.data.originalError&&e.data.originalError.code));if(code===4902)await pv.request({method:'wallet_addEthereumChain',params:[RH]});}}}catch(e){}
-  onStage&&onStage('Sign the message in your wallet. It’s free and doesn’t send a transaction.');
-  const n=await api('auth/nonce');if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
-  const now=new Date(),exp=new Date(now.getTime()+10*60000);
-  const msg=`${n.data.domain} wants you to sign in with your Ethereum account:\n${raw}\n\nSign in to Lanternhold. This free signature proves you own this wallet. It does not send a transaction or move funds.\n\nURI: ${location.origin}\nVersion: 1\nChain ID: ${n.data.chainId}\nNonce: ${n.data.nonce}\nIssued At: ${now.toISOString()}\nExpiration Time: ${exp.toISOString()}`;
-  const sig=await pv.request({method:'personal_sign',params:[hexUtf8(msg),raw]});if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
+  onStage&&onStage('Approve the sign-in request in your wallet. It’s a free signature: no transaction, no gas, no access to your funds.');
+  const n=await api('auth/nonce?address='+addr);
+  if(!n.ok)throw {message:n.status===0?'Couldn’t reach the server. Check your connection and try again.':n.data&&n.data.msg?n.data.msg:'The game server isn’t set up correctly (error '+n.status+'). The site owner can open '+location.host+'/api/health to see what’s missing.'};
+  const msg=n.data.message;
+  // only sign what we expect: a sign-in for this exact site, for this account, with the game's own wording
+  if(typeof msg!=='string'||!msg.startsWith(location.host+' wants you to sign in with your Ethereum account:\n'+n.data.address+'\n')||msg.indexOf('\nURI: '+location.protocol+'//'+location.host+'\n')<0||n.data.address.toLowerCase()!==addr)
+    throw {message:'Sign-in message didn’t match this site. Refresh the page and try again.'};
+  const sig=await ask(pv,'personal_sign',[hexUtf8(msg),raw]);if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
   const v=await api(endpoint,{method:'POST',body:{message:msg,signature:sig}});
   if(!v.ok)throw {message:v.data.msg||(v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')')};
   return {me:v.data,addr};
@@ -148,14 +155,14 @@ function render(){
       :signin}
     ${ACC.note?`<p class="${ACC.noteOk?'note':'err'}" role="status">${esc(ACC.note)}</p>`:''}
     ${ACC.err?`<p class="err" role="alert">${ACC.err}</p>`:''}
-    ${me?'':'<p class="fine">Sign in with an EVM wallet on Robinhood Chain (a free signature, never a transaction) or with Google. Your hero and progress are saved to your account.</p>'}`;
+    ${me?'':'<p class="fine">Sign in with an EVM wallet (two quick approvals: connect, then one free signature. Never a transaction) or with Google. Your hero and progress are saved to your account.</p>'}`;
   }else if(s==='nowallet'){
     h=`<h2>No wallet found</h2><p class="lead">This browser doesn’t have an EVM wallet. To sign in with your wallet:</p>
     <ol class="how"><li>Open your wallet app (Robinhood Wallet, MetaMask, Rabby…)</li><li>Use its built-in browser to open this page</li><li>Tap <b>Connect wallet</b> again</li></ol>
     <p class="lead small">On a computer, install a wallet extension and reload.${ACC.cfg.google?' Or sign in with Google instead. You can connect a wallet later from the game.':''}</p>
     <div class="row"><button class="btn alt" id="back">Back</button>${ACC.cfg.google?'<button class="btn" id="goog">Continue with Google</button>':''}</div>`;
   }else if(s==='signing'){
-    h=`<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><button class="btn alt" id="back">Cancel</button>`;
+    h=`<div class="spin" aria-hidden="true"></div><h2>Check your wallet</h2><p class="lead">${esc(ACC.stage||('Approve the connection in '+(ACC.wname||'your wallet')+'.'))}</p><ul class="safe"><li>✓ The request should say <b>${esc(location.host)}</b></li><li>✓ It’s only a signature: no transaction, no gas</li><li>✓ Lanternhold never asks for approvals, transfers or your secret phrase</li></ul><button class="btn alt" id="back">Cancel</button>`;
   }else if(s==='creator'){
     const d=ACC.draft,L=d.look;
     const sw=(k,arr)=>`<div class="swrow" role="radiogroup" aria-label="${k}">${arr.map((c,i)=>`<button class="sw" role="radio" aria-checked="${L[k]===i}" aria-label="${k} ${i+1}" data-k="${k}" data-i="${i}" style="--c:${c}"></button>`).join('')}</div>`;
@@ -222,7 +229,7 @@ render();
     if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
   if(x||g)history.replaceState(null,'',location.pathname);}
 try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}
-api('config').then(r=>{if(r.ok){ACC.cfg=r.data;if(ACC.screen==='welcome'&&!box.hidden)render();}});
+api('config').then(r=>{if(r.ok&&r.data.main&&/^[a-z0-9.-]+\.[a-z]{2,}$/.test(r.data.main)&&r.data.main!==location.host){location.replace('https://'+r.data.main+location.pathname+location.search+location.hash);return;}if(r.ok){ACC.cfg=r.data;if(ACC.screen==='welcome'&&!box.hidden)render();}});
 api('me').then(async r=>{if(!(r.ok&&r.data.account))return render();
   if(r.data.wallet&&signedInWithWallet()){
     await new Promise(res=>setTimeout(res,300)); // let wallets announce themselves

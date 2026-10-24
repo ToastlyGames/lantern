@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 buildArt();
 const cv=$('cv'),g=cv.getContext('2d');
-{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};$('goldIc').src=u(iconOf('gold'));$('icBag').src=u(ART.chest[0]);$('icRet').src=u(ART.torch[0]);
+{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};{const p=new Px(16,16);p.rect(3,2,10,12,'#c2a26b');p.rect(4,3,8,10,'#f4e4c1');for(const y of [5,7,9,11])p.rect(5,y,6,1,'#8a6f30');p.rect(2,1,12,2,'#8a6f30');p.rect(2,13,12,2,'#8a6f30');p.set(12,4,PAL.gold).set(11,3,PAL.gold);p.outline();$('icSkill').src=u(p.canvas());}$('icBag').src=u(ART.chest[0]);$('icRet').src=u(ART.torch[0]);
 }
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rand=Math.random,ri=(a,b)=>a+Math.floor(rand()*(b-a+1));
@@ -11,7 +11,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:[null,null,null,null,null,null],kills:0,deaths:0,bosses:{}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:[null,null,null,null,null,null],kills:0,deaths:0,bosses:{},goals:{},cnt:{}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -36,6 +36,8 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.bosses={};for(const k of Object.keys(obj(o.bosses)))if(ENEMIES[k]&&ENEMIES[k].boss)s.bosses[k]=true;
   const Q=Array.isArray(o.quick)?o.quick:DEF.quick;s.quick=[0,1,2,3,4].map(i=>ITEMS[Q[i]]&&(ITEMS[Q[i]].food||ITEMS[Q[i]].oil)?Q[i]:null);
   s.flags={};for(const [k,v] of Object.entries(obj(o.flags)))if(/^[a-z]{2,16}$/.test(k))s.flags[k]=!!v;s.guide=int(o.guide,0,99,0);
+  s.goals={};for(const k of Object.keys(obj(o.goals)).slice(0,300))if(/^[a-z0-9]{2,16}$/.test(k))s.goals[k]=1;
+  s.cnt={};for(const [k,v] of Object.entries(obj(o.cnt)).slice(0,60))if(/^[a-z]{2,16}$/.test(k)){const n=int(v,0,1e9,0);if(n)s.cnt[k]=n;}
   return s;}
 let S=normalize({}),PID=null;
 function save(now){if(!PID)return;S.savedAt=Date.now();try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
@@ -100,7 +102,7 @@ const keys={};let stick={x:0,y:0,on:false},aPressed=false,retHeld=false;
 window.addEventListener('keydown',e=>{if(!started||!$('acct').hidden)return;const tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA')return;if(!$('sheet').hidden&&e.code!=='Escape')return;const k=e.code;if((k==='KeyT'||k==='Slash')&&!e.repeat){e.preventDefault();toggleChat(true);$('chatIn').focus();return;}keys[k]=true;
   if(k==='Space'||k==='KeyJ'||k==='KeyE'||k==='Enter'){e.preventDefault();if(!e.repeat)aPressed=true;}
   if(/^Digit[1-5]$/.test(k)&&!e.repeat)useQuick(+k.slice(5)-1);if(k==='KeyF'&&!e.repeat)useFlask();if(k==='KeyQ'&&!e.repeat)useFood();if(k==='KeyR')retHeld=true;
-  if((k==='KeyI'||k==='KeyB')&&!e.repeat)openBag();if(k==='KeyM'&&!e.repeat)toggleMute();if(k==='Escape')closeSheet();
+  if((k==='KeyI'||k==='KeyB')&&!e.repeat)openBag();if(k==='KeyH'&&!e.repeat)openHero();if(k==='KeyK'&&!e.repeat)openSkills();if(k==='KeyM'&&!e.repeat)toggleMute();if(k==='Escape')closeSheet();
   if(k.startsWith('Arrow'))e.preventDefault();});
 window.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyR')retHeld=false;});
 const pad=$('pad'),knob=$('knob');let padId=null,padC={x:0,y:0};
@@ -134,7 +136,7 @@ addEventListener('contextmenu',e=>{if(!e.target.closest('input,textarea,#acctBod
 addEventListener('dragstart',e=>{if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS')e.preventDefault();});
 const bRet=$('bRet');bRet.addEventListener('pointerdown',e=>{e.preventDefault();retHeld=true;try{bRet.setPointerCapture(e.pointerId);}catch(_){}});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bRet.addEventListener(t,()=>{retHeld=false;}));
-$('bBag').addEventListener('click',()=>openBag());
+$('bBag').addEventListener('click',()=>openBag());$('bHero').addEventListener('click',()=>openHero());$('bSkill').addEventListener('click',()=>openSkills());
 
 // ---------- world state ----------
 const HOLD=buildHold();bakeGround(HOLD);
@@ -146,7 +148,7 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(){FISHING=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
+function enterHold(){FISHING=null;CHOP=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
   updateHud();MP.toHold();}
 function startDelve(from,seed){run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
@@ -169,12 +171,15 @@ function nearestAct(){
   for(const o of map.objs){if(!o.act||o.gone)continue;const d=Math.hypot(o.act.x-P.x,o.act.y-P.y);if(d<bd){bd=d;best={o,label:o.act.label,id:o.act.id};}}
   if(scene==='hold'){for(const p of map.plots){const d=Math.hypot(p.cx-P.x,p.cy+6-P.y);if(d<bd){bd=d;const st=S.plots[p.i],ready=st&&growth(st)>=1;best={plot:p,label:readyPlots().length?'Harvest':'Farm',id:'plot'};}}}
   if(scene==='hold'){if(FISHING)return {label:FISHING.phase==='bite'?'Hook!':'Fishing',id:'hook'};if(!best){const sp=fishSpot();if(sp)best={label:'Fish',id:'fish',sp};}}
+  if(scene==='hold'){if(CHOP)return {label:'Chopping',id:'noop'};if(!best){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
+  {const d=nearBagDrop();if(d)best={label:'Pick up',id:'pickup',d};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden){const sx=map.stairs.tx*T+8,sy=map.stairs.ty*T+10,d=Math.hypot(sx-P.x,sy-P.y);if(d<14)best={label:'Descend',id:'stairs'};}
   return best;
 }
 function doAct(a){
-  if(a.id==='gate')return openGate();if(a.id==='house')return openBag();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
+  if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
   if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('sell');
+  if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
   if(a.id==='stairs'&&MP.client())return MP.askDown();
@@ -204,7 +209,6 @@ function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit
 function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
   if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   if(mine)spawnLoot(e.x,e.y-4,e.d.drops);if(mine&&e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null);
-  if(!mine&&hit.includes(me)&&OTH.get(top))floatText(e.x,e.y-24,'loot: '+OTH.get(top).name,'#c2d3e0');
   if(e.d.boss){if(hit.includes(me))MP.feed('boss',map.pack.bossName);sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
     setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
@@ -219,15 +223,48 @@ let shake=0;
 function rollRarity(floor,boost){const w={};let tot=0;for(const r of RORDER){let x=RARITY[r].w;if(r==='rare')x*=1+floor*.08*boost;if(r==='xrare')x*=1+floor*.15*boost;if(r==='legendary')x*=1+floor*.25*boost;w[r]=x;tot+=x;}
   let q=rand()*tot;for(const r of RORDER){q-=w[r];if(q<=0)return r;}return 'common';}
 function gearDrops(src,floor,boss){const luck=1+A('luck')/100,out=[];
-  if(rand()<{chest:.10,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
+  if(rand()<{chest:.10,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
   if(rand()<{chest:.035,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
   if(boss){const k=Object.keys(CAPES).find(k=>CAPES[k].boss===boss);if(k&&rand()<.05*luck)out.push('cape_'+k);}
   return out;}
-function dropGear(x,y,src,boss){for(const id of gearDrops(src,run?run.floor:1,boss))drops.push(mkDrop(x,y,id,1));}
+function dropGear(x,y,src,boss){for(const id of gearDrops(src,run?run.floor:1,boss))addDrop(mkDrop(x,y,id,1));}
 function spawnLoot(x,y,table){for(const [id,ch,a,b] of table){if(rand()>=(id==='gold'?ch:ch*(1+A('luck')/100)))continue;const n=ri(a,b);
-  if(id==='gold'){const piles=Math.min(4,Math.ceil(n/6));for(let i=0;i<piles;i++)drops.push(mkDrop(x,y,'gold',Math.ceil(n/piles)));}
-  else drops.push(mkDrop(x,y,id,n));}}
+  if(id==='gold'){const piles=Math.min(4,Math.ceil(n/6));for(let i=0;i<piles;i++)addDrop(mkDrop(x,y,'gold',Math.ceil(n/piles)));}
+  else addDrop(mkDrop(x,y,id,n));}}
 function rareFound(id){const it=ITEMS[id],R=RARITY[it.rarity];sfx('rare');buzz([30,40,30]);toast(R.n+': '+it.n,'rare r-'+it.rarity);puff(P.x,P.y-10,R.c,it.rarity==='legendary'?30:12);if(RORDER.indexOf(it.rarity)>=RORDER.indexOf('rare'))MP.feed('loot',it.n);}
+// ---------- items on the ground ----------
+// Loot (monsters, ore, chests): in a party dungeon everyone sees it and whoever walks over it first gets it.
+// Bag drops: land at your feet, you can pick them back up at once, other players nearby see them after 30 s (anywhere).
+// The realtime room decides who gets each networked item, so it is never picked up twice.
+let dropRef=0;
+const roomUp=()=>netOn()&&NET.roomOpen()&&!!MP.room;
+function addDrop(d,bag){d.ref='r'+(++dropRef);d.bag=!!bag;if(bag){d.vx=d.vy=0;d.vz=0;d.t=1;d.expAt=Date.now()+180e3;}drops.push(d);
+  if(roomUp()&&(bag||MP.shared())){d.net=true;NET.send({t:'drop',ref:d.ref,it:d.id,n:d.n,x:Math.round(d.x),y:Math.round(d.y),vx:Math.round(d.vx),vy:Math.round(d.vy),bag:d.bag});}
+  return d;}
+function netDrop(v,settled){if(drops.some(d=>d.did===v.did))return;if(scene==='delve'?(!run||v.f!==run.floor):v.f!=null)return;if(!ITEMS[v.it]&&v.it!=='gold')return;
+  drops.push({x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
+const dropShown=d=>!d.showAt||Date.now()>=d.showAt;
+function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;give(into,d.id,d.n);
+  if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');
+  floatText(P.x,P.y-24,'+'+d.n+' '+(d.id==='gold'?'gold':ITEMS[d.id].n),d.id==='gold'?'#ffcd75':'#a7f070');if(scene==='hold')save();}
+function claimDrop(d){if(d.taken)return;
+  if(!d.net)return grantDrop(d);                    // solo: it's just yours
+  if(!d.did||!roomUp())return;                      // waiting for the room to confirm the drop (or to reconnect)
+  if(d.pending&&Date.now()-d.pendAt<3000)return;d.pending=true;d.pendAt=Date.now();NET.send({t:'take',did:d.did});}
+function updateDrops(dt){const now=Date.now();
+  for(const d of drops){d.t+=dt;if(d.expAt&&now>d.expAt){d.taken=true;continue;}if(!dropShown(d))continue;
+    d.vz-=260*dt;d.z=Math.max(0,d.z+d.vz*dt);if(d.z===0)d.vz=0;d.vx*=.9;d.vy*=.9;moveBody(d,d.vx*dt,d.vy*dt,2);
+    if(d.bag||P.hp<=0)continue;                     // bag drops are picked up with the action button, never by walking past
+    const dist=Math.hypot(P.x-d.x,P.y-4-d.y);if(d.t>.35&&dist<30&&!d.pending){d.x+=(P.x-d.x)*Math.min(1,dt*8);d.y+=(P.y-4-d.y)*Math.min(1,dt*8);}
+    if(d.t>.35&&dist<7)claimDrop(d);}
+  drops=drops.filter(d=>!d.taken);}
+// (re)joining a room: its list of items on the ground is the truth; a drop of mine it never confirmed is sent again
+function syncDrops(list){const mine=drops.filter(d=>d.net&&!d.did&&!d.taken);drops=drops.filter(d=>!d.net);
+  for(const v of list){const a=mine.find(d=>!d.did&&v.by===MP.id&&v.it===d.id&&v.n===d.n&&Math.hypot(v.x-d.x,v.y-d.y)<6);if(a){a.did=v.did;drops.push(a);}else netDrop(v,true);}
+  for(const d of mine)if(!d.did){drops.push(d);NET.send({t:'drop',ref:d.ref,it:d.id,n:d.n,x:Math.round(d.x),y:Math.round(d.y),vx:0,vy:0,bag:d.bag});}}
+function nearBagDrop(){let best=null,bd=16;for(const d of drops){if(!d.bag||d.taken||!dropShown(d))continue;const k=Math.hypot(d.x-P.x,d.y-(P.y-4));if(k<bd){bd=k;best=d;}}return best;}
+// drop from the bag: lands at your feet
+function dropToGround(id,n){return addDrop({x:P.x+(P.dir==='left'?-8:P.dir==='right'?8:0),y:P.y+(P.dir==='up'?-6:4),id,n,vx:0,vy:0,z:0,vz:0,t:1},true);}
 function mkDrop(x,y,id,n){const a=rand()*Math.PI*2,s=30+rand()*40;return {x,y,id,n,vx:Math.cos(a)*s,vy:Math.sin(a)*s,z:0,vz:70,t:0};}
 function puff(x,y,col,n){if(reduceMotion)n=Math.min(n,3);for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=20+rand()*50;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,t:0,life:.4+rand()*.3,col});}}
 
@@ -264,18 +301,49 @@ function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=
   for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d];if(tAt(map,tx+dx,ty+dy)===WATER){let bx=tx+dx,by=ty+dy;if(tAt(map,bx+dx,by+dy)===WATER){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
-function startFishing(sp){sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
-function landFish(hooked){const pool=WATERS.hold.fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;
+function startFishing(sp){CHOP=null;sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
+let missRun=0;
+function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS.hold.fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
   if(rand()<(1/300)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
 function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.hypot(P.x-FISHING.px,P.y-FISHING.py)>3){FISHING=null;return;}const f=FISHING;f.t+=dt;
   if(f.phase==='cast'&&f.t>.6){f.phase='wait';f.t=0;f.wait=biteWait();sfx('splash');}
   else if(f.phase==='wait'&&f.t>f.wait){f.phase='bite';f.t=0;sfx('bite');buzz(50);}
-  else if(f.phase==='bite'&&f.t>1.3){if(rand()<catchChance())landFish(false);else floatText(P.x,P.y-24,'It got away…','#94b0c2');f.phase='reel';f.t=0;}
+  else if(f.phase==='bite'&&f.t>1.3){if(rand()<catchChance())landFish(false);else{floatText(P.x,P.y-24,'It got away…','#94b0c2');if(++missRun>=5)secret('miss5');}f.phase='reel';f.t=0;}
   else if(f.phase==='reel'&&f.t>.7){f.phase='cast';f.t=0;}}
+// ---------- woodcutting: trees at the Hold are shared by everyone in your world ----------
+// Each tree holds 150 logs. Every log anyone cuts comes off the same stack (the world's realtime room keeps count), then the
+// tree falls and regrows 90 s later. One swing every ~2.5 s, so there's time to chat with whoever is cutting next to you.
+let CHOP=null;
+const chopEvery=()=>Math.max(1.6,2.6-.01*(lvlOf('woodcutting')-1));
+const chopChance=()=>Math.min(.95,.62+.005*(lvlOf('woodcutting')-1));
+function treeUp(o){if(o.until&&Date.now()>=o.until){o.until=0;o.logs=TREES[o.kind].logs;}return !o.until;}
+function nearTree(){if(scene!=='hold'||!map.trees)return null;let best=null,bd=22;for(const o of map.trees){const d=Math.hypot(o.x-P.x,o.y+5-P.y);if(d<bd){bd=d;best=o;}}return best;}
+function startChop(o){if(!treeUp(o))return toast('Just a stump for now. It regrows soon.');const L=TREES[o.kind];if(lvlOf('woodcutting')<L.lvl)return toast('You need Woodcutting '+L.lvl+' for the '+L.n+'.','bad');
+  FISHING=null;CHOP={o,t:0,sw:0,px:P.x,py:P.y};const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');sfx('swing');}
+function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
+  if(P.moving||scene!=='hold'||Math.hypot(P.x-c.px,P.y-c.py)>3){CHOP=null;return;}
+  if(!treeUp(o)){CHOP=null;return;}
+  c.sw+=dt;if(c.sw>=.85){c.sw=0;sfx('hit');puff(o.x+(P.x<o.x?-4:4),o.y-6,PAL.wood,3);o.shake=.25;}
+  c.t+=dt;if(c.t<chopEvery())return;c.t=0;
+  const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
+  if(roomUp())NET.send({t:'chop',i:o.ti,ok:ok?1:0});
+  else if(ok){o.logs--;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
+function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
+  floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
+function treeFell(o,ms){o.logs=0;o.until=Date.now()+ms;if(CHOP&&CHOP.o===o)CHOP=null;puff(o.x,o.y-14,PAL.green,14);puff(o.x,o.y-4,PAL.wood,8);
+  if(Math.hypot(o.x-P.x,o.y-P.y)<120){sfx('boss');toast('Timber! The '+TREES[o.kind].n+' is down. It regrows in '+Math.round(ms/1000)+' s.');}}
+// a tree update from the room: how many logs are left, and who swung
+function onTree(m){const o=HOLD.trees&&HOLD.trees[m.i];if(!o)return;const was=!o.until;
+  if(m.wait>0){if(was)treeFell(o,m.wait);else o.until=Date.now()+m.wait;}else{o.until=0;o.logs=m.left;}
+  if(m.by&&m.by!==MP.id){const p=OTH.get(m.by);if(p){p.chopT=3.6;p.chopX=o.x;}o.shake=.25;
+    o.cut=o.cut||{};o.cut[m.by]=Date.now();
+    if(CHOP&&CHOP.o===o&&Object.values(o.cut).filter(t=>Date.now()-t<7000).length>=2)secret('choir');}}
+function drawAxe(x,y,dir,ph){const a=(dir==='left'?-1:1)*(-.9+Math.sin(ph*Math.PI*2)*.9);g.save();g.translate(Math.round(x+(dir==='left'?-5:5)),Math.round(y-8));g.scale(dir==='left'?-1:1,1);g.rotate(a);g.drawImage(ART.axe,-5,-11);g.restore();}
 function hookFish(){const f=FISHING;if(f&&f.phase==='bite'){landFish(true);f.phase='reel';f.t=0;}}
-function drawFishing(){const f=FISHING;if(!f)return;const d=f.dir,sx=d==='left'?-1:1;
-  const hx=P.x+(d==='left'?-4:4),hy=P.y-7,tx=P.x+(d==='up'?6:d==='left'?-10:10),ty=P.y+(d==='up'?-20:-17);
+// px/py: whose rod it is (you, or another player whose cast arrives through the room)
+function drawFishing(f=FISHING,px=P.x,py=P.y){if(!f)return;const d=f.dir,sx=d==='left'?-1:1;
+  const hx=px+(d==='left'?-4:4),hy=py-7,tx=px+(d==='up'?6:d==='left'?-10:10),ty=py+(d==='up'?-20:-17);
   g.fillStyle='#6b3e26';const n=Math.max(Math.abs(tx-hx),Math.abs(ty-hy));for(let i=0;i<=n;i++)g.fillRect(Math.round(hx+(tx-hx)*i/n),Math.round(hy+(ty-hy)*i/n),1,1);
   let bx=f.bx,by=f.by+Math.round(Math.sin(time*3));if(f.phase==='cast'){const k=Math.min(1,f.t/.6);bx=tx+(f.bx-tx)*k;by=ty+(f.by-ty)*k-Math.sin(k*Math.PI)*14;}
   else if(f.phase==='reel'){const k=Math.min(1,f.t/.7);bx=f.bx+(tx-f.bx)*k;by=f.by+(ty-f.by)*k;}
@@ -290,7 +358,7 @@ const growth=st=>Math.min(1,(Date.now()-st.t0)/1000/CROPS[st.crop].grow);
 let farmSel=null,farmQty=0,farmTick=null;
 const emptyPlots=()=>S.plots.map((p,i)=>p?-1:i).filter(i=>i>=0);
 const readyPlots=()=>S.plots.map((p,i)=>p&&growth(p)>=1?i:-1).filter(i=>i>=0);
-function harvestAll(){const got={};let xp=0;for(const i of readyPlots()){const st=S.plots[i],c=CROPS[st.crop],n=ri(c.yield[0],c.yield[1])+(rand()<lvlOf('farming')/100?1:0);give(S.bank,c.out,n);xp+=c.xp*n;got[c.out]=(got[c.out]||0)+n;S.plots[i]=null;const p=HOLD.plots[i];puff(p.cx,p.cy,'#a7f070',6);}
+function harvestAll(){const got={};let xp=0;for(const i of readyPlots()){const st=S.plots[i],c=CROPS[st.crop],n=ri(c.yield[0],c.yield[1])+(rand()<lvlOf('farming')/100?1:0);give(S.bank,c.out,n);xp+=c.xp*n;got[c.out]=(got[c.out]||0)+n;bump('crops',n);S.plots[i]=null;const p=HOLD.plots[i];puff(p.cx,p.cy,'#a7f070',6);}
   if(xp)skillXp('farming',xp);save();const txt=Object.entries(got).map(([id,n])=>'+'+n+' '+ITEMS[id].n).join(', ');if(txt){floatText(P.x,P.y-20,txt,'#a7f070');toast('Harvested '+txt+' · '+xp+' Farming xp','good');}}
 function plantMany(crop,n){const free=emptyPlots().slice(0,n),c=CROPS[crop];n=Math.min(free.length,avail(c.seed));
   for(let k=0;k<n;k++){const i=free[k];S.plots[i]={crop,t0:Date.now()};const p=HOLD.plots[i];puff(p.cx,p.cy,'#a0663b',4);}take(c.seed,n);if(n){sfx('plant');S.flags.planted=true;skillXp('farming',c.plantXp*n);}save();toast('Planted '+n+' '+c.n+' · '+c.plantXp*n+' Farming xp','good');}
@@ -353,7 +421,7 @@ const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
 function cook(r,n){let ok=0,burnt=0,xp=0;for(let i=0;i<n&&canMake(r);i++){for(const [id,q] of Object.entries(r.need))take(id,q);
     if(rand()<burnChance(r)){give(S.bank,r.burn.out,1);burnt++;}else{give(S.bank,r.out,r.n||1);ok++;xp+=r.xp;}}
-  sfx('cook');if(xp)skillXp('cooking',xp);S.flags.cooked=true;save();toast(`Cooked ${ok} ${ITEMS[r.out].n}${burnt?`, burnt ${burnt}`:''}${xp?' · '+xp+' Cooking xp':''}`,burnt&&!ok?'bad':'good');}
+  sfx('cook');if(xp)skillXp('cooking',xp);bump('cooked',ok);bump('burnt',burnt);S.flags.cooked=true;save();toast(`Cooked ${ok} ${ITEMS[r.out].n}${burnt?`, burnt ${burnt}`:''}${xp?' · '+xp+' Cooking xp':''}`,burnt&&!ok?'bad':'good');}
 function openKitchen(){const lv=lvlOf('cooking');
   openSheet(`<h2>The Kitchen</h2>${skillLine('cooking')}<p class="lead small">Food heals you in the Depths. Higher Cooking means less burnt food.</p><div class="list">${RECIPES.kitchen.map((r,i)=>{const it=ITEMS[r.out],m=maxMake(r),lock=lv<r.lvl,bc=burnChance(r);
     return `<div class="recipe${lock?' locked':''}"><div class="rh">${iconImg(r.out)}<span><b>${it.n}</b><small>Heals ${it.heal} · ${r.xp} xp${bc>0?' · '+Math.round(bc*100)+'% burn':''} · have ${avail(r.out)}${lock?' · Needs Cooking '+r.lvl:''}</small></span></div><div class="need">${needText(r)}</div>
@@ -369,8 +437,8 @@ function openCraft(kind){
   $('sx').onclick=closeSheet;
   $('sheet').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>{const r=RECIPES[kind][+b.dataset.make];if(!canMake(r))return;
     for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;const it=ITEMS[r.out];
-    if(it.gear){give(S.bank,r.out,1);S.flags.forged=true;sfx('cook');if(r.xp)skillXp('smithing',r.xp);save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
-    else{give(S.bank,r.out,r.n||1);toast('Made '+it.n+(r.n?' ×'+r.n:''),'good');if(kind==='press')S.flags.pressed=true;}
+    if(it.gear){give(S.bank,r.out,1);S.flags.forged=true;bump('forged');sfx('cook');if(r.xp)skillXp('smithing',r.xp);save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    else{give(S.bank,r.out,r.n||1);toast('Made '+it.n+(r.n?' ×'+r.n:''),'good');if(kind==='press'){S.flags.pressed=true;bump('pressed');}}
     sfx('cook');
     save();openCraft(kind);});
 }
@@ -391,7 +459,7 @@ function openSettings(){
   $('sdef').onclick=()=>{Object.assign(SET,SET_DEF,{shake:!reduceMotion});muted=false;try{localStorage.setItem('lanternhold.mute','0');}catch(e){}saveSet(true);openSettings();};}
 let sellArm=null;
 function openMarket(tab){
-  const ok=id=>ITEMS[id]&&!ITEMS[id].bound,byV=(a,b)=>ITEMS[b].v-ITEMS[a].v;
+  const ok=id=>ITEMS[id]&&!ITEMS[id].bound&&!ITEMS[id].keep,byV=(a,b)=>ITEMS[b].v-ITEMS[a].v;
   const rows=(store,from)=>Object.keys(store).filter(id=>ok(id)&&store[id]>0).sort(byV).map(id=>{const n=store[id],arm=sellArm===from+':'+id;
     return `<div class="recipe"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n}</b><small>×${n} · ${fmt(ITEMS[id].v)} gold each${ITEMS[id].relic?' · Relic':''}${rTag(id)?' · '+rTag(id):''}</small></span><button class="btn sm${arm?' warn':''}" data-sell="${id}" data-from="${from}">${arm?'Sure?':'Sell 1'}</button>${n>1?`<button class="btn sm alt" data-sellall="${id}" data-from="${from}">All</button>`:''}</div></div>`;}).join('');
   const bagR=rows(S.bank,'bag'),bankR=rows(S.vault,'bank');
@@ -400,7 +468,7 @@ function openMarket(tab){
   openSheet(`<h2>Market Board</h2><div class="tabs"><button class="tab" aria-selected="${tab==='sell'}" data-tab="sell">Sell</button><button class="tab" aria-selected="${tab==='shop'}" data-tab="shop">Shop</button></div><p class="lead">You have ${iconImg('gold')} <b>${fmt(S.gold)}</b> gold.</p><div class="list">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;const q=s=>$('sheet').querySelectorAll(s);
   q('[data-tab]').forEach(b=>b.onclick=()=>openMarket(b.dataset.tab));
-  const sellFrom=(from,id,n)=>{const st=from==='bank'?S.vault:S.bank;n=Math.min(n,st[id]||0);if(!n)return 0;st[id]-=n;if(st[id]<=0)delete st[id];S.gold+=ITEMS[id].v*n;sfx('coin');save();return n;};
+  const sellFrom=(from,id,n)=>{const st=from==='bank'?S.vault:S.bank;n=Math.min(n,st[id]||0);if(!n)return 0;st[id]-=n;if(st[id]<=0)delete st[id];S.gold+=ITEMS[id].v*n;bump('sold',ITEMS[id].v*n);sfx('coin');save();return n;};
   const pricey=id=>ITEMS[id].relic||ITEMS[id].v>=300||(ITEMS[id].rarity&&RORDER.indexOf(ITEMS[id].rarity)>=2);
   q('[data-sell]').forEach(b=>b.onclick=()=>{const id=b.dataset.sell,from=b.dataset.from,key=from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;return openMarket('sell');}sellArm=null;if(sellFrom(from,id,1))toast('Sold '+ITEMS[id].n+' for '+fmt(ITEMS[id].v)+' gold');openMarket('sell');});
   q('[data-sellall]').forEach(b=>b.onclick=()=>{const id=b.dataset.sellall,from=b.dataset.from,key='all:'+from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;b.textContent='Sure?';b.classList.add('warn');return;}sellArm=null;const n=sellFrom(from,id,1e9);if(n)toast('Sold '+n+' '+ITEMS[id].n);openMarket('sell');});
@@ -419,7 +487,9 @@ function linkRows(){const L=window.ACC&&ACC.links&&ACC.links();if(!L)return '';c
   return out.join('');}
 function xRow(){const x=window.ACC&&ACC.xInfo&&ACC.xInfo();if(!x)return '';const u=x.username;
   return `<div class="gear xrow"><i class="ic xic" aria-hidden="true">X</i><span><small>X account</small><b>${u?`<a href="https://x.com/${chatEsc(u)}" target="_blank" rel="noopener noreferrer">@${chatEsc(u)}</a>`:'Not linked'}</b><small>${u?'Linked to this hero':x.enabled?'Approve on X to prove it’s yours':'Coming soon'}</small></span>${u?`<button class="btn alt sm${xArm?' warn':''}" id="xUn">${xArm?'Sure?':'Unlink'}</button>`:x.enabled?'<button class="btn sm" id="xLn">Link X</button>':''}</div>`;}
-function openBag(tab){bagTab=tab||bagTab;
+function heroIcon(){try{const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(heroImg(myLook(),'down',0),0,-1);$('icHero').src=c.toDataURL();}catch(e){}}
+function openHero(){openBag('hero');}function openSkills(){openBag('skills');}
+function openBag(tab){bagTab=tab||'items';
   const hc=document.createElement('canvas');hc.width=16;hc.height=16;hc.getContext('2d').drawImage(heroImg(myLook(),'down',0),0,0);
   const LK=window.ACC&&ACC.links?ACC.links():{},wa=LK.wallet||S.wallet,wl=wa?wa.slice(0,6)+'…'+wa.slice(-4):LK.google?'Google account':'Signed in';
   const img=c=>`<img class="ic" alt="" src="${c.toDataURL()}">`;
@@ -442,15 +512,18 @@ function openBag(tab){bagTab=tab||bagTab;
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="row"><button class="btn alt" id="setO">Settings</button><button class="btn alt" id="gd">Goals</button></div>
    <div class="row"><button class="btn alt" id="reset">Reset progress</button><button class="btn alt" id="out">Sign out</button></div>`;}
-  else if(bagTab==='skills'){body=`<div class="list">${['farming','fishing','cooking','smithing'].map(skillLine).join('')}</div>
+  else if(bagTab==='skills'){body=`<div class="list">${['woodcutting','fishing','farming','cooking','smithing'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
+   <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Trees at the Hold hold 150 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
    <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
    <p class="small">Combat level ${S.lvl} · ${S.xp}/${xpNeed(S.lvl)} xp · deepest floor ${S.deepest||'—'}</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
-   body=`${scene==='delve'?'<h3>Found this delve</h3>'+listItems(run.pack):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>In your bag</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
-  openSheet(`<h2>Bag</h2><div class="tabs">${[['hero','Hero'],['skills','Skills'],['items','Items']].map(([k,l])=>`<button class="tab" aria-selected="${bagTab===k}" data-bt="${k}">${l}</button>`).join('')}</div>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
+   const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
+   body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>
+   ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
+  openSheet(`<h2>${{hero:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
   q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
@@ -458,8 +531,8 @@ function openBag(tab){bagTab=tab||bagTab;
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
   if($('adm'))$('adm').onclick=openAdmin;
   if($('setO'))$('setO').onclick=openSettings;if($('gLn'))$('gLn').onclick=()=>{$('gLn').disabled=true;ACC.linkGoogle();};
-  if($('wLn'))$('wLn').onclick=async()=>{const b=$('wLn');b.disabled=true;b.textContent='Check wallet…';const r=await ACC.linkWallet();toast(r.ok?'Wallet connected: '+r.addr.slice(0,6)+'…'+r.addr.slice(-4):r.msg,r.ok?'good':'bad');openBag('hero');};if($('xLn'))$('xLn').onclick=()=>{$('xLn').disabled=true;$('xLn').textContent='Opening X…';ACC.xLink();};
-  if($('xUn'))$('xUn').onclick=async()=>{if(!xArm){xArm=true;return openBag('hero');}xArm=false;const ok=await ACC.xUnlink();toast(ok?'X account unlinked':'Couldn’t unlink. Try again.',ok?'good':'bad');openBag('hero');};if($('gd'))$('gd').onclick=openGuide;
+  if($('wLn'))$('wLn').onclick=async()=>{const b=$('wLn');b.disabled=true;b.textContent='Check wallet…';const r=await ACC.linkWallet();toast(r.ok?'Wallet connected: '+r.addr.slice(0,6)+'…'+r.addr.slice(-4):r.msg,r.ok?'good':'bad');openHero();};if($('xLn'))$('xLn').onclick=()=>{$('xLn').disabled=true;$('xLn').textContent='Opening X…';ACC.xLink();};
+  if($('xUn'))$('xUn').onclick=async()=>{if(!xArm){xArm=true;return openHero();}xArm=false;const ok=await ACC.xUnlink();toast(ok?'X account unlinked':'Couldn’t unlink. Try again.',ok?'good':'bad');openHero();};if($('gd'))$('gd').onclick=()=>openGuide();if($('gd2'))$('gd2').onclick=()=>openGuide();
   if($('out'))$('out').onclick=()=>{save();ACC.flush();ACC.logout();};
   if($('reset'))$('reset').onclick=()=>{if($('reset').dataset.c){S=normalize({name:S.name,look:S.look,wallet:S.wallet});save();P.hp=maxHp();enterHold();closeSheet();toast('Progress reset');}else{$('reset').dataset.c=1;$('reset').textContent='Tap again to reset';}};
 }
@@ -471,31 +544,32 @@ function itemInfo(id){const it=ITEMS[id],o=[];
   if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id))o.push('Used at the Forge');
   if(id==='burnt_fish')o.push('Not much use to anyone');return o;}
 let dropQty=1,dropArm=false;
-function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag('items');return;}if(!keep){dropQty=1;dropArm=false;}dropQty=Math.min(dropQty,n);
+function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();return;}if(!keep){dropQty=1;dropArm=false;}dropQty=Math.min(dropQty,n);
   const R=rc(id),rare=!!R||!!it.relic;
   if(it.bound){openSheet(`<div class="itemhd" style="--rc:${R.c}"><img class="big" alt="" src="${iconOf(id).toDataURL()}"><span><b>${it.n}</b><em style="color:${R.c}">${R.n}</em><small>Bound to you</small></span></div>
      <ul class="info"><li>${helmStat(it.tier)}</li><li>The only one in the game. It can never be sold, traded or dropped.</li></ul>
      ${S.gear.helm!==it.tier?'<button class="btn big" id="eqIt">Equip</button>':''}<div class="row"><button class="btn alt" id="back">Back to items</button></div>`);
-    $('back').onclick=()=>openBag('items');if($('eqIt'))$('eqIt').onclick=()=>{equipItem(id);openBag('hero');};return;}
+    $('back').onclick=()=>openBag();if($('eqIt'))$('eqIt').onclick=()=>{equipItem(id);openHero();};return;}
   openSheet(`<div class="itemhd" ${R?`style="--rc:${R.c}"`:''}><img class="big" alt="" src="${iconOf(id).toDataURL()}"><span><b>${it.n}</b>${R?`<em style="color:${R.c}">${R.n}</em>`:''}<small>You have ${fmt(n)} · worth ${fmt(it.v)} gold each</small></span></div>
    <ul class="info">${itemInfo(id).map(t=>`<li>${t}</li>`).join('')}</ul>
    ${itemSlot(id)?`<button class="btn big" id="eqIt">Equip${S.gear[itemSlot(id)]?' (swap with '+ITEMS[gearId(itemSlot(id),S.gear[itemSlot(id)])].n+')':''}</button>`:''}
    ${it.food||it.oil?`<h3>Quick slot</h3><div class="qslots">${S.quick.map((q,j)=>`<button class="qs ${q===id?'on':''}" data-qset="${j}" aria-label="Put in quick slot ${j+1}">${q?`<img alt="" src="${iconOf(q).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>`:''}
-   <h3>Drop</h3><p class="lead small">Dropped items are gone for good. To get gold instead, sell at the Market Board.</p>
+   ${it.keep?'<p class="lead small" style="color:#ff77a8">Goal Relic. Earned only through goals. It can’t be sold, traded or dropped.</p>':`   <h3>Drop</h3><p class="lead small">It lands at your feet. Tap <b>Pick up</b> to take it back. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes. To get gold instead, sell at the Market Board.</p>
    ${n>1?`<div class="qty"><span>How many?</span><button class="btn alt sm" id="dm" aria-label="Fewer">−</button><output id="dn">${dropQty}</output><button class="btn alt sm" id="dp" aria-label="More">+</button><button class="btn alt sm" id="dx">All</button></div>`:''}
    <button class="btn big danger" id="drop">${dropArm?`Tap again to drop ${dropQty} ${it.n}`:`Drop ${dropQty>1?dropQty+' ':''}${it.n}`}</button>
+`}
    <div class="row"><button class="btn alt" id="back">Back to items</button></div>`);
   const setQ=v=>{dropQty=Math.max(1,Math.min(n,v));dropArm=false;openItem(id,true);};
-  if($('dm')){$('dm').onclick=()=>setQ(dropQty-1);$('dp').onclick=()=>setQ(dropQty+1);$('dx').onclick=()=>setQ(n);}
-  $('back').onclick=()=>openBag('items');
-  if($('eqIt'))$('eqIt').onclick=()=>{equipItem(id);if(S.bank[id])openItem(id,true);else openBag('hero');};
+  if($('dm')&&$('dp')){$('dm').onclick=()=>setQ(dropQty-1);$('dp').onclick=()=>setQ(dropQty+1);$('dx').onclick=()=>setQ(n);}
+  $('back').onclick=()=>openBag();
+  if($('eqIt'))$('eqIt').onclick=()=>{equipItem(id);if(S.bank[id])openItem(id,true);else openHero();};
   $('sheet').querySelectorAll('[data-qset]').forEach(b=>b.onclick=()=>{const j=+b.dataset.qset,o=S.quick.indexOf(id);if(o>=0)S.quick[o]=S.quick[j]===id?null:S.quick[j];S.quick[j]=id;save();updateQuick(true);openItem(id,true);});
-  $('drop').onclick=()=>{if((rare||dropQty>=10||dropQty===n&&n>1)&&!dropArm){dropArm=true;openItem(id,true);return;}
-    take(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n);sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag('items');};}
+  if($('drop'))$('drop').onclick=()=>{if((rare||dropQty>=10||dropQty===n&&n>1)&&!dropArm){dropArm=true;openItem(id,true);return;}
+    take(id,dropQty);dropToGround(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n+' at your feet');sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag();};}
 function openAdmin(){if(!ADMIN)return;
   const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock the lift to floor 6'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?[['f5','Jump to Mother Slime (F5)'],['f10','Jump to the Ossuary Knight (F10)']]:[]);
   openSheet(`<h2>Admin powers</h2><p class="lead small">Only party hat owners see this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
-  $('back').onclick=()=>openBag('hero');
+  $('back').onclick=()=>openHero();
   $('sheet').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const k=b.dataset.ad;
     if(k==='kit'){grantKit();S.gold-=100000;}
     if(k==='gold')S.gold+=10000;
@@ -534,9 +608,9 @@ function openEquip(slot){
    <h3>Equipped</h3>${curId?line(curId,slot==='cape'||slot==='helm'?'<button class="btn alt sm" id="off">Take off</button>':''):'<p class="lead small">Nothing.</p>'}
    <h3>${scene==='hold'?'In your bag and bank':'In your bag'}</h3>${opts.length?`<div class="list">${opts.map(id=>line(id,`<button class="btn sm" data-wear="${id}">Equip</button>`)).join('')}</div>`:`<p class="lead small">None yet.${scene==='delve'?' Items found this delve go into your bag when you get home.':''}</p>`}
    <div class="row"><button class="btn alt" id="back">Back</button></div>`);
-  $('back').onclick=()=>openBag('hero');
+  $('back').onclick=()=>openHero();
   if($('off'))$('off').onclick=()=>{give(S.bank,curId,1);S.gear[slot]=null;P.hp=Math.min(P.hp,maxHp());save();openEquip(slot);};
-  $('sheet').querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{equipItem(b.dataset.wear);openBag('hero');});
+  $('sheet').querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{equipItem(b.dataset.wear);openHero();});
 }
 // ---------- the Bank ----------
 const BANK_UNLOCKS=[
@@ -547,7 +621,7 @@ const BANK_UNLOCKS=[
   {t:'Reach Cooking 15',slots:2,done:()=>lvlOf('cooking')>=15},
   {t:'Reach Smithing 15',slots:2,done:()=>lvlOf('smithing')>=15},
   {t:'Reach combat level 10',slots:2,done:()=>S.lvl>=10},
-  {t:'Complete every goal',slots:4,done:()=>S.guide>=GOALS.length}];
+  {t:'Complete 25 goals',slots:4,done:()=>goalsDone()>=25}];
 const bankCap=()=>BANK_BASE+BANK_UNLOCKS.reduce((a,u)=>a+(u.done()?u.slots:0),0)+S.bankBuys*BANK_BUY_SLOTS;
 const bankMax=()=>BANK_BASE+BANK_UNLOCKS.reduce((a,u)=>a+u.slots,0)+BANK_BUYS.length*BANK_BUY_SLOTS;
 const bankUsed=()=>Object.keys(S.vault).length;
@@ -583,24 +657,107 @@ function migrateBank(){if(S.flags.vault)return;S.flags.vault=true;const keepOut=
   for(const [id] of Object.entries(S.bank).filter(([id])=>ITEMS[id]&&!keepOut.has(id)).sort(byWorth))if(deposit(id,0,true))moved++;
   S.flags.deposited=false;if(moved)setTimeout(()=>toast('Your stored items are now in the Bank. Supplies stay in your bag.','good'),1600);}
 
-// ---------- guide: first goals for new players ----------
+// ---------- goals: complete in any order, each pays gold once ----------
+// Categories run from first steps to long grinds. Secret goals stay hidden ("???") until someone stumbles on them.
+// Every goal completed rolls for a Goal Relic, items that exist nowhere else in the game (much better odds on secrets).
+const bump=(k,n=1)=>{if(n>0)S.cnt[k]=(S.cnt[k]||0)+n;};
+const C=k=>S.cnt[k]||0;
+const totalLvl=()=>Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0);
+const ownsRarity=r=>allKeys().concat(Object.keys(S.vault)).some(id=>ITEMS[id]&&ITEMS[id].rarity&&RORDER.indexOf(ITEMS[id].rarity)>=RORDER.indexOf(r)&&ITEMS[id].rarity!=='unique');
+const GOAL_CATS=[['start','First steps'],['skills','Skills'],['depths','The Depths'],['hold','Life at the Hold'],['secret','Secrets']];
+const lv=(k,n)=>({done:()=>lvlOf(k)>=n,prog:()=>[lvlOf(k),n]}),cn=(f,n)=>({done:()=>f()>=n,prog:()=>[Math.min(n,f()),n]});
 const GOALS=[
-  {t:'Plant crops at the Farm',hint:'Walk to the fenced field and tap Farm.',done:()=>S.flags.planted,gold:10},
-  {t:'Catch a fish at the lake',hint:'Stand at the lake edge and tap Fish. Tap Hook! when the bobber dips.',done:()=>S.caught>0,gold:10},
-  {t:'Cook food at the Kitchen',hint:'Cooked Pondfin heals 35. Bread heals 30.',done:()=>S.flags.cooked,gold:10},
-  {t:'Press Lampseed into oil',hint:'The Oil Press turns 1 Lampseed into 2 Oil Flasks.',done:()=>S.flags.pressed,gold:15},
-  {t:'Store something in the Bank',hint:'The stone building on the left. Banked items are safe if you fall.',done:()=>!!S.flags.deposited,gold:10},
-  {t:'Enter the Delve Gate',hint:'The cave at the top of the Hold.',done:()=>S.deepest>=1,gold:15},
-  {t:'Reach floor 3',hint:'Find the stairs on each floor. Mine ore on the walls.',done:()=>S.deepest>=3,gold:25},
-  {t:'Forge a Copper Blade',hint:'6 Copper Ore + 20 gold at the Forge, then equip it from your bag.',done:()=>!!S.flags.forged||S.gear.blade!=='rusty',gold:25},
-  {t:'Defeat Mother Slime',hint:'She waits on floor 5. Bring food.',done:()=>!!S.bosses.mother,gold:60},
-  {t:'Reach Fishing level 10',hint:'Pondfin give 10 xp each.',done:()=>lvlOf('fishing')>=10,gold:50},
-  {t:'Defeat the Ossuary Knight',hint:'Floor 10. Watch for his charge.',done:()=>!!S.bosses.knight,gold:150}];
+  {id:'plant',cat:'start',t:'Plant crops at the Farm',hint:'Walk to the fenced field and tap Farm. You start with 20 Wheat Seeds.',done:()=>S.flags.planted,gold:10},
+  {id:'fish',cat:'start',t:'Catch a fish',hint:'Stand at the lake edge and tap Fish. Tap Hook! when the bobber dips.',done:()=>S.caught>0,gold:10},
+  {id:'chop',cat:'start',t:'Cut your first log',hint:'Walk up to a tree inside the Hold and tap Chop.',...cn(()=>C('logs'),1),gold:10},
+  {id:'cook',cat:'start',t:'Cook food at the Kitchen',hint:'Cooked Pondfin heals 35. Bread heals 30.',done:()=>S.flags.cooked,gold:10},
+  {id:'press',cat:'start',t:'Press Lampseed into oil',hint:'The Oil Press turns 1 Lampseed into 2 Oil Flasks.',done:()=>S.flags.pressed,gold:15},
+  {id:'bank',cat:'start',t:'Store something in the Bank',hint:'The stone building. Banked items are safe if you fall.',done:()=>!!S.flags.deposited,gold:10},
+  {id:'gate',cat:'start',t:'Enter the Delve Gate',hint:'The cave at the top of the Hold.',done:()=>S.deepest>=1,gold:15},
+  {id:'f3',cat:'start',t:'Reach floor 3',hint:'Find the stairs on each floor. Mine ore on the walls.',done:()=>S.deepest>=3,gold:25,prog:()=>[Math.min(3,S.deepest),3]},
+  {id:'forge',cat:'start',t:'Forge a Copper Blade',hint:'6 Copper Ore + 20 gold at the Forge, then equip it.',done:()=>!!S.flags.forged||S.gear.blade!=='rusty',gold:25},
+  {id:'fish10',cat:'skills',t:'Reach Fishing 10',hint:'Pondfin give 10 xp each.',...lv('fishing',10),gold:50},
+  {id:'fish25',cat:'skills',t:'Reach Fishing 25',hint:'Hook! catches never miss.',...lv('fishing',25),gold:150},
+  {id:'fish100',cat:'skills',t:'Catch 100 fish',hint:'A quiet afternoon at the lake.',...cn(()=>S.caught||0,100),gold:75},
+  {id:'fish1k',cat:'skills',t:'Catch 1,000 fish',hint:'The lake knows your name.',...cn(()=>S.caught||0,1000),gold:400},
+  {id:'wc5',cat:'skills',t:'Reach Woodcutting 5',hint:'Every log is 3 xp. Cut with friends.',...lv('woodcutting',5),gold:30},
+  {id:'wc15',cat:'skills',t:'Reach Woodcutting 15',hint:'Faster swings and fewer misses as you level.',...lv('woodcutting',15),gold:100},
+  {id:'wc30',cat:'skills',t:'Reach Woodcutting 30',hint:'New trees arrive with new areas.',...lv('woodcutting',30),gold:250},
+  {id:'logs500',cat:'skills',t:'Cut 500 logs',hint:'Stack them. Logs will feed a new skill soon.',...cn(()=>C('logs'),500),gold:100},
+  {id:'logs5k',cat:'skills',t:'Cut 5,000 logs',hint:'Somewhere, a forest trembles.',...cn(()=>C('logs'),5000),gold:500},
+  {id:'farm10',cat:'skills',t:'Reach Farming 10',hint:'Plant and harvest at the Farm.',...lv('farming',10),gold:50},
+  {id:'crops',cat:'skills',t:'Harvest 500 crops',hint:'Higher Farming gives bonus crops.',...cn(()=>C('crops'),500),gold:150},
+  {id:'cook10',cat:'skills',t:'Reach Cooking 10',hint:'Cook at the Kitchen.',...lv('cooking',10),gold:50},
+  {id:'smith10',cat:'skills',t:'Reach Smithing 10',hint:'Forge gear at the Forge.',...lv('smithing',10),gold:60},
+  {id:'smith25',cat:'skills',t:'Reach Smithing 25',hint:'Ember gear starts at 25.',...lv('smithing',25),gold:200},
+  {id:'total',cat:'skills',t:'Total skill level 100',hint:'Every skill counts.',...cn(totalLvl,100),gold:200},
+  {id:'mother',cat:'depths',t:'Defeat Mother Slime',hint:'She waits on floor 5. Bring food.',done:()=>!!S.bosses.mother,gold:60},
+  {id:'knight',cat:'depths',t:'Defeat the Ossuary Knight',hint:'Floor 10. Watch for his charge.',done:()=>!!S.bosses.knight,gold:150},
+  {id:'f10',cat:'depths',t:'Reach floor 10',hint:'The crypt goes deep.',done:()=>S.deepest>=10,gold:100,prog:()=>[Math.min(10,S.deepest),10]},
+  {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Defeat monsters in the Depths.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
+  {id:'cb25',cat:'depths',t:'Reach combat level 25',hint:'Better blades help.',done:()=>S.lvl>=25,prog:()=>[Math.min(25,S.lvl),25],gold:200},
+  {id:'kill100',cat:'depths',t:'Defeat 100 monsters',hint:'Every hit counts in a party.',...cn(()=>S.kills||0,100),gold:60},
+  {id:'kill1k',cat:'depths',t:'Defeat 1,000 monsters',hint:'The Depths grow quiet when you visit.',...cn(()=>S.kills||0,1000),gold:300},
+  {id:'chests',cat:'depths',t:'Open 25 chests',hint:'Chests hide in dead ends.',...cn(()=>C('chests'),25),gold:75},
+  {id:'ore',cat:'depths',t:'Mine 200 ore',hint:'Hit the glinting rocks in the walls.',...cn(()=>C('ores'),200),gold:75},
+  {id:'rare',cat:'depths',t:'Find a Rare lantern or cape',hint:'Chests and bosses drop them most.',done:()=>ownsRarity('rare'),gold:100},
+  {id:'party',cat:'depths',t:'Delve with a party',hint:'Invite a friend from the Social button, then enter the Gate.',done:()=>!!S.flags.partied,gold:40},
+  {id:'friend',cat:'hold',t:'Make a friend',hint:'Social button → Friends → add a name.',done:()=>!!S.flags.friend,gold:20},
+  {id:'sell',cat:'hold',t:'Earn 5,000 gold at the Market',hint:'Sell what you don’t need at the Market Board.',...cn(()=>C('sold'),5000),gold:75},
+  {id:'expand',cat:'hold',t:'Buy more bank space',hint:'At the Bank.',done:()=>S.bankBuys>=1,gold:50},
+  {id:'rich',cat:'hold',t:'Hold 25,000 gold at once',hint:'Saving up for something?',done:()=>S.gold>=25000,prog:()=>[Math.min(25000,S.gold),25000],gold:250},
+  // secrets: hidden until found
+  {id:'konami',cat:'secret',t:'Old Habits',hint:'Up, up, and away… then down again. Left and right, twice.',gold:300,secret:true},
+  {id:'night',cat:'secret',t:'Night Owl',hint:'The lake is quietest after midnight.',gold:150,secret:true},
+  {id:'miss5',cat:'secret',t:'The One That Got Away',hint:'Some days the fish win. Again and again.',gold:77,secret:true},
+  {id:'burnt',cat:'secret',t:'Chef’s Kiss',hint:'Practice makes… charcoal.',gold:99,secret:true,done:()=>C('burnt')>=25},
+  {id:'dizzy',cat:'secret',t:'Dizzy',hint:'Round and round the lantern goes.',gold:111,secret:true},
+  {id:'choir',cat:'secret',t:'Timber Choir',hint:'Three axes, one tree.',gold:150,secret:true},
+  {id:'word',cat:'secret',t:'Speak, Friend',hint:'Say the name of this place aloud.',gold:50,secret:true},
+  {id:'fall10',cat:'secret',t:'Persistence',hint:'Fall ten times. Rise ten times.',gold:100,secret:true,done:()=>(S.deaths||0)>=10},
+  {id:'giver',cat:'secret',t:'Generous Soul',hint:'Leave something on the ground for a stranger.',gold:120,secret:true}];
+const GOAL_BY=Object.fromEntries(GOALS.map(g=>[g.id,g]));
+const goalsDone=()=>GOALS.filter(g=>S.goals[g.id]).length;
+// Goal Relics: the only way to get them. Rolled on every goal completed; secrets roll ten times better.
+const GOAL_RELICS=[['cape_wayfinder',1/600],['starlit_lantern',1/2000]];
+function goalRelic(secretGoal){for(const [id,ch] of GOAL_RELICS){const has=(S.bank[id]||0)+(S.vault[id]||0)>0||S.gear.cape===ITEMS[id].cape||S.gear.lantern===ITEMS[id].lantern;
+    if(has||rand()>=ch*(secretGoal?10:1)*(1+A('luck')/200))continue;give(S.vault,id,1);const R=RARITY[ITEMS[id].rarity];
+    setTimeout(()=>{sfx('rare');buzz([60,40,60,40,120]);puff(P.x,P.y-10,R.c,40);toast('Goal Relic! '+ITEMS[id].n+' is waiting in your Bank','rare r-mythic');MP.feed('loot',ITEMS[id].n);},1800);return;}}
+function completeGoal(g){if(!g||S.goals[g.id])return;S.goals[g.id]=1;S.gold+=g.gold;
+  if(g.secret){toast('Secret found: '+g.t+' · +'+g.gold+' gold','rare r-xrare');sfx('rare');buzz([30,30,30]);puff(P.x,P.y-10,'#c77dff',18);}
+  else{toast('Goal complete: '+g.t+' · +'+g.gold+' gold','good');sfx('coin');}
+  goalRelic(!!g.secret);save();}
+function secret(id){if(started&&S.goals&&!S.goals[id])completeGoal(GOAL_BY[id]);}
+// first run of the new goals: anything already done counts, with a one-time gold catch-up (capped)
+function migrateGoals(){if(S.flags.goalsv)return;S.flags.goalsv=true;let n=0,g0=0;
+  for(const g of GOALS)if(g.done&&!S.goals[g.id]&&g.done()){S.goals[g.id]=1;n++;g0+=g.gold;}
+  const pay=Math.min(1000,g0);S.gold+=pay;if(n)setTimeout(()=>toast(`Goals upgraded: ${n} already complete · +${pay} gold`,'good'),2500);save();}
+function nextGoal(){for(const [c] of GOAL_CATS){if(c==='secret')continue;const g=GOALS.find(g=>g.cat===c&&!S.goals[g.id]);if(g)return g;}return null;}
 let guideT=0;
 function updateGuide(dt){guideT-=dt;if(guideT>0)return;guideT=.8;checkBankGrowth();const el=$('guide');
-  const g0=GOALS[S.guide];if(g0&&g0.done()){S.gold+=g0.gold;S.guide++;toast('Goal complete: '+g0.t+' · +'+g0.gold+' gold','good');sfx('coin');save();}
-  const g1=GOALS[S.guide];el.hidden=!g1;if(g1){const t=document.documentElement.classList.contains('land')&&matchMedia('(pointer:coarse)').matches||document.documentElement.classList.contains('land')?`Goal ${S.guide+1}/${GOALS.length}`:`Goal ${S.guide+1}/${GOALS.length} · ${g1.t}`;if(el.textContent!==t)el.textContent=t;}}
-function openGuide(){openSheet(`<h2>Goals</h2><p class="lead small">Finish goals in order for gold. More goals arrive with each season.</p><ol class="goals">${GOALS.map((g,i)=>`<li class="${i<S.guide?'done':i===S.guide?'on':''}"><b>${g.t}</b><small>${i<S.guide?'Done':g.hint} · +${g.gold} gold</small></li>`).join('')}</ol><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+  if(!S.flags.goalsv)migrateGoals();
+  if(MP.party&&scene==='delve'&&MP.shared())S.flags.partied=true;if(MP.friends&&MP.friends.friends&&MP.friends.friends.length)S.flags.friend=true;
+  let k=0;for(const g of GOALS)if(!S.goals[g.id]&&g.done&&g.done()){completeGoal(g);if(++k>=2)break;}
+  const nx=nextGoal(),d=goalsDone(),land=document.documentElement.classList.contains('land');
+  const t=nx?(land?`Goals ${d}/${GOALS.length}`:`Goals ${d}/${GOALS.length} · ${nx.t}`):`Goals ${d}/${GOALS.length}`;el.hidden=false;if(el.textContent!==t)el.textContent=t;}
+let goalTab='start';
+function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
+  const list=GOALS.filter(g=>g.cat===goalTab).map(g=>{const ok=!!S.goals[g.id],hid=g.secret&&!ok,pr=!ok&&g.prog?g.prog():null;
+    return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
+  const cnt=c=>{const a=GOALS.filter(g=>g.cat===c);return `${a.filter(g=>S.goals[g.id]).length}/${a.length}`;};
+  openSheet(`<h2>Goals <small>${d}/${GOALS.length}</small></h2><p class="lead small">Finish them in any order for gold. Every goal also has a tiny chance to award a <b style="color:#ff77a8">Goal Relic</b>, something that exists nowhere else. Secrets have far better odds.</p>
+    <div class="tabs">${GOAL_CATS.map(([k,l])=>`<button class="tab" aria-selected="${goalTab===k}" data-gt="${k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
+    <ol class="goals">${list}</ol><div class="row"><button class="btn" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-gt]').forEach(b=>b.onclick=()=>openGuide(b.dataset.gt));}
+// ---- secret inputs: a remembered direction sequence (keys or stick), and spinning on the spot ----
+const SEQ=[];let seqLast=null,spinLog=[];
+function secretInput(mx,my,l){const d=l>.5?(Math.abs(mx)>Math.abs(my)?(mx>0?'right':'left'):(my>0?'down':'up')):null;
+  if(d!==seqLast){seqLast=d;if(d){const now=performance.now();SEQ.push([d,now]);if(SEQ.length>8)SEQ.shift();
+      if(SEQ.length===8&&SEQ.map(x=>x[0]).join()==='up,up,down,down,left,right,left,right'&&now-SEQ[0][1]<6000)secret('konami');
+      spinLog.push([d,now]);spinLog=spinLog.filter(x=>now-x[1]<4000);
+      const ring=['up','right','down','left'];let turns=0,dirn=0;for(let i=1;i<spinLog.length;i++){const a=ring.indexOf(spinLog[i-1][0]),b=ring.indexOf(spinLog[i][0]),st=(b-a+4)%4;
+        const s2=st===1?1:st===3?-1:0;if(s2&&(dirn===0||s2===dirn)){dirn=s2;turns++;}else{turns=s2?1:0;dirn=s2;}}
+      if(turns>=12)secret('dizzy');}}}
 $('guide').addEventListener('click',()=>{if(started)openGuide();});
 
 // ---------- simulated town ----------
@@ -612,7 +769,7 @@ function update(dt){
   let mx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0),my=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
   if(stick.on){mx=stick.x;my=stick.y;}
   if(paused){mx=0;my=0;aPressed=false;retHeld=false;}
-  const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l;}
+  const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l;}if(started)secretInput(mx,my,l);
   P.moving=l>.15&&P.chan<=0;
   if(P.moving){const sp=(scene==='hold'?72:62)*dt*(1+A('spd')/100);moveBody(P,mx*sp,0,4);moveBody(P,0,my*sp,4);P.anim+=dt;
     if(P.swing<=0)P.dir=Math.abs(mx)>Math.abs(my)?(mx>0?'right':'left'):(my>0?'down':'up');}
@@ -621,7 +778,7 @@ function update(dt){
   // context
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();}
-  if(scene==='hold'){updateFishing(dt);}
+  if(scene==='hold'){updateFishing(dt);updateChop(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -633,12 +790,7 @@ function update(dt){
     // return flame
     if(retHeld&&P.hp>0){P.chan+=dt;if(P.chan>=2){retHeld=false;returnHome();return;}}else P.chan=0;
     updateEnemies(dt);
-    // drops
-    for(const d of drops){d.t+=dt;d.vz-=260*dt;d.z=Math.max(0,d.z+d.vz*dt);if(d.z===0)d.vz=0;
-      d.vx*=.9;d.vy*=.9;moveBody(d,d.vx*dt,d.vy*dt,2);
-      const dist=Math.hypot(P.x-d.x,P.y-4-d.y);if(d.t>.35&&dist<30){d.x+=(P.x-d.x)*Math.min(1,dt*8);d.y+=(P.y-4-d.y)*Math.min(1,dt*8);}
-      if(d.t>.35&&dist<7){d.taken=true;give(run.pack,d.id,d.n);if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');floatText(P.x,P.y-24,'+'+d.n+' '+(d.id==='gold'?'gold':ITEMS[d.id].n),d.id==='gold'?'#ffcd75':'#a7f070');}}
-    drops=drops.filter(d=>!d.taken);
+    updateDrops(dt);
   }
   for(const f of fx){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=90*dt;}fx=fx.filter(f=>f.t<f.life);
   for(const t of texts)t.t+=dt;texts=texts.filter(t=>t.t<.9);
@@ -681,7 +833,7 @@ function updateEnemies(dt){
 // ---------- HUD ----------
 let lastAct=null;
 function setActLabel(a){const lab=a?a.label:(scene==='delve'?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
-const PT=['gold','goldRun','hpTxt','oilTxt','packN'];
+const PT=['hpTxt','oilTxt','packN'];
 let quickKey='';
 function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S.bank[id]||0:'').join(',')+'|'+scene+'|'+(force?Math.random():'');if(key===quickKey)return;quickKey=key;
   $('quick').innerHTML=S.quick.map((id,i)=>{const n=id?S.bank[id]||0:0;return `<button class="qs ${id&&!n?'empty':''}" data-q="${i}" aria-label="Quick slot ${i+1}${id?': '+ITEMS[id].n+', '+n:' (empty)'}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:'<b>+</b>'}${id?`<span class="cnt"><canvas class="pt"></canvas></span>`:''}<i>${i+1}</i></button>`;}).join('');
@@ -690,11 +842,10 @@ function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S
 function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
-  $('lvl').textContent='Lv '+S.lvl;ptSet($('gold'),fmt(S.gold),{font:'big',px:14,color:'#ffcd75'});
+  $('lvl').textContent='Lv '+S.lvl;{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
   $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
-  const pg=dv?(run.pack.gold||0):0;$('goldRun').hidden=!pg;if(pg)ptSet($('goldRun'),'+'+fmt(pg)+' in pack',{font:'small',px:9,color:'#a7f070'});
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
     
     const pn=Object.values(run.pack).reduce((a,b)=>a+b,0);$('packW').hidden=!pn;ptSet($('packN'),pn,{font:'small',px:9,color:'#c2d3e0'});
@@ -723,8 +874,8 @@ function render(){
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.y,f:()=>drawObj(o)});
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o)});
-  for(const d of drops)list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>{drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(o.chopT>0&&scene==='hold')drawAxe(o.x,o.y,o.dir,time*1.18);}});
+  for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
@@ -739,7 +890,8 @@ function render(){
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
 }
 function drawObj(o){
-  if(o.type==='tree')spr(ART.tree,o.x-16,o.y-30);
+  if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;spr(ART.tree,o.x-16+k,o.y-30);
+    if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-34,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-33,w,2);}}}
   else if(o.type==='house')spr(ART.house,o.x-24,o.y-48);
   else if(o.type==='bank')spr(ART.bank,o.x-24,o.y-48);
   else if(o.type==='forge')spr(ART.forge[Math.floor(time*4)%2],o.x-24,o.y-40);
@@ -784,7 +936,7 @@ function drawPlayer(){
   if(P.say&&time<P.sayUntil)ptDraw(g,P.say.length>26?P.say.slice(0,25)+'...':P.say,P.x,P.y-(ADMIN_HATS[S.gear.helm]?(scene==='hold'?44:34):(scene==='hold'?34:24)),{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
   if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
-  drawFishing();
+  drawFishing();if(CHOP)drawAxe(P.x,P.y,P.dir,CHOP.sw/.85);
 }
 function drawSwing(){const t=1-P.swing/.2,base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir],a=base-1.2+t*2.4;
   const sw=ART.sword[S.gear.blade];g.save();g.translate(Math.round(P.x),Math.round(P.y-6));g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();
@@ -843,9 +995,9 @@ MP.gateMember=()=>{const p=MP.party,lead=(p.members.find(m=>m.id===p.leader)||{}
   $('sx').onclick=closeSheet;if($('jp'))$('jp').onclick=()=>MP.enterInst(p.inst.room,p.inst.floor,p.inst.seed);$('lv').onclick=()=>{NET.lsend({t:'leave'});closeSheet();setTimeout(openGate,400);};};
 // ---- shared objects (chests, glowcaps, ore): the host decides who gets them ----
 function objTaken(o,by){const mine=by===MP.me();
-  if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
+  if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');bump('chests');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
   else if(o.type==='glowcap'){o.gone=true;o.light=null;o.act=null;if(mine)spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);}
-  else if(o.type==='ore'){o.gone=true;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine)spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,2,3],['gem',.06,1,1]]);puff(ox+8,oy+12,'#ffcd75',10);}}
+  else if(o.type==='ore'){o.gone=true;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,2,3],['gem',.06,1,1]]);}puff(ox+8,oy+12,'#ffcd75',10);}}
 function mineOre(o,i,who){if(o.gone)return;o.hp--;if(o.hp<=0){objTaken(o,who);MP.objOut(i,o,who);}else MP.objOut(i,o,null);}
 MP.objOut=(i,o,by)=>{if(MP.shared())NET.send({t:'obj',o:i,open:o.open?1:0,gone:o.gone?1:0,hp:o.hp,by});};
 function applyHit(e,d,a,who){e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
@@ -858,14 +1010,16 @@ function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt
 // ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
 MP.tick=dt=>{
   for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>80||Math.abs(dy)>80){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
-    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;}
+    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;}
   if(!netOn()||!NET.roomOpen()||!MP.room)return;
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
+  {const f=FISHING&&scene==='hold'?{d:FISHING.dir,ph:FISHING.phase,bx:Math.round(FISHING.bx),by:Math.round(FISHING.by)}:null,k=f?f.d+f.ph+f.bx+','+f.by:'';if(k!==MP.fishKey){MP.fishKey=k;NET.send({t:'fish',f});}}
   MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
   if(scene==='delve'&&MP.inInst()&&MP.host===MP.id&&OTH.size){MP.enT-=dt;if(MP.enT<=0){MP.enT=.1;
     NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100)])});}}
 };
-function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m});
+const fishOf=f=>f?{dir:f.d,phase:f.ph,bx:f.bx,by:f.by,t:0}:null;
+function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish)});
   if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
 // ---- lobby messages ----
 if(window.NET){
@@ -884,7 +1038,7 @@ if(window.NET){
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
   NET.onL('kicked',m=>{OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
-  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);MP.sent='';MP.lookKey='';MP.sendT=0;MP.lookT=0;
+  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;}for(const [i,left,wait] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.until=wait>0?Date.now()+wait:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
     MP.chatLog=(m.chat||[]).map(c=>({id:m.room+':'+c.n,name:c.name,text:c.text,at:c.at,me:c.id===MP.id}));if(MP.chatCb)MP.chatCb(MP.chatLog);
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
     if(m.room[0]==='d'){
@@ -896,6 +1050,12 @@ if(window.NET){
   NET.onR('-',m=>{const o=OTH.get(m.id);OTH.delete(m.id);if(o&&MP.inInst())toast(o.name+' left the dungeon');});
   NET.onR('S',m=>{for(const [id,x,y,d,mv] of m.p){const o=OTH.get(id);if(!o)continue;o.tx=x;o.ty=y;o.dir=d;o.moving=!!mv;}});
   NET.onR('L',m=>{const o=OTH.get(m.id);if(o)o.look=m.look||DEFAULT_LOOK;});
+  NET.onR('D',m=>{const v=m.d;if(m.ref){const d=drops.find(q=>q.ref===m.ref);if(d){d.did=v.did;if(v.left!=null)d.expAt=Date.now()+v.left;return;}}netDrop(v,false);});
+  NET.onR('took',m=>{const d=drops.find(q=>q.did===m.did);if(d&&d.bag&&d.ref&&m.by!==MP.id)secret('giver');if(m.by===MP.id){if(d)grantDrop(d);else if(ITEMS[m.it]||m.it==='gold')grantDrop({id:m.it,n:m.n});}else if(d)d.taken=true;});
+  NET.onR('gone',m=>{const d=drops.find(q=>q.did===m.did);if(d)d.taken=true;});
+  NET.onR('nope',m=>{const d=drops.find(q=>q.did===m.did);if(d){d.pending=false;d.showAt=Date.now()+5000;}});
+  NET.onR('T',onTree);
+  NET.onR('F',m=>{const o=OTH.get(m.id);if(o)o.fish=fishOf(m.f);});
   NET.onR('say',m=>{const msg={id:MP.room+':'+m.n,name:m.name,text:m.text,at:m.at,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatLog.length>60)MP.chatLog.shift();if(MP.chatCb)MP.chatCb([msg]);
     const o=OTH.get(m.id);if(o){o.say=m.text.length>26?m.text.slice(0,25)+'...':m.text;o.sayT=4.5;}});
   NET.onR('slow',()=>chatSys('Slow down a little.'));
@@ -929,7 +1089,7 @@ window.CHATNET={
   why(){if(!netOn())return 'Chat isn’t available right now.';if(!MP.room)return 'Connecting to the world…';return null;},
   join(ch,cb){MP.chatCb=cb;cb(MP.chatLog.slice());return ()=>{if(MP.chatCb===cb)MP.chatCb=null;};},
   async send(ch,text){const pm=text.match(/^\/p\s+(.+)/i);if(pm){if(!MP.party)return {ok:false,msg:'You’re not in a party. Invite someone from the Social menu.'};NET.lsend({t:'pchat',text:pm[1]});return {ok:true,party:true};}
-    if(!NET.roomOpen())return {ok:false,msg:'Reconnecting… try again in a moment.'};NET.send({t:'say',text});return {ok:true};}
+    if(!NET.roomOpen())return {ok:false,msg:'Reconnecting… try again in a moment.'};NET.send({t:'say',text});if(/\blanternhold\b/i.test(text))secret('word');return {ok:true};}
 };
 // ---- friends ----
 MP.loadFriends=async()=>{if(!window.ACC||!ACC.api)return;const r=await ACC.api.call(null,'friends');if(!r.ok)return;MP.friends=r.data;
@@ -1062,5 +1222,5 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf};
 })();

@@ -5,6 +5,7 @@ const ITEMS={
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
+  logs:{n:'Logs',v:2},
   bread:{n:'Bread',v:8,heal:30,food:true},stew:{n:'Glowcap Stew',v:20,heal:70,food:true},
   oil:{n:'Oil Flask',v:15,oil:50},
   rusty_blade:{n:'Rusty Blade',v:1,gear:'blade',tier:'rusty'},traveler_garb:{n:'Traveler Garb',v:1,gear:'mail',tier:'none'},
@@ -25,8 +26,8 @@ const GEAR={
 const HELM_ATTR={partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
 const ADMIN_HATS={partyhat:'Blue Party Hat',greenhat:'Green Party Hat'};
 // ---------- rarity ----------
-const RARITY={unique:{n:'One of One',c:'#73eff7',w:0},common:{n:'Common',c:'#c2d3e0',w:62},uncommon:{n:'Uncommon',c:'#a7f070',w:26},rare:{n:'Rare',c:'#41a6f6',w:9},xrare:{n:'Extremely Rare',c:'#c77dff',w:2.6},legendary:{n:'Legendary',c:'#ffcd75',w:.4}};
-const RORDER=['common','uncommon','rare','xrare','legendary','unique'];
+const RARITY={unique:{n:'One of One',c:'#73eff7',w:0},common:{n:'Common',c:'#c2d3e0',w:62},uncommon:{n:'Uncommon',c:'#a7f070',w:26},rare:{n:'Rare',c:'#41a6f6',w:9},xrare:{n:'Extremely Rare',c:'#c77dff',w:2.6},legendary:{n:'Legendary',c:'#ffcd75',w:.4},mythic:{n:'Mythic',c:'#ff77a8',w:0}};
+const RORDER=['common','uncommon','rare','xrare','legendary','mythic','unique'];
 // ---------- lanterns: everyone starts with Basic. Better lanterns burn oil slower (last longer) and throw more light ----------
 const LANTERNS={
   basic:{n:'Basic Lantern',r:'common',burn:1,light:1,metal:'#566c86',glow:'#ffcd75',v:2},
@@ -34,7 +35,9 @@ const LANTERNS={
   copper:{n:'Copper Lantern',r:'uncommon',burn:.8,light:1.05,metal:'#ef7d57',glow:'#ffcd75',v:70},
   iron:{n:'Iron Lantern',r:'rare',burn:.68,light:1.1,metal:'#f4f4f4',glow:'#ffe9a8',v:180},
   crystal:{n:'Crystal Lantern',r:'xrare',burn:.55,light:1.2,metal:'#73eff7',glow:'#c9fbff',v:600},
-  wisp:{n:'Wispheart Lantern',r:'legendary',aura:'#b8f7ff',burn:.42,light:1.32,metal:'#ffcd75',glow:'#b8f7ff',v:2400}
+  wisp:{n:'Wispheart Lantern',r:'legendary',aura:'#b8f7ff',burn:.42,light:1.32,metal:'#ffcd75',glow:'#b8f7ff',v:2400},
+  // Goal relics: never drop, can't be bought, sold or dropped. A very rare, random reward for completing goals.
+  starlit:{n:'Starlit Lantern',r:'mythic',aura:'#ff77a8',burn:.36,light:1.45,metal:'#c77dff',glow:'#ffd6f0',v:9000,goal:true}
 };
 // ---------- capes: nobody starts with one; each carries special attributes ----------
 // attrs: hp (+max HP), def (+defense), dmg (% damage), oil (% slower oil burn), spd (% move speed), light (% light radius),
@@ -47,19 +50,23 @@ const CAPES={
   hearth:{n:'Hearthkeeper Cape',r:'rare',c1:'#ef7d57',c2:'#b13e53',attr:{cookSafe:50,regen:.2},v:300},
   glow:{n:'Glowcap Shroud',r:'xrare',c1:'#e86fd0',c2:'#5d275d',attr:{light:20,luck:12},v:900},
   mother:{n:"Mother's Mantle",r:'legendary',aura:'#a7f070',c1:'#a7f070',c2:'#257179',attr:{dmg:15,regen:.35,hp:12},v:3000,boss:'mother'},
-  knight:{n:'Pall of the Ossuary',r:'legendary',aura:'#c77dff',c1:'#5d275d',c2:'#1a1c2c',attr:{def:3,dmg:12,oil:10},v:4500,boss:'knight'}
+  knight:{n:'Pall of the Ossuary',r:'legendary',aura:'#c77dff',c1:'#5d275d',c2:'#1a1c2c',attr:{def:3,dmg:12,oil:10},v:4500,boss:'knight'},
+  wayfinder:{n:"Wayfinder's Mantle",r:'mythic',aura:'#ff77a8',c1:'#ff77a8',c2:'#29366f',attr:{spd:10,luck:15,light:15,fishXp:10,chopXp:10},v:7000,src:'goal',goal:true}
 };
 const ATTR_TXT={hp:v=>`+${v} max HP`,def:v=>`+${v} defense`,dmg:v=>`+${v}% damage`,oil:v=>`Oil lasts ${v}% longer`,spd:v=>`+${v}% move speed`,light:v=>`+${v}% light radius`,
-  luck:v=>`+${v}% loot luck`,regen:v=>`Regenerate ${v} HP/s in the Depths`,fishXp:v=>`+${v}% Fishing XP`,catch:v=>`+${v}% catch chance`,cookSafe:v=>`${v}% less burnt food`};
-for(const [k,l] of Object.entries(LANTERNS))ITEMS[k+'_lantern']={n:l.n,v:l.v,lantern:k,rarity:l.r};
-for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,rarity:c.r};
+  luck:v=>`+${v}% loot luck`,regen:v=>`Regenerate ${v} HP/s in the Depths`,fishXp:v=>`+${v}% Fishing XP`,catch:v=>`+${v}% catch chance`,cookSafe:v=>`${v}% less burnt food`,chopXp:v=>`+${v}% Woodcutting XP`};
+for(const [k,l] of Object.entries(LANTERNS))ITEMS[k+'_lantern']={n:l.n,v:l.v,lantern:k,rarity:l.r,keep:!!l.goal};
+for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,rarity:c.r,keep:!!c.goal};
 // ---------- skills 1–99 (classic curve: early levels fly by, late levels take a very long time) ----------
-const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'}};
+const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'}};
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
 const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'}};
 const WATERS={hold:{n:'Hold Lake',fish:['pondfin']}};
+// ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
+// Expansions add new trees (with higher levels) per area. Logs will feed a future skill.
+const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:150,regrow:90,item:'logs'}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
