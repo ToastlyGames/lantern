@@ -196,10 +196,15 @@ function glowcapSprite(){const p=new Px(16,16);[[5,9,3],[10,11,2.4],[8,13,2]].fo
 function bonesSprite(){const p=new Px(16,16);p.line(3,12,10,9,PAL.bone).line(5,8,12,13,PAL.bone);p.ell(12,6,2.4,2,PAL.bone);p.set(11,6,PAL.ink).set(13,6,PAL.ink);p.outline();return p.canvas();}
 
 // ---------- the Hold ----------
+// admin badge: a small gold crown with an "A", shown before admin names
+function crownSprite(){const p=new Px(13,13),G='#ffcd75',D='#d9a066',H='#fff3c4',R='#e43b44',I='#1a1c2c';
+  p.rows(1,1,['h....r....h','g...ggg...g','gg..ggg..gg','ggg.ggg.ggg','ggggggggggg','ddddddddddd','ddddddddddd','ddddddddddd','ddddddddddd','ddddddddddd','ggggggggggg'],{g:G,d:D,h:H,r:R});
+  for(const [x,y] of [[5,5],[4,6],[6,6],[4,7],[5,7],[6,7],[4,8],[6,8],[4,9],[6,9]])p.set(x+1,y+1,I);
+  p.outline();return p.canvas();}
 function stumpSprite(){const p=new Px(32,32);p.rect(12,23,8,6,PAL.bark).rect(13,23,6,1,PAL.tan).rect(14,24,4,1,PAL.wood);p.rect(10,28,3,2,PAL.bark).rect(19,28,3,2,PAL.bark);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
 function axeSprite(){const p=new Px(10,12);p.rect(4,2,2,10,PAL.wood).rect(5,2,1,10,PAL.bark);p.rect(5,1,4,4,'#94b0c2').rect(8,0,1,6,'#c2d3e0').rect(6,2,2,1,'#566c86');p.outline();return p.canvas();}
-function treeSprite(){const p=new Px(32,32);p.rect(14,20,4,10,PAL.bark).rect(15,20,1,10,PAL.wood);
-  p.ell(16,13,11,10,PAL.fern);p.ell(14,11,8,7,PAL.green);p.ell(12,9,4,3,PAL.lime);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
+function treeSprite(dx=0){const p=new Px(32,32);p.rect(14,20,4,10,PAL.bark).rect(15,20,1,10,PAL.wood);
+  p.ell(16+dx,13,11,10,PAL.fern);p.ell(14+dx,11,8,7,PAL.green);p.ell(12+dx*1.5,9,4,3,PAL.lime);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
 function bankSprite(){const p=new Px(48,48),st='#94b0c2',st2='#566c86',st3='#c2d3e0',roof='#333c57',G=PAL.gold;
   // pediment roof
   for(let y=0;y<10;y++){const w=8+y*4;p.rect(24-w/2,6+y,w,1,y<2?st3:roof);}p.rect(2,16,44,3,st3);p.rect(2,18,44,1,st2);
@@ -323,7 +328,7 @@ function buildArt(){
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
-  ART.tree=treeSprite();ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
+  ART.tree=treeSprite();ART.crown=crownSprite();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
   ART.press=pressSprite();ART.board=boardSprite();ART.gate=gateSprite();ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
