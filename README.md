@@ -1,371 +1,340 @@
-# Lanternhold Wiki
-
-Season 0 (Beta) · updated October 24, 2026
-
-## Overview
-
-Lanternhold is a pixel-art dungeon MMO for Robinhood Chain, playable in the browser on phone and desktop at [lanternhold.fun](https://lanternhold.fun). It is in **Season 0 (Beta)**: every player is real, progress saves to your account, and the token and on-chain items arrive in Season 1.
-
-**The core loop:**
-
-1. **Build up at the Hold.** The Hold is a shared town where you farm, fish, chop trees, cook and forge, alongside everyone in your world.
-2. **Delve into the Depths.** Light your lantern, go down through floors of monsters, ore and chests, alone or with a party of up to 4.
-3. **Bring the loot home.** Light the Return Flame to come back with everything, or fall and lose about half of what you carried.
-4. **Grow.** Better gear lets you go deeper, deeper floors drop better loot, and goals reward you along the way.
-
-There are 5 skills to train (Woodcutting, Fishing, Farming, Cooking and Smithing) plus a combat level, 2 biomes with a boss each, 48 goals (9 of them secret) and items from Common up to Mythic.
-
-## Getting started
-
-Sign in, pick a name and a look, and you start in the Hold with 40 gold, 20 Wheat Seeds, 3 Oil Flasks and 3 Bread.
-
-**Signing in.** There are no guest accounts. Choose one of:
-
-- **Wallet:** any EVM wallet (MetaMask and others). It takes two approvals: connect, then one free signature. It is never a transaction, costs no gas and gives no access to your funds.
-- **Google:** one tap. You can connect a wallet later from the Hero screen.
-
-You can also link your X account from the Hero screen to show your @handle to friends.
-
-**Your hero.** Names are 3 to 16 letters, numbers or \_, permanent and unique. You choose skin, hair, hair style (short, long, spiky or hood) and clothes, and can change your look later at the house in the Hold.
-
-**Controls**
-
-| Action | Phone | Desktop |
-| --- | --- | --- |
-| Move | Joystick (bottom left) | WASD or arrow keys |
-| Attack / use | Big round button | Space or left click |
-| Quick slots (food, oil) | 5 buttons around the action button | 1 to 5 |
-| Return Flame (leave the Depths) | Hold the flame button for 2 s | Hold R |
-| Bag | Chest button | B |
-| Hero | Face button above the bag | H |
-| Skills | Scroll button above the hero | K |
-| Chat | Speech button at the bottom | T |
-| Zoom | Settings | Mouse wheel |
-
-**On screen.** Top: your level, health, where you are (and oil in the Depths). Top right: Settings and Social. The goals pill shows how many goals you have done and suggests the next one. Tap it to open Goals.
-
-**Settings** (saved to your account): zoom (Close is the default), brightness, screen shake, name tags, world feed, vibration and sound.
-
-## The Hold
-
-The Hold is the safe town where everyone in your world lives, trades and trains; nothing can hurt you there. Walk up to a place and the action button changes to what you can do.
-
-| Place | What you do there |
-| --- | --- |
-| Delve Gate (the cave at the top) | Enter the Depths, alone or leading your party. Once Mother Slime is beaten, a lift takes you straight to floor 6. |
-| Farm (the fenced field) | Plant seeds in 6 plots and harvest them when grown. |
-| Lake | Fish for Pondfin from the shore. |
-| Trees | 9 trees inside the Hold can be chopped for logs. The trees around the edge are the border of the world. |
-| Kitchen | Cook fish and bake bread and stew. |
-| Oil Press | Turn 1 Lampseed into 2 Oil Flasks, the fuel for your lantern. |
-| Forge | Make blades, helmets and armor from ore. |
-| Bank (the stone building) | Store items safely. Banked items are never lost. |
-| Market Board | Sell items for gold and buy supplies. |
-| House | Open your Hero screen and change your look. |
-
-**Shared trees.** Each tree holds 150 logs that everyone in the world cuts from together. At 0 it falls ("Timber!") and stays a stump for 90 seconds before it grows back.
-
-**Worlds.** Each world holds up to 50 players. You join the busiest world with room, or your party's world. Switch any time from Social → Worlds. Trees, chat and items on the ground belong to each world; your progress, friends and party come with you.
-
-**Life in the Hold.** Trees sway, the forge chimney smokes, the kitchen pot steams, butterflies circle the flowers and the lake glints.
-
-## Skills
-
-Every skill runs from level 1 to 99 on a classic curve: early levels come in minutes, the last ones take a very long time. Open Skills (K) to see your levels and XP to the next level.
-
-| Level | Total XP |
-| --- | --- |
-| 2 | 83 |
-| 10 | 1,154 |
-| 20 | 4,470 |
-| 30 | 13,363 |
-| 50 | 101,333 |
-| 70 | 737,627 |
-| 99 | 13,034,431 |
-
-### Woodcutting
-
-Walk up to a tree in the Hold and tap **Chop**. Every swing has a chance to give 1 log and **3 XP**.
-
-- Level 1: one swing every 2.6 s, 62% chance per swing. Each level adds 0.5% chance (up to 95%) and swings a little faster (down to 1.6 s).
-- Trees are shared: up to 150 logs each, then they fall and regrow after 90 s. Cut with friends and chat while you work.
-- XP is slow on purpose. Level 30 takes around 4 hours of cutting. New trees with higher level requirements arrive with new areas.
-- Logs sell for 2 gold each, but they will feed a new skill in a future update, so it pays to stack them.
-
-### Fishing
-
-Stand at the edge of the lake and tap **Fish**. The bobber settles, then dips: tap **Hook!** while it dips for a sure catch. If you don't, you still have a 32% chance (plus 0.6% per Fishing level).
-
-- Pondfin: Fishing 1, **10 XP** each. More fish, each needing a higher level, come with new waters.
-- The Angler's Cape (rare) can be caught while fishing: about 1 in 300 catches.
-
-### Farming
-
-Tap **Farm** at the field to plant seeds in the 6 plots. Each level gives a 1% chance of a bonus crop per plot.
-
-| Crop | Level | Seed | Grows in | Yield | XP (plant / per crop) |
-| --- | --- | --- | --- | --- | --- |
-| Wheat | 1 | Wheat Seed | 45 s | 3 to 4 | 2 / 4 |
-| Lampseed | 3 | Lampseed | 70 s | 2 to 3 | 5 / 7 |
-| Glowcap | 6 | Glowcap Spore | 100 s | 2 to 3 | 8 / 11 |
-
-### Cooking
-
-Cook at the Kitchen. **Cook all** works through a whole stack, one item at a time, with a progress bar over your head. Walk away or tap Stop to finish early; you keep what is cooked and lose nothing.
-
-| Food | Level | Needs | Time each | Heals | XP |
-| --- | --- | --- | --- | --- | --- |
-| Bread | 1 | 2 Wheat | 1.5 s | 30 | 6 |
-| Cooked Pondfin | 1 | 1 Raw Pondfin | 2 s | 35 | 10 |
-| Glowcap Stew | 5 | 1 Glowcap + 1 Wheat | 3 s | 70 | 16 |
-
-Pondfin can burn: a 45% chance at level 1, falling to 0% at Cooking 30. Better fish take longer to cook: 2 s plus 0.05 s for each Fishing level the fish needs.
-
-### Smithing
-
-Forge gear at the Forge. Each piece gives Smithing XP and goes into your bag.
-
-| Item | Level | Needs | Gold | XP |
-| --- | --- | --- | --- | --- |
-| Copper Blade | 1 | 6 Copper Ore | 20 | 60 |
-| Copper Helm | 3 | 4 Copper Ore | 10 | 45 |
-| Copper Mail | 6 | 8 Copper Ore, 4 Slime Gel | 20 | 90 |
-| Iron Blade | 10 | 6 Iron Ore, 2 Copper Ore | 60 | 150 |
-| Iron Helm | 12 | 4 Iron Ore, 3 Old Bone | 40 | 120 |
-| Iron Mail | 14 | 8 Iron Ore, 6 Old Bone | 60 | 220 |
-| Ember Blade | 25 | 4 Emberite Ore, 2 Cave Gem | 200 | 400 |
-| Ember Helm | 28 | 3 Emberite Ore, 1 Cave Gem | 150 | 320 |
-| Ember Mail | 32 | 6 Emberite Ore, 2 Cave Gem | 200 | 550 |
-
-### Combat level
-
-You earn combat XP by defeating monsters; everyone who hits a monster gets its full XP. Each level needs 22 × level^1.5 XP and adds 8 max HP (60 HP at level 1). Your combat level shows next to your name.
-
-## The Depths
-
-The Depths are randomly built dungeon floors below the Delve Gate: find the stairs on each floor, fight what lives there, and get home with the loot. Each delve is your own instance (or your party's).
-
-| Floors | Biome | Monsters | Ore in the walls | Boss |
-| --- | --- | --- | --- | --- |
-| 1 to 5 | Mossroot Caverns | Slime, Bat, Crawler | Copper | Mother Slime (floor 5) |
-| 6 to 10 | Bone Crypts | Skeleton, Wisp, Spider, Bat | Iron, rare Emberite | The Ossuary Knight (floor 10) |
-| 11 to 15 | Emberforge Halls | Arrives in Season 1 | | |
-
-**Your lantern.** It starts full and burns oil as you go, faster on deeper floors. Better lanterns burn slower and light more. Drink an Oil Flask (+50%) from a quick slot. At 0% oil, a Shade appears every few seconds and hunts you.
-
-**Getting home.** Hold the Return Flame button (or R) for 2 seconds to go home with everything you found. If you fall, you lose about half of this delve's loot and half of what is in your bag. Your Bank and equipped gear are always safe.
-
-**On each floor.** Ore glints in the walls (hit it to mine), chests hide in dead ends, glowcaps grow on the floor, and the stairs lead down. Floors get harder as you go: monsters hit harder and have more health.
-
-**The lift.** After you beat Mother Slime, the lift at the Delve Gate can take you straight to floor 6.
-
-### Monsters
-
-| Monster | HP | Damage | XP | Drops |
-| --- | --- | --- | --- | --- |
-| Gelling | 6 | 3 | 1 | Slime Gel. Mother Slime keeps spawning them |
-| Bat | 9 | 4 | 3 | Gold |
-| Slime | 14 | 5 | 4 | Slime Gel, gold |
-| Wisp | 18 | 8 | 8 | Gold, Lampseed, Cave Gem (rare) |
-| Shade | 20 | 11 | 5 | Nothing. Comes when your oil runs out |
-| Crawler | 22 | 7 | 6 | Gold, Lampseed, Glowcap Spore |
-| Spider | 26 | 10 | 10 | Gold, Old Bone |
-| Skeleton | 32 | 9 | 9 | Old Bone, gold |
-| **Mother Slime** (boss) | 280 | 11 | 120 | Slime Crown relic, 2 to 3 Cave Gems, 60 to 90 gold, Lampseed |
-| **The Ossuary Knight** (boss) | 520 | 15 | 300 | Knight's Sigil relic, 3 to 4 Cave Gems, 150 to 220 gold, Emberite Ore |
-
-HP and damage are floor-1 values and rise on deeper floors. Beating a boss opens the stairs and clears the rest of the floor.
-
-### Rare gear drops
-
-Lanterns and capes drop from chests (10% lantern, 3.5% cape), from monsters (0.6% / 0.25%) and from bosses (50% / 25%). Each boss also has a 5% chance at its own legendary cape. Deeper floors and Loot Luck improve the rarity.
-
-## Items and gear
-
-You wear 5 pieces of gear: a blade, armor, a lantern, a cape and a helmet. Open Hero (H) to see and change them.
-
-**Rarities**, from most to least common: Common, Uncommon, Rare, Extremely Rare, Legendary, Mythic. One of One is reserved for the admin party hats. Rare finds make a sound, light up and post to the world feed.
-
-| Slot | Starting piece | Copper | Iron | Ember |
-| --- | --- | --- | --- | --- |
-| Blade (damage) | Rusty Blade: 6 | 10 | 16 | 25 |
-| Armor (defense) | Traveler Garb: 0 | 2 | 4 | 7 |
-| Helmet (defense) | none | 1 | 2 | 4 |
-
-### Lanterns
-
-Everyone starts with the Basic Lantern. Better lanterns make your oil last longer and light more of the dark.
-
-| Lantern | Rarity | Oil lasts | Light |
-| --- | --- | --- | --- |
-| Basic | Common | normal | normal |
-| Tin | Common | +11% | normal |
-| Copper | Uncommon | +25% | +5% |
-| Iron | Rare | +47% | +10% |
-| Crystal | Extremely Rare | +82% | +20% |
-| Wispheart | Legendary | +138% | +32% |
-| Starlit | Mythic (Goal Relic) | +178% | +45% |
-
-### Capes
-
-Nobody starts with a cape. Each one carries special bonuses.
-
-| Cape | Rarity | Bonuses | Where from |
-| --- | --- | --- | --- |
-| Tattered Cloak | Common | +6 max HP | Depths |
-| Mossweave Cape | Uncommon | Oil lasts 10% longer, +5% speed | Depths |
-| Angler's Cape | Uncommon | +10% Fishing XP, +6% catch chance | Fishing only |
-| Gravecloth Mantle | Rare | +2 defense, +10 max HP | Depths |
-| Hearthkeeper Cape | Rare | 50% less burnt food, regenerate 0.2 HP/s | Depths |
-| Glowcap Shroud | Extremely Rare | +20% light, +12% loot luck | Depths |
-| Mother's Mantle | Legendary | +15% damage, regenerate 0.35 HP/s, +12 max HP | Mother Slime (5%) |
-| Pall of the Ossuary | Legendary | +3 defense, +12% damage, oil lasts 10% longer | The Ossuary Knight (5%) |
-| Wayfinder's Mantle | Mythic (Goal Relic) | +10% speed, +15% loot luck, +15% light, +10% Fishing XP, +10% Woodcutting XP | Goals only |
-
-### Relics and special items
-
-- **Boss relics:** the Slime Crown (Mother Slime) and Knight's Sigil (Ossuary Knight). In the live game, relics can be minted on-chain and traded.
-- **Goal Relics:** the Starlit Lantern and Wayfinder's Mantle exist nowhere else. Each goal you complete has a tiny chance to award one (see Goals). They can't be sold, traded or dropped.
-- **Admin party hats:** the Blue Party Hat (Lantern) and Green Party Hat (Kush) are One of One, bound to their owners, and can never drop, be sold or be traded.
-
-### Materials and supplies
-
-Ore (Copper, Iron, Emberite), Cave Gems, Slime Gel and Old Bone feed the Forge. Wheat, Lampseed and Glowcap come from the Farm. Oil Flasks refill your lantern. Bread, Cooked Pondfin and Glowcap Stew heal you in the Depths. Logs are stockpiled for a coming skill.
-
-## Bag, Bank, Market and drops
-
-Your **bag** comes with you everywhere and is at risk in the Depths; your **Bank** is always safe.
-
-**Bag (B).** Shows your gold and every item you carry. Tap an item to see what it does, equip it, put it in a quick slot or drop it. In the Depths it also lists what you've found on this delve. If you fall, you lose about half of your bag.
-
-**Quick slots.** 5 slots for food and Oil Flasks, used with one tap (or keys 1 to 5) in the Depths.
-
-**Bank.** The Bank holds any amount of one item per slot. You start with 16 slots and can grow it to 72:
-
-| How | Extra slots |
-| --- | --- |
-| Defeat Mother Slime | 4 |
-| Defeat the Ossuary Knight | 6 |
-| Farming, Fishing, Cooking or Smithing 15 | 2 each |
-| Combat level 10 | 2 |
-| Complete 25 goals | 4 |
-| Buy expansions: 8 purchases of 4 slots for 250, 750, 2,000, 5,000, 10,000, 20,000, 40,000 and 75,000 gold | 32 |
-
-**Bank everything but supplies** keeps your Oil Flasks and food in your bag for the next delve. The Forge, Kitchen and Oil Press can use banked items directly.
-
-**Market Board.** Sell anything from your bag or Bank for its value in gold (gear you are wearing isn't listed). The shop sells Wheat Seeds (5 gold), Lampseed (30), Oil Flasks (45) and Bread (20).
-
-**Items on the ground.**
-
-- **Dungeon loot in a party:** everything that drops (monsters, ore, chests, glowcaps) appears for the whole party. Whoever walks over it first gets it.
-- **Dropping from your bag:** the item lands at your feet. You can tap **Pick up** to take it back right away. Other players nearby see it after 30 seconds and can pick it up. It disappears after 3 minutes.
-- The server decides who picks up each item, so nothing is ever picked up twice.
-
-## Playing together
-
-Everyone in your world shares the Hold: you see each other move, fish, chop and chat in real time, and you can team up for the Depths.
-
-**Chat.** Tap the chat button (or press T) to talk to everyone on the same map. Start a message with **/p** to talk to your party only. Chat is filtered and slowed down to stop spam. Speech bubbles appear over the speaker.
-
-**World feed.** Big moments scroll across the top for everyone: rare finds, boss kills, new combat levels and deep floors reached.
-
-**Social (top right).**
-
-- **Friends:** add players by hero name, accept requests, see who is online and where, and jump to a friend's world.
-- **Party:** up to 4 players. The leader opens the Delve Gate and the whole party is asked to join the same dungeon. Leaders can hand over leadership or remove members.
-- **Nearby:** everyone on your map, with quick Add friend and Invite buttons.
-- **Worlds:** every world with its player count. Switch to one with room, or open an empty one.
-
-**Party dungeons.** The party shares one dungeon. The leader's game runs the monsters; if the leader leaves, the player who has been there longest takes over without a break. Loot drops for everyone, and every player who hits a monster gets its full XP.
-
-**Name tags** show each player's name and combat level. The level colour compares them to you:
-
-| Colour | Their level |
-| --- | --- |
-| Green | Same as yours or lower |
-| Yellow | 1 to 5 levels higher |
-| Red | 6 or more levels higher |
-
-**Admins** have a gold crown with an A before their name. Lantern (Blue Party Hat) and Kush (Green Party Hat) are the admins in Season 0.
-
-**One device at a time.** Signing in on a second device closes the first.
-
-## Goals and secrets
-
-There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each pays gold once, in any order, the moment you do it. Tap the goals pill at the top of the screen to see them all with progress bars.
-
-| Group | Goal | Gold |
-| --- | --- | --- |
-| First steps | Plant crops at the Farm | 10 |
-| First steps | Catch a fish | 10 |
-| First steps | Cut your first log | 10 |
-| First steps | Cook food at the Kitchen | 10 |
-| First steps | Press Lampseed into oil | 15 |
-| First steps | Store something in the Bank | 10 |
-| First steps | Enter the Delve Gate | 15 |
-| First steps | Reach floor 3 | 25 |
-| First steps | Forge a Copper Blade | 25 |
-| Skills | Reach Fishing 10 / 25 | 50 / 150 |
-| Skills | Catch 100 / 1,000 fish | 75 / 400 |
-| Skills | Reach Woodcutting 5 / 15 / 30 | 30 / 100 / 250 |
-| Skills | Cut 500 / 5,000 logs | 100 / 500 |
-| Skills | Reach Farming 10 | 50 |
-| Skills | Harvest 500 crops | 150 |
-| Skills | Reach Cooking 10 | 50 |
-| Skills | Reach Smithing 10 / 25 | 60 / 200 |
-| Skills | Total skill level 100 | 200 |
-| The Depths | Defeat Mother Slime | 60 |
-| The Depths | Defeat the Ossuary Knight | 150 |
-| The Depths | Reach floor 10 | 100 |
-| The Depths | Reach combat level 10 / 25 | 50 / 200 |
-| The Depths | Defeat 100 / 1,000 monsters | 60 / 300 |
-| The Depths | Open 25 chests | 75 |
-| The Depths | Mine 200 ore | 75 |
-| The Depths | Find a Rare lantern or cape | 100 |
-| The Depths | Delve with a party | 40 |
-| Life at the Hold | Make a friend | 20 |
-| Life at the Hold | Earn 5,000 gold at the Market | 75 |
-| Life at the Hold | Buy more bank space | 50 |
-| Life at the Hold | Hold 25,000 gold at once | 250 |
-
-**Secrets** show as "???" with a riddle until you find them: Old Habits, Night Owl, The One That Got Away, Chef's Kiss, Dizzy, Timber Choir, Speak Friend, Persistence and Generous Soul. They pay 50 to 300 gold.
-
-**Goal Relics.** Every goal you complete rolls for a Goal Relic, items that can't be found any other way: Wayfinder's Mantle (1 in 600 per goal) and the Starlit Lantern (1 in 2,000). Secrets roll 10 times better. A relic goes straight to your Bank and you can only own one of each.
-
-### Secret solutions (spoilers: remove before sharing with players)
-
-| Secret | Riddle | How to get it | Gold |
-| --- | --- | --- | --- |
-| Old Habits | Up, up, and away… | Enter up, up, down, down, left, right, left, right on the keys or joystick | 300 |
-| Night Owl | The lake is quietest after midnight | Catch a fish between midnight and 3 am (your time) | 150 |
-| The One That Got Away | Some days the fish win | 5 fish get away in a row | 77 |
-| Chef's Kiss | Practice makes… charcoal | Burn 25 fish | 99 |
-| Dizzy | Round and round the lantern goes | Spin in circles 3 times within 4 seconds | 111 |
-| Timber Choir | Three axes, one tree | Chop a tree while 2 other players chop the same tree | 150 |
-| Speak, Friend | Say the name of this place aloud | Say "lanternhold" in chat | 50 |
-| Persistence | Fall ten times. Rise ten times | Die 10 times | 100 |
-| Generous Soul | Leave something for a stranger | Drop an item that another player picks up | 120 |
-
-## Accounts, saving and safety
-
-Your hero saves to your account automatically, so you can pick up on any device by signing in the same way.
-
-- **Saving:** progress, settings, goals and your bank save to the server as you play. Saves are checked on the server so nobody can give themselves impossible gold, XP or items.
-- **Wallet sign-in:** a standard Sign-In with Ethereum message that names lanternhold.fun, with a one-time code that expires in 5 minutes. Your wallet should show "lanternhold.fun" with no warning. Lanternhold never asks for a transaction, a token approval or your secret phrase. If anything ever does, it isn't us.
-- **Switching wallets** in your wallet app signs you out, so you never play on the wrong account.
-- **Google players** can connect a wallet later from the Hero screen, and anyone can link an X account to show their @handle.
-- **One hero per account**, and one device online at a time.
-
-## Coming next and FAQ
-
-Season 1 brings the token, on-chain relics and the next biome, Emberforge Halls (floors 11 to 15).
-
-**On the way:** a new skill that uses logs, new trees and fish with higher levels, Cinderite gear at Smithing 50+, and more goals each season.
-
-**FAQ**
-
-- **What do I lose if I die?** About half of this delve's loot and half of your bag. Your Bank and the gear you're wearing are safe.
-- **How do I get more oil?** Grow Lampseed at the Farm (Farming 3) and press it at the Oil Press, or buy Oil Flasks at the Market Board.
-- **Why can't I see my friend?** You may be in different worlds. Use Social → Friends → Join world, or Social → Worlds.
-- **Can I play on my phone?** Yes. The game is built for phones first, in portrait or landscape.
-- **Does signing in cost anything?** No. Wallet sign-in is a free signature, not a transaction.
+# Lanternhold: Season 0 (Beta)
+
+This is the live, multiplayer version of Lanternhold. Every player is real: they sign in with a wallet or Google, share the Hold with other players, chat, add friends, form parties and delve into dungeon instances together.
+
+It runs on three services:
+- **Vercel:** the game page (`public/`, built from `client-src/`) and the API (`api/`). The API handles sign-in, heroes, saves, friends, and X and Google linking.
+- **Supabase (Postgres):** accounts, heroes, saves and friends. It's set up from `supabase/schema.sql`.
+- **Cloudflare (Workers + Durable Objects):** the realtime server in `realtime/`. It carries live positions, chat, the friends online list, parties, invites and dungeon instances.
+
+No passwords are stored. Wallet players sign a free message (Sign-In with Ethereum, Robinhood Chain 4663) that costs no gas. Google players sign in with Google.
+
+## Already live? Updating to Season 0
+
+1. **Database:** run the new `supabase/schema.sql` in the Supabase SQL Editor. It's safe to run again. It adds Google accounts, friends and the new permissions.
+2. **Code:** replace the files in your GitHub repo with this folder, including the new `realtime/` folder, then commit and push.
+3. **Realtime server:** set up Cloudflare (step 3 below) and copy its address.
+4. **Vercel:** add `RT_URL` and `RT_SECRET`. Google is optional: add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` too (step 5). Then **redeploy**.
+5. **Check:** open `https://YOUR-SITE/api/health`. Every line should say ok, including `realtime`.
+
+## Season 0 launch checklist (fresh setup)
+
+1. **Database:** create a Supabase project on **Pro** in **East US (North Virginia)** and run all of `supabase/schema.sql` (step 1).
+2. **Code:** upload this folder to a **private** GitHub repo (step 2).
+3. **Realtime server:** deploy `realtime/` on Cloudflare, add the `RT_SECRET` secret and `ALLOWED_ORIGINS` (step 3).
+4. **Website and API:** import the repo into Vercel on **Pro**, add the environment variables and deploy. Then add `APP_DOMAIN` and redeploy (step 4).
+5. **Google sign-in** (recommended): create a Google OAuth client and add its keys (step 5).
+6. **Your admin hero:** sign in, create your hero, then run `supabase/link-admin-hero.sql` (step 6).
+7. **Health check:** `/api/health` says `"ok": true`.
+8. **Two-device check:** sign in on your phone and on a computer with **two different accounts**:
+   - see each other in the Hold and chat;
+   - add each other as friends;
+   - invite each other to a party;
+   - delve together.
+9. **Optional:**
+   - X linking (see "Linking an X account");
+   - a custom domain;
+   - a Vercel Firewall rate limit on `/api/auth/`.
+
+**What's in Season 0:**
+- **Sign-in:** wallet (Robinhood Chain) or Google. Google players can connect a wallet later, and wallet players can add Google, from the bag's Hero tab. There's no guest play.
+- **A shared world:** everyone signs in to the Hold together and sees other players walk around.
+  - Each "World" holds up to 50 players, and new worlds open as more people join.
+  - Friends can hop to each other's world.
+  - Party members are placed in the same world.
+- **Chat:**
+  - everyone in your world or dungeon can read it;
+  - start a message with `/p` to talk to your party only;
+  - speech bubbles appear over heroes.
+- **Social menu:** the people icon under the settings gear.
+  - **Friends:** add someone by hero name; accept requests; see who's online and where; join their world; invite them to your party.
+  - **Party:** up to 4 players. See your members, leave the party, or (as leader) promote or remove someone.
+  - **Nearby:** everyone around you, with Add friend and Invite.
+- **Dungeon instances:** every delve is a private instance.
+  - Alone, you face it alone.
+  - In a party, the leader opens the way and everyone is asked to join the same dungeon. You see each other and fight the same monsters.
+  - A chest or ore vein taken by one player is gone for everyone.
+  - Loot goes to whoever did the most damage, and XP to everyone who hit the monster.
+  - The leader takes the party down the stairs.
+- **World feed:** real events from real players, like rare loot, bosses beaten and milestones reached.
+- **Kept from before:**
+  - the four skills (Farming, Fishing, Cooking, Smithing) up to level 99;
+  - floors 1–10 with two bosses;
+  - loot rarities and auras, the bank and the market;
+  - settings saved to the hero;
+  - touch controls on phones, and keyboard, click and scroll controls on computers.
+
+**Not in Season 0 (coming next):**
+- the token (it needs server-decided rewards and an audited claim contract; see "Before the Season 1 token");
+- player-to-player trading;
+- floors 11–15.
+
+---
+
+## Setup
+
+### 1. Supabase: the database
+
+1. Go to **supabase.com** and create a project. For **Region**, choose **East US (North Virginia)**, next to the game's server in Washington D.C. (`iad1`).
+2. Open **SQL Editor → New query**, paste the whole of `supabase/schema.sql` and press **Run**. It's safe to run again whenever you update.
+3. In **Project Settings → API** (or **Data API / API Keys**), copy:
+   - the **Project URL**, like `https://abcd1234efgh5678ijkl.supabase.co`. This becomes `SUPABASE_URL`.
+   - the **service_role** key (a **secret** key starting `sb_secret_` on newer dashboards). This becomes `SUPABASE_SERVICE_ROLE_KEY`. ⚠️ Only ever paste this into Vercel's environment variables.
+
+### 2. GitHub: where the code lives
+
+Create a **private** repo, then add this folder with **GitHub Desktop** (File → Add local repository → Commit → Publish). Keep the folder structure, including `api/`, `lib/`, `client-src/`, `realtime/` and `supabase/`.
+
+### 3. Cloudflare: the realtime server (about 10 minutes)
+
+1. Sign up at **dash.cloudflare.com**. The free plan works for testing: about 2 million player messages a day. For launch, switch to **Workers Paid** ($5 a month) under **Workers & Pages → Plans**.
+2. Open **Workers & Pages → Create → Import a repository**, connect GitHub and pick your repo. Set:
+   - **Project name:** `lanternhold-realtime`
+   - **Root directory:** `realtime`
+   - **Build command:** leave empty
+   - **Deploy command:** `npx wrangler deploy`
+
+   Then click **Deploy**. Every push to GitHub redeploys it automatically.
+3. Open the worker's **Settings → Variables and Secrets** and add two entries:
+   - a **Secret** named `RT_SECRET`: 64 random characters. Make a new one; don't reuse `SESSION_SECRET`.
+   - a **Text** variable named `ALLOWED_ORIGINS`: your game's address with `https://`, like `https://lanternhold.vercel.app`. Separate several addresses with commas.
+4. Copy the worker's address from its overview page, like `https://lanternhold-realtime.yourname.workers.dev`. Opening it should show "Lanternhold realtime: ok".
+
+### 4. Vercel: the website and API
+
+1. On **vercel.com**, choose **Add New → Project** and import the repo. Leave the build settings as they are.
+2. Add these **Environment Variables**:
+
+   | Name | Value |
+   |---|---|
+   | `SUPABASE_URL` | the Project URL from step 1 |
+   | `SUPABASE_SERVICE_ROLE_KEY` | the service_role / secret key from step 1 |
+   | `SESSION_SECRET` | 64 random characters |
+   | `RT_URL` | the Cloudflare worker address from step 3 |
+   | `RT_SECRET` | **the same** 64 characters you put in Cloudflare's `RT_SECRET` |
+   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from step 5 (optional) |
+
+3. **Deploy**. Then add `APP_DOMAIN` = your site address without `https://` (like `lanternhold.vercel.app`) and **redeploy**.
+4. If you use a **custom domain** (like `lanternhold.fun`):
+   - set `APP_DOMAIN` to it, main address first, then any others, separated by commas: `lanternhold.fun, lanternhold.vercel.app`. The `www.` version is allowed automatically. On the live site, players on any other address (www., vercel.app) are sent to the main one, so wallets always see one site name;
+   - add `https://lanternhold.fun` (and `https://www.lanternhold.fun`) to Cloudflare's `ALLOWED_ORIGINS`;
+   - add `https://lanternhold.fun/api/auth/google/callback` to the Google redirect URIs and `https://lanternhold.fun/api/x/callback` to the X callback URLs;
+   - redeploy, then open `/api/health` on the new address.
+
+   If you also give the worker a custom domain, add it to `connect-src` in `vercel.json` (by default only `*.workers.dev` is allowed).
+
+### 5. Google sign-in (recommended, free, about 10 minutes)
+
+1. Go to **console.cloud.google.com** and create a project called "Lanternhold".
+2. Open **Google Auth Platform**:
+   - **Branding:** set the app name, support email and your site address.
+   - **Audience:** choose **External**, then **Publish app**, so anyone can sign in. The game only asks for basic sign-in (your Google ID and email), so Google doesn't need to review it.
+3. Open **Clients → Create client → Web application**. Under **Authorized redirect URIs**, add `https://YOUR-SITE/api/auth/google/callback`. `/api/health` prints the exact address.
+4. Copy the **Client ID** and **Client secret** into Vercel as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then redeploy.
+
+Google blocks sign-in inside in-app browsers, such as wallet apps, X and Instagram. The game says so, and tells Google players to use Safari or Chrome. Wallet players keep using their wallet's browser.
+
+### 6. Your admin hero
+
+1. Sign in with your wallet and create your hero.
+2. In Supabase's SQL Editor, run `supabase/link-admin-hero.sql`. It's set to `0x2f62…dcA2`; edit the address for a different wallet. It makes that hero the game's only admin, with the Blue Party Hat, and copies your demo progress the first time.
+3. Sign out and back in to get the admin loadout.
+4. To rename the hero to Lantern, run `supabase/rename-hero-lantern.sql`.
+
+Only the database can make an admin. To list admins, run `select name from heroes where is_admin;`.
+
+---
+
+## How multiplayer works
+
+- **The lobby:** one Cloudflare "Lobby" knows who's online.
+  - It picks your world: your party's world if they're in one, otherwise the busiest world with space, so the Hold feels lively.
+  - It delivers friend status, party invites and the world feed.
+  - Each hero can only be online on one device. Signing in elsewhere closes the first device.
+- **Worlds:** each world is a separate room of up to 50 players.
+  - Positions are sent up to 10 times a second, only while you move, and sent on to everyone in batches.
+  - Chat is filtered and rate-limited by the server, and names always come from the sign-in, never from the player's device.
+- **Dungeon instances** are private rooms that only your party can join.
+  - **The host:** the leader's game is the host. It runs the monsters and sends them to everyone 10 times a second.
+  - **Other players:** their attacks go to the host, which applies the damage, decides who gets the loot and tells everyone. Chests, glowcaps and ore are handled the same way, so each can only be taken once.
+  - **If the host leaves**, the player who has been there longest takes over the monsters without a break. Members who join late land on the party's current floor with the dungeon as it is.
+- **Shared world objects:** each world room also keeps count of the logs left in every tree at the Hold (150 each; at 0 the tree falls and regrows after 90 s), and of items on the ground. Party loot in dungeons is visible to the whole party, and items dropped from a bag show to other players after 30 s. The room decides who picks each item up, so nothing is taken twice.
+- **Fishing and woodcutting** are shown to everyone: rods, bobbers and axe swings.
+- **Saves:** heroes still save to Supabase exactly as before.
+- **Fallback:** if the realtime server can't be reached, the game still works solo, and Social and chat explain why they're unavailable.
+
+## Wallet sign-in safety
+
+Signing in with a wallet takes at most two approvals: connect (or pick) the account, then one free signature. There is no network switch, no transaction and no token approval.
+
+- **One standard message, written by the server.** It's a Sign-In with Ethereum (EIP-4361) message naming the exact site you're on, with your checksummed address, a one-time code and a 5-minute expiry. Wallets like MetaMask recognise it and show a clean sign-in request for that site. The server refuses anything that isn't exactly that message: no extra lines, different wording, other sites, other chains or old messages.
+- **One use, one browser.** The one-time code is also kept in a short-lived HttpOnly cookie, so a signed message only works once, from the browser that asked for it.
+- **Phishing-resistant.** Copy sites can't use a signature: the wallet shows the copy site's name (and warns), and our server only accepts messages for its own addresses, sent from its own pages.
+- **The game can't ask for more.** The game only lets itself call four wallet methods: list accounts, connect, pick account and sign a message. Requests to send funds or approve tokens are blocked in the game code itself.
+- **Sessions:** an HttpOnly, Secure, SameSite=Strict cookie that page scripts can't read and other sites can't trigger. Switching or disconnecting the wallet signs you out.
+- **Page hardening:** a strict Content Security Policy (no outside scripts), no framing (stops clickjacking), and cross-origin window isolation.
+
+## How saving works
+
+- While you play, the game saves to the server every 10–14 seconds, but only if something changed. It also saves right away when you return to the Hold, when you die and when you sign out.
+- Each save carries a revision number. If a second device saves an old copy over newer progress, the server refuses it and that device reloads the newest progress. Two devices can never overwrite each other.
+- The server checks every save. It cleans out unknown items and invalid values, then refuses "impossible" jumps such as millions of gold in a few seconds, piles of new legendaries, or skill levels gained too fast. Refused saves are logged in the `save_flags` table so you can review them (`select * from save_flags order by at desc;`).
+- The Blue Party Hat is removed from any save that isn't an admin hero.
+- To ban someone, run `update accounts set banned = true where id = (select account_id from heroes where name_key = lower('TheirName'));`. They can no longer load their hero, save, chat or join the realtime server (their next ticket is refused).
+
+## Costs and plans
+
+- **Vercel:** the free Hobby plan is for **non-commercial, personal use only**. A game with a token is commercial, so move to **Pro** before you launch publicly. Pro is $20 a month per developer seat, and that includes a monthly usage credit. Beyond that, Vercel charges $0.60 per million requests and $0.128 per CPU-hour in `iad1`.
+- **Supabase:** the free plan has a 500 MB database and **pauses a project after a week of inactivity**. **Pro** is $25 a month and never pauses. It includes $10 of compute credit, which covers the default Micro database, plus 250 GB of egress and unlimited API requests. For 1,000 players at once, switch to **Small** compute (about $15 a month, so about $5 more after the credit) for headroom. Do this under **Project Settings → Compute and Disk**.
+- **Storage:** a save is roughly 0.5–2 KB, so even 100,000 players fit in a few hundred MB.
+
+- **Cloudflare (realtime):** Workers Paid is $5 a month. Durable Objects cost $0.15 per million incoming messages, where 20 game messages count as one billed request. Outgoing messages are free, and so is bandwidth. Rooms use WebSocket hibernation, so they're only billed for time while they're actually handling a message, not for the whole time players are connected. Heartbeats are answered by Cloudflare without waking the room.
+
+**What 1,000 players costs** (from the load tests):
+
+| | 1,000 players online 24/7 | A realistic month (1,000 at peak, ~250 on average) |
+|---|---|---|
+| Vercel (plan + saves) | ~$130 | ~$60 |
+| Supabase (Pro + Small) | $30 | $30 |
+| Cloudflare: messages | ~$95 | ~$25 |
+| Cloudflare: room time | ~$100 (20 busy worlds) | ~$25 |
+| Cloudflare plan | $5 | $5 |
+| **About** | **$360 / month** | **$145 / month** |
+
+Ways to spend less:
+- **Save less often:** raise `SAVE_GAP` in `client-src/account-live.js`.
+- **Send positions less often:** raise `MP.sendT=.1` in `client-src/game.js` from 0.1 to 0.15 seconds. That cuts realtime messages by a third, and movement still looks smooth because other players glide between updates.
+
+## Built for 1,000+ players at once
+
+**What was done to handle the load:**
+- **Fewer requests.** The game only saves when something actually changed. A player standing in the Hold, reading the bank or AFK sends nothing at all.
+- **Spread out.** Each player gets their own save rhythm, every 10–14 seconds, so 1,000 players never all hit the server at the same moment. When the server is busy or a connection drops, the game waits longer and longer between retries (5 s, 10 s, 20 s… up to a minute) instead of hammering it.
+- **Fewer database trips.** A save is now **2** database calls (was 3) and loading your hero is **1** (was 3). Each uses a small function inside Postgres (`lh_state`, `lh_cas_save`). The database clock times saves, so the anti-cheat timing can't drift.
+- **Server next to the database.** `vercel.json` pins the functions to Washington D.C. (`iad1`), beside Supabase's North Virginia region. It also turns on Fluid compute, so one server instance handles many players at once. Every request is capped at 10 seconds so nothing hangs.
+- **Database tuned for constant saving.** The `saves` table leaves room for in-place updates and is vacuumed often. Old sign-in codes are cleared every hour automatically (pg_cron).
+- **Cached game files.** `game.js` is cached for a year (its name changes with every build), so returning players only download the small page.
+- **Safer under pressure:**
+  - banned accounts are now also blocked from saving;
+  - refused saves are rate-limited like normal ones, so a cheater can't flood the review log;
+  - the new database functions can only be called with the server key.
+
+**Realtime load test** (`realtime/test/rt-load.mjs`, run on one machine against the local Cloudflare runtime):
+- 600 players across 12 full worlds walked around for 45 seconds, sending 2,900 position updates a second. Positions reached other players in 160 ms typically, including the 100 ms batching. No connections dropped.
+- 1,000 players across 20 worlds: no dropped connections. Delays were higher (250 ms typical) because the test players, the server and every world ran on one computer. On Cloudflare each world runs separately.
+
+**Save load test, 1,000 players** (`npm run loadtest`, real wallet signatures, simulated 15 ms database calls):
+- 1,000 players signed in and created heroes in **9 seconds**.
+- During 2 minutes of play, about 57 requests a second came in. **7,551 saves** were made with **0 failures**. A save took **33 ms** typically and 49 ms for the slowest 1 in 100.
+- The server code used about **1.6 ms of CPU per request**, about 9% of one CPU core for all 1,000 players.
+- At 2,000 players with slower 25 ms database calls: 10,911 saves, 0 failures, 53 ms typical.
+
+**Test your real deployment before launch** (after upgrading to Pro):
+```bash
+npm run loadtest -- --url https://YOUR-SITE.vercel.app --players 1000 --minutes 3 --confirm
+```
+This creates throwaway heroes named `lt_xxxx_1…`. Afterwards, run `supabase/cleanup-load-test.sql` in the SQL Editor to remove them. Watch **Supabase → Reports** and **Vercel → Observability** while it runs.
+
+**Matching regions.** If your Supabase project isn't in North Virginia, change `"regions"` in `vercel.json` to the closest match:
+
+| Supabase region | Vercel region |
+|---|---|
+| East US (N. Virginia) | `iad1` |
+| West US (N. California) | `sfo1` |
+| West EU (Ireland) | `dub1` |
+| Central EU (Frankfurt) | `fra1` |
+| Southeast Asia (Singapore) | `sin1` |
+
+**Optional extra protection (Vercel Pro).** Under **Firewall → Rules**, add a rate limit on `/api/auth/` of about 30 requests per minute per IP. This blunts bots that spam sign-ins. Normal players sign in once a week.
+
+## Chat
+
+Players tap the chat button at the bottom of the screen (or press **T** on a computer) to open a see-through chat panel. Tapping it again closes it.
+- **Who sees it:** everyone in your world, or everyone in your dungeon instance. Start a message with `/p` to talk to your party only.
+- **Server rules:**
+  - names come from the sign-in, so they can't be faked;
+  - messages are up to 140 characters, with offensive words masked;
+  - each player can send one message every 1.2 seconds.
+- **History:** messages aren't stored. A world keeps its last 30 messages in memory so newcomers see the recent conversation. (The old `chat_messages` table from the previous build is no longer used.)
+
+## Linking an X account
+
+Players can link their X account to their hero from the bag's **Hero** tab (**Link X**). They approve it on X itself, so nobody can claim someone else's account. One X account can be linked to only one hero, and players can unlink it any time. The game keeps only the X account's id and @username. X's access token is thrown away straight after reading those.
+
+**To turn it on (about 10 minutes):**
+1. Go to **developer.x.com**, sign in with the X account that will own the app, and create a **Project** and an **App**. X's API is now pay-per-use with no free tier, so add a few dollars of credit. Each link is one profile lookup, about $0.01.
+2. In the app's **User authentication settings**, turn on **OAuth 2.0** and set:
+   - App type: **Web App** (a confidential client)
+   - Callback URL: `https://YOUR-SITE/api/x/callback`. Use your real address; `/api/health` prints the exact one.
+   - Website URL: `https://YOUR-SITE`
+3. Copy the **OAuth 2.0 Client ID** and **Client Secret** into Vercel's Environment Variables as `X_CLIENT_ID` and `X_CLIENT_SECRET`, then redeploy.
+4. Open `/api/health`. The `x` line should say "ok: X linking is on".
+
+Until it's on, the Hero tab shows "X account · Coming soon". If you change your domain later, update the callback URL on X as well.
+
+## Before the Season 1 token
+
+Right now the player's device works out combat and loot, and the server checks that results are *plausible*. That is good enough for a free game. It is **not** enough for anything worth real money, because a skilled cheater could still farm within the limits. Before tokens can be collected:
+
+1. **Server-decided rewards:** the server rolls token drops (boss kills, season goals) and records them in a `claims` table. Token amounts never come from the client.
+2. **Claim vouchers:** the server signs an EIP-712 voucher (`wallet, amount, nonce, expiry`). The player redeems it on a claim contract on Robinhood Chain (4663), which checks the signature and that each voucher is used only once.
+3. **Limits:** caps per day and per wallet, an emergency pause on the contract, and reviewing `save_flags` before payouts.
+4. **Audit:** have the claim contract audited before mainnet, and keep the signing key in a secrets manager, separate from the session secret.
+
+None of this changes what players have now. Their heroes and progress carry straight into Season 1.
+
+---
+
+## For developers
+
+Requires Node 20 or newer.
+
+```bash
+npm install
+npm run build      # client-src/ → public/index.html + public/game.js, and lib/gamedata.js
+npm run dev        # http://localhost:3000, in-memory database (no Supabase needed)
+npm test           # 72 API tests (wallet signatures, Google and X with stand-in servers, friends, saves)
+npm run loadtest   # 1,000 simulated players saving against a local server
+
+cd realtime && npm install
+npm run dev        # the realtime server on ws://127.0.0.1:8787 (secret in realtime/.dev.vars)
+npm test           # 45 realtime tests: tickets, worlds, chat, friends, parties, instances, host handover
+node test/rt-load.mjs --players 600 --seconds 60
+```
+
+To play locally with other players, run both servers. Start the realtime server first, then start the game with `RT_URL=ws://127.0.0.1:8787 RT_SECRET=<the secret from realtime/.dev.vars> npm run dev`, and open http://localhost:3000 in two browsers.
+
+Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run dev` to use a real database instead.
+
+- Edit game code in `client-src/`, never in `public/`, which is generated. Item and skill tables live in `client-src/data.js`, and the build copies them to the server so both always agree.
+- API routes: `api/auth/nonce`, `api/auth/verify`, `api/auth/logout`, `api/auth/google/start`, `api/auth/google/callback`, `api/auth/link-wallet`, `api/me`, `api/config`, `api/name`, `api/hero`, `api/save`, `api/friends`, `api/rt-ticket`, `api/x/start`, `api/x/callback`, `api/x/unlink`, `api/health`.
+- Security:
+  - sessions are signed cookies (HttpOnly, Secure, SameSite=Lax, 7 days);
+  - every write needs the `X-LH` header and a same-origin request;
+  - a strict Content-Security-Policy allows scripts from this site only;
+  - the database has Row Level Security on with no public policies, so only the server key can reach it.
+
+### Troubleshooting
+
+- **Everyone vanished at the same time and new devices see nobody:** check **Workers & Pages → Durable Objects** (or the usage email) for a hit daily limit. The free plan allows 100,000 requests and 13,000 GB-s of Durable Object time a day, and it resets at 00:00 UTC (8 pm Eastern in summer, 7 pm in winter). Workers Paid ($5 a month) removes the hard stop.
+
+- **Players can't see each other, or Social says the realtime server isn't reachable:**
+  - `/api/health` shows the `realtime` line;
+  - `RT_URL` must be the worker's address;
+  - `RT_SECRET` must be identical in Vercel and Cloudflare;
+  - `ALLOWED_ORIGINS` in Cloudflare must contain your site address exactly, with `https://` and no trailing `/`;
+  - after changing any of these, redeploy Vercel.
+- **Google sign-in shows "redirect_uri_mismatch":** add the exact redirect URI from `/api/health` in Google Cloud → Clients.
+- **First, open `https://YOUR-SITE/api/health`.** It checks every setting and the database, and names anything wrong. Secret values are never shown.
+- **"Couldn't reach the server" or "isn't set up correctly" when signing in:**
+  - `SUPABASE_URL` must be the **Project URL**, like `https://abcd1234efgh5678ijkl.supabase.co`. Find it in Supabase → Project Settings → API (or Data API). The server now also accepts the bare project ID, a missing `https://` or a trailing `/rest/v1`.
+  - "Permission denied" in the health page: run `supabase/schema.sql` again. New Supabase projects no longer give the server key access to tables automatically, and the script now grants it.
+  - Every time you change an environment variable in Vercel, **redeploy**. Changes don't apply until you do.
+
+- **"Sign-in failed" or "bad_origin" right after deploying or adding a domain:** the address in the address bar must be in `APP_DOMAIN` (comma-separated list; www. is automatic). Redeploy after changing it. `/api/health` says which addresses are allowed.
+- **Wallet shows a red "deceptive site" or "domain mismatch" warning:** the sign-in message names the site the player is on, so this only happens if the page isn't on one of the `APP_DOMAIN` addresses. Fix `APP_DOMAIN` and redeploy.
+- **Every request gives 500:** an environment variable is missing or misspelled. The Vercel **Logs** tab names the one at fault.
+- **Desktop wallet extension isn't detected:** some extensions inject scripts that a strict Content-Security-Policy blocks. Wallet in-app browsers aren't affected. If needed, add the extension's origin to `script-src` in `vercel.json`.
+- **Saves feel slow (over ~150 ms):** the Vercel region probably doesn't match the Supabase region. See "Matching regions".
+- **Supabase CPU stays above 70% in Reports:** move up one compute size (Small → Medium). It takes about a minute, with a brief reconnect.
+- **Supabase project paused (free plan):** open the dashboard and click **Restore**, or upgrade to Pro.
