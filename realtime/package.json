@@ -7,7 +7,8 @@
     "dev": "wrangler dev --port 8787",
     "deploy": "wrangler deploy",
     "test": "node test/rt-test.mjs",
-    "test:hibernation": "node test/hib-test.mjs"
+    "test:hibernation": "node test/hib-test.mjs",
+    "test:trees": "node test/tree-test.mjs"
   },
   "devDependencies": {
     "wrangler": "4.147.0",
