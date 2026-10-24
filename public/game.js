@@ -217,10 +217,15 @@ function glowcapSprite(){const p=new Px(16,16);[[5,9,3],[10,11,2.4],[8,13,2]].fo
 function bonesSprite(){const p=new Px(16,16);p.line(3,12,10,9,PAL.bone).line(5,8,12,13,PAL.bone);p.ell(12,6,2.4,2,PAL.bone);p.set(11,6,PAL.ink).set(13,6,PAL.ink);p.outline();return p.canvas();}
 
 // ---------- the Hold ----------
+// admin badge: a small gold crown with an "A", shown before admin names
+function crownSprite(){const p=new Px(13,13),G='#ffcd75',D='#d9a066',H='#fff3c4',R='#e43b44',I='#1a1c2c';
+  p.rows(1,1,['h....r....h','g...ggg...g','gg..ggg..gg','ggg.ggg.ggg','ggggggggggg','ddddddddddd','ddddddddddd','ddddddddddd','ddddddddddd','ddddddddddd','ggggggggggg'],{g:G,d:D,h:H,r:R});
+  for(const [x,y] of [[5,5],[4,6],[6,6],[4,7],[5,7],[6,7],[4,8],[6,8],[4,9],[6,9]])p.set(x+1,y+1,I);
+  p.outline();return p.canvas();}
 function stumpSprite(){const p=new Px(32,32);p.rect(12,23,8,6,PAL.bark).rect(13,23,6,1,PAL.tan).rect(14,24,4,1,PAL.wood);p.rect(10,28,3,2,PAL.bark).rect(19,28,3,2,PAL.bark);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
 function axeSprite(){const p=new Px(10,12);p.rect(4,2,2,10,PAL.wood).rect(5,2,1,10,PAL.bark);p.rect(5,1,4,4,'#94b0c2').rect(8,0,1,6,'#c2d3e0').rect(6,2,2,1,'#566c86');p.outline();return p.canvas();}
-function treeSprite(){const p=new Px(32,32);p.rect(14,20,4,10,PAL.bark).rect(15,20,1,10,PAL.wood);
-  p.ell(16,13,11,10,PAL.fern);p.ell(14,11,8,7,PAL.green);p.ell(12,9,4,3,PAL.lime);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
+function treeSprite(dx=0){const p=new Px(32,32);p.rect(14,20,4,10,PAL.bark).rect(15,20,1,10,PAL.wood);
+  p.ell(16+dx,13,11,10,PAL.fern);p.ell(14+dx,11,8,7,PAL.green);p.ell(12+dx*1.5,9,4,3,PAL.lime);p.ell(16,30,6,2,null);p.outline();return p.canvas();}
 function bankSprite(){const p=new Px(48,48),st='#94b0c2',st2='#566c86',st3='#c2d3e0',roof='#333c57',G=PAL.gold;
   // pediment roof
   for(let y=0;y<10;y++){const w=8+y*4;p.rect(24-w/2,6+y,w,1,y<2?st3:roof);}p.rect(2,16,44,3,st3);p.rect(2,18,44,1,st2);
@@ -344,7 +349,7 @@ function buildArt(){
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
-  ART.tree=treeSprite();ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
+  ART.tree=treeSprite();ART.crown=crownSprite();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
   ART.press=pressSprite();ART.board=boardSprite();ART.gate=gateSprite();ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
@@ -427,7 +432,8 @@ const RECIPES={
     {out:'iron_blade',need:{iron_ore:6,copper_ore:2},gold:60,lvl:10,xp:150},{out:'iron_helm',need:{iron_ore:4,bone:3},gold:40,lvl:12,xp:120},{out:'iron_mail',need:{iron_ore:8,bone:6},gold:60,lvl:14,xp:220},
     {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550}
   ],
-  kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16}],
+  // time: seconds per item at the Kitchen. Fish take longer the better they are: 2 s + 0.05 s per Fishing level the fish needs.
+  kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3}],
   press:[{out:'oil',n:2,need:{lampseed:1}}]
 };
 // growth in seconds (demo speed). Live: 30 min to 8 h.
@@ -786,7 +792,7 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(){FISHING=null;CHOP=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
+function enterHold(){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
   updateHud();MP.toHold();}
 function startDelve(from,seed){run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
@@ -809,6 +815,7 @@ function nearestAct(){
   for(const o of map.objs){if(!o.act||o.gone)continue;const d=Math.hypot(o.act.x-P.x,o.act.y-P.y);if(d<bd){bd=d;best={o,label:o.act.label,id:o.act.id};}}
   if(scene==='hold'){for(const p of map.plots){const d=Math.hypot(p.cx-P.x,p.cy+6-P.y);if(d<bd){bd=d;const st=S.plots[p.i],ready=st&&growth(st)>=1;best={plot:p,label:readyPlots().length?'Harvest':'Farm',id:'plot'};}}}
   if(scene==='hold'){if(FISHING)return {label:FISHING.phase==='bite'?'Hook!':'Fishing',id:'hook'};if(!best){const sp=fishSpot();if(sp)best={label:'Fish',id:'fish',sp};}}
+  if(scene==='hold'&&COOK)return {label:'Stop',id:'cookstop'};
   if(scene==='hold'){if(CHOP)return {label:'Chopping',id:'noop'};if(!best){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
   {const d=nearBagDrop();if(d)best={label:'Pick up',id:'pickup',d};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden){const sx=map.stairs.tx*T+8,sy=map.stairs.ty*T+10,d=Math.hypot(sx-P.x,sy-P.y);if(d<14)best={label:'Descend',id:'stairs'};}
@@ -817,7 +824,7 @@ function nearestAct(){
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
   if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('sell');
-  if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='noop')return;
+  if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
   if(a.id==='stairs'&&MP.client())return MP.askDown();
@@ -939,7 +946,7 @@ function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=
   for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d];if(tAt(map,tx+dx,ty+dy)===WATER){let bx=tx+dx,by=ty+dy;if(tAt(map,bx+dx,by+dy)===WATER){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
-function startFishing(sp){CHOP=null;sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
+function startFishing(sp){CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
 let missRun=0;
 function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS.hold.fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
@@ -958,7 +965,7 @@ const chopChance=()=>Math.min(.95,.62+.005*(lvlOf('woodcutting')-1));
 function treeUp(o){if(o.until&&Date.now()>=o.until){o.until=0;o.logs=TREES[o.kind].logs;}return !o.until;}
 function nearTree(){if(scene!=='hold'||!map.trees)return null;let best=null,bd=22;for(const o of map.trees){const d=Math.hypot(o.x-P.x,o.y+5-P.y);if(d<bd){bd=d;best=o;}}return best;}
 function startChop(o){if(!treeUp(o))return toast('Just a stump for now. It regrows soon.');const L=TREES[o.kind];if(lvlOf('woodcutting')<L.lvl)return toast('You need Woodcutting '+L.lvl+' for the '+L.n+'.','bad');
-  FISHING=null;CHOP={o,t:0,sw:0,px:P.x,py:P.y};const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');sfx('swing');}
+  FISHING=null;if(COOK)stopCook();CHOP={o,t:0,sw:0,px:P.x,py:P.y};const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');sfx('swing');}
 function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   if(P.moving||scene!=='hold'||Math.hypot(P.x-c.px,P.y-c.py)>3){CHOP=null;return;}
   if(!treeUp(o)){CHOP=null;return;}
@@ -977,7 +984,32 @@ function onTree(m){const o=HOLD.trees&&HOLD.trees[m.i];if(!o)return;const was=!o
   if(m.by&&m.by!==MP.id){const p=OTH.get(m.by);if(p){p.chopT=3.6;p.chopX=o.x;}o.shake=.25;
     o.cut=o.cut||{};o.cut[m.by]=Date.now();
     if(CHOP&&CHOP.o===o&&Object.values(o.cut).filter(t=>Date.now()-t<7000).length>=2)secret('choir');}}
-function drawAxe(x,y,dir,ph){const a=(dir==='left'?-1:1)*(-.9+Math.sin(ph*Math.PI*2)*.9);g.save();g.translate(Math.round(x+(dir==='left'?-5:5)),Math.round(y-8));g.scale(dir==='left'?-1:1,1);g.rotate(a);g.drawImage(ART.axe,-5,-11);g.restore();}
+// ---- the axe swing: drawn pixel by pixel with both arms on the handle, so it reads as a person chopping ----
+// ph 0→1 is one swing: a short follow-through, a slow wind-up over the shoulder, then a fast strike that lands at ph=1
+// (exactly when the chips fly and the thunk plays). Side views swing at the tree; front/back views swing at the side.
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function axeAngle(ph){if(ph<.12)return .35-.15*(ph/.12);if(ph<.8)return .2+(-2.35-.2)*ease((ph-.12)/.68);const k=(ph-.8)/.2;return -2.35+(2.35+.35)*k*k;}
+function pxLine(x0,y0,x1,y1,c){const n=Math.max(1,Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));g.fillStyle=c;for(let i=0;i<=n;i++)g.fillRect(Math.round(x0+(x1-x0)*i/n),Math.round(y0+(y1-y0)*i/n),1,1);}
+const axeBehind=ph=>axeAngle(((ph%1)+1)%1)<-.95;   // raised above the shoulder: the head hides the handle
+function drawAxe(x,y,dir,ph,look,patchOnly){look=look||myLook();ph=((ph%1)+1)%1;
+  const A=look.armor&&ARMOR[look.armor],tun=LOOKS.cloth[look.cloth??0]||LOOKS.cloth[0],sl=A?A.m2:shade(tun,.68),skin=LOOKS.skin[look.skin??1]||LOOKS.skin[1];
+  const side=dir==='left'||dir==='right',m=dir==='left'?-1:1,X=Math.round(x),Y=Math.round(y);
+  let th=axeAngle(ph);
+  // pivot = shoulder (sprite-space → world): side views at the front shoulder, front/back views at the right shoulder
+  let sx,sy;if(side){sx=X-m*1;sy=Y-6;}else{sx=X+4;sy=Y-6;th=th*0.9;}
+  const ux=Math.cos(th)*(side?m:1),uy=Math.sin(th),vx=-uy*(side?m:1),vy=Math.cos(th);   // u: along the arm/handle, v: the blade's edge side
+  // hide the hanging sprite arm on the swinging side (paint it as tunic)
+  g.fillStyle=A?A.m:tun;if(side)g.fillRect(X+(m>0?0:-2),Y-6,2,3);else if(dir==='down')g.fillRect(X+4,Y-6,1,3);
+  if(patchOnly)return;
+  const hx=sx+ux*3.6,hy=sy+uy*3.6;            // hands
+  if(dir==='up'){pxLine(sx,sy,hx,hy,sl);}      // from behind: one arm, axe goes up past the head's side
+  else{pxLine(sx,sy,hx,hy,sl);pxLine(sx-(side?m*2:7),sy+1,hx-ux*.6,hy-uy*.6,shade(sl,.8));}
+  // handle (wood, 7 px) and head (steel, 3 px wide, edge highlighted)
+  const ex=hx+ux*7,ey=hy+uy*7;pxLine(hx-ux*.8,hy-uy*.8,ex,ey,'#8a5a3a');
+  g.fillStyle=skin;g.fillRect(Math.round(hx),Math.round(hy),1,1);g.fillRect(Math.round(hx-ux*1.4),Math.round(hy-uy*1.4),1,1);
+  for(let k=-1;k<=2;k++)for(let w=0;w<2;w++){const px=ex-ux*w+vx*k,py=ey-uy*w+vy*k;g.fillStyle=k===2?'#f4f4f4':k===-1?'#566c86':'#94b0c2';g.fillRect(Math.round(px),Math.round(py),1,1);}
+  // a quick motion smear during the strike
+  if(ph>.86){g.globalAlpha=.35*(1-(ph-.86)/.14);for(let k=1;k<=3;k++){const t2=axeAngle(ph-k*.035),a=Math.cos(t2)*(side?m:1),b=Math.sin(t2);g.fillStyle='#f4f4f4';g.fillRect(Math.round(sx+a*9.7),Math.round(sy+b*9.7),1,1);g.fillRect(Math.round(sx+a*8.7),Math.round(sy+b*8.7),1,1);}g.globalAlpha=1;}}
 function hookFish(){const f=FISHING;if(f&&f.phase==='bite'){landFish(true);f.phase='reel';f.t=0;}}
 // px/py: whose rod it is (you, or another player whose cast arrives through the room)
 function drawFishing(f=FISHING,px=P.x,py=P.y){if(!f)return;const d=f.dir,sx=d==='left'?-1:1;
@@ -1057,14 +1089,36 @@ function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_T
   return `<div class="skl">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small></b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':fmt(b-xp)+' xp to level '+(l+1)}</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
+// ---------- timed cooking: each item takes a moment at the Kitchen; Cook All queues them up ----------
+const cookTime=r=>r.time||(r.fish&&FISH[r.fish]?2+.05*(FISH[r.fish].lvl-1):2);
+let COOK=null;
+function startCook(r,n){const kit=HOLD.objs.find(o=>o.type==='kitchen');
+  n=Math.min(n,maxMake(r));if(n<1)return;FISHING=null;CHOP=null;closeSheet();
+  COOK={r,n,i:0,t:0,ok:0,burnt:0,xp:0,px:P.x,py:P.y,kx:kit?kit.x:P.x,ky:kit?kit.y-14:P.y-20};sfx('cook');}
+function stopCook(why){const c=COOK;if(!c)return;COOK=null;if(c.ok||c.burnt){if(c.xp)skillXp('cooking',c.xp);save();
+    toast(`Cooked ${c.ok} ${ITEMS[c.r.out].n}${c.burnt?`, burnt ${c.burnt}`:''}${c.xp?' · '+c.xp+' Cooking xp':''}${why?' · '+why:''}`,c.burnt&&!c.ok?'bad':'good');}
+  else if(why)toast(why);}
+function updateCook(dt){const c=COOK;if(!c)return;
+  if(P.moving||scene!=='hold'||Math.hypot(P.x-c.px,P.y-c.py)>3)return stopCook('stopped');
+  c.t+=dt;if(Math.random()<dt*3)puff(c.kx+(Math.random()-.5)*6,c.ky,'#f4f4f4',1);
+  if(c.t<cookTime(c.r))return;c.t=0;
+  if(!canMake(c.r))return stopCook('out of ingredients');
+  for(const [id,q] of Object.entries(c.r.need))take(id,q);
+  if(rand()<burnChance(c.r)){give(S.bank,c.r.burn.out,1);c.burnt++;bump('burnt');floatText(P.x,P.y-24,'Burnt!','#94b0c2');sfx('hurt');}
+  else{give(S.bank,c.r.out,c.r.n||1);c.ok++;c.xp+=c.r.xp;bump('cooked');S.flags.cooked=true;floatText(P.x,P.y-24,'+1 '+ITEMS[c.r.out].n,'#ef7d57');sfx('pick');}
+  puff(c.kx,c.ky,'#ffcd75',4);c.i++;updateQuick(true);
+  if(c.i>=c.n){c.i=c.n;stopCook();}}
+function drawCook(){const c=COOK;if(!c)return;const k=Math.min(1,c.t/cookTime(c.r)),X=Math.round(P.x),Y=Math.round(P.y-(ADMIN_HATS[S.gear.helm]?46:36));
+  g.fillStyle='rgba(26,28,44,.85)';g.fillRect(X-12,Y,24,5);g.fillStyle='#ef7d57';g.fillRect(X-11,Y+1,Math.round(22*k),3);
+  ptDraw(g,(c.i+1)+'/'+c.n,X,Y-6,{font:'small',px:7,color:'#ffcd75'});}
 function cook(r,n){let ok=0,burnt=0,xp=0;for(let i=0;i<n&&canMake(r);i++){for(const [id,q] of Object.entries(r.need))take(id,q);
     if(rand()<burnChance(r)){give(S.bank,r.burn.out,1);burnt++;}else{give(S.bank,r.out,r.n||1);ok++;xp+=r.xp;}}
   sfx('cook');if(xp)skillXp('cooking',xp);bump('cooked',ok);bump('burnt',burnt);S.flags.cooked=true;save();toast(`Cooked ${ok} ${ITEMS[r.out].n}${burnt?`, burnt ${burnt}`:''}${xp?' · '+xp+' Cooking xp':''}`,burnt&&!ok?'bad':'good');}
 function openKitchen(){const lv=lvlOf('cooking');
   openSheet(`<h2>The Kitchen</h2>${skillLine('cooking')}<p class="lead small">Food heals you in the Depths. Higher Cooking means less burnt food.</p><div class="list">${RECIPES.kitchen.map((r,i)=>{const it=ITEMS[r.out],m=maxMake(r),lock=lv<r.lvl,bc=burnChance(r);
-    return `<div class="recipe${lock?' locked':''}"><div class="rh">${iconImg(r.out)}<span><b>${it.n}</b><small>Heals ${it.heal} · ${r.xp} xp${bc>0?' · '+Math.round(bc*100)+'% burn':''} · have ${avail(r.out)}${lock?' · Needs Cooking '+r.lvl:''}</small></span></div><div class="need">${needText(r)}</div>
+    return `<div class="recipe${lock?' locked':''}"><div class="rh">${iconImg(r.out)}<span><b>${it.n}</b><small>Heals ${it.heal} · ${r.xp} xp · ${cookTime(r)} s each${bc>0?' · '+Math.round(bc*100)+'% burn':''} · have ${avail(r.out)}${lock?' · Needs Cooking '+r.lvl:''}</small></span></div><div class="need">${needText(r)}</div>
     <div class="cookb"><button class="btn sm" data-ck="${i}" data-n="1" ${!lock&&m>=1?'':'disabled'}>Cook 1</button><button class="btn sm alt" data-ck="${i}" data-n="5" ${!lock&&m>=5?'':'disabled'}>×5</button><button class="btn sm alt" data-ck="${i}" data-n="${m}" ${!lock&&m>1?'':'disabled'}>All${m>1?' ('+m+')':''}</button></div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
-  $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>{cook(RECIPES.kitchen[+b.dataset.ck],+b.dataset.n);openKitchen();});}
+  $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>startCook(RECIPES.kitchen[+b.dataset.ck],+b.dataset.n));}
 function needText(r){const p=Object.entries(r.need).map(([id,n])=>`<span class="${has(id,n)?'ok':'no'}">${iconImg(id)}${avail(id)}/${n}</span>`);if(r.gold)p.push(`<span class="${S.gold>=r.gold?'ok':'no'}">${iconImg('gold')}${r.gold}</span>`);return p.join('');}
 const canMake=r=>Object.entries(r.need).every(([id,n])=>has(id,n))&&S.gold>=(r.gold||0)&&(!r.lvl||RECIPES.forge.indexOf(r)<0||lvlOf('smithing')>=r.lvl);
 function openCraft(kind){
@@ -1416,7 +1470,7 @@ function update(dt){
   // context
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();}
-  if(scene==='hold'){updateFishing(dt);updateChop(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
+  if(scene==='hold'){updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -1512,10 +1566,11 @@ function render(){
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.y,f:()=>drawObj(o)});
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>{drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(o.chopT>0&&scene==='hold')drawAxe(o.x,o.y,o.dir,time*1.18);}});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+  if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
   g.restore();
   if(scene==='delve')drawLight(cx,cy);
@@ -1528,7 +1583,7 @@ function render(){
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
 }
 function drawObj(o){
-  if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;spr(ART.tree,o.x-16+k,o.y-30);
+  if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;const sw=reduceMotion?0:Math.sin(time*1.1+o.x*.07+o.y*.03);spr(sw>.55?ART.treeSway[1]:sw<-.75?ART.treeSway[0]:ART.tree,o.x-16+k,o.y-30);
     if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-34,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-33,w,2);}}}
   else if(o.type==='house')spr(ART.house,o.x-24,o.y-48);
   else if(o.type==='bank')spr(ART.bank,o.x-24,o.y-48);
@@ -1542,6 +1597,25 @@ function drawObj(o){
   else if(o.type==='chest')spr(ART.chest[o.open?1:0],o.x-8,o.y-14);
   else if(o.type==='glowcap')spr(ART.glowcap,o.x-8,o.y-15);
 }
+// ---- life at the Hold: chimney smoke, kitchen steam, butterflies over the flowers, falling leaves, glints on the lake ----
+function drawAmbient(cx,cy,x0,y0,x1,y1){const t=time;
+  const inView=(x,y,m=40)=>x>cx-m&&x<cx+VW+m&&y>cy-m&&y<cy+VH+m;
+  for(const o of map.objs){
+    if(o.type==='forge'&&inView(o.x,o.y-40))for(let i=0;i<8;i++){const ph=(t*.32+i/8)%1,x=o.x+14+Math.sin(ph*4+i)*1.5+ph*7,y=o.y-41-ph*30,r=1+ph*2.6;
+      g.globalAlpha=(1-ph)*.5;g.fillStyle=ph<.25?'#566c86':'#94b0c2';g.fillRect(Math.round(x-r/2),Math.round(y-r/2),Math.round(r),Math.round(r));}
+    else if(o.type==='kitchen'&&inView(o.x,o.y-20))for(let i=0;i<4;i++){const ph=(t*.45+i/4)%1,x=o.x+Math.sin(ph*6+i*2)*2.5,y=o.y-15-ph*14;
+      g.globalAlpha=(1-ph)*.45;g.fillStyle='#f4f4f4';g.fillRect(Math.round(x),Math.round(y),1+(ph>.5?1:0),1);}
+    else if(o.type==='tree'&&!(o.chop&&o.until)&&inView(o.x,o.y-20)){const ph=(t*.11+o.x*.0137+o.y*.0071)%1;if(ph<.4){const k=ph/.4,x=o.x-6+(o.x*7%12)+Math.sin(k*14)*3+k*8,y=o.y-20+k*26;
+      g.globalAlpha=k>.85?(1-k)/.15:1;g.fillStyle=(o.x/16|0)%2?'#a7f070':'#38b764';g.fillRect(Math.round(x),Math.round(y),Math.sin(k*14)>0?2:1,1);}}}
+  g.globalAlpha=1;
+  // butterflies drifting around the flowers
+  if(!map.flies)map.flies=map.objs.filter(o=>o.type==='flowers').filter((_,i)=>i%5===0).slice(0,7).map((o,i)=>({x:o.x,y:o.y,c:['#f4f4f4','#ffcd75','#73eff7','#e86fd0','#a7f070'][i%5],s:.6+i*.13}));
+  for(const [i,f] of map.flies.entries()){const x=f.x+Math.sin(t*.5*f.s+i)*22+Math.sin(t*1.7+i*2)*4,y=f.y-10+Math.cos(t*.7*f.s+i*1.3)*9+Math.sin(t*3+i)*2;if(!inView(x,y))continue;
+    const open=Math.floor(t*12+i*3)%3!==0,X=Math.round(x),Y=Math.round(y);g.fillStyle='rgba(0,0,0,.18)';g.fillRect(X,Y+10,2,1);
+    g.fillStyle=f.c;if(open){g.fillRect(X-2,Y-1,2,2);g.fillRect(X+1,Y-1,2,2);}else{g.fillRect(X-1,Y-2,1,2);g.fillRect(X+1,Y-2,1,2);}g.fillStyle='#1a1c2c';g.fillRect(X,Y-1,1,2);}
+  // light glinting on the water
+  const tick=Math.floor(t*2.2);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(tAt(map,x,y)===WATER&&((x*73+y*151+tick*7)%23)===0){const px=x*T+((x*5+tick)%12)+2,py=y*T+((y*7+tick*3)%12)+2;
+    g.fillStyle='#f4f4f4';g.globalAlpha=.85;g.fillRect(px,py,2,1);g.globalAlpha=.5;g.fillRect(px+2,py,1,1);g.fillRect(px-1,py,1,1);g.globalAlpha=1;}}
 function drawAura(x,y,cols,seed){const t=time+seed,X=Math.round(x),Y=Math.round(y);
   g.save();const k=1/Math.sqrt(cols.length);
   cols.forEach((c,ci)=>{const pulse=.5+.5*Math.sin(t*3+ci*2);
@@ -1554,14 +1628,21 @@ function drawAura(x,y,cols,seed){const t=time+seed,X=Math.round(x),Y=Math.round(
   for(let i=0;i<14;i++){const c=cols[i%cols.length],ph=(t*.6+i/14)%1,ang=i*2.4+t*.9,px=X+Math.sin(ang)*(5+4*Math.sin(i*1.7)),py=Y-2-ph*28;
     g.globalAlpha=Math.max(0,1-ph);g.fillStyle=ph<.2?'#ffffff':c;g.fillRect(Math.round(px),Math.round(py),1,1);if(i%2===0){g.fillRect(Math.round(px),Math.round(py)-1,1,1);g.fillRect(Math.round(px)-1,Math.round(py),1,1);}}
   g.globalAlpha=1;}
+// another player's combat level against yours: same or lower is green, a little higher yellow, much higher red
+const lvlColor=l=>{const d=l-S.lvl;return d<=0?'#a7f070':d<=5?'#ffcd75':'#ff6b6b';};
 function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const fr=moving?1+Math.floor(anim*8)%2:0,img=heroImg(look,dir,fr);
   const au=look?auraColors(look,me?S.gear.lantern:look.lan||null):[];if(au.length)drawAura(x,y,au,(npc?npc.name.length:0));
   g.fillStyle='rgba(0,0,0,.3)';g.fillRect(Math.round(x-4),Math.round(y),8,1);
-  const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17);
-  spr(img,x-8,y-15);
-  const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25);
-  if(name&&(me||SET.names))ptDraw(g,name,x,y-(look&&ADMIN_HATS[look.helm]?34:24),{color:me?'#ffcd75':'#c2d3e0',bg:'rgba(26,28,44,.6)'});
+  const yb=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0;   // a 1-px bob on each step
+  const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17+yb);
+  spr(img,x-8,y-15+yb);
+  const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
+  if(name&&(me||SET.names)){const lv=me?S.lvl:look&&look.lvl,ty=y-(look&&ADMIN_HATS[look.helm]?34:24),adm=me?ADMIN:!!(npc&&npc.adm);
+    const lt=lv?'('+lv+')':'',wn=ptMeasure(name,'small'),wl=lt?ptMeasure(lt,'small')+3:0,wc=adm?ART.crown.width+2:0,tw=wc+wn+wl,x0=Math.round(x-Math.floor(tw/2));
+    g.fillStyle='rgba(26,28,44,.6)';g.fillRect(x0-2,Math.round(ty-2),tw+4,BFONT.small.h+4);
+    if(adm)g.drawImage(ART.crown,x0-2,Math.round(ty)-5);
+    ptDraw(g,name,x0+wc,ty,{color:me?'#ffcd75':adm?'#ffe9a8':'#c2d3e0',align:'left'});if(lt)ptDraw(g,lt,x0+wc+wn+3,ty,{color:me?'#f4f4f4':lvlColor(lv),align:'left'});}
   if(npc&&npc.sayT>0)ptDraw(g,npc.say,x,y-34,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
 }
 function drawPlayer(){
@@ -1570,11 +1651,12 @@ function drawPlayer(){
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
   if(d==='up')spr(lan,P.x+lx,P.y+ly);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
-  drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);
+  const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
+  drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)ptDraw(g,P.say.length>26?P.say.slice(0,25)+'...':P.say,P.x,P.y-(ADMIN_HATS[S.gear.helm]?(scene==='hold'?44:34):(scene==='hold'?34:24)),{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
   if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
-  drawFishing();if(CHOP)drawAxe(P.x,P.y,P.dir,CHOP.sw/.85);
+  drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
 function drawSwing(){const t=1-P.swing/.2,base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir],a=base-1.2+t*2.4;
   const sw=ART.sword[S.gear.blade];g.save();g.translate(Math.round(P.x),Math.round(P.y-6));g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();
@@ -1652,19 +1734,20 @@ MP.tick=dt=>{
   if(!netOn()||!NET.roomOpen()||!MP.room)return;
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
   {const f=FISHING&&scene==='hold'?{d:FISHING.dir,ph:FISHING.phase,bx:Math.round(FISHING.bx),by:Math.round(FISHING.by)}:null,k=f?f.d+f.ph+f.bx+','+f.by:'';if(k!==MP.fishKey){MP.fishKey=k;NET.send({t:'fish',f});}}
-  MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
+  MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade,lvl:S.lvl}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
   if(scene==='delve'&&MP.inInst()&&MP.host===MP.id&&OTH.size){MP.enT-=dt;if(MP.enT<=0){MP.enT=.1;
     NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100)])});}}
 };
 const fishOf=f=>f?{dir:f.d,phase:f.ph,bx:f.bx,by:f.by,t:0}:null;
-function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish)});
+function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,adm:!!p.adm,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish)});
   if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
 // ---- lobby messages ----
 if(window.NET){
   NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(MP.room)NET.lsend({t:'where',room:MP.room,floor:MP.inInst()&&run?run.floor:undefined});else if(scene==='hold')MP.toHold();MP.loadFriends();refreshSocial();});
   NET.onL('off',()=>{});
-  NET.onL('world',m=>{if(scene==='hold')NET.join(m.room);});
+  NET.onL('world',m=>{if(MP.wantWorld){if(m.room!==MP.wantWorld)toast('World '+MP.wantWorld.slice(1)+' just filled up. You’re in World '+m.room.slice(1)+'.','bad');else if(m.room!==MP.room)toast('Welcome to World '+m.room.slice(1),'good');MP.wantWorld=null;}if(scene==='hold')NET.join(m.room);});
   NET.onL('online',m=>{MP.online=m.n;refreshSocial();});
+  NET.onL('worlds',m=>{MP.worlds={cap:m.cap||50,list:Array.isArray(m.list)?m.list:[]};refreshSocial();});
   NET.onL('status',m=>{for(const s of m.list)MP.status.set(s.id,s);refreshSocial();});
   NET.onL('party',m=>{const had=!!MP.party;MP.party=m.party;refreshSocial();if(!m.party&&had&&MP.inInst()&&MP.host!==MP.id){} });
   NET.onL('invited',m=>{MP.invites=MP.invites.filter(i=>i.from!==m.from);MP.invites.push({from:m.from,name:m.name,at:Date.now()});showPrompt();sfx('rare');buzz(40);});
@@ -1773,6 +1856,15 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
       +(p.inst&&MP.room!==p.inst.room?`<button class="btn big" id="jp">Join your party on floor ${p.inst.floor}</button>`:'')
       +`<div class="row"><button class="btn alt" id="lvP">Leave party</button></div>`
       :`<p class="lead">You’re not in a party. Parties of up to 4 delve together in one shared dungeon. Invite friends from the Friends tab, or players around you from Nearby.</p>`;
+  }else if(socTab==='worlds'){
+    const W=MP.worlds,cap=W?W.cap:50;
+    if(!W)body='<p class="lead small">Looking up worlds…</p>';
+    else{const list=W.list.slice();if(myWorld&&!list.some(w=>w[0]===myWorld))list.push([myWorld,OTH.size+1]);list.sort((a,b)=>+a[0].slice(1)-+b[0].slice(1));
+      let next=1;while(list.some(w=>w[0]==='w'+next))next++;
+      body=list.map(([r,n])=>{const me=r===myWorld,full=n>=cap&&!me,b=me?'':full?'<button class="btn alt sm" disabled>Full</button>':scene!=='hold'?'':`<button class="btn sm" data-sw="${r}">Switch</button>`;
+          return `<div class="srow"><span><b>World ${r.slice(1)}${me?' (you’re here)':''}</b><small>${n}/${cap} players</small><i class="xpb"><i style="width:${Math.min(100,Math.round(n/cap*100))}%;background:${full?'#b13e53':'#a7f070'}"></i></i></span><span class="sbtns">${b}</span></div>`;}).join('')
+        +(scene==='hold'?`<div class="srow"><span><b>World ${next}</b><small>Empty. A quiet place to start fresh.</small></span><span class="sbtns"><button class="btn alt sm" data-sw="w${next}">Open</button></span></div>`:'')
+        +`<p class="lead small">${scene==='hold'?'Each world holds '+cap+' players. Your party, friends list and progress come with you; trees, chat and items on the ground belong to each world.':'Return home to the Hold to switch worlds.'}</p>`;}
   }else{
     const near=[...OTH.values()];
     body=near.length?near.map(o=>{const fr=F.friends.some(f=>f.name.toLowerCase()===o.id),pend=F.outgoing.some(n=>n.toLowerCase()===o.id),b=[];
@@ -1782,8 +1874,8 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
       :'<p class="lead small">No one else is here right now.</p>';
   }
   const pn=p?p.members.length:0;
-  openSheet(`<div id="socialSheet"></div><h2>Social</h2><p class="lead small">${MP.online||1} player${MP.online===1?'':'s'} online${MP.room&&MP.room[0]==='w'?' · you’re in World '+MP.room.slice(1):''}</p>
-   <div class="tabs"><button class="tab" aria-selected="${socTab==='friends'}" data-st2="friends">Friends${F.incoming.length?' ('+F.incoming.length+')':''}</button><button class="tab" aria-selected="${socTab==='party'}" data-st2="party">Party${pn?' '+pn+'/4':''}</button><button class="tab" aria-selected="${socTab==='here'}" data-st2="here">Nearby ${OTH.size}</button></div>
+  openSheet(`<div id="socialSheet"></div><h2>Social</h2><p class="lead small">${MP.online||1} player${MP.online===1?'':'s'} online${MP.room&&MP.room[0]==='w'?' · you’re in World '+MP.room.slice(1)+(socTab!=='worlds'?' · <button class="linkb" id="swB">Switch world</button>':''):''}</p>
+   <div class="tabs"><button class="tab" aria-selected="${socTab==='friends'}" data-st2="friends">Friends${F.incoming.length?' ('+F.incoming.length+')':''}</button><button class="tab" aria-selected="${socTab==='party'}" data-st2="party">Party${pn?' '+pn+'/4':''}</button><button class="tab" aria-selected="${socTab==='here'}" data-st2="here">Nearby ${OTH.size}</button><button class="tab" aria-selected="${socTab==='worlds'}" data-st2="worlds">Worlds</button></div>
    <div class="list social">${body}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   const q=s=>$('sheet').querySelectorAll(s);$('sx').onclick=()=>{socOpen=false;closeSheet();};
   q('[data-st2]').forEach(b=>b.onclick=()=>{MP.rmArm=null;openSocial(b.dataset.st2);});
@@ -1793,6 +1885,9 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
   q('[data-fadd]').forEach(b=>b.onclick=()=>MP.friendDo('add',b.dataset.fadd));
   q('[data-inv]').forEach(b=>b.onclick=()=>{NET.lsend({t:'invite',to:b.dataset.inv});b.disabled=true;b.textContent='Invited';});
   q('[data-jw]').forEach(b=>b.onclick=()=>{MP.wantWorld=b.dataset.jw;socOpen=false;closeSheet();NET.lsend({t:'world',want:b.dataset.jw});toast('Travelling to World '+b.dataset.jw.slice(1));});
+  if(socTab==='worlds'&&!keep)NET.lsend({t:'worlds'});
+  if($('swB'))$('swB').onclick=()=>openSocial('worlds');
+  q('[data-sw]').forEach(b=>b.onclick=()=>{if(scene!=='hold')return;MP.wantWorld=b.dataset.sw;socOpen=false;closeSheet();NET.lsend({t:'world',want:b.dataset.sw});toast('Travelling to World '+b.dataset.sw.slice(1)+'…');});
   q('[data-kick]').forEach(b=>b.onclick=()=>NET.lsend({t:'kick',id:b.dataset.kick}));
   q('[data-lead]').forEach(b=>b.onclick=()=>NET.lsend({t:'lead',id:b.dataset.lead}));
   if($('lvP'))$('lvP').onclick=()=>NET.lsend({t:'leave'});
@@ -1860,7 +1955,7 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]}};
 })();
 
 // ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
