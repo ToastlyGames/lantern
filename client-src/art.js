@@ -160,6 +160,18 @@ function pathTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,PAL.t
   for(let i=0;i<10;i++)p.set(r()*16,r()*16,PAL.wood);for(let i=0;i<4;i++){const x=r()*15|0,y=r()*15|0;p.rect(x,y,2,1,PAL.yellow);}return p.canvas();}
 function waterTile(f){const p=new Px(16,16);p.rect(0,0,16,16,PAL.blue);
   for(let y=2;y<16;y+=5)for(let x=(y+f*3)%8;x<16;x+=8){p.rect(x,y,3,1,PAL.sky);}p.set((5+f*4)%16,9,PAL.cyan);return p.canvas();}
+// dock planks over the water (transparent gaps between boards and at the sides let the water show through)
+function dockTile(kind){const p=new Px(16,16),W='#a0663b',W2='#8a5a3a',D='#6b3e26',HI='#c98a4a';
+  const x0=kind==='walk'?2:0,x1=kind==='walk'?14:16;
+  for(let y=0;y<16;y+=4){p.rect(x0,y,x1-x0,3,(y/4)%2?W2:W);p.rect(x0,y,x1-x0,1,HI);p.set(x0+3+(y%8),y+1,D).set(x1-4,y+2,D);}
+  if(kind==='walk'){p.rect(1,0,1,16,D);p.rect(14,0,1,16,D);p.rect(0,6,2,3,'#4b3226');p.rect(14,6,2,3,'#4b3226');}
+  else{p.rect(0,15,16,1,D);p.rect(0,0,2,2,'#4b3226');p.rect(14,0,2,2,'#4b3226');p.rect(0,13,2,3,'#4b3226');p.rect(14,13,2,3,'#4b3226');}
+  return p.canvas();}
+function lilySprite(f){const p=new Px(8,6);p.ell(3.5,3,3.5,2.5,'#38b764');p.set(3,3,'#2b4b3a').set(4,2,'#2b4b3a');p.set(1,2,'#a7f070');if(f)p.set(6,1,'#e86fd0').set(5,1,'#f4f4f4');return p.canvas();}
+// a plot that isn't open yet: hard, weedy ground with a little stake
+function lockedSoilTile(){const p=new Px(16,16);p.rect(0,0,16,16,'#5a4a3a');p.rect(0,0,16,1,PAL.wood).rect(0,0,1,16,PAL.wood);
+  [[3,4],[11,3],[6,11],[12,12],[2,13]].forEach(([x,y])=>{p.set(x,y,'#38b764').set(x+1,y-1,'#38b764').set(x-1,y-1,'#257179');});
+  p.set(5,7,'#4b3226').set(6,7,'#4b3226').set(9,9,'#4b3226');p.rect(12,5,1,6,PAL.wood);p.rect(10,4,5,3,'#e3d2bf');p.set(12,5,'#6b3e26');return p.canvas();}
 function soilTile(wet){const p=new Px(16,16);p.rect(0,0,16,16,wet?PAL.soil:PAL.bark);
   for(let y=2;y<16;y+=4)p.rect(1,y,14,1,wet?PAL.bark:PAL.soil);p.rect(0,0,16,1,PAL.wood).rect(0,0,1,16,PAL.wood);return p.canvas();}
 const BIOMES={
@@ -426,7 +438,7 @@ function buildArt(){
   ART.skeleton=[0,1].map(skeletonFrame);ART.wisp=[0,1].map(wispFrame);ART.spider=[0,1].map(spiderFrame);
   ART.shade=[0,1].map(shadeFrame);ART.knight=[0,1].map(knightFrame);
   ART.grass=[1,2,3,4].map(grassTile);ART.path=[5,6,7].map(pathTile);ART.water=[0,1].map(waterTile);
-  ART.soil=soilTile(false);ART.soilWet=soilTile(true);
+  ART.soil=soilTile(false);ART.soilLocked=lockedSoilTile();ART.dock={walk:dockTile('walk'),deck:dockTile('deck')};ART.lily=[lilySprite(0),lilySprite(1)];ART.soilWet=soilTile(true);
   ART.floor={};ART.wall={};ART.face={};
   for(const b of Object.keys(BIOMES)){ART.floor[b]=[11,12,13,14].map(s=>floorTile(b,s));ART.wall[b]=[21,22].map(s=>wallTile(b,false,s));ART.face[b]=[31,32,33].map(s=>wallTile(b,true,s));}
   ART.stairs=stairsTile();ART.deco=decoSprites();ART.chest=[chestSprite(false),chestSprite(true)];ART.torch=[0,1].map(torchSprite);

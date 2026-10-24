@@ -1,8 +1,21 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.7',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.9',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.9',date:'2026-10-24',title:'The farm, plot by plot',notes:[
+    'Every square of soil is now its own plot: 12 in all, 2 rows of 6, with crops growing right in the middle of each square.',
+    'New farmers start with 4 plots. More open for free at Farming 5, 10, 15, 20, 30, 40, 50 and 60, or buy one sooner with gold (750 gold for the first, each one after costs more).',
+    'Farmers from before this update keep their crops and start with 6 plots.',
+    'Locked plots show as rough ground with a little stake, and the Farm screen lays out the plots exactly like the field.',
+    'New "Harvest & replant" button, and planting now fills every empty plot by default.']},
+  {v:'0.7.8',date:'2026-10-24',title:'A bigger lake and a dock',notes:[
+    'The lake in the Hold is bigger, with lily pads drifting on the water.',
+    'A wooden dock runs out to a platform in the middle of the lake: walk out and fish off any side of it.',
+    'Your line always lands in open water, never up against the shore.']},
+  {v:'0.7.8',date:'2026-10-24',title:'A bigger lake and a dock',notes:[
+    'The lake in the Hold is bigger, with lily pads drifting on the water.',
+    'A wooden dock now runs out to a platform in the middle of the lake: walk out and fish off any side of it.']},
   {v:'0.7.7',date:'2026-10-24',title:'Into the arch',notes:[
     'Walking up into the Delve Gate\'s archway no longer hides your character behind the stone: you stay visible on the stairs.']},
   {v:'0.7.6',date:'2026-10-24',title:'Tidier crossroads',notes:[

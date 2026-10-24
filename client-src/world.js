@@ -1,5 +1,5 @@
 // ===== Maps: the Hold (handmade) and the Depths (procedural) =====
-const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5;
+const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6;
 function newMap(w,h,kind,fill){return {w,h,kind,t:new Uint8Array(w*h).fill(fill),solid:new Uint8Array(w*h),objs:[],lights:[],seed:0};}
 const tAt=(m,x,y)=>x<0||y<0||x>=m.w||y>=m.h?WALL:m.t[y*m.w+x];
 const setT=(m,x,y,v)=>{if(x>=0&&y>=0&&x<m.w&&y<m.h)m.t[y*m.w+x]=v;};
@@ -14,8 +14,12 @@ function buildHold(){
   for(let y=5;y<H-1;y++){setT(m,12,y,PATH);setT(m,13,y,PATH);}
   for(let x=1;x<W;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
   for(let x=14;x<17;x++)setT(m,x,13,PATH);
-  // pond
-  [[18,19],[19,19],[20,19],[21,19],[17,20],[18,20],[19,20],[20,20],[21,20],[22,20],[18,21],[19,21],[20,21],[21,21],[22,21],[19,22],[20,22],[21,22]].forEach(([x,y])=>{setT(m,x,y,WATER);setSolid(m,x,y,1);});
+  // the lake, with a wooden dock running out to a platform in the middle (stand on it and fish off any side)
+  const lake=[[18,22],[17,23],[16,23],[16,23],[16,23],[17,22]];   // rows 17–22: [from x, to x]
+  lake.forEach(([a,b],j)=>{for(let x=a;x<=b;x++){setT(m,x,17+j,WATER);setSolid(m,x,17+j,1);}});
+  for(let y=17;y<=18;y++){setT(m,19,y,DOCK);setSolid(m,19,y,0);}
+  for(let x=18;x<=20;x++){setT(m,x,19,DOCK);setSolid(m,x,19,0);}   // platform in the middle: open water on every side
+  m.lilies=[[17,18,0],[22,18,1],[16,21,1],[21,22,0],[23,20,0]];
   // border + inner trees
   const tree=(tx,ty)=>addObj(m,{type:'tree',x:tx*T+8,y:ty*T+15,spr:'tree',block:[[tx,ty]]});
   // the east road ends at an opening in the trees (rows 11–12), closed with a barricade until Season 1's new area
@@ -41,7 +45,8 @@ function buildHold(){
   // farm with fence
   for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:14*T+14,spr:'fence',block:[[x,14]]});addObj(m,{type:'fence',x:x*T+8,y:19*T+14,spr:'fence',block:[[x,19]]});}
   for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:y*T+14,spr:'fence',block:[[2,y]]});addObj(m,{type:'fence',x:9*T+8,y:y*T+14,spr:'fence',block:[[9,y]]});}
-  m.plots=[];[[3,15],[5,15],[7,15],[3,17],[5,17],[7,17]].forEach(([x,y],i)=>{setT(m,x,y,SOIL);setT(m,x+1,y,SOIL);m.plots.push({i,tx:x,ty:y,cx:x*T+16,cy:y*T+10});});
+  m.plots=[];for(let c=0;c<6;c++)[15,17].forEach((y,r)=>{const x=3+c;setT(m,x,y,SOIL);m.plots.push({i:c*2+r,tx:x,ty:y,cx:x*T+8,cy:y*T+10});});   // one plot per square; index order = unlock order (left to right, both rows)
+  m.plots.sort((a,b)=>a.i-b.i);
   // flowers
   const r=rng(7);for(let i=0;i<34;i++){const x=1+(r()*(W-2)|0),y=1+(r()*(H-2)|0);if(tAt(m,x,y)===GRASS&&!solidAt(m,x,y))m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:r()*4|0,flat:true});}
   m.spawn={x:13*T,y:9*T+8};

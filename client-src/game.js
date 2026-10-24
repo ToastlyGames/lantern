@@ -11,7 +11,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:[null,null,null,null,null,null],kills:0,deaths:0,bosses:{},goals:{},cnt:{}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -32,7 +32,7 @@ function normalize(raw){const o=obj(raw),s=fresh();
   if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}}
   const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null};
   const K=obj(o.skills);s.skills={};for(const k of Object.keys(SKILLS))s.skills[k]=num(K[k],0,200e6,0);
-  const now=Date.now(),P0=Array.isArray(o.plots)?o.plots:[];s.plots=DEF.plots.map((_,i)=>{const p=obj(P0[i]);return CROPS[p.crop]?{crop:p.crop,t0:num(p.t0,0,now,now)}:null;});
+  Object.assign(s,cleanPlots(o,Date.now()));
   s.bosses={};for(const k of Object.keys(obj(o.bosses)))if(ENEMIES[k]&&ENEMIES[k].boss)s.bosses[k]=true;
   const Q=Array.isArray(o.quick)?o.quick:DEF.quick;s.quick=[0,1,2,3,4].map(i=>ITEMS[Q[i]]&&(ITEMS[Q[i]].food||ITEMS[Q[i]].oil)?Q[i]:null);
   s.flags={};for(const [k,v] of Object.entries(obj(o.flags)))if(/^[a-z]{2,16}$/.test(k))s.flags[k]=!!v;s.guide=int(o.guide,0,99,0);
@@ -299,7 +299,7 @@ function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
-  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d];if(tAt(map,tx+dx,ty+dy)===WATER){let bx=tx+dx,by=ty+dy;if(tAt(map,bx+dx,by+dy)===WATER){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9};}}return null;}
+  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d];if(tAt(map,tx+dx,ty+dy)===WATER){let bx=tx+dx,by=ty+dy;if(tAt(map,bx+dx,by+dy)===WATER&&tAt(map,bx+2*dx,by+2*dy)===WATER){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
 function startFishing(sp){CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
@@ -385,15 +385,27 @@ function drawFishing(f=FISHING,px=P.x,py=P.y){if(!f)return;const d=f.dir,sx=d===
 // ---------- farm ----------
 const growth=st=>Math.min(1,(Date.now()-st.t0)/1000/CROPS[st.crop].grow);
 let farmSel=null,farmQty=0,farmTick=null;
-const emptyPlots=()=>S.plots.map((p,i)=>p?-1:i).filter(i=>i>=0);
+const plotsOpen=()=>plotCap(lvlOf('farming'),S.plotBuys||0);
+const emptyPlots=()=>S.plots.map((p,i)=>p||i>=plotsOpen()?-1:i).filter(i=>i>=0);
 const readyPlots=()=>S.plots.map((p,i)=>p&&growth(p)>=1?i:-1).filter(i=>i>=0);
-function harvestAll(){const got={};let xp=0;for(const i of readyPlots()){const st=S.plots[i],c=CROPS[st.crop],n=ri(c.yield[0],c.yield[1])+(rand()<lvlOf('farming')/100?1:0);give(S.bank,c.out,n);xp+=c.xp*n;got[c.out]=(got[c.out]||0)+n;bump('crops',n);S.plots[i]=null;const p=HOLD.plots[i];puff(p.cx,p.cy,'#a7f070',6);}
-  if(xp)skillXp('farming',xp);save();const txt=Object.entries(got).map(([id,n])=>'+'+n+' '+ITEMS[id].n).join(', ');if(txt){floatText(P.x,P.y-20,txt,'#a7f070');toast('Harvested '+txt+' · '+xp+' Farming xp','good');}}
+function harvestAll(replant){const got={},again=[];let xp=0;for(const i of readyPlots()){const st=S.plots[i];again.push([i,st.crop]);const c=CROPS[st.crop],n=ri(c.yield[0],c.yield[1])+(rand()<lvlOf('farming')/100?1:0);give(S.bank,c.out,n);xp+=c.xp*n;got[c.out]=(got[c.out]||0)+n;bump('crops',n);S.plots[i]=null;const p=HOLD.plots[i];puff(p.cx,p.cy,'#a7f070',6);}
+  if(xp)skillXp('farming',xp);
+  if(replant){let n=0,pxp=0;for(const [i,k] of again){const c=CROPS[k];if(i>=plotsOpen()||S.plots[i]||lvlOf('farming')<c.lvl||avail(c.seed)<1)continue;take(c.seed,1);S.plots[i]={crop:k,t0:Date.now()};pxp+=c.plantXp;n++;}if(n){skillXp('farming',pxp);sfx('plant');}}
+  save();const txt=Object.entries(got).map(([id,n])=>'+'+n+' '+ITEMS[id].n).join(', ');if(txt){floatText(P.x,P.y-20,txt,'#a7f070');toast('Harvested '+txt+' · '+xp+' Farming xp','good');}}
 function plantMany(crop,n){const free=emptyPlots().slice(0,n),c=CROPS[crop];n=Math.min(free.length,avail(c.seed));
   for(let k=0;k<n;k++){const i=free[k];S.plots[i]={crop,t0:Date.now()};const p=HOLD.plots[i];puff(p.cx,p.cy,'#a0663b',4);}take(c.seed,n);if(n){sfx('plant');S.flags.planted=true;skillXp('farming',c.plantXp*n);}save();toast('Planted '+n+' '+c.n+' · '+c.plantXp*n+' Farming xp','good');}
-function plotCells(){return S.plots.map((st,i)=>{if(!st)return `<div class="plot empty"><span class="pi"></span><small>Empty</small></div>`;
-  const gr=growth(st),c=CROPS[st.crop],left=Math.ceil(c.grow*(1-gr));
-  return `<div class="plot ${gr>=1?'ready':''}">${iconImg(c.out)}<small>${gr>=1?'Ready':fmtT(left)}</small><i style="width:${Math.round(gr*100)}%"></i></div>`;}).join('');}
+// the sheet's grid matches the field: 2 rows of 6, plot index = column*2 + row
+function plotCells(){const open=plotsOpen(),cells=[];for(let r=0;r<2;r++)for(let c=0;c<6;c++){const i=c*2+r,st=S.plots[i];
+  if(!st){cells.push(i<open?`<div class="plot empty"><span class="pi"></span><small>Empty</small></div>`:`<div class="plot locked"><span class="pl">🔒</span><small>${i===open?'Next':'Locked'}</small></div>`);continue;}
+  const gr=growth(st),c2=CROPS[st.crop],left=Math.ceil(c2.grow*(1-gr));
+  cells.push(`<div class="plot ${gr>=1?'ready':''}">${iconImg(c2.out)}<small>${gr>=1?'Ready':fmtT(left)}</small><i style="width:${Math.round(gr*100)}%"></i></div>`);}
+  return cells.join('');}
+function plotExpand(){const open=plotsOpen(),lvl=lvlOf('farming'),cost=PLOT_BUYS[S.plotBuys||0],nextL=PLOT_LVLS.find(l=>l>lvl);
+  if(open>=PLOT_MAX)return `<p class="lead small">All ${PLOT_MAX} plots are open.</p>`;
+  return `<h3>Expand the farm <small>${open} of ${PLOT_MAX} plots open</small></h3>
+  <p class="lead small">${nextL?`The next plot opens for free at <b>Farming ${nextL}</b>. `:''}Or buy one now${cost!==undefined?'':' (you have bought every plot you can)'}.</p>
+  ${cost!==undefined?`<button class="btn big" id="pbuy" ${S.gold>=cost?'':'disabled'}>Buy a plot · ${fmt(cost)} gold</button>${S.gold<cost?`<p class="lead small">You have ${fmt(S.gold)} gold.</p>`:''}`:''}`;}
+function buyPlot(){const cost=PLOT_BUYS[S.plotBuys||0];if(cost===undefined||S.gold<cost||plotsOpen()>=PLOT_MAX)return;S.gold-=cost;S.plotBuys=(S.plotBuys||0)+1;save();sfx('level');toast('New farm plot! '+plotsOpen()+' of '+PLOT_MAX+' open','good');}
 const fmtT=s=>s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s';
 let farmPicked=false;
 function openFarm(){
@@ -403,18 +415,20 @@ function openFarm(){
   const sc=CROPS[farmSel],sn=avail(sc.seed),sName=ITEMS[sc.seed].n+(sn===1?'':'s');
   const why=lvl<sc.lvl?`<p class="lead small lockmsg">🔒 You have ${sn?sn+' '+sName:'no '+ITEMS[sc.seed].n+'s'}, but planting ${sc.n} needs <b>Farming ${sc.lvl}</b> (you're Farming ${lvl}). Plant and harvest Wheat to level up.${sc.seed==='lampseed'?' Until then, Lampseed can be pressed into Oil Flasks at the Oil Press.':''}</p>`
     :`<p class="lead small">No ${ITEMS[sc.seed].n}s in your bag or bank.${sc.seed==='wheat_seed'?' Buy them at the Market.':' Find them in the Depths'+(sc.seed==='lampseed'?' or buy them at the Market.':'.')}</p>`;
-  const seeds=canCrop(CROPS[farmSel])?avail(CROPS[farmSel].seed):0,max=Math.min(free,seeds);farmQty=Math.max(max?1:0,Math.min(farmQty||max,max));
+  const seeds=canCrop(CROPS[farmSel])?avail(CROPS[farmSel].seed):0,max=Math.min(free,seeds);farmQty=max;   // default: fill every empty plot
   openSheet(`<h2>Farm</h2>${skillLine('farming')}<p class="lead small">Crops grow in real time, even while you're away. Higher Farming means a better chance of an extra crop.</p>
   <div class="plots" id="plots">${plotCells()}</div>
-  ${ready?`<button class="btn big" id="harv">Harvest all (${ready} ready)</button>`:''}
+  ${ready?`<div class="row"><button class="btn big" id="harv">Harvest all (${ready})</button><button class="btn big alt" id="harvR">Harvest &amp; replant</button></div>`:''}
   <h3>Plant ${free?`<small>${free} empty plot${free>1?'s':''}</small>`:''}</h3>
   ${free?`<div class="list crops">${crops.map(([k,c])=>`<button class="item${canCrop(c)?'':' locked'}" aria-pressed="${k===farmSel}" data-crop="${k}">${iconImg(c.seed)}<span><b>${lvl<c.lvl?'🔒 ':''}${c.n}</b><small>${lvl<c.lvl?'Needs Farming '+c.lvl+' · ':''}${avail(c.seed)} ${ITEMS[c.seed].n}${avail(c.seed)===1?'':'s'} · ${fmtT(c.grow)} · ${c.yield[0]}–${c.yield[1]} each</small></span></button>`).join('')}</div>
    ${max?`<div class="qty"><span>How many?</span><button class="btn alt sm" id="qm" aria-label="Fewer">−</button><output id="qn">${farmQty}</output><button class="btn alt sm" id="qp" aria-label="More">+</button><button class="btn alt sm" id="qx">Max</button></div>
    <button class="btn big" id="plant">Plant ${farmQty} ${CROPS[farmSel].n}</button>`:why}`
    :'<p class="lead small">Every plot is growing. Harvest to free them up.</p>'}
+  ${plotExpand()}
   <div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;
-  if($('harv'))$('harv').onclick=()=>{harvestAll();openFarm();};
+  if($('pbuy'))$('pbuy').onclick=()=>{buyPlot();openFarm();};
+  if($('harv'))$('harv').onclick=()=>{harvestAll();openFarm();};if($('harvR'))$('harvR').onclick=()=>{harvestAll(true);openFarm();};
   q.querySelectorAll('[data-crop]').forEach(b=>b.onclick=()=>{farmSel=b.dataset.crop;farmPicked=true;farmQty=0;openFarm();});
   const setQ=v=>{farmQty=Math.max(1,Math.min(max,v));$('qn').textContent=farmQty;$('plant').textContent='Plant '+farmQty+' '+CROPS[farmSel].n;};
   if($('qm')){$('qm').onclick=()=>setQ(farmQty-1);$('qp').onclick=()=>setQ(farmQty+1);$('qx').onclick=()=>setQ(max);}
@@ -938,7 +952,10 @@ function render(){TAGS.length=0;
   camX=cx;camY=cy;g.save();g.translate(-cx,-cy);
   g.drawImage(map.ground,0,0);
   const x0=Math.floor(cx/T),y0=Math.floor(cy/T),x1=Math.ceil((cx+VW)/T),y1=Math.ceil((cy+VH)/T),wf=Math.floor(time*2)%2;
-  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(tAt(map,x,y)===WATER)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);
+  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);
+      if(tt===DOCK)g.drawImage(tAt(map,x,y+1)===WATER&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
+    for(const [lx,ly,lf] of map.lilies||[])g.drawImage(ART.lily[lf],lx*T+4+Math.round(Math.sin(time*.8+lx)*.6),ly*T+5);
+    {const open=plotsOpen();for(const p of map.plots)if(p.i>=open&&!S.plots[p.i])g.drawImage(ART.soilLocked,p.tx*T,p.ty*T);}
     for(const p of map.plots){const st=S.plots[p.i];if(!st)continue;const gr=growth(st),stg=gr>=1?2:gr>=.5?1:0;spr(ART.crop[st.crop][stg],p.cx-8,p.cy-10);
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}

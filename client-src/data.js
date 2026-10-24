@@ -85,6 +85,14 @@ const CROPS={
   lampseed:{seed:'lampseed',grow:70,yield:[2,3],out:'lampseed',n:'Lampseed',lvl:3,plantXp:5,xp:7},
   glowcap:{seed:'glowcap_spore',grow:100,yield:[2,3],out:'glowcap',n:'Glowcap',lvl:6,plantXp:8,xp:11}
 };
+// Farm plots: 12 squares (2 rows of 6). Everyone starts with 4; more open with Farming levels or for gold (each purchase costs more).
+const PLOT_BASE=4,PLOT_MAX=12,PLOT_LVLS=[5,10,15,20,30,40,50,60],PLOT_BUYS=[750,1500,3000,5000,8000,12000,18000,25000];
+const plotCap=(farmLvl,buys)=>Math.min(PLOT_MAX,PLOT_BASE+PLOT_LVLS.filter(l=>farmLvl>=l).length+buys);
+// saves from before the 12-square farm had 6 two-square plots: keep their crops and give them 6 squares (2 bought)
+function cleanPlots(o,now){const P0=Array.isArray(o.plots)?o.plots:[],legacy=o.plotBuys===undefined&&P0.length===6,ok=p=>p&&typeof p==='object'&&CROPS[p.crop];
+  const v=p=>({crop:p.crop,t0:Math.min(now,Math.max(0,Number(p.t0)||now))});
+  const plots=Array(PLOT_MAX).fill(null);if(legacy){let k=0;for(const p of P0)if(ok(p))plots[k++]=v(p);}else for(let i=0;i<PLOT_MAX;i++)if(ok(P0[i]))plots[i]=v(P0[i]);
+  return {plots,plotBuys:legacy?2:Math.max(0,Math.min(PLOT_BUYS.length,Math.floor(Number(o.plotBuys)||0)))};}
 const SHOP=[{id:'wheat_seed',price:5},{id:'lampseed',price:30},{id:'oil',price:45},{id:'bread',price:20}];
 // enemies: hp, damage, speed (px/s), xp, AI, drops [item, chance, min, max]
 const ENEMIES={
