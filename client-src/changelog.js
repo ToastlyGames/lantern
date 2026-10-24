@@ -1,10 +1,19 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.0',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.3',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.3',date:'2026-10-24',title:'Quieter chat bubbles',notes:[
+    'Chat over players\' heads is now small, sharp text with a barely-there background, sitting just above their name.',
+    'Longer messages wrap onto up to 3 short lines instead of being cut off.']},
+  {v:'0.7.2',date:'2026-10-24',title:'Upright phones',notes:[
+    'Playing with your phone upright: the Return Flame now sits just above the joystick, so the chat button no longer covers it.',
+    'The chat button moved to the left edge, below the top bar.']},
+  {v:'0.7.1',date:'2026-10-24',title:'Tallow sets up shop',notes:[
+    'Tallow moved his cart to the old well\'s spot, on the corner of the grass where the two roads cross.',
+    'The well is gone, making room for his cart.']},
   {v:'0.7.0',date:'2026-10-24',title:'Tallow arrives, and the road east',notes:[
-    'Meet Tallow, the Hold\'s first merchant. Find his cart by the crossroads to buy supplies and sell your goods.',
+    'Meet Tallow, the Hold\'s first merchant. Buy supplies and sell your goods at his cart.',
     'The Market Board is now the Bulletin: the current build and every update we ship, newest first.',
     'Oak trees now hold 300 logs and grow back in 20 seconds, so several players can chop together.',
     'The east road now ends at a barricade and a sign. Something is coming in Season 1.']},

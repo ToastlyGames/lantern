@@ -29,14 +29,14 @@ function buildHold(){
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
   addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
   // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
-  addObj(m,{type:'stall',x:19*T+8,y:9*T+14,spr:'stall',block:[[18,9],[19,9]]});
-  addObj(m,{type:'npc',name:'Tallow',x:20*T+12,y:10*T+12,act:{x:20*T+12,y:11*T+2,label:'Trade',id:'market'}});
   // the east road: a sign and a barricaded opening in the trees
   addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
   addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
   addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
   addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
-  addObj(m,{type:'well',x:9*T,y:10*T,spr:'well',block:[[8,9],[9,9]]});
+  // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
+  addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
+  addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});
   // farm with fence
   for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:14*T+14,spr:'fence',block:[[x,14]]});addObj(m,{type:'fence',x:x*T+8,y:19*T+14,spr:'fence',block:[[x,19]]});}
   for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:y*T+14,spr:'fence',block:[[2,y]]});addObj(m,{type:'fence',x:9*T+8,y:y*T+14,spr:'fence',block:[[9,y]]});}
