@@ -1550,26 +1550,18 @@ function updateHud(force){
 
 // ---------- render ----------
 function spr(img,x,y){g.drawImage(img,Math.round(x),Math.round(y));}
-// ---- name tags: crisp small text on an overlay canvas at screen resolution (not pixel-scaled with the world) ----
-// The NAME is centred over the hero; the combat level sits to its right and an admin's crown to its left.
-const TAGS=[];const tagCv=$('tags'),tg=tagCv.getContext('2d');let tagKey='';
-function drawTags(){const dpr=window.devicePixelRatio||1,W=VW*SCALE,H=VH*SCALE;
-  if(tagCv.width!==W||tagCv.height!==H){tagCv.width=W;tagCv.height=H;tagCv.style.width=cv.style.width;tagCv.style.height=cv.style.height;}
-  tg.setTransform(1,0,0,1,0,0);tg.clearRect(0,0,W,H);if(!TAGS.length)return;
-  const fs=Math.round(9.5*dpr),pad=Math.round(3*dpr),gap=Math.round(3*dpr),bh=fs+Math.round(4*dpr);
-  tg.font=`600 ${fs}px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif`;tg.textBaseline='middle';tg.lineJoin='round';
-  for(const t of TAGS){const cx=Math.round((t.x-camX)*SCALE),cy=Math.round((t.y-camY)*SCALE)-Math.round(bh/2);
-    if(cx<-200||cx>W+200||cy<-40||cy>H+40)continue;
-    const nw=tg.measureText(t.name).width,lt=t.lv?String(t.lv):'',lw=lt?tg.measureText(lt).width:0;
-    const left=cx-nw/2,right=cx+nw/2+(lt?gap+lw+Math.round(4*dpr):0);
-    // soft pill behind name (+ level)
-    tg.fillStyle='rgba(20,22,34,.38)';const x0=left-pad,x1=right+pad,r=bh/2;tg.beginPath();tg.moveTo(x0+r,cy-bh/2);tg.arcTo(x1,cy-bh/2,x1,cy+bh/2,r);tg.arcTo(x1,cy+bh/2,x0,cy+bh/2,r);tg.arcTo(x0,cy+bh/2,x0,cy-bh/2,r);tg.arcTo(x0,cy-bh/2,x1,cy-bh/2,r);tg.fill();
-    tg.lineWidth=Math.max(2,2.2*dpr);tg.strokeStyle='rgba(16,18,28,.85)';tg.textAlign='center';
-    tg.strokeText(t.name,cx,cy+.5);tg.fillStyle=t.me?'#ffd98a':t.adm?'#ffe9a8':'#f2f5f8';tg.fillText(t.name,cx,cy+.5);
-    if(lt){const lx=cx+nw/2+gap,lc=t.me?'#cfd8e3':lvlColor(t.lv);tg.textAlign='left';
-      tg.fillStyle='rgba(16,18,28,.55)';const bw=lw+Math.round(4*dpr);tg.fillRect(lx,cy-fs/2,bw,fs);
-      tg.strokeText(lt,lx+Math.round(2*dpr),cy+.5);tg.fillStyle=lc;tg.fillText(lt,lx+Math.round(2*dpr),cy+.5);}
-    if(t.adm){const cs=Math.round(11*dpr),k=cs/9;tg.imageSmoothingEnabled=false;tg.drawImage(ART.crownS,Math.round(left-pad-gap-cs),Math.round(cy-cs/2),cs,cs);}}}
+// ---- name tags: real HTML text placed over the game, so it stays sharp on every phone and screen ----
+// The NAME is centred over the hero; the combat level hangs to its right and an admin's crown to its left.
+const TAGS=[];const tagBox=$('tags'),tagPool=[];
+function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
+function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
+  for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
+    const e=tagEl(n++),key=t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0);
+    if(e._k!==key){e._k=key;e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
+      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.children[0].style.display=t.adm?'':'none';
+      const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
+    const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
+  for(let i=n;i<tagPool.length;i++)if(!tagPool[i].hidden)tagPool[i].hidden=true;}
 function render(){TAGS.length=0;
   g.setTransform(1,0,0,1,0,0);g.fillStyle=scene==='hold'?'#1a1c2c':'#0b0c14';g.fillRect(0,0,VW,VH);
   const mw=map.w*T,mh=map.h*T;let cx=Math.round(P.x-VW/2),cy=Math.round(P.y-8-VH/2);
@@ -1665,7 +1657,7 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
   // Name tags are collected here and drawn on a sharp overlay after the world (see drawTags). Off by default
   // (Settings → Player names), except admins, whose names everyone always sees.
-  {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames))TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?26:17),name,lv:me?S.lvl:look&&look.lvl,adm,me});}
+  {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames))TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?30:20),name,lv:me?S.lvl:look&&look.lvl,adm,me});}
   if(npc&&npc.sayT>0)ptDraw(g,npc.say,x,y-34,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
 }
 function drawPlayer(){
