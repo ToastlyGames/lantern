@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.0 · updated October 24, 2026
+Season 0 (Beta) · build v0.8.2 · updated October 24, 2026
 
 ## Welcome
 
@@ -390,6 +390,7 @@ Your hero saves to your account automatically, so you can pick up where you left
 **Staying safe**
 
 - The only official site is **lanternhold.fun**. Always check the address bar.
+- The only official token contract address is the one on the Bulletin in the Hold (and in the Official token section of this wiki). Never trust an address sent to you in a DM.
 - Wallet sign-in is a standard Sign-In with Ethereum message that names lanternhold.fun, with a one-time code that expires after 5 minutes. Your wallet should show "lanternhold.fun" with no warning.
 - Lanternhold will **never** ask you for a transaction, a token approval, your seed phrase or your private key. If anything does, it isn't us. Close it and don't sign.
 - Admins will never ask for your wallet details, and never sell items for payment outside the game.
