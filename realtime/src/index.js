@@ -287,7 +287,10 @@ export class Lobby {
 const HOST_OUT = new Set(['en', 'kill', 'obj', 'objs', 'floor', 'hurt', 'grant', 'fx']);   // host -> everyone (or one player with `to`)
 const TO_HOST = new Set(['hit', 'act', 'mine', 'shade', 'down', 'sync']);                    // a player -> the host
 const FISH_PH = new Set(['cast', 'wait', 'bite', 'reel']);
-const TREE_LOGS = 150, TREE_REGROW_MS = 90e3, TREE_MAX = 64, CHOP_GAP_MS = 1200;
+// Tree types (match TREES in the game's data.js): logs per tree and regrow time. Higher-level trees in later areas hold
+// fewer logs and take longer to regrow.
+const TREE_TYPES = { oak: { logs: 300, regrow: 20e3 } }, TREE_MAX = 64, CHOP_GAP_MS = 1200;
+const treeType = k => TREE_TYPES[k] || TREE_TYPES.oak;
 const DROP_MAX = 400, DROP_PRIVATE_MS = 30e3, DROP_LIFE_MS = 180e3, LOOT_LIFE_MS = 30 * 60e3;
 export class Room {
   constructor(ctx, env) {
@@ -368,13 +371,14 @@ export class Room {
     const s = JSON.stringify({ t: 'D', d: this.dropView(d, null) }); for (const q of this.players.values()) if (q.id !== p.id) send(q.ws, s);
   }
   // ---- shared trees (Hold worlds): every log anyone cuts comes off the same stack; at 0 the tree falls and regrows ----
-  tree(i) { let t = this.trees.get(i); if (!t) { t = { i, left: TREE_LOGS, until: 0 }; this.trees.set(i, t); } if (t.until && Date.now() >= t.until) { t.left = TREE_LOGS; t.until = 0; } return t; }
+  tree(i, kind) { let t = this.trees.get(i); if (!t) { const k = TREE_TYPES[kind] ? kind : 'oak'; t = { i, kind: k, left: treeType(k).logs, until: 0 }; this.trees.set(i, t); }
+    const T = treeType(t.kind); if (t.left > T.logs) t.left = T.logs; if (t.until && (Date.now() >= t.until || t.until - Date.now() > T.regrow)) { t.left = T.logs; t.until = 0; } return t; }
   treeView(t) { return [t.i, t.left, t.until ? Math.max(0, t.until - Date.now()) : 0]; }
   onChop(p, m) {
     const i = m.i; if (this.inst || !Number.isInteger(i) || i < 0 || i >= TREE_MAX) return;
     const now = Date.now(); if (now - (p.lastChop || 0) < CHOP_GAP_MS) return; p.lastChop = now;
-    const t = this.tree(i);
-    if (!t.until && m.ok) { t.left--; if (t.left <= 0) { t.left = 0; t.until = now + TREE_REGROW_MS; } this.ctx.storage.put('trees', [...this.trees.values()]).catch(() => { }); }
+    const t = this.tree(i, typeof m.k === 'string' ? m.k : 'oak');
+    if (!t.until && m.ok) { t.left--; if (t.left <= 0) { t.left = 0; t.until = now + treeType(t.kind).regrow; } this.ctx.storage.put('trees', [...this.trees.values()]).catch(() => { }); }
     const [, left, wait] = this.treeView(t); this.all({ t: 'T', i, left, wait, by: p.id });
   }
   onTake(p, m) {
@@ -394,7 +398,7 @@ export class Room {
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
       players: [...this.players.values()].filter(x => x.id !== who.id).map(x => this.pub(x)), chat: this.chat,
       drops: (this.pruneDrops(), [...this.drops.values()].filter(d => !this.inst || d.f === (this.cfg ? this.cfg.floor : null)).map(d => this.dropView(d, who.id))),
-      trees: this.inst ? null : [...this.trees.values()].map(t => this.treeView(this.tree(t.i))).filter(v => v[1] < TREE_LOGS || v[2] > 0) });
+      trees: this.inst ? null : [...this.trees.values()].map(t => this.treeView(this.tree(t.i))).filter((v, j) => v[2] > 0 || v[1] < treeType([...this.trees.values()][j].kind).logs) });
     if (!old) this.all({ t: '+', p: this.pub(p) }, who.id);
     p.seen = Date.now();
   }
