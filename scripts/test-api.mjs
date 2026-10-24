@@ -263,10 +263,10 @@ try {
   console.log('Settings');
   { const st = new Client(); await st.signIn(); await st.req('hero', { method: 'POST', body: { name: 'Setter' } });
     let sm = (await st.req('me')).data; await sleep(2100);
-    const d = sm.save.data; d.settings = { zoom: 9, bright: 999, names: false, feed: 1, evil: '<script>' };
+    const d = sm.save.data; d.settings = { zoom: 9, bright: 999, pnames: 1, feed: 1, evil: '<script>' };
     await st.req('save', { method: 'POST', body: { data: d, rev: sm.save.rev } });
     const st2 = new Client(); st2.acct = st.acct; await st2.signIn(); sm = (await st2.req('me')).data;
-    ok(JSON.stringify(sm.save.data.settings) === JSON.stringify({ zoom: 4, bright: 160, shake: true, names: false, feed: true, vib: true, sound: true }), 'settings saved with the hero, cleaned, and loaded on another device'); }
+    ok(JSON.stringify(sm.save.data.settings) === JSON.stringify({ zoom: 4, bright: 160, shake: true, pnames: true, feed: true, vib: true, sound: true }), 'settings saved with the hero, cleaned, and loaded on another device'); }
 
   console.log('Sign out');
   await a.req('auth/logout', { method: 'POST' });
