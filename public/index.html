@@ -31,6 +31,10 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 /* name tags: only the name is centred on the hero (the box is the name), level and crown hang outside it */
 .tag{position:absolute;left:0;top:0;will-change:transform;white-space:nowrap}
 .tag b{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:600 11px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;color:#f2f5f8;background:rgba(20,22,34,.38);padding:2px 5px 2px;border-radius:7px;text-shadow:0 1px 1px rgba(10,12,20,.9),0 0 2px rgba(10,12,20,.8);-webkit-font-smoothing:antialiased}
+/* chat over heads: just the words, a whisper of background, wrapping to at most 3 short lines */
+.tag.say b{transform:translate(-50%,-100%);font:500 10.5px/1.25 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(20,22,34,.14);padding:1px 4px;border-radius:5px;
+  white-space:normal;width:max-content;max-width:150px;text-align:center;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  text-shadow:0 1px 1px rgba(8,10,18,.95),0 0 3px rgba(8,10,18,.85),1px 0 1px rgba(8,10,18,.7),-1px 0 1px rgba(8,10,18,.7)}
 .tag.adm b{color:#ffe9a8}.tag.me b{color:#ffd98a}.tag.npc b{color:#a7f070;background:rgba(20,22,34,.5)}
 .npchd{display:flex;gap:12px;align-items:center;margin:0 0 10px}.npchd img{width:78px;height:90px;image-rendering:pixelated;background:var(--ink);border:2px solid var(--line);padding:4px}
 .npchd b{display:block;font-size:26px;color:var(--gold)}.npchd small{display:block;color:var(--muted);font-size:15px}.npchd em{display:block;font-style:normal;margin-top:6px;font-size:17px;color:var(--text)}
@@ -289,6 +293,10 @@ small{font-size:17px;color:var(--muted)}
   .land :root #mini,.land #mini{gap:5px}.land .rb.sm{width:38px;height:38px}
   :root #bBag{width:48px;height:48px}
   .short #acts{transform:scale(.88);transform-origin:100% 100%}
+  /* upright phones: the bottom row is full (joystick, quick slots, Attack), so the Return Flame sits just above the
+     joystick under your left thumb, and the chat button moves up to the left edge */
+  :root:not(.land) #bRet{position:fixed;left:calc(var(--sl) + 56px);top:auto;bottom:calc(var(--sb) + 168px)}
+  :root:not(.land) #chatB{left:calc(var(--sl) + 12px);transform:none;bottom:auto;top:calc(var(--st) + 92px)}
 }
 </style></head>
 <body>
@@ -326,4 +334,4 @@ small{font-size:17px;color:var(--muted)}
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=f6c23b648d"></script></body></html>
+<script src="/game.js?v=80eb801e91"></script></body></html>

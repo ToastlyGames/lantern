@@ -575,10 +575,19 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.0',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.3',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.3',date:'2026-10-24',title:'Quieter chat bubbles',notes:[
+    'Chat over players\' heads is now small, sharp text with a barely-there background, sitting just above their name.',
+    'Longer messages wrap onto up to 3 short lines instead of being cut off.']},
+  {v:'0.7.2',date:'2026-10-24',title:'Upright phones',notes:[
+    'Playing with your phone upright: the Return Flame now sits just above the joystick, so the chat button no longer covers it.',
+    'The chat button moved to the left edge, below the top bar.']},
+  {v:'0.7.1',date:'2026-10-24',title:'Tallow sets up shop',notes:[
+    'Tallow moved his cart to the old well\'s spot, on the corner of the grass where the two roads cross.',
+    'The well is gone, making room for his cart.']},
   {v:'0.7.0',date:'2026-10-24',title:'Tallow arrives, and the road east',notes:[
-    'Meet Tallow, the Hold\'s first merchant. Find his cart by the crossroads to buy supplies and sell your goods.',
+    'Meet Tallow, the Hold\'s first merchant. Buy supplies and sell your goods at his cart.',
     'The Market Board is now the Bulletin: the current build and every update we ship, newest first.',
     'Oak trees now hold 300 logs and grow back in 20 seconds, so several players can chop together.',
     'The east road now ends at a barricade and a sign. Something is coming in Season 1.']},
@@ -649,14 +658,14 @@ function buildHold(){
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
   addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
   // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
-  addObj(m,{type:'stall',x:19*T+8,y:9*T+14,spr:'stall',block:[[18,9],[19,9]]});
-  addObj(m,{type:'npc',name:'Tallow',x:20*T+12,y:10*T+12,act:{x:20*T+12,y:11*T+2,label:'Trade',id:'market'}});
   // the east road: a sign and a barricaded opening in the trees
   addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
   addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
   addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
   addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
-  addObj(m,{type:'well',x:9*T,y:10*T,spr:'well',block:[[8,9],[9,9]]});
+  // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
+  addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
+  addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});
   // farm with fence
   for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:14*T+14,spr:'fence',block:[[x,14]]});addObj(m,{type:'fence',x:x*T+8,y:19*T+14,spr:'fence',block:[[x,19]]});}
   for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:y*T+14,spr:'fence',block:[[2,y]]});addObj(m,{type:'fence',x:9*T+8,y:y*T+14,spr:'fence',block:[[9,y]]});}
@@ -1748,8 +1757,9 @@ const TAGS=[];const tagBox=$('tags'),tagPool=[];
 function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
-    const e=tagEl(n++),key=t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
-    if(e._k!==key){e._k=key;e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
+    const e=tagEl(n++),key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
+    if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
+    else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
       L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';
       const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
     const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
@@ -1812,7 +1822,7 @@ function drawObj(o){
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
   else if(o.type==='npc'){const fr=Math.floor(time*1.6+Math.sin(time*.7))%2;spr(ART.merchant[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
     if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
-    if(o.sayT>0){o.sayT-=1/60;ptDraw(g,o.say,o.x,o.y-48,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});}}
+    if(o.sayT>0){o.sayT-=1/60;TAGS.push({x:o.x,y:o.y-45,say:o.say});}}
   else if(o.type==='sign')spr(ART.sign,o.x-9,o.y-22);
   else if(o.type==='barricade')spr(ART.barricade,o.x-10,o.y-60);
   else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
@@ -1868,7 +1878,7 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   // Name tags are collected here and drawn on a sharp overlay after the world (see drawTags). Off by default
   // (Settings → Player names), except admins, whose names everyone always sees.
   {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames))TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?30:20),name,lv:me?S.lvl:look&&look.lvl,adm,me});}
-  if(npc&&npc.sayT>0)ptDraw(g,npc.say,x,y-34,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
+  if(npc&&npc.sayT>0)TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?28:18)-(npc.adm||SET.pnames?5:0),say:npc.say});
 }
 function drawPlayer(){
   if(P.inv>0&&Math.floor(P.inv*20)%2)return;
@@ -1878,7 +1888,7 @@ function drawPlayer(){
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
-  if(P.say&&time<P.sayUntil)ptDraw(g,P.say.length>26?P.say.slice(0,25)+'...':P.say,P.x,P.y-(ADMIN_HATS[S.gear.helm]?(scene==='hold'?44:34):(scene==='hold'?34:24)),{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
+  if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames?5:0),say:P.say});
   if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
@@ -2007,7 +2017,7 @@ if(window.NET){
   NET.onR('T',onTree);
   NET.onR('F',m=>{const o=OTH.get(m.id);if(o)o.fish=fishOf(m.f);});
   NET.onR('say',m=>{const msg={id:MP.room+':'+m.n,name:m.name,text:m.text,at:m.at,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatLog.length>60)MP.chatLog.shift();if(MP.chatCb)MP.chatCb([msg]);
-    const o=OTH.get(m.id);if(o){o.say=m.text.length>26?m.text.slice(0,25)+'...':m.text;o.sayT=4.5;}});
+    const o=OTH.get(m.id);if(o){o.say=m.text;o.sayT=4.5;}});
   NET.onR('slow',()=>chatSys('Slow down a little.'));
   NET.onR('full',()=>{MP.room=null;NET.lsend({t:'world'});});
   NET.onR('denied',()=>{if(scene==='delve'){toast('That dungeon is closed. Heading home.','bad');returnHome();}});
