@@ -56,3 +56,15 @@
   q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
   document.addEventListener('keydown', function (e) { if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); } });
 })();
+// copy the official contract address
+(function () {
+  var b = document.getElementById('caCopy'), m = document.getElementById('caMsg'); if (!b) return;
+  var full = b.getAttribute('data-ca');
+  var fit = function () { b.textContent = full; if (b.scrollWidth > b.clientWidth) b.textContent = full.slice(0, 6) + '\u2026' + full.slice(-4); };
+  fit(); window.addEventListener('resize', fit);
+  b.addEventListener('click', function () {
+    var ca = full, done = function (ok) { m.textContent = ok ? 'Copied! Paste it into your wallet or Pons to check it.' : 'Press and hold (or select) the address to copy it.'; m.classList.toggle('ok', ok); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ca).then(function () { done(true); }, function () { done(false); });
+    else done(false);
+  });
+})();
