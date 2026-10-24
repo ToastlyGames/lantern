@@ -532,7 +532,8 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']}};
 // ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
 // Expansions add new trees per area: the higher the level, the fewer logs and the longer the regrow. Logs feed a future skill.
 // Keep logs/regrow in step with TREE_TYPES in realtime/src/index.js (the server keeps the shared count).
-const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,item:'logs'}};
+// regenDelay/regenEvery (s): a partly cut tree left alone for regenDelay grows back 1 log every regenEvery.
+const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
@@ -575,8 +576,18 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.3',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.6',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.6',date:'2026-10-24',title:'Tidier crossroads',notes:[
+    'The Bulletin moved forward to line up with the road, matching Tallow\'s cart across the crossroads.',
+    'The Kitchen moved into the corner of the grass by the road, and the Oil Press now stands where the little path ends.']},
+  {v:'0.7.5',date:'2026-10-24',title:'Trees grow back',notes:[
+    'A tree that was only partly chopped now slowly grows its logs back when nobody is cutting it.',
+    'Oaks start regrowing 15 seconds after the last swing and add a log every 2 seconds until they are full again.']},
+  {v:'0.7.4',date:'2026-10-24',title:'Fresh chat every session',notes:[
+    'Chat now starts fresh each time you sign in: you see what\'s said from the moment you log in until you log out.',
+    'Messages aren\'t stored on the server any more.',
+    'Your chat carries over when you switch worlds or head into the Depths, with a note showing where you went.']},
   {v:'0.7.3',date:'2026-10-24',title:'Quieter chat bubbles',notes:[
     'Chat over players\' heads is now small, sharp text with a barely-there background, sitting just above their name.',
     'Longer messages wrap onto up to 3 short lines instead of being cut off.']},
@@ -656,13 +667,14 @@ function buildHold(){
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
-  addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
+  addObj(m,{type:'board',x:15*T,y:10*T+14,spr:'board',block:[[14,10],[15,10]],act:{x:15*T,y:11*T+6,label:'Bulletin',id:'bulletin'}});
   // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
   // the east road: a sign and a barricaded opening in the trees
   addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
   addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
-  addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
-  addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
+  // Kitchen in the corner of the grass between the north–south road and the short path; Oil Press where that path ends
+  addObj(m,{type:'kitchen',x:15*T,y:16*T,spr:'kitchen',anim:true,block:[[14,15],[15,15]],act:{x:15*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
+  addObj(m,{type:'press',x:18*T,y:13*T+14,spr:'press',block:[[17,13],[18,13]],act:{x:17*T-2,y:13*T+10,label:'Oil Press',id:'press'}});
   // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
   addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
   addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});
@@ -1155,7 +1167,10 @@ function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.
 let CHOP=null;
 const chopEvery=()=>Math.max(1.6,2.6-.01*(lvlOf('woodcutting')-1));
 const chopChance=()=>Math.min(.95,.62+.005*(lvlOf('woodcutting')-1));
-function treeUp(o){if(o.until&&Date.now()>=o.until){o.until=0;o.logs=TREES[o.kind].logs;}return !o.until;}
+function treeUp(o){const L=TREES[o.kind],now=Date.now();if(o.until&&now>=o.until){o.until=0;o.logs=L.logs;o.cutAt=0;}
+  // same slow regrowth as the server: untouched for regenDelay, then +1 log every regenEvery
+  if(!o.until&&o.cutAt&&o.logs<L.logs){const grown=Math.floor((now-o.cutAt-L.regenDelay*1000)/(L.regenEvery*1000));if(grown>0)o.logs=Math.min(L.logs,o.leftAtCut+grown);if(o.logs>=L.logs)o.cutAt=0;}
+  return !o.until;}
 function nearTree(){if(scene!=='hold'||!map.trees)return null;let best=null,bd=22;for(const o of map.trees){const d=Math.hypot(o.x-P.x,o.y+5-P.y);if(d<bd){bd=d;best=o;}}return best;}
 function startChop(o){if(!treeUp(o))return toast('Just a stump for now. It regrows soon.');const L=TREES[o.kind];if(lvlOf('woodcutting')<L.lvl)return toast('You need Woodcutting '+L.lvl+' for the '+L.n+'.','bad');
   FISHING=null;if(COOK)stopCook();CHOP={o,t:0,sw:0,px:P.x,py:P.y};const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');sfx('swing');}
@@ -1166,14 +1181,14 @@ function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   c.t+=dt;if(c.t<chopEvery())return;c.t=0;
   const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
   if(roomUp())NET.send({t:'chop',i:o.ti,k:o.kind,ok:ok?1:0});
-  else if(ok){o.logs--;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
+  else{if(ok)o.logs--;o.cutAt=Date.now();o.leftAtCut=o.logs;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
 function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
   floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
 function treeFell(o,ms){o.logs=0;o.until=Date.now()+ms;if(CHOP&&CHOP.o===o)CHOP=null;puff(o.x,o.y-14,PAL.green,14);puff(o.x,o.y-4,PAL.wood,8);
   if(Math.hypot(o.x-P.x,o.y-P.y)<120){sfx('boss');toast('Timber! The '+TREES[o.kind].n+' is down. It regrows in '+Math.round(ms/1000)+' s.');}}
 // a tree update from the room: how many logs are left, and who swung
 function onTree(m){const o=HOLD.trees&&HOLD.trees[m.i];if(!o)return;const was=!o.until;
-  if(m.wait>0){if(was)treeFell(o,m.wait);else o.until=Date.now()+m.wait;}else{o.until=0;o.logs=m.left;}
+  if(m.wait>0){if(was)treeFell(o,m.wait);else o.until=Date.now()+m.wait;}else{o.until=0;o.logs=m.left;o.leftAtCut=m.left;o.cutAt=Date.now();}
   if(m.by&&m.by!==MP.id){const p=OTH.get(m.by);if(p){p.chopT=3.6;p.chopX=o.x;}o.shake=.25;
     o.cut=o.cut||{};o.cut[m.by]=Date.now();
     if(CHOP&&CHOP.o===o&&Object.values(o.cut).filter(t=>Date.now()-t<7000).length>=2)secret('choir');}}
@@ -1998,8 +2013,9 @@ if(window.NET){
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
   NET.onL('kicked',m=>{OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
-  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;}for(const [i,left,wait] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.until=wait>0?Date.now()+wait:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
-    MP.chatLog=(m.chat||[]).map(c=>({id:m.room+':'+c.n,name:c.name,text:c.text,at:c.at,me:c.id===MP.id}));if(MP.chatCb)MP.chatCb(MP.chatLog);
+  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
+    // chat lives only for this session: nothing said before you signed in is shown, and your log carries over between rooms
+    if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
     if(m.room[0]==='d'){
       if(run&&m.floor&&m.floor!==run.floor)enterFloor(m.floor);
