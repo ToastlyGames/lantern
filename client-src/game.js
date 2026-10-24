@@ -812,10 +812,26 @@ let goalTab='start';
 const SEENV='lanternhold.seenBuild';
 const bulletinNew=()=>{try{return localStorage.getItem(SEENV)!==BUILD.version;}catch(e){return false;}};
 function openBulletin(){try{localStorage.setItem(SEENV,BUILD.version);}catch(e){}
-  openSheet(`<h2>The Bulletin</h2><div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
+  openSheet(`<h2>The Bulletin</h2>${tokenCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
    <p class="lead small">Every update we ship is posted here, newest first.</p>
    <div class="changelog">${CHANGELOG.map((e,i)=>`<section class="${i===0?'latest':''}"><h3>v${e.v} · ${chatEsc(e.title)} <small>${e.date}</small></h3><ul>${e.notes.map(n=>`<li>${chatEsc(n)}</li>`).join('')}</ul></section>`).join('')}</div>
-   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}}
+// one line, always: if the whole address doesn't fit (phones), show the first 4 and last 4 (tapping still copies all of it)
+const caShort=ca=>ca.slice(0,6)+'…'+ca.slice(-4);
+function caFit(el){const t=tokenInfo();if(!t)return;el.textContent=t.ca;el.title=t.ca;el.style.fontSize='';
+  if(el.scrollWidth>el.clientWidth){el.style.fontSize='13px';if(el.scrollWidth>el.clientWidth){el.style.fontSize='';el.textContent=caShort(t.ca);}}}
+// The official token: the contract address comes from the server (TOKEN_CA in Vercel), never from anything a player typed.
+// set by the account code from /api/config (it runs in its own scope, so it's handed over on window)
+const tokenInfo=()=>{const t=window.LH_TOKEN;return t&&/^0x[0-9a-fA-F]{40}$/.test(t.ca)?t:null;};
+function tokenCard(){const t=tokenInfo();
+  if(!t)return `<div class="ca pending"><b>Official contract address</b><small>It will be posted right here at launch. Until then, any address you see anywhere else is not ours.</small></div>`;
+  return `<div class="ca"><b>Official ${t.symbol?'$'+chatEsc(t.symbol)+' ':''}contract address</b><button class="caaddr" id="caCopy" aria-label="Copy the contract address">${t.ca}</button>
+   <small id="caMsg">Tap to copy the full address · Robinhood Chain · launched on Pons</small><small class="warn">This is the only official address. Always check it here before you buy.</small></div>`;}
+async function copyCA(){const t=tokenInfo();if(!t)return;let ok=false;
+  try{await navigator.clipboard.writeText(t.ca);ok=true;}catch(e){}
+  if(!ok){try{const ta=document.createElement('textarea');ta.value=t.ca;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99);ok=document.execCommand('copy');ta.remove();}catch(e){}}
+  const m=$('caMsg');if(m){m.textContent=ok?'Copied! Paste it into your wallet or Pons to check it.':'Couldn\'t copy automatically. Press and hold the address to copy it.';m.classList.toggle('ok',ok);}
+  if(ok){sfx('pick');toast('Contract address copied','good');}}
 function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
    <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
@@ -938,7 +954,8 @@ const TAGS=[];const tagBox=$('tags'),tagPool=[];
 function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
-    const e=tagEl(n++),key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
+    const e=tagEl(n++);if(e.hidden)e.hidden=false;   // unhide first: a hidden tag measures 0 wide and the level badge would cover the name
+    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
     if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
     else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
       L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';

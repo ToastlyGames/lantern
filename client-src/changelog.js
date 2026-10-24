@@ -1,8 +1,15 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.0',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.2',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.8.2',date:'2026-10-24',title:'The official contract address',notes:[
+    'The Bulletin now has a permanent spot at the top for the official token contract address. Tap it to copy it.',
+    'Until launch it says the address will be posted there, so you know any address from anywhere else isn\'t ours.',
+    'The wiki shows the same address under Official token.',
+    'The address always sits on one line. On phones it shows the first and last 4 characters, and tapping it still copies the whole address.']},
+  {v:'0.8.1',date:'2026-10-24',title:'Tidy name tags',notes:[
+    'Fixed name tags where the level badge could sit on top of a player\'s name (for example "Lant 34" instead of "Lantern 34") when several players were close together.']},
   {v:'0.8.0',date:'2026-10-24',title:'The Lanternhold Wiki',notes:[
     'The official Lanternhold Wiki is live at lanternhold.fun/wiki: every skill, place, monster, item and goal, with search.',
     'Open it any time from Settings → Open the wiki.',

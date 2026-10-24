@@ -229,7 +229,7 @@ render();
     if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
   if(x||g)history.replaceState(null,'',location.pathname);}
 try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}
-api('config').then(r=>{if(r.ok){ACC.cfg=r.data;const m=r.data.main;let last=0;try{last=+sessionStorage.getItem('lanternhold.hop')||0;}catch(e){}
+api('config').then(r=>{if(r.ok){ACC.cfg=r.data;window.LH_TOKEN=r.data.token?Object.freeze({ca:String(r.data.token.ca),symbol:r.data.token.symbol?String(r.data.token.symbol):null}):null;const m=r.data.main;let last=0;try{last=+sessionStorage.getItem('lanternhold.hop')||0;}catch(e){}
   if(m&&/^[a-z0-9.-]+\.[a-z]{2,}$/.test(m)&&m!==location.host&&Date.now()-last>60000){try{sessionStorage.setItem('lanternhold.hop',String(Date.now()));}catch(e){}location.replace('https://'+m+location.pathname+location.search+location.hash);return;}if(ACC.screen==='welcome'&&!box.hidden)render();}});
 api('me').then(async r=>{if(!(r.ok&&r.data.account))return render();
   if(r.data.wallet&&signedInWithWallet()){
