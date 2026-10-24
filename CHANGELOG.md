@@ -1,6 +1,14 @@
 # Lanternhold changelog
 
-Current build: **v0.7.9** · Season 0 (Beta)
+Current build: **v0.8.0** · Season 0 (Beta)
+
+## v0.8.0 · The Lanternhold Wiki
+
+_2026-10-24_
+
+- The official Lanternhold Wiki is live at lanternhold.fun/wiki: every skill, place, monster, item and goal, with search.
+- Open it any time from Settings → Open the wiki.
+- The wiki's Updates page shows this same history and stays up to date with every build.
 
 ## v0.7.9 · The farm, plot by plot
 

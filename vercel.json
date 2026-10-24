@@ -63,5 +63,12 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/wiki",
+      "destination": "/wiki/",
+      "permanent": true
+    }
   ]
 }
