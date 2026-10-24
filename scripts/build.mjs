@@ -12,7 +12,7 @@ writeFileSync(new URL('../lib/gamedata.js', import.meta.url),
   '\nexport { ITEMS, GEAR, HELM_ATTR, RARITY, RORDER, LANTERNS, CAPES, ATTR_TXT, SKILLS, XP_TABLE, levelFor, FISH, WATERS, CROPS, RECIPES, SHOP, ENEMIES, PACKS, NAMES };\n');
 
 // 2) client: one script file (so the page can use a strict Content-Security-Policy), styles inline
-const js = ['font.js', 'art.js', 'data.js', 'world.js', 'net.js', 'game.js', 'account-live.js'].map(src).join('\n');
+const js = ['font.js', 'art.js', 'data.js', 'changelog.js', 'world.js', 'net.js', 'game.js', 'account-live.js'].map(src).join('\n');
 const hash = createHash('sha256').update(js).digest('hex').slice(0, 10);
 mkdirSync(new URL('../public/', import.meta.url), { recursive: true });
 writeFileSync(new URL('../public/game.js', import.meta.url), js);
@@ -20,4 +20,8 @@ const head = src('head.html').replace('/*FONTFACE*/', src('fontface.css'));
 writeFileSync(new URL('../public/index.html', import.meta.url), head + src('body.html') + `<script src="/game.js?v=${hash}"></script></body></html>`);
 // 3) favicons and the home-screen manifest
 for (const f of readdirSync(new URL('../client-src/icons/', import.meta.url))) copyFileSync(new URL('../client-src/icons/' + f, import.meta.url), new URL('../public/' + f, import.meta.url));
+// 4) CHANGELOG.md, from the same list the in-game Bulletin shows
+{ const { BUILD, CHANGELOG } = new Function(src('changelog.js') + '\nreturn { BUILD, CHANGELOG };')();
+  const md = `# Lanternhold changelog\n\nCurrent build: **v${BUILD.version}** · ${BUILD.season}\n\n` + CHANGELOG.map(e => `## v${e.v} · ${e.title}\n\n_${e.date}_\n\n` + e.notes.map(n => '- ' + n).join('\n')).join('\n\n') + '\n';
+  writeFileSync(new URL('../CHANGELOG.md', import.meta.url), md); }
 console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js');
