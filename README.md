@@ -115,11 +115,11 @@ Create a **private** repo, then add this folder with **GitHub Desktop** (File �
    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from step 5 (optional) |
 
 3. **Deploy**. Then add `APP_DOMAIN` = your site address without `https://` (like `lanternhold.vercel.app`) and **redeploy**.
-4. If you use a **custom domain**:
-   - update `APP_DOMAIN`;
-   - add the new address to Cloudflare's `ALLOWED_ORIGINS`;
-   - add it to the Google redirect URI and the X callback URL;
-   - redeploy.
+4. If you use a **custom domain** (like `lanternhold.fun`):
+   - set `APP_DOMAIN` to it, main address first, then any others, separated by commas: `lanternhold.fun, lanternhold.vercel.app`. The `www.` version is allowed automatically. On the live site, players on any other address (www., vercel.app) are sent to the main one, so wallets always see one site name;
+   - add `https://lanternhold.fun` (and `https://www.lanternhold.fun`) to Cloudflare's `ALLOWED_ORIGINS`;
+   - add `https://lanternhold.fun/api/auth/google/callback` to the Google redirect URIs and `https://lanternhold.fun/api/x/callback` to the X callback URLs;
+   - redeploy, then open `/api/health` on the new address.
 
    If you also give the worker a custom domain, add it to `connect-src` in `vercel.json` (by default only `*.workers.dev` is allowed).
 
@@ -158,10 +158,22 @@ Only the database can make an admin. To list admins, run `select name from heroe
   - **The host:** the leader's game is the host. It runs the monsters and sends them to everyone 10 times a second.
   - **Other players:** their attacks go to the host, which applies the damage, decides who gets the loot and tells everyone. Chests, glowcaps and ore are handled the same way, so each can only be taken once.
   - **If the host leaves**, the player who has been there longest takes over the monsters without a break. Members who join late land on the party's current floor with the dungeon as it is.
+- **Shared world objects:** each world room also keeps count of the logs left in every tree at the Hold (150 each; at 0 the tree falls and regrows after 90 s), and of items on the ground. Party loot in dungeons is visible to the whole party, and items dropped from a bag show to other players after 30 s. The room decides who picks each item up, so nothing is taken twice.
+- **Fishing and woodcutting** are shown to everyone: rods, bobbers and axe swings.
 - **Saves:** heroes still save to Supabase exactly as before.
 - **Fallback:** if the realtime server can't be reached, the game still works solo, and Social and chat explain why they're unavailable.
 
-## How saving works
+## Wallet sign-in safety
+
+Signing in with a wallet takes at most two approvals: connect (or pick) the account, then one free signature. There is no network switch, no transaction and no token approval.
+
+- **One standard message, written by the server.** It's a Sign-In with Ethereum (EIP-4361) message naming the exact site you're on, with your checksummed address, a one-time code and a 5-minute expiry. Wallets like MetaMask recognise it and show a clean sign-in request for that site. The server refuses anything that isn't exactly that message: no extra lines, different wording, other sites, other chains or old messages.
+- **One use, one browser.** The one-time code is also kept in a short-lived HttpOnly cookie, so a signed message only works once, from the browser that asked for it.
+- **Phishing-resistant.** Copy sites can't use a signature: the wallet shows the copy site's name (and warns), and our server only accepts messages for its own addresses, sent from its own pages.
+- **The game can't ask for more.** The game only lets itself call four wallet methods: list accounts, connect, pick account and sign a message. Requests to send funds or approve tokens are blocked in the game code itself.
+- **Sessions:** an HttpOnly, Secure, SameSite=Strict cookie that page scripts can't read and other sites can't trigger. Switching or disconnecting the wallet signs you out.
+- **Page hardening:** a strict Content Security Policy (no outside scripts), no framing (stops clickjacking), and cross-origin window isolation.
+
 ## How saving works
 
 - While you play, the game saves to the server every 10–14 seconds, but only if something changed. It also saves right away when you return to the Hold, when you die and when you sign out.
@@ -176,7 +188,7 @@ Only the database can make an admin. To list admins, run `select name from heroe
 - **Supabase:** the free plan has a 500 MB database and **pauses a project after a week of inactivity**. **Pro** is $25 a month and never pauses. It includes $10 of compute credit, which covers the default Micro database, plus 250 GB of egress and unlimited API requests. For 1,000 players at once, switch to **Small** compute (about $15 a month, so about $5 more after the credit) for headroom. Do this under **Project Settings → Compute and Disk**.
 - **Storage:** a save is roughly 0.5–2 KB, so even 100,000 players fit in a few hundred MB.
 
-- **Cloudflare (realtime):** Workers Paid is $5 a month. Durable Objects cost $0.15 per million incoming messages, where 20 game messages count as one billed request. Outgoing messages are free, and so is bandwidth. You also pay for time while a room has players in it: about $4 a month for a room that's busy around the clock.
+- **Cloudflare (realtime):** Workers Paid is $5 a month. Durable Objects cost $0.15 per million incoming messages, where 20 game messages count as one billed request. Outgoing messages are free, and so is bandwidth. Rooms use WebSocket hibernation, so they're only billed for time while they're actually handling a message, not for the whole time players are connected. Heartbeats are answered by Cloudflare without waking the room.
 
 **What 1,000 players costs** (from the load tests):
 
@@ -304,6 +316,8 @@ Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run
 
 ### Troubleshooting
 
+- **Everyone vanished at the same time and new devices see nobody:** check **Workers & Pages → Durable Objects** (or the usage email) for a hit daily limit. The free plan allows 100,000 requests and 13,000 GB-s of Durable Object time a day, and it resets at 00:00 UTC (8 pm Eastern in summer, 7 pm in winter). Workers Paid ($5 a month) removes the hard stop.
+
 - **Players can't see each other, or Social says the realtime server isn't reachable:**
   - `/api/health` shows the `realtime` line;
   - `RT_URL` must be the worker's address;
@@ -317,7 +331,8 @@ Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your shell before `npm run
   - "Permission denied" in the health page: run `supabase/schema.sql` again. New Supabase projects no longer give the server key access to tables automatically, and the script now grants it.
   - Every time you change an environment variable in Vercel, **redeploy**. Changes don't apply until you do.
 
-- **"Sign-in failed" right after deploying:** check that `APP_DOMAIN` exactly matches the address bar (no `https://`, no trailing `/`) and that you redeployed after setting it.
+- **"Sign-in failed" or "bad_origin" right after deploying or adding a domain:** the address in the address bar must be in `APP_DOMAIN` (comma-separated list; www. is automatic). Redeploy after changing it. `/api/health` says which addresses are allowed.
+- **Wallet shows a red "deceptive site" or "domain mismatch" warning:** the sign-in message names the site the player is on, so this only happens if the page isn't on one of the `APP_DOMAIN` addresses. Fix `APP_DOMAIN` and redeploy.
 - **Every request gives 500:** an environment variable is missing or misspelled. The Vercel **Logs** tab names the one at fault.
 - **Desktop wallet extension isn't detected:** some extensions inject scripts that a strict Content-Security-Policy blocks. Wallet in-app browsers aren't affected. If needed, add the extension's origin to `script-src` in `vercel.json`.
 - **Saves feel slow (over ~150 ms):** the Vercel region probably doesn't match the Supabase region. See "Matching regions".
