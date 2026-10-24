@@ -18,7 +18,7 @@ const fresh=()=>JSON.parse(JSON.stringify(DEF));
 const num=(v,lo,hi,d)=>{v=Number(v);return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;};
 const int=(v,lo,hi,d)=>Math.floor(num(v,lo,hi,d));
 const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
-const SET_DEF={zoom:2,bright:100,shake:true,names:true,feed:true,vib:true,sound:true};
+const SET_DEF={zoom:2,bright:100,shake:true,pnames:false,feed:true,vib:true,sound:true};
 function cleanSet(v){if(!v||typeof v!=='object')return null;const o={};for(const k of Object.keys(SET_DEF))o[k]=typeof SET_DEF[k]==='boolean'?(v[k]===undefined?SET_DEF[k]:!!v[k]):SET_DEF[k];
   o.zoom=Math.max(0,Math.min(4,Math.round(+v.zoom)||0));if(v.zoom===undefined)o.zoom=SET_DEF.zoom;o.bright=Math.max(60,Math.min(160,Math.round(+v.bright)||100));return o;}
 function normalize(raw){const o=obj(raw),s=fresh();
@@ -497,7 +497,7 @@ function openSettings(){
    <h3>Display</h3>
    <div class="setrow col"><span>Zoom <b id="zv">${ZOOMS[SET.zoom]}</b></span><div class="seg">${ZOOMS.map((z,i)=>`<button class="btn alt sm" data-zoom="${i}" aria-pressed="${i===SET.zoom}">${z}</button>`).join('')}</div></div>
    <div class="setrow col"><span>Brightness <b id="bv">${SET.bright}%</b></span><input type="range" id="bright" min="60" max="160" step="5" value="${SET.bright}" aria-label="Brightness"></div>
-   ${tog('names',"Other players' names",SET.names)}${tog('feed','World feed in the Hold',SET.feed)}${tog('shake','Screen shake',SET.shake)}
+   ${tog('pnames','Player names',SET.pnames)}${tog('feed','World feed in the Hold',SET.feed)}${tog('shake','Screen shake',SET.shake)}
    <h3>Sound and feel</h3>${tog('sound','Sound effects',!muted)}${tog('vib','Vibration',SET.vib)}
    <div class="row"><button class="btn alt" id="sdef">Reset to default</button><button class="btn" id="sx">Done</button></div>`);
   const q=s=>$('sheet').querySelectorAll(s);$('sx').onclick=closeSheet;
@@ -994,11 +994,13 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17+yb);
   spr(img,x-8,y-15+yb);
   const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
-  if(name&&(me||SET.names)){const lv=me?S.lvl:look&&look.lvl,ty=y-(look&&ADMIN_HATS[look.helm]?34:24),adm=me?ADMIN:!!(npc&&npc.adm);
-    const lt=lv?'('+lv+')':'',wn=ptMeasure(name,'small'),wl=lt?ptMeasure(lt,'small')+3:0,wc=adm?ART.crown.width+2:0,tw=wc+wn+wl,x0=Math.round(x-Math.floor(tw/2));
-    g.fillStyle='rgba(26,28,44,.6)';g.fillRect(x0-2,Math.round(ty-2),tw+4,BFONT.small.h+4);
-    if(adm)g.drawImage(ART.crown,x0-2,Math.round(ty)-5);
-    ptDraw(g,name,x0+wc,ty,{color:me?'#ffcd75':adm?'#ffe9a8':'#c2d3e0',align:'left'});if(lt)ptDraw(g,lt,x0+wc+wn+3,ty,{color:me?'#f4f4f4':lvlColor(lv),align:'left'});}
+  // Name tags: tiny pixel font, centred on the hero; admins' crown hangs to the left. Off by default (Settings → Player names),
+  // except admins, whose names everyone always sees.
+  {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames)){const lv=me?S.lvl:look&&look.lvl,ty=Math.round(y-(look&&ADMIN_HATS[look.helm]?31:22));
+    const lt=lv?'('+lv+')':'',wn=ptMeasure(name,'tiny'),wl=lt?ptMeasure(lt,'tiny')+2:0,tw=wn+wl,x0=Math.round(x-tw/2);
+    g.fillStyle='rgba(26,28,44,.32)';g.fillRect(x0-1,ty-1,tw+3,8);
+    if(adm)g.drawImage(ART.crownS,x0-ART.crownS.width-1,ty-2);
+    ptDraw(g,name,x0,ty,{font:'tiny',color:me?'#ffcd75':adm?'#ffe9a8':'#e8eef4',align:'left'});if(lt)ptDraw(g,lt,x0+wn+2,ty,{font:'tiny',color:me?'#f4f4f4':lvlColor(lv),align:'left'});}}
   if(npc&&npc.sayT>0)ptDraw(g,npc.say,x,y-34,{color:'#1a1c2c',shadow:null,bg:'#f4f4f4'});
 }
 function drawPlayer(){
@@ -1311,5 +1313,5 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET}};
 })();
