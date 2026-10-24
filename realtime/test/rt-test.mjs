@@ -54,7 +54,7 @@ try {
   b.R.send({ t: 'say', text: 'hi', name: 'Lantern' }); await sleep(1300); b.R.send({ t: 'say', text: 'spoof?', name: 'Lantern' });
   const sp = await a.R.wait(m => m.t === 'say' && m.text === 'spoof?'); ok(sp && sp.name === b.name, 'clients can’t pick their own name');
   const late = new Player(names(5)[4].slice(0, 15) + 'z'); await late.lobby(); const hl = await late.room(wa.room);
-  ok(hl.chat.some(m => m.text === 'spoof?'), 'newcomers get the recent chat');
+  ok(!hl.chat && !(hl.chat || []).some(m => m.text === 'spoof?'), 'newcomers start with a fresh chat (no history is stored or sent)');
 
   console.log('Friends status');
   c.L.send({ t: 'watch', ids: [a.id, 'nobody_here'] });
