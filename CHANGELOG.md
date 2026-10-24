@@ -1,6 +1,12 @@
 # Lanternhold changelog
 
-Current build: **v0.7.6** · Season 0 (Beta)
+Current build: **v0.7.7** · Season 0 (Beta)
+
+## v0.7.7 · Into the arch
+
+_2026-10-24_
+
+- Walking up into the Delve Gate's archway no longer hides your character behind the stone: you stay visible on the stairs.
 
 ## v0.7.6 · Tidier crossroads
 
