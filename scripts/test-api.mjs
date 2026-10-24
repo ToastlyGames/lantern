@@ -39,7 +39,7 @@ const gMock = http.createServer(async (req, res) => {
 const PORT = 3999, BASE = `http://localhost:${PORT}`;
 // TEST_SUPABASE_URL + TEST_SUPABASE_KEY run the same tests against a real Supabase/PostgREST database instead of memory.
 const PG = process.env.TEST_SUPABASE_URL ? { SUPABASE_URL: process.env.TEST_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: process.env.TEST_SUPABASE_KEY, LH_DEV_HOOKS: '1', LH_MEMORY_DB: '' } : { LH_MEMORY_DB: '1', SUPABASE_URL: '' };
-const XENV = { GOOGLE_CLIENT_ID: 'g-client', GOOGLE_CLIENT_SECRET: 'g-secret', GOOGLE_AUTH_URL: `http://localhost:${GPORT}/auth`, GOOGLE_TOKEN_URL: `http://localhost:${GPORT}/token`, RT_URL: 'https://rt.example.workers.dev', RT_SECRET: 'r'.repeat(40), X_CLIENT_ID: 'test-client', X_CLIENT_SECRET: 'test-secret', X_API_BASE: `http://localhost:${XPORT}`, X_AUTH_URL: `http://localhost:${XPORT}/authorize` };
+const XENV = { GOOGLE_CLIENT_ID: 'g-client', GOOGLE_CLIENT_SECRET: 'g-secret', GOOGLE_AUTH_URL: `http://localhost:${GPORT}/auth`, GOOGLE_TOKEN_URL: `http://localhost:${GPORT}/token`, RT_URL: 'https://rt.example.workers.dev', RT_SECRET: 'r'.repeat(40), X_CLIENT_ID: 'test-client', X_CLIENT_SECRET: 'test-secret', X_API_BASE: `http://localhost:${XPORT}`, X_AUTH_URL: `http://localhost:${XPORT}/authorize`, TOKEN_CA: '0x52908400098527886e0f7030069857d2e4169ee7', TOKEN_SYMBOL: '$lant' };
 const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_OFFLINE: '1', ...XENV, ...PG }, stdio: ['ignore', 'pipe', 'inherit'] });
 await new Promise(r => srv.stdout.once('data', r));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -195,6 +195,7 @@ try {
   const google = async (c, who, q = '') => { const r = await c.req('auth/google/start' + q, { manual: true }); const u = new URL(r.location, BASE); if (u.pathname.startsWith('/?')) return r.location;
     gSeen.challenge = u.searchParams.get('code_challenge'); return (await c.req(`auth/google/callback?state=${u.searchParams.get('state')}&code=${who}`, { manual: true })).location; };
   ok((await new Client().req('config')).data.google === true, 'config says Google sign-in is on');
+  { const t = (await new Client().req('config')).data.token; ok(t && t.ca === '0x52908400098527886E0F7030069857D2E4169EE7' && t.symbol === 'LANT', 'config gives the official contract address, checksummed'); }
   { const g = new Client();
     const r0 = await g.req('auth/google/start', { manual: true }), u0 = new URL(r0.location);
     ok(u0.searchParams.get('code_challenge_method') === 'S256' && u0.searchParams.get('redirect_uri') === `http://localhost:${PORT}/api/auth/google/callback` && /openid/.test(u0.searchParams.get('scope')), 'Google sign-in uses PKCE and the right redirect');

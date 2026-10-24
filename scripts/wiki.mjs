@@ -2,6 +2,7 @@
 // Output: public/wiki/index.html (static, no inline scripts so it fits the site's Content-Security-Policy) + wiki.js (search, menu).
 // Markdown support is the subset the wiki uses: # / ## / ### headings, paragraphs, - and 1. lists, tables, **bold**, _italic_, `code`, [links](url).
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { tokenInfo } from '../lib/token.js';
 
 const root = new URL('../', import.meta.url);
 const read = p => readFileSync(new URL(p, root), 'utf8');
@@ -51,6 +52,11 @@ export function buildWiki() {
   const parsed = parse(read('docs/WIKI.md')), { title, sections } = parsed;
   const subtitle = parsed.subtitle.replace(/build v[\d.]+/, 'build v' + BUILD.version);   // always the live build
   const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  // the official token (from TOKEN_CA at build time, the same value the in-game Bulletin shows), right after Welcome
+  { const t = tokenInfo();
+    sections.splice(1, 0, { id: 'token', title: 'Official token', subs: [], html: t
+      ? `<div class="ca"><b>Official ${t.symbol ? '$' + esc(t.symbol) + ' ' : ''}contract address</b><button class="caaddr" id="caCopy" type="button" data-ca="${t.ca}" title="${t.ca}" aria-label="Copy the contract address">${t.ca}</button><small id="caMsg">Click the address to copy it · Robinhood Chain · launched on Pons</small></div>\n<p>This is the only official contract address. It's also shown on the Bulletin in the Hold. Always check an address against one of these two places before you buy, and never trust an address sent to you in a DM.</p>`
+      : `<p>The official contract address will be posted on the Bulletin in the Hold and here at launch. Until then, any address you see anywhere else is not ours.</p>` }); }
   sections.push({
     id: 'updates', title: 'Updates', subs: [],
     html: `<p>Every update to the game, newest first. The same list is on the Bulletin at the crossroads in the Hold.</p>\n` +
@@ -131,6 +137,8 @@ tbody tr:nth-child(odd) td{background:rgba(255,255,255,.025)}
 .upd b{font:26px/1 var(--pix);color:var(--gold)}.upd span{font:22px/1 var(--pix)}.upd time{margin-left:auto;color:var(--muted);font-size:14px}
 .upd ul{margin:8px 0 2px;padding-left:20px}
 mark{background:var(--gold);color:var(--ink);padding:0 2px}
+.ca{background:var(--panel);border:2px solid var(--gold);padding:12px 14px;margin:12px 0}.ca b{display:block;font:24px/1.1 var(--pix);color:var(--gold);margin-bottom:8px}.ca small{display:block;color:var(--muted);margin-top:6px}.ca small.ok{color:var(--green)}
+.caaddr{display:block;width:100%;text-align:center;font:600 16px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;color:var(--text);background:var(--panel2);border:2px solid var(--line);padding:8px 10px;cursor:pointer;user-select:none}.caaddr:hover{border-color:var(--gold)}
 .none{display:none;background:var(--panel);padding:14px;border:2px solid var(--line);margin-top:20px}
 .hide{display:none!important}
 footer{border-top:2px solid var(--line);margin-top:50px;padding:20px 0;color:var(--muted);font-size:14px}
