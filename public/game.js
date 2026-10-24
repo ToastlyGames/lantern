@@ -596,8 +596,15 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.0',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.2',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.8.2',date:'2026-10-24',title:'The official contract address',notes:[
+    'The Bulletin now has a permanent spot at the top for the official token contract address. Tap it to copy it.',
+    'Until launch it says the address will be posted there, so you know any address from anywhere else isn\'t ours.',
+    'The wiki shows the same address under Official token.',
+    'The address always sits on one line. On phones it shows the first and last 4 characters, and tapping it still copies the whole address.']},
+  {v:'0.8.1',date:'2026-10-24',title:'Tidy name tags',notes:[
+    'Fixed name tags where the level badge could sit on top of a player\'s name (for example "Lant 34" instead of "Lantern 34") when several players were close together.']},
   {v:'0.8.0',date:'2026-10-24',title:'The Lanternhold Wiki',notes:[
     'The official Lanternhold Wiki is live at lanternhold.fun/wiki: every skill, place, monster, item and goal, with search.',
     'Open it any time from Settings → Open the wiki.',
@@ -1705,10 +1712,26 @@ let goalTab='start';
 const SEENV='lanternhold.seenBuild';
 const bulletinNew=()=>{try{return localStorage.getItem(SEENV)!==BUILD.version;}catch(e){return false;}};
 function openBulletin(){try{localStorage.setItem(SEENV,BUILD.version);}catch(e){}
-  openSheet(`<h2>The Bulletin</h2><div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
+  openSheet(`<h2>The Bulletin</h2>${tokenCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
    <p class="lead small">Every update we ship is posted here, newest first.</p>
    <div class="changelog">${CHANGELOG.map((e,i)=>`<section class="${i===0?'latest':''}"><h3>v${e.v} · ${chatEsc(e.title)} <small>${e.date}</small></h3><ul>${e.notes.map(n=>`<li>${chatEsc(n)}</li>`).join('')}</ul></section>`).join('')}</div>
-   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}}
+// one line, always: if the whole address doesn't fit (phones), show the first 4 and last 4 (tapping still copies all of it)
+const caShort=ca=>ca.slice(0,6)+'…'+ca.slice(-4);
+function caFit(el){const t=tokenInfo();if(!t)return;el.textContent=t.ca;el.title=t.ca;el.style.fontSize='';
+  if(el.scrollWidth>el.clientWidth){el.style.fontSize='13px';if(el.scrollWidth>el.clientWidth){el.style.fontSize='';el.textContent=caShort(t.ca);}}}
+// The official token: the contract address comes from the server (TOKEN_CA in Vercel), never from anything a player typed.
+// set by the account code from /api/config (it runs in its own scope, so it's handed over on window)
+const tokenInfo=()=>{const t=window.LH_TOKEN;return t&&/^0x[0-9a-fA-F]{40}$/.test(t.ca)?t:null;};
+function tokenCard(){const t=tokenInfo();
+  if(!t)return `<div class="ca pending"><b>Official contract address</b><small>It will be posted right here at launch. Until then, any address you see anywhere else is not ours.</small></div>`;
+  return `<div class="ca"><b>Official ${t.symbol?'$'+chatEsc(t.symbol)+' ':''}contract address</b><button class="caaddr" id="caCopy" aria-label="Copy the contract address">${t.ca}</button>
+   <small id="caMsg">Tap to copy the full address · Robinhood Chain · launched on Pons</small><small class="warn">This is the only official address. Always check it here before you buy.</small></div>`;}
+async function copyCA(){const t=tokenInfo();if(!t)return;let ok=false;
+  try{await navigator.clipboard.writeText(t.ca);ok=true;}catch(e){}
+  if(!ok){try{const ta=document.createElement('textarea');ta.value=t.ca;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99);ok=document.execCommand('copy');ta.remove();}catch(e){}}
+  const m=$('caMsg');if(m){m.textContent=ok?'Copied! Paste it into your wallet or Pons to check it.':'Couldn\'t copy automatically. Press and hold the address to copy it.';m.classList.toggle('ok',ok);}
+  if(ok){sfx('pick');toast('Contract address copied','good');}}
 function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
    <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
@@ -1831,7 +1854,8 @@ const TAGS=[];const tagBox=$('tags'),tagPool=[];
 function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
-    const e=tagEl(n++),key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
+    const e=tagEl(n++);if(e.hidden)e.hidden=false;   // unhide first: a hidden tag measures 0 wide and the level badge would cover the name
+    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
     if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
     else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
       L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';
@@ -2506,7 +2530,7 @@ render();
     if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
   if(x||g)history.replaceState(null,'',location.pathname);}
 try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}
-api('config').then(r=>{if(r.ok){ACC.cfg=r.data;const m=r.data.main;let last=0;try{last=+sessionStorage.getItem('lanternhold.hop')||0;}catch(e){}
+api('config').then(r=>{if(r.ok){ACC.cfg=r.data;window.LH_TOKEN=r.data.token?Object.freeze({ca:String(r.data.token.ca),symbol:r.data.token.symbol?String(r.data.token.symbol):null}):null;const m=r.data.main;let last=0;try{last=+sessionStorage.getItem('lanternhold.hop')||0;}catch(e){}
   if(m&&/^[a-z0-9.-]+\.[a-z]{2,}$/.test(m)&&m!==location.host&&Date.now()-last>60000){try{sessionStorage.setItem('lanternhold.hop',String(Date.now()));}catch(e){}location.replace('https://'+m+location.pathname+location.search+location.hash);return;}if(ACC.screen==='welcome'&&!box.hidden)render();}});
 api('me').then(async r=>{if(!(r.ok&&r.data.account))return render();
   if(r.data.wallet&&signedInWithWallet()){
