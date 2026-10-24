@@ -68,31 +68,65 @@ export default {
   }
 };
 
+// ---------- Staying cheap: WebSocket hibernation ----------
+// Both Durable Objects use Cloudflare's hibernation API: between messages the object sleeps and isn't billed for time, even
+// with players connected. (Plain accept() bills every second a socket is open; on the free plan that ran out the daily
+// quota after a night of play and every player vanished until midnight UTC.) Heartbeats are answered by Cloudflare itself
+// without waking the object. Anything the object must remember across a nap lives in each socket's attachment or in storage.
+const PING = '{"t":"ping"}', PONG = '{"t":"pong"}', SWEEP_MS = 30000, SILENT_MS = 75000;
+function autoPong(ctx) { try { ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG)); } catch { } }
+function lastHeard(ctx, ws, seen) { let t = seen || 0; try { const a = ctx.getWebSocketAutoResponseTimestamp(ws); if (a && +a > t) t = +a; } catch { } return t; }
+async function armSweep(ctx) { try { if (!(await ctx.storage.getAlarm())) await ctx.storage.setAlarm(Date.now() + SWEEP_MS); } catch { } }
+
 // ---------- Lobby: one for the whole game ----------
 export class Lobby {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env;
-    this.users = new Map();      // id -> { id, name, adm, ws, room, floor, party, on, lastFeed, offT }
+    this.users = new Map();      // id -> { id, name, adm, hat, ws, room, floor, party, on, lastFeed, offT, watching }
     this.watchers = new Map();   // id -> Set of ids watching them (friends lists)
     this.parties = new Map();    // partyId -> { id, leader, members: [id], inst: { room, floor, seed } | null }
     this.invites = new Map();    // toId -> Map(fromId -> at)
     this.feedQ = []; this.feedT = null; this.lastFeedAt = 0;
-    // Players send a heartbeat every 20 s. A connection silent for 75 s is dead (phone locked, network gone): close it.
-    this.sweep = setInterval(() => { const now = Date.now(); for (const u of this.users.values()) if (u.on && now - (u.seen || now) > 75000) { try { u.ws.close(4001, 'silent'); } catch { } this.dropSilent(u); } }, 15000);
+    autoPong(ctx);
     ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get('parties');
       if (saved) for (const p of saved) this.parties.set(p.id, p);
+      // waking from a nap: rebuild who is connected from their sockets
+      const now = Date.now();
+      for (const ws of ctx.getWebSockets()) {
+        const a = ws.deserializeAttachment(); if (!a || !a.id) continue;
+        const u = { ...a, ws, on: true, seen: a.seen || now, tok: 50, tokAt: now };
+        const prev = this.users.get(a.id); if (prev && (prev.at || 0) > (a.at || 0)) continue;
+        this.users.set(a.id, u);
+      }
+      for (const u of this.users.values()) if (Array.isArray(u.watching)) { u.watching = new Set(u.watching); for (const id of u.watching) { if (!this.watchers.has(id)) this.watchers.set(id, new Set()); this.watchers.get(id).add(u.id); } }
     });
   }
   persist() { this.ctx.storage.put('parties', [...this.parties.values()]).catch(() => { }); }
+  att(u) { if (!u.on) return; try { u.ws.serializeAttachment({ id: u.id, name: u.name, adm: u.adm, hat: u.hat, room: u.room, floor: u.floor, party: u.party, at: u.at, seen: u.seen, watching: u.watching ? [...u.watching].slice(0, 100) : null }); } catch { } }
   async fetch(req) {
     const who = JSON.parse(req.headers.get('x-lh-who'));
     const [client, server] = Object.values(new WebSocketPair());
-    server.accept();
+    this.ctx.acceptWebSocket(server);
     this.connect(who, server);
+    await armSweep(this.ctx);
     return new Response(null, { status: 101, webSocket: client });
   }
-  dropSilent(u) { if (u.drop) u.drop(); }
+  // Players send a heartbeat every 20 s. A connection silent for 75 s is dead (phone locked, network gone): close it.
+  async alarm() {
+    const now = Date.now();
+    for (const u of [...this.users.values()]) if (u.on && now - lastHeard(this.ctx, u.ws, u.seen) > SILENT_MS) { try { u.ws.close(4001, 'silent'); } catch { } this.gone(u, u.ws); }
+    if (this.ctx.getWebSockets().length) await this.ctx.storage.setAlarm(Date.now() + SWEEP_MS);
+  }
+  webSocketMessage(ws, data) {
+    const u = this.byWs(ws); if (!u) return;
+    const now = Date.now(); u.seen = now; if (now - (u.seenSaved || 0) > 15000) { u.seenSaved = now; this.att(u); }
+    if (data === PING) return send(ws, PONG); if (!allow(u)) return;
+    let m; try { m = JSON.parse(data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(u, m);
+  }
+  webSocketClose(ws) { const u = this.byWs(ws); if (u) this.gone(u, ws); try { ws.close(); } catch { } }
+  webSocketError(ws) { const u = this.byWs(ws); if (u) this.gone(u, ws); }
+  byWs(ws) { const a = ws.deserializeAttachment(); const u = a && this.users.get(a.id); return u && u.ws === ws ? u : null; }
   online() { let n = 0; for (const u of this.users.values()) if (u.on) n++; return n; }
   partyOf(id) { const u = this.users.get(id); return u && u.party ? this.parties.get(u.party) : null; }
   view(p) { return p ? { id: p.id, leader: p.leader, inst: p.inst, members: p.members.map(m => { const u = this.users.get(m); return { id: m, name: u ? u.name : m, on: !!(u && u.on), room: u && u.on ? u.room : null, floor: u && u.on ? u.floor : null }; }) } : null; }
@@ -103,21 +137,21 @@ export class Lobby {
 
   connect(who, ws) {
     let u = this.users.get(who.id);
-    if (u && u.on && u.ws !== ws) { send(u.ws, { t: 'kicked', reason: 'You signed in somewhere else.' }); try { u.ws.close(4000, 'replaced'); } catch { } }
+    if (u && u.on && u.ws !== ws) { const old = u.ws; send(old, { t: 'kicked', reason: 'You signed in somewhere else.' }); try { old.close(4000, 'replaced'); } catch { } }
     if (!u) { u = { id: who.id, party: null }; this.users.set(who.id, u); }
-    Object.assign(u, { name: who.name, adm: who.adm, ws, on: true, room: null, floor: null, tok: 50, tokAt: Date.now() });
+    Object.assign(u, { name: who.name, adm: who.adm, hat: who.hat, ws, on: true, room: null, floor: null, tok: 50, tokAt: Date.now(), at: Date.now() });
     clearTimeout(u.offT);
     // rejoin a saved party after a reconnect or a server restart
     if (!u.party) for (const p of this.parties.values()) if (p.members.includes(u.id)) u.party = p.id;
+    u.seen = Date.now(); this.att(u);
     send(ws, { t: 'hello', you: u.id, online: this.online(), party: this.view(this.partyOf(u.id)) });
     const p = this.partyOf(u.id); if (p) this.pushParty(p);
     this.notifyWatchers(u.id);
     u.seen = Date.now();
-    ws.addEventListener('message', ev => { if (u.ws !== ws) return; u.seen = Date.now(); if (ev.data === '{"t":"ping"}') return send(ws, '{"t":"pong"}'); if (!allow(u)) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(u, m); });
-    u.drop = () => gone();
-    const gone = () => { if (u.ws !== ws || !u.on) return; u.on = false; u.room = null; this.notifyWatchers(u.id); const p2 = this.partyOf(u.id); if (p2) { this.pushParty(p2); this.checkInst(p2); }
-      u.offT = setTimeout(() => { if (!u.on) { this.leaveParty(u, true); this.users.delete(u.id); } }, OFFLINE_GRACE_MS); };
-    ws.addEventListener('close', gone); ws.addEventListener('error', gone);
+  }
+  gone(u, ws) {
+    if (u.ws !== ws || !u.on) return; u.on = false; u.room = null; this.notifyWatchers(u.id); const p2 = this.partyOf(u.id); if (p2) { this.pushParty(p2); this.checkInst(p2); }
+    u.offT = setTimeout(() => { if (!u.on) { this.leaveParty(u, true); this.users.delete(u.id); } }, OFFLINE_GRACE_MS);
   }
 
   worldCounts() { const c = new Map(); for (const u of this.users.values()) if (u.on && u.room && u.room[0] === 'w') c.set(u.room, (c.get(u.room) || 0) + 1); return c; }
@@ -138,6 +172,7 @@ export class Lobby {
       case 'where': {
         const room = typeof m.room === 'string' && ROOM_RE.test(m.room) ? m.room : null;
         u.room = room; u.floor = room && room[0] === 'd' && Number.isInteger(m.floor) && m.floor > 0 && m.floor < 100 ? m.floor : null;
+        this.att(u);
         this.notifyWatchers(u.id); const p = this.partyOf(u.id); if (p) { this.checkInst(p); this.pushParty(p); }
         return;
       }
@@ -146,6 +181,7 @@ export class Lobby {
         for (const old of u.watching || []) this.watchers.get(old)?.delete(u.id);
         u.watching = new Set(ids);
         for (const id of ids) { if (!this.watchers.has(id)) this.watchers.set(id, new Set()); this.watchers.get(id).add(u.id); }
+        this.att(u);
         return send(u.ws, { t: 'status', list: ids.map(id => this.status(id)) });
       }
       case 'nudge': { const to = this.users.get(String(m.to || '').toLowerCase()); if (to && to.on) send(to.ws, { t: 'nudge', from: u.name, k: m.k === 'friend' ? 'friend' : 'x' }); return; }
@@ -186,18 +222,18 @@ export class Lobby {
     if (p && p.members.length >= PARTY_MAX) return this.note(u, 'That party is full.', true);
     if (u.party) this.leaveParty(u, false);
     if (!p) { p = { id: 'p' + rid(10), leader: from, members: [from], inst: null }; this.parties.set(p.id, p); f.party = p.id; }
-    p.members.push(u.id); u.party = p.id; this.persist();
+    p.members.push(u.id); u.party = p.id; this.att(u); this.att(f); this.persist();
     this.pushParty(p);
     for (const id of p.members) if (id !== u.id) { const x = this.users.get(id); if (x && x.on) this.note(x, u.name + ' joined the party.'); }
     if (p.inst) send(u.ws, Object.assign({ t: 'partyDelve', by: (this.users.get(p.leader) || {}).name || 'Your party' }, p.inst));
   }
   leaveParty(u, quiet) {
     const p = this.partyOf(u.id) || [...this.parties.values()].find(x => x.members.includes(u.id));
-    u.party = null; if (!p) { if (!quiet && u.on) send(u.ws, { t: 'party', party: null }); return; }
+    u.party = null; this.att(u); if (!p) { if (!quiet && u.on) send(u.ws, { t: 'party', party: null }); return; }
     p.members = p.members.filter(x => x !== u.id);
     if (u.on) send(u.ws, { t: 'party', party: null });
     if (p.members.length <= 1) {                       // a party of one is no party
-      for (const id of p.members) { const x = this.users.get(id); if (x) { x.party = null; if (x.on) { send(x.ws, { t: 'party', party: null }); this.note(x, 'Your party has disbanded.'); } } }
+      for (const id of p.members) { const x = this.users.get(id); if (x) { x.party = null; this.att(x); if (x.on) { send(x.ws, { t: 'party', party: null }); this.note(x, 'Your party has disbanded.'); } } }
       this.parties.delete(p.id);
     } else {
       if (p.leader === u.id) p.leader = p.members.find(id => (this.users.get(id) || {}).on) || p.members[0];
@@ -249,14 +285,29 @@ export class Lobby {
 // ---------- Room: a Hold world or a dungeon instance ----------
 const HOST_OUT = new Set(['en', 'kill', 'obj', 'objs', 'floor', 'hurt', 'grant', 'fx']);   // host -> everyone (or one player with `to`)
 const TO_HOST = new Set(['hit', 'act', 'mine', 'shade', 'down', 'sync']);                    // a player -> the host
+const FISH_PH = new Set(['cast', 'wait', 'bite', 'reel']);
+const TREE_LOGS = 150, TREE_REGROW_MS = 90e3, TREE_MAX = 64, CHOP_GAP_MS = 1200;
+const DROP_MAX = 400, DROP_PRIVATE_MS = 30e3, DROP_LIFE_MS = 180e3, LOOT_LIFE_MS = 30 * 60e3;
 export class Room {
   constructor(ctx, env) {
-    this.ctx = ctx; this.env = env; this.players = new Map(); this.chat = []; this.flushT = null; this.seq = 0;
+    this.ctx = ctx; this.env = env; this.players = new Map(); this.chat = []; this.flushT = null; this.seq = 0; this.drops = new Map(); this.trees = new Map();
     this.cfg = null;   // dungeon instances only: { allowed: [ids], host, seed, floor }
-    ctx.blockConcurrencyWhile(async () => { this.cfg = (await ctx.storage.get('cfg')) || null; });
-    // Remove players whose connection went silent (no heartbeat for 75 s), so nobody is left standing frozen on others' screens.
-    this.sweep = setInterval(() => { const now = Date.now(); for (const p of [...this.players.values()]) if (now - (p.seen || now) > 75000) { try { p.ws.close(4001, 'silent'); } catch { } p.drop && p.drop(); } }, 15000);
+    autoPong(ctx);
+    ctx.blockConcurrencyWhile(async () => {
+      this.cfg = (await ctx.storage.get('cfg')) || null; this.chat = (await ctx.storage.get('chat')) || [];
+      this.id = (await ctx.storage.get('id')) || null; this.inst = !!(this.id && this.id[0] === 'd');
+      this.drops = new Map(((await ctx.storage.get('drops')) || []).map(d => [d.did, d]));
+      this.trees = new Map(((await ctx.storage.get('trees')) || []).map(t => [t.i, t]));
+      this.seq = this.chat.length ? this.chat[this.chat.length - 1].n || 0 : 0;
+      const now = Date.now();   // waking from a nap: rebuild the players from their sockets
+      for (const ws of ctx.getWebSockets()) {
+        const a = ws.deserializeAttachment(); if (!a || !a.id) continue;
+        const prev = this.players.get(a.id); if (prev && prev.joined > a.joined) continue;
+        this.players.set(a.id, { ...a, ws, dirty: false, seen: a.seen || now, tok: 50, tokAt: now });
+      }
+    });
   }
+  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
   async fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === '/setup' && req.method === 'POST') {          // called by the Lobby only (not reachable from outside)
@@ -264,13 +315,33 @@ export class Room {
       await this.ctx.storage.put('cfg', this.cfg); return new Response('ok');
     }
     const who = JSON.parse(req.headers.get('x-lh-who')), room = req.headers.get('x-lh-room');
-    this.id = room; this.inst = room[0] === 'd';
+    if (this.id !== room) { this.id = room; this.ctx.storage.put('id', room).catch(() => { }); }
+    this.inst = room[0] === 'd';
     const [client, server] = Object.values(new WebSocketPair());
-    server.accept();
-    if (this.inst && !(this.cfg && this.cfg.allowed.includes(who.id))) { send(server, { t: 'denied', reason: 'This dungeon belongs to another party.' }); server.close(4003, 'denied'); }
-    else if (!this.inst && this.players.size >= WORLD_CAP && !this.players.has(who.id)) { send(server, { t: 'full' }); server.close(4009, 'full'); }
-    else this.join(who, server);
+    if (this.inst && !(this.cfg && this.cfg.allowed.includes(who.id))) { server.accept(); send(server, { t: 'denied', reason: 'This dungeon belongs to another party.' }); server.close(4003, 'denied'); }
+    else if (!this.inst && this.players.size >= WORLD_CAP && !this.players.has(who.id)) { server.accept(); send(server, { t: 'full' }); server.close(4009, 'full'); }
+    else { this.ctx.acceptWebSocket(server); this.join(who, server); await armSweep(this.ctx); }
     return new Response(null, { status: 101, webSocket: client });
+  }
+  // Remove players whose connection went silent (no heartbeat for 75 s), so nobody is left standing frozen on others' screens.
+  async alarm() {
+    const now = Date.now();
+    if (this.pruneDrops()) this.saveDrops();
+    for (const p of [...this.players.values()]) if (now - lastHeard(this.ctx, p.ws, p.seen) > SILENT_MS) { try { p.ws.close(4001, 'silent'); } catch { } this.gone(p, p.ws); }
+    if (this.ctx.getWebSockets().length) await this.ctx.storage.setAlarm(Date.now() + SWEEP_MS);
+  }
+  byWs(ws) { const a = ws.deserializeAttachment(); const p = a && this.players.get(a.id); return p && p.ws === ws ? p : null; }
+  webSocketMessage(ws, data) {
+    const p = this.byWs(ws); if (!p) return;
+    const now = Date.now(); p.seen = now; if (now - (p.seenSaved || 0) > 15000) { p.seenSaved = now; this.att(p); }
+    if (data === PING) return send(ws, PONG); if (!allow(p)) return; if (typeof data !== 'string' || data.length > 6000) return;
+    let m; try { m = JSON.parse(data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(p, m);
+  }
+  webSocketClose(ws) { const p = this.byWs(ws); if (p) this.gone(p, ws); try { ws.close(); } catch { } }
+  webSocketError(ws) { const p = this.byWs(ws); if (p) this.gone(p, ws); }
+  gone(p, ws) {
+    if (this.players.get(p.id) !== p || p.ws !== ws) return; this.players.delete(p.id); this.all({ t: '-', id: p.id });
+    if (this.inst && this.cfg && this.cfg.host === p.id) this.pick();
   }
   host() { if (!this.inst) return null; const h = this.cfg.host; if (this.players.has(h)) return h; return null; }
   pick() {  // a new host when the old one leaves: whoever has been here longest
@@ -278,23 +349,53 @@ export class Room {
     this.cfg.host = best ? best.id : this.cfg.host; this.ctx.storage.put('cfg', this.cfg).catch(() => { });
     if (best) this.all({ t: 'host', id: best.id });
   }
-  pub(p) { return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m }; }
+  pub(p) { return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m, fish: p.fish || null }; }
+  // ---- items on the ground: dungeon loot (seen by the whole party at once) and items dropped from a bag (the dropper sees
+  // them at once, everyone else after 30 s). The server decides who picks each one up, so nothing is ever picked up twice.
+  pruneDrops() { const now = Date.now(); let ch = false; for (const [k, d] of this.drops) if (d.exp && now > d.exp) { this.drops.delete(k); ch = true; }
+    while (this.drops.size > DROP_MAX) { this.drops.delete(this.drops.keys().next().value); ch = true; } return ch; }
+  saveDrops() { this.ctx.storage.put('drops', [...this.drops.values()]).catch(() => { }); }
+  dropView(d, forId) { return { did: d.did, it: d.it, n: d.n, x: d.x, y: d.y, vx: d.vx, vy: d.vy, f: d.f, by: d.by, bag: d.bag ? 1 : 0, wait: forId === d.by ? 0 : Math.max(0, d.pub - Date.now()), left: d.exp ? Math.max(0, d.exp - Date.now()) : null }; }
+  onDrop(p, m) {
+    const it = typeof m.it === 'string' && /^[a-z0-9_]{1,32}$/.test(m.it) ? m.it : null, n = Number.isInteger(m.n) && m.n >= 1 && m.n <= 1e6 ? m.n : 0;
+    const x = +m.x, y = +m.y; if (!it || !n || !(x >= 0 && x < 20000 && y >= 0 && y < 20000)) return;
+    const now = Date.now(), bag = !!m.bag, f = this.inst ? (this.cfg ? this.cfg.floor : null) : null;
+    const v = q => Number.isFinite(+q) ? Math.max(-200, Math.min(200, Math.round(+q))) : 0;
+    const d = { did: rid(10), it, n, x: Math.round(x), y: Math.round(y), vx: v(m.vx), vy: v(m.vy), f, by: p.id, bag, at: now, pub: bag ? now + DROP_PRIVATE_MS : now, exp: bag ? now + DROP_LIFE_MS : now + LOOT_LIFE_MS };
+    this.pruneDrops(); this.drops.set(d.did, d); this.saveDrops();
+    send(p.ws, Object.assign({ t: 'D', ref: typeof m.ref === 'string' ? m.ref.slice(0, 24) : null }, { d: this.dropView(d, p.id) }));
+    const s = JSON.stringify({ t: 'D', d: this.dropView(d, null) }); for (const q of this.players.values()) if (q.id !== p.id) send(q.ws, s);
+  }
+  // ---- shared trees (Hold worlds): every log anyone cuts comes off the same stack; at 0 the tree falls and regrows ----
+  tree(i) { let t = this.trees.get(i); if (!t) { t = { i, left: TREE_LOGS, until: 0 }; this.trees.set(i, t); } if (t.until && Date.now() >= t.until) { t.left = TREE_LOGS; t.until = 0; } return t; }
+  treeView(t) { return [t.i, t.left, t.until ? Math.max(0, t.until - Date.now()) : 0]; }
+  onChop(p, m) {
+    const i = m.i; if (this.inst || !Number.isInteger(i) || i < 0 || i >= TREE_MAX) return;
+    const now = Date.now(); if (now - (p.lastChop || 0) < CHOP_GAP_MS) return; p.lastChop = now;
+    const t = this.tree(i);
+    if (!t.until && m.ok) { t.left--; if (t.left <= 0) { t.left = 0; t.until = now + TREE_REGROW_MS; } this.ctx.storage.put('trees', [...this.trees.values()]).catch(() => { }); }
+    const [, left, wait] = this.treeView(t); this.all({ t: 'T', i, left, wait, by: p.id });
+  }
+  onTake(p, m) {
+    const d = this.drops.get(String(m.did || '')), now = Date.now();
+    if (!d || (d.exp && now > d.exp)) return send(p.ws, { t: 'gone', did: String(m.did || '').slice(0, 24) });
+    if (d.by !== p.id && now < d.pub) return send(p.ws, { t: 'nope', did: d.did });
+    this.drops.delete(d.did); this.saveDrops();
+    this.all({ t: 'took', did: d.did, by: p.id, it: d.it, n: d.n });
+  }
   all(o, except) { const s = JSON.stringify(o); for (const p of this.players.values()) if (p.id !== except) send(p.ws, s); }
   join(who, ws) {
     const old = this.players.get(who.id);
     if (old) { try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now() };
-    this.players.set(who.id, p);
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
+    this.players.set(who.id, p); this.att(p);
     if (this.inst && !this.host()) this.pick();
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
-      players: [...this.players.values()].filter(x => x.id !== who.id).map(x => this.pub(x)), chat: this.chat });
+      players: [...this.players.values()].filter(x => x.id !== who.id).map(x => this.pub(x)), chat: this.chat,
+      drops: (this.pruneDrops(), [...this.drops.values()].filter(d => !this.inst || d.f === (this.cfg ? this.cfg.floor : null)).map(d => this.dropView(d, who.id))),
+      trees: this.inst ? null : [...this.trees.values()].map(t => this.treeView(this.tree(t.i))).filter(v => v[1] < TREE_LOGS || v[2] > 0) });
     if (!old) this.all({ t: '+', p: this.pub(p) }, who.id);
     p.seen = Date.now();
-    ws.addEventListener('message', ev => { if (this.players.get(who.id) !== p) return; p.seen = Date.now(); if (ev.data === '{"t":"ping"}') return send(ws, '{"t":"pong"}'); if (!allow(p)) return; if (typeof ev.data !== 'string' || ev.data.length > 6000) return; let m; try { m = JSON.parse(ev.data); } catch { return; } if (m && typeof m.t === 'string') this.onMessage(p, m); });
-    const gone = () => { if (this.players.get(who.id) !== p) return; this.players.delete(who.id); this.all({ t: '-', id: who.id });
-      if (this.inst && this.cfg.host === who.id) this.pick(); };
-    p.drop = gone;
-    ws.addEventListener('close', gone); ws.addEventListener('error', gone);
   }
   onMessage(p, m) {
     const t = m.t;
@@ -304,18 +405,27 @@ export class Room {
       if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
       return;
     }
-    if (t === 'look') { p.look = cleanLook(m.look, p.hat); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
+    if (t === 'look') { p.look = cleanLook(m.look, p.hat); this.att(p); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
     if (t === 'say') {
       const now = Date.now(); if (now - (p.lastSay || 0) < 1200) return send(p.ws, { t: 'slow' }); p.lastSay = now;
       const text = cleanText(m.text); if (!text) return;
       const msg = { t: 'say', id: p.id, name: p.name, text, at: now, n: ++this.seq };
       this.chat.push(msg); if (this.chat.length > 30) this.chat.shift();
+      this.ctx.storage.put('chat', this.chat).catch(() => { });
       return this.all(msg);
     }
+    if (t === 'fish') {
+      const f = m.f && typeof m.f === 'object' && DIRS.has(m.f.d) && FISH_PH.has(m.f.ph) && +m.f.bx >= 0 && +m.f.bx < 20000 && +m.f.by >= 0 && +m.f.by < 20000
+        ? { d: m.f.d, ph: m.f.ph, bx: Math.round(+m.f.bx), by: Math.round(+m.f.by) } : null;
+      p.fish = f; this.att(p); return this.all({ t: 'F', id: p.id, f }, p.id);
+    }
+    if (t === 'drop') return this.onDrop(p, m);
+    if (t === 'take') return this.onTake(p, m);
+    if (t === 'chop') return this.onChop(p, m);
     if (!this.inst) return;
     const host = this.cfg.host;
     if (HOST_OUT.has(t) && p.id === host) {
-      if (t === 'floor' && Number.isInteger(m.f) && m.f > 0 && m.f < 100) { this.cfg.floor = m.f; this.ctx.storage.put('cfg', this.cfg).catch(() => { }); }
+      if (t === 'floor' && Number.isInteger(m.f) && m.f > 0 && m.f < 100) { this.cfg.floor = m.f; this.ctx.storage.put('cfg', this.cfg).catch(() => { }); let ch = false; for (const [k, d] of this.drops) if (d.f !== m.f) { this.drops.delete(k); ch = true; } if (ch) this.saveDrops(); }
       const out = Object.assign({}, m, { from: p.id });
       if (typeof m.to === 'string') { const q = this.players.get(m.to); if (q) send(q.ws, out); } else this.all(out, p.id);
       return;
@@ -324,7 +434,7 @@ export class Room {
   }
   flush() {
     this.flushT = null; const rows = [];
-    for (const p of this.players.values()) if (p.dirty) { p.dirty = false; rows.push([p.id, p.x, p.y, p.d, p.m ? 1 : 0]); }
+    for (const p of this.players.values()) if (p.dirty) { p.dirty = false; this.att(p); rows.push([p.id, p.x, p.y, p.d, p.m ? 1 : 0]); }
     if (rows.length) this.all({ t: 'S', p: rows });
   }
 }
