@@ -576,8 +576,10 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.6',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.7',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.7',date:'2026-10-24',title:'Into the arch',notes:[
+    'Walking up into the Delve Gate\'s archway no longer hides your character behind the stone: you stay visible on the stairs.']},
   {v:'0.7.6',date:'2026-10-24',title:'Tidier crossroads',notes:[
     'The Bulletin moved forward to line up with the road, matching Tallow\'s cart across the crossroads.',
     'The Kitchen moved into the corner of the grass by the road, and the Oil Press now stands where the little path ends.']},
@@ -663,7 +665,7 @@ function buildHold(){
   // the inner trees can be cut (Woodcutting); border trees are the edge of the world
   m.trees=[];[[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind='oak';o.chop=true;o.ti=m.trees.length;o.logs=TREES.oak.logs;o.until=0;m.trees.push(o);});
   // buildings
-  addObj(m,{type:'gate',x:13*T,y:5*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
+  addObj(m,{type:'gate',x:13*T,y:5*T,sortY:3*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
@@ -1797,7 +1799,7 @@ function render(){TAGS.length=0;
     if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else spr(ART.ore[o.kind],tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
   // y-sorted
   const list=[];
-  for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.y,f:()=>drawObj(o)});
+  for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
   for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
