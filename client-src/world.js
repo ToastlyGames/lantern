@@ -23,7 +23,7 @@ function buildHold(){
   // the inner trees can be cut (Woodcutting); border trees are the edge of the world
   m.trees=[];[[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind='oak';o.chop=true;o.ti=m.trees.length;o.logs=TREES.oak.logs;o.until=0;m.trees.push(o);});
   // buildings
-  addObj(m,{type:'gate',x:13*T,y:5*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
+  addObj(m,{type:'gate',x:13*T,y:5*T,sortY:3*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads

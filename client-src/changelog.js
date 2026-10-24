@@ -1,8 +1,10 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.6',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.7',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.7',date:'2026-10-24',title:'Into the arch',notes:[
+    'Walking up into the Delve Gate\'s archway no longer hides your character behind the stone: you stay visible on the stairs.']},
   {v:'0.7.6',date:'2026-10-24',title:'Tidier crossroads',notes:[
     'The Bulletin moved forward to line up with the road, matching Tallow\'s cart across the crossroads.',
     'The Kitchen moved into the corner of the grass by the road, and the Oil Press now stands where the little path ends.']},
