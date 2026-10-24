@@ -27,13 +27,14 @@ function buildHold(){
   addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
-  addObj(m,{type:'board',x:15*T,y:10*T+2,spr:'board',block:[[14,9],[15,9]],act:{x:15*T,y:10*T+8,label:'Bulletin',id:'bulletin'}});
+  addObj(m,{type:'board',x:15*T,y:10*T+14,spr:'board',block:[[14,10],[15,10]],act:{x:15*T,y:11*T+6,label:'Bulletin',id:'bulletin'}});
   // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
   // the east road: a sign and a barricaded opening in the trees
   addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
   addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
-  addObj(m,{type:'kitchen',x:17*T,y:16*T,spr:'kitchen',anim:true,block:[[16,15],[17,15]],act:{x:17*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
-  addObj(m,{type:'press',x:21*T,y:16*T,spr:'press',block:[[20,15],[21,15]],act:{x:21*T,y:16*T+6,label:'Oil Press',id:'press'}});
+  // Kitchen in the corner of the grass between the north–south road and the short path; Oil Press where that path ends
+  addObj(m,{type:'kitchen',x:15*T,y:16*T,spr:'kitchen',anim:true,block:[[14,15],[15,15]],act:{x:15*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
+  addObj(m,{type:'press',x:18*T,y:13*T+14,spr:'press',block:[[17,13],[18,13]],act:{x:17*T-2,y:13*T+10,label:'Oil Press',id:'press'}});
   // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
   addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
   addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});

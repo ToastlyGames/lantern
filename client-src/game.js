@@ -318,7 +318,10 @@ function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.
 let CHOP=null;
 const chopEvery=()=>Math.max(1.6,2.6-.01*(lvlOf('woodcutting')-1));
 const chopChance=()=>Math.min(.95,.62+.005*(lvlOf('woodcutting')-1));
-function treeUp(o){if(o.until&&Date.now()>=o.until){o.until=0;o.logs=TREES[o.kind].logs;}return !o.until;}
+function treeUp(o){const L=TREES[o.kind],now=Date.now();if(o.until&&now>=o.until){o.until=0;o.logs=L.logs;o.cutAt=0;}
+  // same slow regrowth as the server: untouched for regenDelay, then +1 log every regenEvery
+  if(!o.until&&o.cutAt&&o.logs<L.logs){const grown=Math.floor((now-o.cutAt-L.regenDelay*1000)/(L.regenEvery*1000));if(grown>0)o.logs=Math.min(L.logs,o.leftAtCut+grown);if(o.logs>=L.logs)o.cutAt=0;}
+  return !o.until;}
 function nearTree(){if(scene!=='hold'||!map.trees)return null;let best=null,bd=22;for(const o of map.trees){const d=Math.hypot(o.x-P.x,o.y+5-P.y);if(d<bd){bd=d;best=o;}}return best;}
 function startChop(o){if(!treeUp(o))return toast('Just a stump for now. It regrows soon.');const L=TREES[o.kind];if(lvlOf('woodcutting')<L.lvl)return toast('You need Woodcutting '+L.lvl+' for the '+L.n+'.','bad');
   FISHING=null;if(COOK)stopCook();CHOP={o,t:0,sw:0,px:P.x,py:P.y};const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');sfx('swing');}
@@ -329,14 +332,14 @@ function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   c.t+=dt;if(c.t<chopEvery())return;c.t=0;
   const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
   if(roomUp())NET.send({t:'chop',i:o.ti,k:o.kind,ok:ok?1:0});
-  else if(ok){o.logs--;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
+  else{if(ok)o.logs--;o.cutAt=Date.now();o.leftAtCut=o.logs;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
 function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
   floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
 function treeFell(o,ms){o.logs=0;o.until=Date.now()+ms;if(CHOP&&CHOP.o===o)CHOP=null;puff(o.x,o.y-14,PAL.green,14);puff(o.x,o.y-4,PAL.wood,8);
   if(Math.hypot(o.x-P.x,o.y-P.y)<120){sfx('boss');toast('Timber! The '+TREES[o.kind].n+' is down. It regrows in '+Math.round(ms/1000)+' s.');}}
 // a tree update from the room: how many logs are left, and who swung
 function onTree(m){const o=HOLD.trees&&HOLD.trees[m.i];if(!o)return;const was=!o.until;
-  if(m.wait>0){if(was)treeFell(o,m.wait);else o.until=Date.now()+m.wait;}else{o.until=0;o.logs=m.left;}
+  if(m.wait>0){if(was)treeFell(o,m.wait);else o.until=Date.now()+m.wait;}else{o.until=0;o.logs=m.left;o.leftAtCut=m.left;o.cutAt=Date.now();}
   if(m.by&&m.by!==MP.id){const p=OTH.get(m.by);if(p){p.chopT=3.6;p.chopX=o.x;}o.shake=.25;
     o.cut=o.cut||{};o.cut[m.by]=Date.now();
     if(CHOP&&CHOP.o===o&&Object.values(o.cut).filter(t=>Date.now()-t<7000).length>=2)secret('choir');}}
@@ -1161,8 +1164,9 @@ if(window.NET){
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
   NET.onL('kicked',m=>{OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
-  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;}for(const [i,left,wait] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.until=wait>0?Date.now()+wait:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
-    MP.chatLog=(m.chat||[]).map(c=>({id:m.room+':'+c.n,name:c.name,text:c.text,at:c.at,me:c.id===MP.id}));if(MP.chatCb)MP.chatCb(MP.chatLog);
+  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
+    // chat lives only for this session: nothing said before you signed in is shown, and your log carries over between rooms
+    if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
     if(m.room[0]==='d'){
       if(run&&m.floor&&m.floor!==run.floor)enterFloor(m.floor);

@@ -1,8 +1,18 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.3',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.7.6',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.7.6',date:'2026-10-24',title:'Tidier crossroads',notes:[
+    'The Bulletin moved forward to line up with the road, matching Tallow\'s cart across the crossroads.',
+    'The Kitchen moved into the corner of the grass by the road, and the Oil Press now stands where the little path ends.']},
+  {v:'0.7.5',date:'2026-10-24',title:'Trees grow back',notes:[
+    'A tree that was only partly chopped now slowly grows its logs back when nobody is cutting it.',
+    'Oaks start regrowing 15 seconds after the last swing and add a log every 2 seconds until they are full again.']},
+  {v:'0.7.4',date:'2026-10-24',title:'Fresh chat every session',notes:[
+    'Chat now starts fresh each time you sign in: you see what\'s said from the moment you log in until you log out.',
+    'Messages aren\'t stored on the server any more.',
+    'Your chat carries over when you switch worlds or head into the Depths, with a note showing where you went.']},
   {v:'0.7.3',date:'2026-10-24',title:'Quieter chat bubbles',notes:[
     'Chat over players\' heads is now small, sharp text with a barely-there background, sitting just above their name.',
     'Longer messages wrap onto up to 3 short lines instead of being cut off.']},

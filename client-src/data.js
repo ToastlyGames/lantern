@@ -67,7 +67,8 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']}};
 // ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
 // Expansions add new trees per area: the higher the level, the fewer logs and the longer the regrow. Logs feed a future skill.
 // Keep logs/regrow in step with TREE_TYPES in realtime/src/index.js (the server keeps the shared count).
-const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,item:'logs'}};
+// regenDelay/regenEvery (s): a partly cut tree left alone for regenDelay grows back 1 log every regenEvery.
+const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
