@@ -596,8 +596,12 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.7.9',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.0',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.8.0',date:'2026-10-24',title:'The Lanternhold Wiki',notes:[
+    'The official Lanternhold Wiki is live at lanternhold.fun/wiki: every skill, place, monster, item and goal, with search.',
+    'Open it any time from Settings → Open the wiki.',
+    'The wiki\'s Updates page shows this same history and stays up to date with every build.']},
   {v:'0.7.9',date:'2026-10-24',title:'The farm, plot by plot',notes:[
     'Every square of soil is now its own plot: 12 in all, 2 rows of 6, with crops growing right in the middle of each square.',
     'New farmers start with 4 plots. More open for free at Farming 5, 10, 15, 20, 30, 40, 50 and 60, or buy one sooner with gold (750 gold for the first, each one after costs more).',
@@ -1405,6 +1409,7 @@ function openSettings(){
    <div class="setrow col"><span>Brightness <b id="bv">${SET.bright}%</b></span><input type="range" id="bright" min="60" max="160" step="5" value="${SET.bright}" aria-label="Brightness"></div>
    ${tog('pnames','Player names',SET.pnames)}${tog('feed','World feed in the Hold',SET.feed)}${tog('shake','Screen shake',SET.shake)}
    <h3>Sound and feel</h3>${tog('sound','Sound effects',!muted)}${tog('vib','Vibration',SET.vib)}
+   <h3>Help</h3><div class="setrow"><span>Guides for everything in the game</span><a class="btn alt sm" href="/wiki/" target="_blank" rel="noopener">Open the wiki</a></div>
    <div class="row"><button class="btn alt" id="sdef">Reset to default</button><button class="btn" id="sx">Done</button></div>`);
   const q=s=>$('sheet').querySelectorAll(s);$('sx').onclick=closeSheet;
   q('[data-zoom]').forEach(b=>b.onclick=()=>{SET.zoom=+b.dataset.zoom;saveSet(true);openSettings();});
