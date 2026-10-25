@@ -1,6 +1,31 @@
 # Lanternhold changelog
 
-Current build: **v0.8.3** · Season 0 (Beta)
+Current build: **v0.8.6** · Season 0 (Beta)
+
+## v0.8.6 · Smoother on Android
+
+_2026-10-25_
+
+- Fixed the joystick getting stuck on Android phones, including inside wallet-app browsers.
+- Dragging the joystick no longer lets the browser grab the swipe (no address bar or pull-down popping in mid-move).
+- On Android, the controls sit a little further from the screen edges, away from the back and home swipes.
+- The joystick keeps pointing the right way if the screen resizes while you’re moving.
+
+## v0.8.5 · Joystick fix
+
+_2026-10-25_
+
+- Fixed the joystick sometimes getting stuck on phones after sliding your thumb down off the bottom of the screen, which kept your hero walking.
+- The joystick also lets go if you switch apps or the screen locks while you’re moving.
+
+## v0.8.4 · Trading
+
+_2026-10-25_
+
+- Trade with other players in the Hold: Social → Nearby → Trade.
+- Both of you build your offers in a trade window and see each other’s offer live. Both must accept, and any change resets both accepts.
+- When both accept, the items and gold move for both of you at the same moment. Goal Relics and the admin party hats can’t be traded.
+- In a party dungeon, items you drop from your bag show up for your party right away, and they can pick them up straight away.
 
 ## v0.8.3 · Fighting side by side
 
