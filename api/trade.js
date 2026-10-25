@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     if (!them || them.banned || !them.hero || !them.save || !me.save) return fail(res, 409, 'unavailable', { msg: 'The trade couldn’t be completed.' });
     const A = sanitize(me.save.data, { admin: !!me.hero.is_admin, hat: me.hero.hat }), B = sanitize(them.save.data, { admin: !!them.hero.is_admin, hat: them.hero.hat });
     const oa = clean(t.a), ob = clean(t.b);
+    if (!oa.g && !ob.g && !Object.keys(oa.i).length && !Object.keys(ob.i).length) return fail(res, 400, 'empty', { msg: 'Add something to the trade first.' });
     const why = check(A, oa) || check(B, ob);
     if (why) return fail(res, 409, 'missing', { msg: 'Trade cancelled: ' + why + '.' });
     move(A, B, oa); move(B, A, ob);
