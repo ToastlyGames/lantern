@@ -25,7 +25,7 @@ async function verifyTicket(token, secret) {
     if (JSON.parse(new TextDecoder().decode(b64uDecode(h))).alg !== 'HS256') return null;
     const c = JSON.parse(new TextDecoder().decode(b64uDecode(p)));
     if (c.iss !== 'lanternhold-rt' || !(c.exp > Date.now() / 1000) || !/^[a-z0-9_]{3,16}$/.test(c.sub) || typeof c.n !== 'string' || c.n.toLowerCase() !== c.sub) return null;
-    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null };
+    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu };
   } catch { return null; }
 }
 export function cleanText(t) {
@@ -103,7 +103,7 @@ export class Lobby {
     });
   }
   persist() { this.ctx.storage.put('parties', [...this.parties.values()]).catch(() => { }); }
-  att(u) { if (!u.on) return; try { u.ws.serializeAttachment({ id: u.id, name: u.name, adm: u.adm, hat: u.hat, room: u.room, floor: u.floor, party: u.party, at: u.at, seen: u.seen, watching: u.watching ? [...u.watching].slice(0, 100) : null }); } catch { } }
+  att(u) { if (!u.on) return; try { u.ws.serializeAttachment({ id: u.id, name: u.name, adm: u.adm, hat: u.hat, mu: !!u.mu, room: u.room, floor: u.floor, party: u.party, at: u.at, seen: u.seen, watching: u.watching ? [...u.watching].slice(0, 100) : null }); } catch { } }
   async fetch(req) {
     const who = JSON.parse(req.headers.get('x-lh-who'));
     const [client, server] = Object.values(new WebSocketPair());
@@ -139,7 +139,7 @@ export class Lobby {
     let u = this.users.get(who.id);
     if (u && u.on && u.ws !== ws) { const old = u.ws; send(old, { t: 'kicked', reason: 'You signed in somewhere else.' }); try { old.close(4000, 'replaced'); } catch { } }
     if (!u) { u = { id: who.id, party: null }; this.users.set(who.id, u); }
-    Object.assign(u, { name: who.name, adm: who.adm, hat: who.hat, ws, on: true, room: null, floor: null, tok: 50, tokAt: Date.now(), at: Date.now() });
+    Object.assign(u, { name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, ws, on: true, room: null, floor: null, tok: 50, tokAt: Date.now(), at: Date.now() });
     clearTimeout(u.offT);
     // rejoin a saved party after a reconnect or a server restart
     if (!u.party) for (const p of this.parties.values()) if (p.members.includes(u.id)) u.party = p.id;
@@ -154,6 +154,24 @@ export class Lobby {
     u.offT = setTimeout(() => { if (!u.on) { this.leaveParty(u, true); this.users.delete(u.id); } }, OFFLINE_GRACE_MS);
   }
 
+  // Admin moderation (the admin's game already recorded mutes and bans on their account through the website's API;
+  // this applies it live). Only admins can send it, and admins can't be moderated.
+  mod(u, m) {
+    if (!u.adm) return;
+    const id = String(m.to || '').toLowerCase(), act = String(m.act || '');
+    if (!/^[a-z0-9_]{3,16}$/.test(id) || id === u.id || !['kick', 'ban', 'mute', 'unmute'].includes(act)) return;
+    const t = this.users.get(id);
+    if (t && t.adm) return this.note(u, 'Admins can’t be moderated.', true);
+    const room = t && t.on ? t.room : null;
+    if (act === 'mute' || act === 'unmute') {
+      if (t) { t.mu = act === 'mute'; this.att(t); if (t.on) send(t.ws, { t: 'muted', on: t.mu }); }
+    } else if (t && t.on) {
+      send(t.ws, { t: 'kicked', mod: act, reason: act === 'ban' ? 'You were banned by an admin.' : 'You were kicked by an admin.', until: typeof m.until === 'string' ? m.until.slice(0, 40) : null, perm: !!m.perm });
+      const ws = t.ws; this.gone(t, ws); try { ws.close(4010, act); } catch { }
+    }
+    if (room) { const stub = this.env.ROOM.get(this.env.ROOM.idFromName(room)); this.ctx.waitUntil(stub.fetch('https://room/mod', { method: 'POST', body: JSON.stringify({ id, act }) }).catch(() => { })); }
+    this.note(u, (t ? t.name : id) + (act === 'kick' ? ' was kicked.' : act === 'ban' ? ' was banned.' : act === 'mute' ? ' is muted.' : ' is unmuted.'));
+  }
   worldCounts() { const c = new Map(); for (const u of this.users.values()) if (u.on && u.room && u.room[0] === 'w') c.set(u.room, (c.get(u.room) || 0) + 1); return c; }
   pickWorld(u, want) {
     const c = this.worldCounts(), has = r => (c.get(r) || 0) < WORLD_CAP || u.room === r;
@@ -195,9 +213,10 @@ export class Lobby {
       case 'lead': { const p = this.partyOf(u.id), id = String(m.id || ''); if (!p || p.leader !== u.id || !p.members.includes(id)) return; p.leader = id; this.persist(); return this.pushParty(p); }
       case 'delve': return this.delve(u, m.floor);
       case 'joinInst': { const p = this.partyOf(u.id); if (p && p.inst) return send(u.ws, Object.assign({ t: 'go' }, p.inst)); return this.note(u, 'Your party isn’t in the Depths right now.'); }
-      case 'pchat': { const p = this.partyOf(u.id), text = cleanText(m.text); if (!p || !text) return; if (Date.now() - (u.lastP || 0) < 1000) return; u.lastP = Date.now();
+      case 'pchat': { const p = this.partyOf(u.id), text = cleanText(m.text); if (!p || !text) return; if (u.mu) return send(u.ws, { t: 'muted', on: true, said: 1 }); if (Date.now() - (u.lastP || 0) < 1000) return; u.lastP = Date.now();
         for (const id of p.members) { const x = this.users.get(id); if (x && x.on) send(x.ws, { t: 'pchat', id: u.id, name: u.name, text }); } return; }
       case 'feed': return this.feed(u, m);
+      case 'mod': return this.mod(u, m);
     }
   }
 
@@ -311,12 +330,20 @@ export class Room {
       }
     });
   }
-  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
+  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
   async fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === '/setup' && req.method === 'POST') {          // called by the Lobby only (not reachable from outside)
       const c = await req.json(); this.cfg = { allowed: c.allowed, host: c.host, seed: c.seed, floor: c.floor };
       await this.ctx.storage.put('cfg', this.cfg); return new Response('ok');
+    }
+    if (url.pathname === '/mod' && req.method === 'POST') {            // called by the Lobby only: an admin muted or removed a player
+      const c = await req.json(), p = this.players.get(String(c.id || ''));
+      if (p) {
+        if (c.act === 'mute' || c.act === 'unmute') { p.mu = c.act === 'mute'; this.att(p); }
+        else { const ws = p.ws; this.gone(p, ws); try { ws.close(4010, c.act); } catch { } }
+      }
+      return new Response('ok');
     }
     const who = JSON.parse(req.headers.get('x-lh-who')), room = req.headers.get('x-lh-room');
     if (this.id !== room) { this.id = room; this.ctx.storage.put('id', room).catch(() => { }); }
@@ -396,7 +423,7 @@ export class Room {
   join(who, ws) {
     const old = this.players.get(who.id);
     if (old) { try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
     this.players.set(who.id, p); this.att(p);
     if (this.inst && !this.host()) this.pick();
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
@@ -416,6 +443,7 @@ export class Room {
     }
     if (t === 'look') { p.look = cleanLook(m.look, p.hat); this.att(p); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
     if (t === 'say') {
+      if (p.mu) return send(p.ws, { t: 'muted', on: true, said: 1 });
       const now = Date.now(); if (now - (p.lastSay || 0) < 1200) return send(p.ws, { t: 'slow' }); p.lastSay = now;
       const text = cleanText(m.text); if (!text) return;
       const msg = { t: 'say', id: p.id, name: p.name, text, at: now, n: now * 1000 + (++this.seq % 1000) };
