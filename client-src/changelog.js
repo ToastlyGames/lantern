@@ -1,8 +1,15 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.6',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.8',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.8',date:'2026-10-25',title:'Right-click to trade',notes:[
+    'On a computer, right-click another player in the Hold and choose Trade.',
+    'On phones, trades start from Social → Nearby → Trade.']},
+  {v:'0.8.7',date:'2026-10-25',title:'Gifts',notes:[
+    'You can give items or gold to another player for nothing in return: start a trade, add what you want to give, and both accept.',
+    'The trade window clearly marks a gift, so nobody is surprised by getting nothing back.',
+    'A trade with nothing on either side can’t be accepted.']},
   {v:'0.8.6',date:'2026-10-25',title:'Smoother on Android',notes:[
     'Fixed the joystick getting stuck on Android phones, including inside wallet-app browsers.',
     'Dragging the joystick no longer lets the browser grab the swipe (no address bar or pull-down popping in mid-move).',
