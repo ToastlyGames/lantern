@@ -1,8 +1,21 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.3',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.6',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.6',date:'2026-10-25',title:'Smoother on Android',notes:[
+    'Fixed the joystick getting stuck on Android phones, including inside wallet-app browsers.',
+    'Dragging the joystick no longer lets the browser grab the swipe (no address bar or pull-down popping in mid-move).',
+    'On Android, the controls sit a little further from the screen edges, away from the back and home swipes.',
+    'The joystick keeps pointing the right way if the screen resizes while you’re moving.']},
+  {v:'0.8.5',date:'2026-10-25',title:'Joystick fix',notes:[
+    'Fixed the joystick sometimes getting stuck on phones after sliding your thumb down off the bottom of the screen, which kept your hero walking.',
+    'The joystick also lets go if you switch apps or the screen locks while you’re moving.']},
+  {v:'0.8.4',date:'2026-10-25',title:'Trading',notes:[
+    'Trade with other players in the Hold: Social → Nearby → Trade.',
+    'Both of you build your offers in a trade window and see each other’s offer live. Both must accept, and any change resets both accepts.',
+    'When both accept, the items and gold move for both of you at the same moment. Goal Relics and the admin party hats can’t be traded.',
+    'In a party dungeon, items you drop from your bag show up for your party right away, and they can pick them up straight away.']},
   {v:'0.8.3',date:'2026-10-24',title:'Fighting side by side',notes:[
     'In a party dungeon you now see your partners swing their blades, the damage they deal and the ore they chip.',
     'When a partner opens a chest, it pops open with their name over it.',

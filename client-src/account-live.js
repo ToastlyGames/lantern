@@ -26,24 +26,24 @@ async function claimName(name,look){
   const st=await nameStatus(name);if(!st.ok)return st;
   const r=await api('hero',{method:'POST',body:{name,look}});
   if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Sign in again.':'Couldn’t reach the server. Try again.')};
-  ACC.me=r.data;return {ok:true};
+  ACC.me=r.data;window.LH_TOK=r.data&&r.data.tok||null;return {ok:true};
 }
 
 // ---------- saving to the server ----------
 // At most one save every 10–14 s while playing (each player gets their own spacing), immediately on key moments
 // (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
-let cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
+let held=false,cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
 const SAVE_GAP=10000+Math.random()*4000;
 const strip=S=>{const d=JSON.parse(JSON.stringify(S));delete d.name;delete d.look;delete d.wallet;delete d.savedAt;return d;};
 function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.stringify(d);if(j===lastSent&&!cloudPending)return;cloudPending={d,j};
   if(now){clearTimeout(cloudTimer);cloudTimer=null;return flushCloud();}
   if(!cloudTimer)retry(Math.max(1000,lastAt+SAVE_GAP-Date.now()));}
 function retry(ms){clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>{cloudTimer=null;flushCloud();},ms);}
-async function flushCloud(){if(cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
+async function flushCloud(){if(held||cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
   if(p.j===lastSent){cloudBusy=false;return;}
   const r=await api('save',{method:'POST',body:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
   const stop=(t,ms)=>{stopped=true;notice(t);setTimeout(()=>location.reload(),ms);};
-  if(r.ok){ACC.rev=r.data.rev;lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
+  if(r.ok){ACC.rev=r.data.rev;if(r.data.tok&&window.LH_onTok)LH_onTok(r.data.tok);lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);
   else if(r.status===422)return stop('Some progress couldn’t be verified and was rolled back.',2500);
   else if(r.status===401)return stop('Your sign-in expired. Please sign in again.',2500);
@@ -65,6 +65,21 @@ const hexUtf8=s=>'0x'+Array.from(new TextEncoder().encode(s)).map(b=>b.toString(
 // a token approval, a chain switch or anything else, so a bug or an injected script can't use our wallet code to do more.
 const SAFE_METHODS=new Set(['eth_accounts','eth_requestAccounts','wallet_requestPermissions','personal_sign']);
 const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.reject({message:'Blocked wallet request: '+method});return pv.request(params?{method,params}:{method});};
+// Claiming rewards is the one transaction Lanternhold ever asks a wallet for: claim() on the rewards vault, with a
+// voucher from our server. It's checked here before the wallet sees it (that contract, that function, nothing else:
+// never a token approval), and it goes from the wallet linked to the hero.
+const CLAIM_SEL='0xfa6b3b53';   // claim(uint256,uint256,uint8,bytes32,bytes32)
+async function claimTx(v,vault){
+  if(!vault||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(vault).toLowerCase())throw {message:'That isn’t the rewards vault.'};
+  if(typeof v.data!=='string'||!v.data.startsWith(CLAIM_SEL)||v.data.length!==10+64*5)throw {message:'That isn’t a rewards claim.'};
+  const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;
+  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to claim.'};
+  const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(v.wallet).toLowerCase());
+  if(!from)throw {message:'Switch your wallet to '+short(v.wallet)+', the wallet linked to your hero.'};
+  const want='0x'+Number(v.chainId).toString(16),cur=String(await pv.request({method:'eth_chainId'})).toLowerCase();
+  if(cur!==want){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:want}]});}
+    catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
+  return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 async function pickAccount(pv){
@@ -116,7 +131,7 @@ async function signWithWallet(w,endpoint,onStage){
 async function connectWallet(w){
   ACC.err='';go('signing',{wname:w.info.name,stage:''});
   try{const r=await signWithWallet(w,'auth/verify',t=>{ACC.stage=t;render();});
-    ACC.me=r.me;setVia('wallet');rememberWallet(w);enter();}
+    ACC.me=r.me;window.LH_TOK=r.me&&r.me.tok||null;setVia('wallet');rememberWallet(w);enter();}
   catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':e&&e.plain?esc(e.message):'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
 }
 
@@ -219,7 +234,10 @@ window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=fals
     catch(e){return {ok:false,msg:e&&e.code===4001?'You declined in your wallet.':(e&&e.message)||'Couldn’t connect the wallet.'};}},
   async linkGoogle(){try{await flushCloud();}catch(e){}location.href='/api/auth/google/start?link=1';},
   async logout(){await flushCloud();if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});location.reload();},
-  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api};
+  // trading: save now, then hold further saves until the website has moved the items (it writes both saves itself)
+  async tradeLock(){for(let i=0;i<20&&(cloudBusy||cloudPending);i++){await flushCloud();if(cloudBusy||cloudPending)await new Promise(r=>setTimeout(r,250));}held=true;return !cloudPending;},
+  tradeUnlock(rev){held=false;if(Number.isInteger(rev)){ACC.rev=rev;lastSent=null;}retry(2500);},
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx};
 
 // ---------- start ----------
 render();
