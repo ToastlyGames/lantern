@@ -1,6 +1,21 @@
 # Lanternhold changelog
 
-Current build: **v0.8.6** · Season 0 (Beta)
+Current build: **v0.8.8** · Season 0 (Beta)
+
+## v0.8.8 · Right-click to trade
+
+_2026-10-25_
+
+- On a computer, right-click another player in the Hold and choose Trade.
+- On phones, trades start from Social → Nearby → Trade.
+
+## v0.8.7 · Gifts
+
+_2026-10-25_
+
+- You can give items or gold to another player for nothing in return: start a trade, add what you want to give, and both accept.
+- The trade window clearly marks a gift, so nobody is surprised by getting nothing back.
+- A trade with nothing on either side can’t be accepted.
 
 ## v0.8.6 · Smoother on Android
 
