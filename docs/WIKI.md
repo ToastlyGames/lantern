@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.2 · updated October 24, 2026
+Season 0 (Beta) · build v0.8.3 · updated October 24, 2026
 
 ## Welcome
 
@@ -291,7 +291,8 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 
 **Items on the ground**
 
-- **Party loot:** in a party dungeon, everything that drops appears for the whole party. Whoever walks over it first gets it.
+- **Monster loot in a party:** everyone who hit a monster at least once gets their own roll at its drops, bosses included. Your loot is yours alone: only you see it and pick it up.
+- **Chests, ore and glowcaps in a party:** what they drop appears for the whole party, and whoever walks over it first gets it.
 - **Dropping from your bag:** the item lands at your feet and you can tap **Pick up** to take it back straight away. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes.
 - The server decides who gets each item, so nothing is ever picked up twice.
 
@@ -310,7 +311,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 - **Nearby:** everyone on your map, with quick Add friend and Invite buttons.
 - **Worlds:** every world and how many players are in it. Switch to one with room, or open a new one.
 
-**Party dungeons.** The whole party shares one dungeon. If the leader leaves, another member takes over without a break. Loot drops for everyone, and everyone who hits a monster gets its full XP.
+**Party dungeons.** The whole party shares one dungeon. If the leader leaves, another member takes over without a break. You see each other's swings, damage numbers, mining and chest opening. Everyone who hits a monster at least once gets its full XP and their own roll at its loot.
 
 **Name tags.** Turn on Settings → Player names to see names and combat levels over everyone's heads. The colour of the level compares them to you:
 
