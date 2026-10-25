@@ -179,6 +179,6 @@ ${body}
   copyFileSync(new URL('client-src/wiki/wiki.js', root), new URL('public/wiki/wiki.js', root));
   for (const f of ['hold.png', 'og.png']) if (existsSync(new URL('client-src/wiki/' + f, root))) copyFileSync(new URL('client-src/wiki/' + f, root), new URL('public/wiki/' + f, root));
   // search engines: what to crawl
-  writeFileSync(new URL('public/robots.txt', root), 'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://lanternhold.fun/sitemap.xml\n');
+  writeFileSync(new URL('public/robots.txt', root), 'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /tools/\n\nSitemap: https://lanternhold.fun/sitemap.xml\n');
   writeFileSync(new URL('public/sitemap.xml', root), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://lanternhold.fun/</loc><lastmod>${BUILD.date}</lastmod></url>\n  <url><loc>https://lanternhold.fun/wiki/</loc><lastmod>${BUILD.date}</lastmod></url>\n</urlset>\n`);
 }

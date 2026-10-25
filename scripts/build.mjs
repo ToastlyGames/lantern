@@ -25,6 +25,10 @@ for (const f of readdirSync(new URL('../client-src/icons/', import.meta.url))) c
 { const { BUILD, CHANGELOG } = new Function(src('changelog.js') + '\nreturn { BUILD, CHANGELOG };')();
   const md = `# Lanternhold changelog\n\nCurrent build: **v${BUILD.version}** · ${BUILD.season}\n\n` + CHANGELOG.map(e => `## v${e.v} · ${e.title}\n\n_${e.date}_\n\n` + e.notes.map(n => '- ' + n).join('\n')).join('\n\n') + '\n';
   writeFileSync(new URL('../CHANGELOG.md', import.meta.url), md); }
+// 5) owner tool: deploy + fund the rewards vault (/tools/vault.html), with the compiled contract built in
+mkdirSync(new URL('../public/tools/', import.meta.url), { recursive: true });
+copyFileSync(new URL('../client-src/tools/vault.html', import.meta.url), new URL('../public/tools/vault.html', import.meta.url));
+writeFileSync(new URL('../public/tools/vault.js', import.meta.url), src('tools/vault.js').replace('__BYTECODE__', JSON.parse(readFileSync(new URL('../contracts/LanternRewards.json', import.meta.url), 'utf8')).bytecode));
 // 5) the public wiki at /wiki, from docs/WIKI.md + the update history
 buildWiki();
 console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js, public/wiki/');

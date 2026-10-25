@@ -39,7 +39,7 @@ const gMock = http.createServer(async (req, res) => {
 const PORT = 3999, BASE = `http://localhost:${PORT}`;
 // TEST_SUPABASE_URL + TEST_SUPABASE_KEY run the same tests against a real Supabase/PostgREST database instead of memory.
 const PG = process.env.TEST_SUPABASE_URL ? { SUPABASE_URL: process.env.TEST_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: process.env.TEST_SUPABASE_KEY, LH_DEV_HOOKS: '1', LH_MEMORY_DB: '' } : { LH_MEMORY_DB: '1', SUPABASE_URL: '' };
-const XENV = { GOOGLE_CLIENT_ID: 'g-client', GOOGLE_CLIENT_SECRET: 'g-secret', GOOGLE_AUTH_URL: `http://localhost:${GPORT}/auth`, GOOGLE_TOKEN_URL: `http://localhost:${GPORT}/token`, RT_URL: 'https://rt.example.workers.dev', RT_SECRET: 'r'.repeat(40), X_CLIENT_ID: 'test-client', X_CLIENT_SECRET: 'test-secret', X_API_BASE: `http://localhost:${XPORT}`, X_AUTH_URL: `http://localhost:${XPORT}/authorize`, TOKEN_CA: '0x52908400098527886e0f7030069857d2e4169ee7', TOKEN_SYMBOL: '$lant' };
+const XENV = { GOOGLE_CLIENT_ID: 'g-client', GOOGLE_CLIENT_SECRET: 'g-secret', GOOGLE_AUTH_URL: `http://localhost:${GPORT}/auth`, GOOGLE_TOKEN_URL: `http://localhost:${GPORT}/token`, RT_URL: 'https://rt.example.workers.dev', RT_SECRET: 'r'.repeat(40), X_CLIENT_ID: 'test-client', X_CLIENT_SECRET: 'test-secret', X_API_BASE: `http://localhost:${XPORT}`, X_AUTH_URL: `http://localhost:${XPORT}/authorize`, TOKEN_CA: '0x52908400098527886e0f7030069857d2e4169ee7', TOKEN_SYMBOL: '$lant', REWARDS_ON: '1' };
 const srv = spawn(process.execPath, ['scripts/dev-server.mjs'], { env: { ...process.env, PORT: String(PORT), LH_OFFLINE: '1', ...XENV, ...PG }, stdio: ['ignore', 'pipe', 'inherit'] });
 await new Promise(r => srv.stdout.once('data', r));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -144,7 +144,7 @@ try {
     ok(r.status === 200 && me.save.data.bank.cape_wayfinder === 1, 'a Goal Relic (one item) saves like any rare find'); }
 
   console.log('Admin');
-  const t = new Client(); await t.signIn(); await t.req('hero', { method: 'POST', body: { name: 'Test' } });
+  const t = new Client(), t0 = t; await t.signIn(); await t.req('hero', { method: 'POST', body: { name: 'Test' } });
   await fetch(BASE + '/__dev/admin?name=test');
   let tm = (await t.req('me')).data;
   ok(tm.hero.admin === true && tm.save.data.gear.helm === 'partyhat', 'admin hero gets the Blue Party Hat from the server');
@@ -190,6 +190,44 @@ try {
     r = await y.req('x/start', { manual: true }); const l4 = new URL(r.location);
     ok((await y.req(`x/callback?state=${l4.searchParams.get('state')}&error=access_denied`, { manual: true })).location === '/?x=declined', 'declining on X is handled');
     ok((await x.req('x/unlink', { method: 'POST' })).status === 200 && !(await x.req('me')).data.hero.x, 'unlink removes it'); }
+
+  console.log('Token rewards');
+  { const p = new Client(); await p.signIn(); await p.req('hero', { method: 'POST', body: { name: 'Earner' } });
+    let me = (await p.req('me')).data;
+    ok(me.tok && me.tok.balance === 0 && me.tok.cap === 1250 && me.tok.pool === 50e6, 'a new hero starts with 0, a daily share of 1,250 and the 50M pool');
+    await sleep(2100);
+    const g = JSON.parse(JSON.stringify(me.save.data)); g.cnt.bossmother = 1; g.bosses = { mother: true };
+    let r = await p.req('save', { method: 'POST', body: { data: g, rev: me.save.rev } });
+    ok(r.status === 200 && r.data.tok && r.data.tok.got >= 100 && r.data.tok.got <= 150 && r.data.tok.from.includes('mother'), `beating Mother Slime pays 100–150 on day 1 (got ${r.data.tok && r.data.tok.got})`);
+    await sleep(2100);
+    const g2 = JSON.parse(JSON.stringify(g)); g2.cnt.bossmother = 40;
+    r = await p.req('save', { method: 'POST', body: { data: g2, rev: r.data.rev } });
+    ok(r.status === 200 && (!r.data.tok || r.data.tok.got <= 150), 'claiming 39 boss kills in 2 seconds only counts one');
+    const t = await p.req('rewards'); ok(t.status === 200 && t.data.on && t.data.claims === null && t.data.tok.balance > 0, 'the rewards panel shows the balance (claims not open yet)');
+    ok((await p.req('rewards', { method: 'POST', body: { action: 'voucher' } })).data.error === 'claims_off', 'no vouchers until the vault is set up');
+    const am = (await t0.req('me')).data; await sleep(2100);
+    const ag = JSON.parse(JSON.stringify(am.save.data)); ag.cnt.bossmother = (ag.cnt.bossmother || 0) + 1;
+    r = await t0.req('save', { method: 'POST', body: { data: ag, rev: am.save.rev } });
+    ok(r.status === 200 && !r.data.tok, 'admins don’t earn from the pool'); }
+
+  console.log('Trading');
+  { const { SignJWT } = await import('jose');
+    const tk = (payload, exp = '1m', secret = 'r'.repeat(40)) => new SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setIssuer('lanternhold-trade').setExpirationTime(exp).sign(new TextEncoder().encode(secret));
+    const x = new Client(), y = new Client(); await x.signIn(); await y.signIn();
+    await x.req('hero', { method: 'POST', body: { name: 'Trader' } }); await y.req('hero', { method: 'POST', body: { name: 'Buyer' } });
+    const side = (id, name, i, g) => ({ id, name, i, g });
+    let r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't1', a: side('trader', 'Trader', { wheat_seed: 5 }, 10), b: side('buyer', 'Buyer', { bread: 1 }, 0) }) } });
+    const xs = (await x.req('me')).data.save, ys = (await y.req('me')).data.save;
+    ok(r.status === 200 && xs.data.bank.wheat_seed === 15 && xs.data.bank.bread === 4 && xs.data.gold === 30 && ys.data.bank.wheat_seed === 25 && ys.data.bank.bread === 2 && ys.data.gold === 50 && r.data.revs.a === xs.rev && r.data.revs.b === ys.rev, 'a signed trade moves items and gold for both saves at once');
+    ok((await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't1', a: side('trader', 'Trader', { wheat_seed: 1 }, 0), b: side('buyer', 'Buyer', {}, 0) }) } })).data.error === 'used', 'a trade can only go through once');
+    ok((await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't2', a: side('trader', 'Trader', {}, 0), b: side('buyer', 'Buyer', { wheat_seed: 1 }, 0) }, '1m', 'x'.repeat(40)) } })).data.error === 'bad_ticket', 'a ticket not signed by the realtime server is refused');
+    ok((await y.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't3', a: side('trader', 'Trader', {}, 0), b: side('buyer', 'Buyer', { wheat_seed: 9 }, 0) }) } })).data.error === 'not_yours', 'only the player who started it can send it');
+    r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't4', a: side('trader', 'Trader', { wheat_seed: 500 }, 0), b: side('buyer', 'Buyer', {}, 0) }) } });
+    ok(r.status === 409 && r.data.error === 'missing' && (await x.req('me')).data.save.data.bank.wheat_seed === 15, 'you can’t give what you don’t have (nothing changes)');
+    r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't5', a: side('trader', 'Trader', {}, 0), b: side('buyer', 'Buyer', {}, 999) }) } });
+    ok(r.status === 409 && r.data.error === 'missing', 'or take more gold than they have');
+    r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't6', a: side('trader', 'Trader', { partyhat_helm: 1 }, 0), b: side('buyer', 'Buyer', {}, 0) }) } });
+    ok(r.status === 409 && /can’t be traded/.test(r.data.msg), 'bound items and Goal Relics can’t be traded'); }
 
   console.log('Moderation');
   { const { jwtVerify } = await import('jose'); const vk = generatePrivateKey(), v = new Client(vk); await v.signIn(); await v.req('hero', { method: 'POST', body: { name: 'Villain' } });
