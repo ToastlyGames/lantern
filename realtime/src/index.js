@@ -35,6 +35,13 @@ export function cleanText(t) {
   return t;
 }
 const send = (ws, o) => { try { ws.send(typeof o === 'string' ? o : JSON.stringify(o)); } catch { } };
+const b64u = b => btoa(String.fromCharCode(...(b instanceof Uint8Array ? b : new Uint8Array(b)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// a short HS256 token (RT_SECRET) the website can check: used for trades both players accepted
+async function signToken(payload, secret) {
+  const data = b64u(enc.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))) + '.' + b64u(enc.encode(JSON.stringify(payload)));
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return data + '.' + b64u(await crypto.subtle.sign('HMAC', key, enc.encode(data)));
+}
 const rid = n => { const a = crypto.getRandomValues(new Uint8Array(n)); return Array.from(a, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join(''); };
 // Per-socket flood control: about 25 messages a second sustained, bursts of 50. Past 4x that the socket is closed.
 function allow(c) {
@@ -304,6 +311,7 @@ export class Lobby {
 
 // ---------- Room: a Hold world or a dungeon instance ----------
 const HOST_OUT = new Set(['en', 'kill', 'obj', 'objs', 'floor', 'hurt', 'grant', 'fx']);   // host -> everyone (or one player with `to`)
+const TRADE_MSG = new Set(['tq', 'ta', 'tu', 'tk', 'tr', 'td', 'tx']);
 const TO_HOST = new Set(['hit', 'act', 'mine', 'shade', 'down', 'sync']);                    // a player -> the host
 const FISH_PH = new Set(['cast', 'wait', 'bite', 'reel']);
 // Tree types (match TREES in the game's data.js): logs per tree and regrow time. Higher-level trees in later areas hold
@@ -316,6 +324,7 @@ export class Room {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env; this.players = new Map(); this.flushT = null; this.seq = 0; this.drops = new Map(); this.trees = new Map();
     this.cfg = null;   // dungeon instances only: { allowed: [ids], host, seed, floor }
+    this.trades = new Map();   // Hold worlds: trades in progress (in memory; a trade is short)
     autoPong(ctx);
     ctx.blockConcurrencyWhile(async () => {
       this.cfg = (await ctx.storage.get('cfg')) || null; ctx.storage.delete('chat').catch(() => { });   // chat is never stored: players only see what's said while they're online
@@ -372,6 +381,7 @@ export class Room {
   webSocketError(ws) { const p = this.byWs(ws); if (p) this.gone(p, ws); }
   gone(p, ws) {
     if (this.players.get(p.id) !== p || p.ws !== ws) return; this.players.delete(p.id); this.all({ t: '-', id: p.id });
+    if (p.trade) this.tradeEnd(this.trades.get(p.trade), 'left', p);
     if (this.inst && this.cfg && this.cfg.host === p.id) this.pick();
   }
   host() { if (!this.inst) return null; const h = this.cfg.host; if (this.players.has(h)) return h; return null; }
@@ -392,10 +402,61 @@ export class Room {
     const x = +m.x, y = +m.y; if (!it || !n || !(x >= 0 && x < 20000 && y >= 0 && y < 20000)) return;
     const now = Date.now(), bag = !!m.bag, f = this.inst ? (this.cfg ? this.cfg.floor : null) : null;
     const v = q => Number.isFinite(+q) ? Math.max(-200, Math.min(200, Math.round(+q))) : 0;
-    const d = { did: rid(10), it, n, x: Math.round(x), y: Math.round(y), vx: v(m.vx), vy: v(m.vy), f, by: p.id, bag, at: now, pub: bag ? now + DROP_PRIVATE_MS : now, exp: bag ? now + DROP_LIFE_MS : now + LOOT_LIFE_MS };
+    const d = { did: rid(10), it, n, x: Math.round(x), y: Math.round(y), vx: v(m.vx), vy: v(m.vy), f, by: p.id, bag, at: now, pub: bag && !this.inst ? now + DROP_PRIVATE_MS : now, exp: bag ? now + DROP_LIFE_MS : now + LOOT_LIFE_MS };
     this.pruneDrops(); this.drops.set(d.did, d); this.saveDrops();
     send(p.ws, Object.assign({ t: 'D', ref: typeof m.ref === 'string' ? m.ref.slice(0, 24) : null }, { d: this.dropView(d, p.id) }));
     const s = JSON.stringify({ t: 'D', d: this.dropView(d, null) }); for (const q of this.players.values()) if (q.id !== p.id) send(q.ws, s);
+  }
+  // ---- trading (Hold worlds): ask → accept → both build offers → both accept the same offers → both save → the
+  // website moves the items in one database transaction, using a ticket signed here that names exactly what was agreed.
+  tradeView(tr) { return { t: 'TO', id: tr.id, a: tr.a, b: tr.b, names: tr.names, off: tr.off, ok: tr.ok, ver: tr.ver, go: !!tr.go }; }
+  tradeOut(tr, msg) { const s = JSON.stringify(msg || this.tradeView(tr)); for (const id of [tr.a, tr.b]) { const q = this.players.get(id); if (q) send(q.ws, s); } }
+  tradeEnd(tr, why, by) {
+    if (!tr) return; this.trades.delete(tr.id);
+    for (const id of [tr.a, tr.b]) { const q = this.players.get(id); if (q && q.trade === tr.id) { q.trade = null; if (!by || q.id !== by.id) send(q.ws, { t: 'TX', why, by: by ? by.name : null }); } }
+  }
+  async onTrade(p, t, m) {
+    const now = Date.now(), tr = p.trade ? this.trades.get(p.trade) : null;
+    if (t === 'tq') {                                    // ask someone here to trade
+      const q = this.players.get(String(m.to || '')); if (!q || q === p) return;
+      if (now - (p.lastTq || 0) < 3000) return; p.lastTq = now;
+      if (p.trade || q.trade) return send(p.ws, { t: 'TX', why: 'busy', by: q.name });
+      (q.tqFrom || (q.tqFrom = new Map())).set(p.id, now);
+      return send(q.ws, { t: 'TQ', from: p.id, name: p.name });
+    }
+    if (t === 'ta') {                                    // accept someone's request
+      const a = this.players.get(String(m.from || '')); if (!a || !p.tqFrom || !(now - (p.tqFrom.get(a.id) || 0) < 90e3)) return;
+      p.tqFrom.delete(a.id);
+      if (a.trade || p.trade) return send(p.ws, { t: 'TX', why: 'busy', by: a.name });
+      const n = { id: rid(12), a: a.id, b: p.id, names: { [a.id]: a.name, [p.id]: p.name }, off: { [a.id]: { i: {}, g: 0 }, [p.id]: { i: {}, g: 0 } }, ok: {}, rdy: {}, ver: 0, at: now };
+      this.trades.set(n.id, n); a.trade = p.trade = n.id; return this.tradeOut(n);
+    }
+    if (!tr) return;
+    if (t === 'tx') return this.tradeEnd(tr, 'cancelled', p);
+    if (t === 'tu' && !tr.go) {                         // change my offer: up to 12 kinds of items and some gold
+      const i = {}; let k = 0;
+      for (const [id, n] of Object.entries(m.i && typeof m.i === 'object' ? m.i : {})) { if (k >= 12) break; if (/^[a-z0-9_]{1,32}$/.test(id) && Number.isInteger(n) && n > 0 && n <= 1e7) { i[id] = n; k++; } }
+      const g = Number.isInteger(m.g) && m.g >= 0 && m.g <= 1e10 ? m.g : 0;
+      tr.off[p.id] = { i, g }; tr.ver++; tr.ok = {}; tr.at = now; return this.tradeOut(tr);
+    }
+    if (t === 'tk' && !tr.go && m.ver === tr.ver) {     // accept the offers as they are now
+      tr.ok[p.id] = tr.ver;
+      if (tr.ok[tr.a] === tr.ver && tr.ok[tr.b] === tr.ver) { tr.go = true; this.tradeOut(tr); return this.tradeOut(tr, { t: 'TR', id: tr.id }); }
+      return this.tradeOut(tr);
+    }
+    if (t === 'tr' && tr.go) {                           // I've saved: when both have, the first player sends the trade to the website
+      tr.rdy[p.id] = 1; if (!(tr.rdy[tr.a] && tr.rdy[tr.b]) || tr.sent) return; tr.sent = true;
+      const side = id => ({ id, name: tr.names[id], i: tr.off[id].i, g: tr.off[id].g });
+      const ticket = await signToken({ iss: 'lanternhold-trade', tid: tr.id, a: side(tr.a), b: side(tr.b), exp: Math.floor(now / 1000) + 60 }, this.env.RT_SECRET);
+      const a = this.players.get(tr.a), b = this.players.get(tr.b);
+      if (a) send(a.ws, { t: 'TG', id: tr.id, ticket }); if (b) send(b.ws, { t: 'TW', id: tr.id });
+      return;
+    }
+    if (t === 'td' && tr.sent && p.id === tr.a) {        // the website's answer
+      const r = m.revs && typeof m.revs === 'object' ? m.revs : {};
+      this.tradeOut(tr, { t: 'TD', id: tr.id, ok: !!m.ok, revs: { [tr.a]: Number.isInteger(r.a) ? r.a : null, [tr.b]: Number.isInteger(r.b) ? r.b : null }, off: tr.off, a: tr.a, b: tr.b, why: typeof m.why === 'string' ? m.why.slice(0, 140) : null });
+      this.trades.delete(tr.id); for (const id of [tr.a, tr.b]) { const q = this.players.get(id); if (q && q.trade === tr.id) q.trade = null; }
+    }
   }
   // ---- shared trees (Hold worlds): every log anyone cuts comes off the same stack; at 0 the tree falls and regrows ----
   tree(i, kind) { let t = this.trees.get(i); if (!t) { const k = TREE_TYPES[kind] ? kind : 'oak'; t = { i, kind: k, left: treeType(k).logs, until: 0 }; this.trees.set(i, t); }
@@ -457,6 +518,7 @@ export class Room {
     if (t === 'drop') return this.onDrop(p, m);
     if (t === 'take') return this.onTake(p, m);
     if (t === 'chop') return this.onChop(p, m);
+    if (TRADE_MSG.has(t)) return this.inst ? undefined : this.onTrade(p, t, m);
     if (!this.inst) return;
     if (t === 'sw') {   // a swing in a party dungeon: everyone else sees the blade, the damage numbers and the ore chips
       const now = Date.now(); if (now - (p.lastSw || 0) < 120) return; p.lastSw = now;
