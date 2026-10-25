@@ -227,7 +227,10 @@ try {
     r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't5', a: side('trader', 'Trader', {}, 0), b: side('buyer', 'Buyer', {}, 999) }) } });
     ok(r.status === 409 && r.data.error === 'missing', 'or take more gold than they have');
     r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't6', a: side('trader', 'Trader', { partyhat_helm: 1 }, 0), b: side('buyer', 'Buyer', {}, 0) }) } });
-    ok(r.status === 409 && /can’t be traded/.test(r.data.msg), 'bound items and Goal Relics can’t be traded'); }
+    ok(r.status === 409 && /can’t be traded/.test(r.data.msg), 'bound items and Goal Relics can’t be traded');
+    ok((await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't7', a: side('trader', 'Trader', {}, 0), b: side('buyer', 'Buyer', {}, 0) }) } })).data.error === 'empty', 'an empty trade is refused');
+    r = await x.req('trade', { method: 'POST', body: { ticket: await tk({ tid: 't8', a: side('trader', 'Trader', { wheat_seed: 1 }, 0), b: side('buyer', 'Buyer', {}, 0) }) } });
+    ok(r.status === 200, 'a one-sided trade (a gift) goes through'); }
 
   console.log('Moderation');
   { const { jwtVerify } = await import('jose'); const vk = generatePrivateKey(), v = new Client(vk); await v.signIn(); await v.req('hero', { method: 'POST', body: { name: 'Villain' } });
