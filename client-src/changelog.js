@@ -1,8 +1,12 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.8',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.9',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.9',date:'2026-10-25',title:'XP bars',notes:[
+    'A thin XP strip along the bottom of your health bar shows progress in whatever you’re training, combat included, in that skill’s colour.',
+    'Each time you gain XP, the goals pill briefly shows the skill, its level, a mini bar and how much XP is left to the next level. Tap it to open Skills.',
+    'The Skills tab now shows Combat too, and every skill shows XP left, progress (like 65 / 83) and a percentage. The skill you’re training is marked.']},
   {v:'0.8.8',date:'2026-10-25',title:'Right-click to trade',notes:[
     'On a computer, right-click another player in the Hold and choose Trade.',
     'On phones, trades start from Social → Nearby → Trade.']},

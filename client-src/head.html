@@ -52,7 +52,15 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 /* HUD */
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(var(--st) + 8px) calc(var(--sr) + 10px) 0 calc(var(--sl) + 10px);display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:2}
 .card{padding:6px 8px;border-radius:2px}
-#vit{flex:1;max-width:260px;display:grid;gap:5px}
+#vit{flex:1;max-width:260px;display:grid;gap:5px;position:relative;overflow:hidden}
+/* XP: a thin strip along the bottom of the health card for the skill you're training */
+#xpb{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(10,12,20,.75)}
+#xpb i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--green);box-shadow:0 0 6px currentColor;transition:width .35s ease-out}
+.land #guide.xp{max-width:min(230px,calc(50vw - 150px))}
+#guide.xp::before{display:none}#guide.xp{white-space:nowrap}#guide.xp .ic{width:16px;height:16px;vertical-align:-3px;margin-right:5px;image-rendering:pixelated}
+#guide.xp b{font-weight:600}#guide.xp small{color:#a9bdcc;font-size:.9em}
+.skl.cur{box-shadow:inset 3px 0 0 var(--gold)}.skl .trn{color:#a7f070;font-size:.75em;margin-left:4px}
+.xpm{display:inline-block;position:relative;width:46px;height:5px;background:var(--ink);margin:0 6px 1px;vertical-align:middle;box-shadow:0 0 0 1px rgba(86,108,134,.6)}.xpm i{position:absolute;left:0;top:0;bottom:0}
 .top{display:flex;justify-content:space-between;gap:8px;font-size:18px;color:var(--muted)}.top span:first-child{color:var(--text);font-weight:600}
 #where{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar{position:relative;height:14px;background:var(--ink);border:1px solid var(--ink)}
