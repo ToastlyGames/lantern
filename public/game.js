@@ -596,8 +596,12 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.8',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.9',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.9',date:'2026-10-25',title:'XP bars',notes:[
+    'A thin XP strip along the bottom of your health bar shows progress in whatever you’re training, combat included, in that skill’s colour.',
+    'Each time you gain XP, the goals pill briefly shows the skill, its level, a mini bar and how much XP is left to the next level. Tap it to open Skills.',
+    'The Skills tab now shows Combat too, and every skill shows XP left, progress (like 65 / 83) and a percentage. The skill you’re training is marked.']},
   {v:'0.8.8',date:'2026-10-25',title:'Right-click to trade',notes:[
     'On a computer, right-click another player in the Hold and choose Trade.',
     'On phones, trades start from Social → Nearby → Trade.']},
@@ -1163,7 +1167,7 @@ function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.la
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
     setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
-function gainXp(n){S.xp+=n;while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;P.hp=maxHp();toast('Level '+S.lvl+'! Max HP '+maxHp(),'good');if(S.lvl%5===0)MP.feed('level',String(S.lvl));sfx('level');buzz(60);puff(P.x,P.y-8,'#ffcd75',16);}}
+function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;P.hp=maxHp();toast('Level '+S.lvl+'! Max HP '+maxHp(),'good');if(S.lvl%5===0)MP.feed('level',String(S.lvl));sfx('level');buzz(60);puff(P.x,P.y-8,'#ffcd75',16);}}
 function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
   shake=!SET.shake?0:3;if(src){const a=Math.atan2(P.y-src.y,P.x-src.x);for(let i=0;i<6;i++)moveBody(P,Math.cos(a)*1.5,Math.sin(a)*1.5,4);}
   if(P.hp<=0)die();}
@@ -1244,7 +1248,7 @@ function summary(title,lead,got,lost,head){openSheet(`<h2>${title}</h2><p class=
 
 // ---------- skills ----------
 const lvlOf=sk=>levelFor(S.skills[sk]||0);
-function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf(sk);S.skills[sk]=Math.min(200e6,(S.skills[sk]||0)+n);const after=lvlOf(sk);
+function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf(sk);S.skills[sk]=Math.min(200e6,(S.skills[sk]||0)+n);const after=lvlOf(sk);xpShow(sk);
   if(after>before){toast(SKILLS[sk].n+' level '+after+'!','good');if(after%10===0||after===99)MP.feed('skill',SKILLS[sk].n+' '+after);sfx('level');buzz(60);puff(P.x,P.y-10,SKILLS[sk].c,16);floatText(P.x,P.y-34,SKILLS[sk].n+' '+after+'!',SKILLS[sk].c);}return n;}
 // ---------- fishing ----------
 let FISHING=null;
@@ -1408,8 +1412,19 @@ function openGate(){
   $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>MP.delve(+b.dataset.go));
   if($('toBank'))$('toBank').onclick=openBank;if($('pack'))$('pack').onclick=()=>{for(const id of ['oil','bread','stew','pondfin'])withdraw(id,0);save();sfx('pick');openGate();};
 }
+// ---- XP: the skill you're training shows as a thin strip under your health, and for a few seconds after each gain
+// the goals pill turns into "Fishing 12 · ▬▬ · 230 xp to 13" (tap it for the Skills tab). Combat counts too.
+let xpTipT=0,xpLast=null;
+function xpInfo(k){if(k==='combat'){const need=xpNeed(S.lvl);return {n:'Combat',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.lvl,p:S.xp/need,left:need-S.xp,max:false};}
+  const l=lvlOf(k),xp=S.skills[k]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)];return {n:SKILLS[k].n,c:SKILLS[k].c,icon:SKILLS[k].icon,l,p:l>=99?1:(xp-a)/(b-a),left:Math.ceil(b-xp),max:l>=99};}
+function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb'),g=$('guide');xpLast=k;
+  bar.hidden=false;f.style.width=Math.max(2,Math.round(x.p*100))+'%';f.style.background=x.c;f.style.color=x.c;bar.title=x.n;
+  const land=document.documentElement.classList.contains('land');
+  g.innerHTML=`${iconImg(x.icon)}<b>${x.n} ${x.l}</b>${land?'':`<i class="xpm"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i>`}<small>${x.max?'max level':(land?' · ':'')+fmt(x.left)+' xp to '+(x.l+1)}</small>`;
+  g.classList.add('xp');g.hidden=false;xpTipT=time+5;}
 function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)],p=l>=99?1:(xp-a)/(b-a);
-  return `<div class="skl">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small></b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':fmt(b-xp)+' xp to level '+(l+1)}</small></span></div>`;}
+  return `<div class="skl${xpLast===sk?' cur':''}">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small>${xpLast===sk?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':`<b>${fmt(Math.ceil(b-xp))}</b> xp to level ${l+1} · ${fmt(Math.floor(xp-a))} / ${fmt(b-a)} (${Math.floor(p*100)}%)`}</small></span></div>`;}
+function combatLine(){const x=xpInfo('combat');return `<div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Combat <em>${x.l}</em>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small><b>${fmt(x.left)}</b> xp to level ${x.l+1} · ${fmt(S.xp)} / ${fmt(xpNeed(S.lvl))} (${Math.floor(x.p*100)}%)</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
 // ---------- timed cooking: each item takes a moment at the Kitchen; Cook All queues them up ----------
@@ -1529,7 +1544,7 @@ function openBag(tab){bagTab=tab||'items';
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="row"><button class="btn alt" id="setO">Settings</button><button class="btn alt" id="gd">Goals</button></div>
    <div class="row"><button class="btn alt" id="reset">Reset progress</button><button class="btn alt" id="out">Sign out</button></div>`;}
-  else if(bagTab==='skills'){body=`<div class="list">${['woodcutting','fishing','farming','cooking','smithing'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
+  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['woodcutting','fishing','farming','cooking','smithing'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
    <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
@@ -1752,6 +1767,7 @@ function migrateGoals(){if(S.flags.goalsv)return;S.flags.goalsv=true;let n=0,g0=
 function nextGoal(){for(const [c] of GOAL_CATS){if(c==='secret')continue;const g=GOALS.find(g=>g.cat===c&&!S.goals[g.id]);if(g)return g;}return null;}
 let guideT=0;
 function updateGuide(dt){guideT-=dt;if(guideT>0)return;guideT=.8;checkBankGrowth();const el=$('guide');
+  if(time<xpTipT)return;if(el.classList.contains('xp')){el.classList.remove('xp');el.textContent='';}
   if(!S.flags.goalsv)migrateGoals();
   if(MP.party&&scene==='delve'&&MP.shared())S.flags.partied=true;if(MP.friends&&MP.friends.friends&&MP.friends.friends.length)S.flags.friend=true;
   let k=0;for(const g of GOALS)if(!S.goals[g.id]&&g.done&&g.done()){completeGoal(g);if(++k>=2)break;}
@@ -1802,7 +1818,7 @@ function secretInput(mx,my,l){const d=l>.5?(Math.abs(mx)>Math.abs(my)?(mx>0?'rig
       const ring=['up','right','down','left'];let turns=0,dirn=0;for(let i=1;i<spinLog.length;i++){const a=ring.indexOf(spinLog[i-1][0]),b=ring.indexOf(spinLog[i][0]),st=(b-a+4)%4;
         const s2=st===1?1:st===3?-1:0;if(s2&&(dirn===0||s2===dirn)){dirn=s2;turns++;}else{turns=s2?1:0;dirn=s2;}}
       if(turns>=12)secret('dizzy');}}}
-$('guide').addEventListener('click',()=>{if(started)openGuide();});
+$('guide').addEventListener('click',()=>{if(!started)return;if($('guide').classList.contains('xp'))openSkills();else openGuide();});
 
 // ---------- simulated town ----------
 // ---------- update ----------
