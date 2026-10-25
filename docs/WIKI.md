@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.8 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.9 · updated October 25, 2026
 
 ## Welcome
 
@@ -82,7 +82,7 @@ The Hold is the safe town where everyone in your world lives and trains. Nothing
 
 ## Skills
 
-Every skill goes from level 1 to 99. Early levels come in minutes, and the last ones take a very long time. Open Skills (K) to see your levels and how much XP you need for the next one.
+Every skill goes from level 1 to 99. Early levels come in minutes, and the last ones take a very long time. Open Skills (K) to see every level, the XP left to the next one and your progress. While you play, a thin strip under your health bar shows progress in whatever you're training, and each time you gain XP the goals pill briefly shows the skill, its level and the XP left (tap it to open Skills).
 
 | Level | Total XP needed |
 | --- | --- |
