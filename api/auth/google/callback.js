@@ -1,4 +1,5 @@
 // GET /api/auth/google/callback?code&state: Google sends the player back here.
+import { banOf } from '../../../lib/mod.js';
 import { db } from '../../../lib/db.js';
 import { appDomain } from '../../../lib/http.js';
 import { makeSession, sessionCookie } from '../../../lib/session.js';
@@ -22,7 +23,8 @@ export default async function handler(req, res) {
       return back(res, r.ok ? 'linked' : r.taken ? 'taken' : 'has');
     }
     const acct = await db().accountByGoogle(who.sub, who.email);  // signing in
-    if (acct.banned) return back(res, 'banned');
+    const ban = banOf(acct);
+    if (ban) return back(res, ban.perm ? 'banned' : 'banned&until=' + encodeURIComponent(ban.until));
     back(res, 'in', sessionCookie(await makeSession(acct.id, acct.wallet || null)));
   } catch (e) { console.error(e); back(res, 'error'); }
 }
