@@ -596,8 +596,15 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.6',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.8',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.8',date:'2026-10-25',title:'Right-click to trade',notes:[
+    'On a computer, right-click another player in the Hold and choose Trade.',
+    'On phones, trades start from Social → Nearby → Trade.']},
+  {v:'0.8.7',date:'2026-10-25',title:'Gifts',notes:[
+    'You can give items or gold to another player for nothing in return: start a trade, add what you want to give, and both accept.',
+    'The trade window clearly marks a gift, so nobody is surprised by getting nothing back.',
+    'A trade with nothing on either side can’t be accepted.']},
   {v:'0.8.6',date:'2026-10-25',title:'Smoother on Android',notes:[
     'Fixed the joystick getting stuck on Android phones, including inside wallet-app browsers.',
     'Dragging the joystick no longer lets the browser grab the swipe (no address bar or pull-down popping in mid-move).',
@@ -2297,6 +2304,7 @@ function openTrade(){const t=MP.trade;if(!t)return;const me=MP.me(),them=t.a===m
   const row=(id,n,rm)=>`<div class="trrow">${iconImg(id)}<span>${chatEsc(ITEMS[id].n)} <b>×${fmt(n)}</b></span>${rm?`<button class="btn alt sm" data-trm="${id}">Remove</button>`:''}</div>`;
   const list=(o,rm)=>(Object.entries(o.i).map(([id,n])=>ITEMS[id]?row(id,n,rm):'').join('')+(o.g?`<div class="trrow">${iconImg('gold')}<span><b>${fmt(o.g)}</b> gold</span></div>`:''))||'<p class="lead small">Nothing yet.</p>';
   const wait=Date.now()-(MP.tradeChanged||0)<2500,iOk=t.ok[me]===t.ver,tOk=t.ok[them]===t.ver,busy=t.go||MP.tradeBusy;
+  const none=o=>!o.g&&!Object.keys(o.i).length,empty=none(mine)&&none(theirs),gift=!empty&&(none(mine)||none(theirs));
   const pick=MP.tradePick&&!busy?Object.entries(S.bank).filter(([id,n])=>tradable(id)&&n>(mine.i[id]||0)).map(([id,n])=>{const left=n-(mine.i[id]||0);
     return `<div class="trrow">${iconImg(id)}<span>${chatEsc(ITEMS[id].n)} <small>${fmt(left)} left</small></span><button class="btn alt sm" data-tad="${id}" data-n="1">+1</button>${left>1?`<button class="btn alt sm" data-tad="${id}" data-n="${left}">All</button>`:''}</div>`;}).join('')||'<p class="lead small">Nothing else in your bag can be traded.</p>':'';
   openSheet(`<div id="tradeSheet"></div><h2>Trade with ${name}</h2>
@@ -2304,8 +2312,9 @@ function openTrade(){const t=MP.trade;if(!t)return;const me=MP.me(),them=t.a===m
    <h3>You offer ${iOk?'<small class="ok">✓ accepted</small>':''}</h3><div class="trbox">${list(mine,!busy)}</div>
    ${busy?'':`<div class="row"><button class="btn alt" id="trPick">${MP.tradePick?'Done adding':'Add items from your bag'}</button></div>${pick?`<div class="trbox">${pick}</div>`:''}
    <div class="setrow col"><span>Gold <small>(you have ${fmt(S.gold)})</small></span><div class="row" style="margin-top:4px"><input id="trG" type="number" min="0" max="${S.gold}" value="${mine.g||''}" placeholder="0" class="trg"><button class="btn alt sm" id="trGs">Set gold</button></div></div>`}
-   <p class="lead small">${busy?'<b>Completing the trade…</b> Both of you are saved, then the items move for both at once.':'Both of you must accept. Any change to either offer resets both accepts, so check what you’re getting before you accept.'}</p>
-   ${busy?'':`<div class="row"><button class="btn alt" id="trX">Cancel</button><button class="btn" id="trOk" ${iOk||wait?'disabled':''}>${iOk?'Waiting for '+name+'…':wait?'Check the offers…':'Accept trade'}</button></div>`}`);
+   ${gift&&!busy?`<p class="lead small trgift">${none(mine)?`<b>A gift to you:</b> ${name} gets nothing back.`:`<b>A gift:</b> you get nothing back from ${name}.`}</p>`:''}
+   <p class="lead small">${busy?'<b>Completing the trade…</b> Both of you are saved, then the items move for both at once.':empty?'Add an item or some gold to start. One side can be empty (a gift), but not both.':'Both of you must accept. Any change to either offer resets both accepts, so check what you’re getting before you accept.'}</p>
+   ${busy?'':`<div class="row"><button class="btn alt" id="trX">Cancel</button><button class="btn" id="trOk" ${iOk||wait||empty?'disabled':''}>${iOk?'Waiting for '+name+'…':empty?'Nothing to trade yet':wait?'Check the offers…':gift&&none(mine)?'Accept gift':'Accept trade'}</button></div>`}`);
   if(busy)return;
   const q=s=>$('sheet').querySelectorAll(s);
   $('trX').onclick=()=>{NET.send({t:'tx'});tradeClear();};
@@ -2351,11 +2360,27 @@ async function openMod(id,name,arm){if(!ADMIN)return;
     NET.lsend({t:'mod',act,to:q.data.id,until:q.data.ban&&q.data.ban.until||null,perm:!!(q.data.ban&&q.data.ban.perm)});
     toast(act==='kick'?st.name+' was kicked':act==='ban'?st.name+' is banned '+banWhen(q.data.ban):act==='mute'?st.name+' is muted':st.name+' is unmuted','good');
     if(act==='mute'||act==='unmute')openMod(id,name);else closeSheet();});}
+// right-click a player (computers): a small menu with Trade (in the Hold), and Moderate for admins
+function playerMenu(o,x,y){closeMenu();const items=[];
+  if(scene==='hold'&&MP.room&&MP.room[0]==='w')items.push(['trade',MP.trade?'Trading…':'Trade',!!MP.trade]);
+  if(ADMIN&&!o.adm)items.push(['mod','Moderate',false]);
+  if(!items.length)return;
+  const m=document.createElement('div');m.id='pmenu';m.className='px';m.setAttribute('role','menu');
+  m.innerHTML=`<b>${chatEsc(o.name)}</b>`+items.map(([k,l,dis])=>`<button class="btn alt sm" role="menuitem" data-pm="${k}" ${dis?'disabled':''}>${l}</button>`).join('');
+  document.body.appendChild(m);const r=m.getBoundingClientRect();
+  m.style.left=Math.max(6,Math.min(innerWidth-r.width-6,x))+'px';m.style.top=Math.max(6,Math.min(innerHeight-r.height-6,y))+'px';
+  m.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{closeMenu();
+    if(b.dataset.pm==='trade'){if(!OTH.has(o.id))return toast(o.name+' isn’t here any more','bad');NET.send({t:'tq',to:o.id});toast('Trade request sent to '+o.name);}
+    else openMod(o.id,o.name);});
+  setTimeout(()=>{addEventListener('pointerdown',menuAway,true);addEventListener('keydown',menuKey,true);},0);}
+function menuAway(e){if(!e.target.closest('#pmenu'))closeMenu();}
+function menuKey(e){if(e.key==='Escape')closeMenu();}
+function closeMenu(){const m=$('pmenu');if(m)m.remove();removeEventListener('pointerdown',menuAway,true);removeEventListener('keydown',menuKey,true);}
 // which player is under the pointer (screen → world)
 function otherAt(cx,cy){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,wx=cx/k+camX,wy=cy/k+camY;let best=null,bd=14;
   for(const o of OTH.values()){const d=Math.hypot(o.x-wx,o.y-8-wy);if(d<bd){bd=d;best=o;}}return best;}
 {let lp=null;const cvEl=$('cv');
-  cvEl.addEventListener('contextmenu',e=>{if(!ADMIN||!started)return;const o=otherAt(e.clientX,e.clientY);if(o){e.preventDefault();openMod(o.id,o.name);}});
+  cvEl.addEventListener('contextmenu',e=>{if(!started||!$('sheet').hidden)return;const o=otherAt(e.clientX,e.clientY);if(o){e.preventDefault();playerMenu(o,e.clientX,e.clientY);}});
   cvEl.addEventListener('touchstart',e=>{if(!ADMIN||!started||e.touches.length!==1)return;const t=e.touches[0],o=otherAt(t.clientX,t.clientY);if(!o)return;
     lp={x:t.clientX,y:t.clientY,o,tm:setTimeout(()=>{if(lp){buzz(30);openMod(lp.o.id,lp.o.name);lp=null;}},600)};},{passive:true});
   const end=e=>{if(lp&&(e.type!=='touchmove'||Math.hypot(e.touches[0].clientX-lp.x,e.touches[0].clientY-lp.y)>10)){clearTimeout(lp.tm);lp=null;}};
