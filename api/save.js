@@ -5,6 +5,7 @@
 import { db } from '../lib/db.js';
 import { guard, send, fail, body } from '../lib/http.js';
 import { sanitize, plausible } from '../lib/validate.js';
+import { rewardsOn, events, roll } from '../lib/rewards.js';
 
 export default async function handler(req, res) {
   const s = await guard(req, res, { methods: ['POST'] });
@@ -30,6 +31,15 @@ export default async function handler(req, res) {
     }
     const rev = await d.casSave(s.accountId, cur.rev, next);
     if (rev === null) { const now = await d.state(s.accountId); return fail(res, 409, 'stale', { save: { data: sanitize(now.save.data, { admin, hat }), rev: now.save.rev } }); }
-    send(res, 200, { rev });
+    // token rewards: rolled here, on the server, from what changed since the last save (admins don't earn)
+    let tok = null;
+    if (rewardsOn() && !admin) {
+      const ev = events(prev, next, dt), r = roll(ev, next.deepest);
+      if (r.units > 0) {
+        try { const e = await d.earn(s.accountId, r.units); if (e) tok = { got: +e.got, balance: +e.balance, today: +e.today, cap: +e.cap, resting: !!e.resting, from: Object.keys(r.got) }; }
+        catch (e) { console.error('rewards', e.message || e); }
+      }
+    }
+    send(res, 200, tok ? { rev, tok } : { rev });
   } catch (e) { console.error(e); fail(res, 500, 'server_error'); }
 }

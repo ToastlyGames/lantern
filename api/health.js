@@ -1,5 +1,7 @@
 // GET /api/health: a setup check you can open in a browser (https://your-site/api/health).
 // Reports which settings are present and whether the database is reachable. Never shows secret values.
+import { rewardsOn } from '../lib/rewards.js';
+import { claimsOn, claimContract, signerAddress } from '../lib/claim.js';
 import { db, supabaseUrl, supabaseKey } from '../lib/db.js';
 import { send, appDomain, appDomains, reqHost, hostAllowed } from '../lib/http.js';
 import { xEnabled, callbackUrl } from '../lib/x.js';
@@ -53,5 +55,8 @@ export default async function handler(req, res) {
   const realtime = rtEnabled() && rtReach !== 'ok' ? 'PROBLEM: ' + rtReach : rtEnabled() ? 'ok: players, chat and parties go through ' + rtUrl() : !process.env.RT_URL ? 'MISSING: set RT_URL to your Cloudflare realtime address (see README)' : 'MISSING: set RT_SECRET (the same 64 random characters as on Cloudflare)';
   const google = googleEnabled() ? 'ok: Google sign-in is on. Redirect URI to register in Google Cloud: ' + googleCallback(appDomain(req)) : 'off (optional): add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to turn on Google sign-in';
   const x = xEnabled() ? 'ok: X linking is on. Callback URL to register at developer.x.com: ' + callbackUrl(appDomain(req)) : 'off (optional): add X_CLIENT_ID and X_CLIENT_SECRET to turn on X linking';
-  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, node: process.version });
+  // token rewards: is earning on, and is claiming set up (the signer's address is public: it goes into the vault contract)
+  let rewards = { on: rewardsOn(), claims: claimsOn(), contract: claimContract(), signer: signerAddress() };
+  if (rewards.on) { try { const t = await db().tok('00000000-0000-0000-0000-000000000000'); rewards.pool = t ? +t.pool : null; rewards.ledger = 'ok'; } catch (e) { rewards.ledger = 'run supabase/rewards.sql: ' + (e.message || e); } }
+  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, node: process.version });
 }
