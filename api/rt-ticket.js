@@ -11,6 +11,6 @@ export default async function handler(req, res) {
     const st = await db().state(s.accountId);
     if (!st || st.banned) return fail(res, 403, 'banned');
     if (!st.hero) return fail(res, 404, 'no_hero');
-    send(res, 200, { url: rtUrl(), ticket: await rtTicket(st.hero) });
+    send(res, 200, { url: rtUrl(), ticket: await rtTicket(st.hero, { muted: !!st.muted }) });
   } catch (e) { console.error(e); fail(res, 500, 'server_error'); }
 }
