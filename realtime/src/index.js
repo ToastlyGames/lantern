@@ -430,6 +430,11 @@ export class Room {
     if (t === 'take') return this.onTake(p, m);
     if (t === 'chop') return this.onChop(p, m);
     if (!this.inst) return;
+    if (t === 'sw') {   // a swing in a party dungeon: everyone else sees the blade, the damage numbers and the ore chips
+      const now = Date.now(); if (now - (p.lastSw || 0) < 120) return; p.lastSw = now;
+      const h = Array.isArray(m.h) ? m.h.slice(0, 8).filter(x => Array.isArray(x) && Number.isInteger(x[0]) && Number.isFinite(+x[1])).map(x => [x[0], Math.max(0, Math.min(9999, Math.round(+x[1])))]) : [];
+      return this.all({ t: 'W', id: p.id, d: DIRS.has(m.d) ? m.d : 'down', h, o: Number.isInteger(m.o) && m.o >= 0 && m.o < 5000 ? m.o : -1 }, p.id);
+    }
     const host = this.cfg.host;
     if (HOST_OUT.has(t) && p.id === host) {
       if (t === 'floor' && Number.isInteger(m.f) && m.f > 0 && m.f < 100) { this.cfg.floor = m.f; this.ctx.storage.put('cfg', this.cfg).catch(() => { }); let ch = false; for (const [k, d] of this.drops) if (d.f !== m.f) { this.drops.delete(k); ch = true; } if (ch) this.saveDrops(); }
