@@ -1,8 +1,13 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.2',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.3',season:'Season 0 (Beta)',date:'2026-10-24'};
 const CHANGELOG=[
+  {v:'0.8.3',date:'2026-10-24',title:'Fighting side by side',notes:[
+    'In a party dungeon you now see your partners swing their blades, the damage they deal and the ore they chip.',
+    'When a partner opens a chest, it pops open with their name over it.',
+    'Monster loot is now personal: everyone who hit a monster at least once gets their own roll at its drops, bosses included. Only you see and pick up your loot.',
+    'Chests, ore and glowcaps still drop shared loot for the whole party.']},
   {v:'0.8.2',date:'2026-10-24',title:'The official contract address',notes:[
     'The Bulletin now has a permanent spot at the top for the official token contract address. Tap it to copy it.',
     'Until launch it says the address will be posted there, so you know any address from anywhere else isn\'t ours.',
