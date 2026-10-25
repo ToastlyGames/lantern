@@ -110,6 +110,7 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 button.cell{font-family:inherit;color:inherit;border:0;cursor:pointer}
 /* controls */
 #ctl{position:fixed;left:0;right:0;bottom:0;padding:0 calc(var(--sr) + 14px) calc(var(--sb) + 14px) calc(var(--sl) + 14px);display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;z-index:2}
+.android #ctl{padding-left:calc(var(--sl) + 30px);padding-bottom:calc(var(--sb) + 26px);padding-right:calc(var(--sr) + 22px)}
 #pad{pointer-events:auto;width:128px;height:128px;border-radius:50%;background:rgba(26,28,44,.55);border:2px solid rgba(86,108,134,.6);position:relative;touch-action:none}
 #knob{position:absolute;left:40px;top:40px;width:44px;height:44px;border-radius:50%;background:var(--panel2);border:2px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
 #acts{pointer-events:auto;display:grid;grid-template-columns:auto auto;gap:10px;align-items:end;justify-items:center}
@@ -128,6 +129,8 @@ button.cell{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .rb.sm{width:42px;height:42px}.rb.sm img{width:22px;height:22px}
 #bBag{width:48px;height:48px}
 .safe{list-style:none;padding:0;margin:10px auto 14px;max-width:360px;text-align:left;font-size:17px;color:var(--muted);display:grid;gap:4px}.safe b{color:var(--text)}
+.trbox{background:var(--ink);border:2px solid var(--line);padding:6px 8px;margin:4px 0 8px}.trrow{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:18px}.trrow .ic{width:24px;height:24px}.trrow span{flex:1}.trrow small{color:var(--muted)}.trrow .btn{min-height:34px;padding:4px 10px}h3 small.ok{color:var(--green)}.trg{flex:1;font:inherit;font-size:20px;padding:6px 8px;background:var(--panel2);color:var(--text);border:2px solid var(--line);min-width:0}
+.tokl b{color:#a7f070!important}.tokl .btn{margin-left:auto}.tokl.big{font-size:28px}.earn{margin:4px 0 8px;padding-left:20px;font-size:17px;line-height:1.5}
 .goldline{display:flex;align-items:center;gap:8px;font-size:22px;background:var(--ink);padding:8px 10px;border:2px solid var(--line);margin:4px 0 8px}.goldline .ic{width:24px;height:24px}.goldline b{color:#ffcd75}.goldline em{color:#a7f070;font-style:normal;font-size:16px;margin-left:6px}
 /* landscape + short screens */
 .land #feed{top:calc(var(--st) + 10px);left:50%;right:auto;transform:translateX(-50%);max-width:34vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -339,4 +342,4 @@ small{font-size:17px;color:var(--muted)}
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=73515258d8"></script></body></html>
+<script src="/game.js?v=35a5e564b1"></script></body></html>

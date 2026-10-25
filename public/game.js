@@ -596,8 +596,21 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.3',season:'Season 0 (Beta)',date:'2026-10-24'};
+const BUILD={version:'0.8.6',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.6',date:'2026-10-25',title:'Smoother on Android',notes:[
+    'Fixed the joystick getting stuck on Android phones, including inside wallet-app browsers.',
+    'Dragging the joystick no longer lets the browser grab the swipe (no address bar or pull-down popping in mid-move).',
+    'On Android, the controls sit a little further from the screen edges, away from the back and home swipes.',
+    'The joystick keeps pointing the right way if the screen resizes while you’re moving.']},
+  {v:'0.8.5',date:'2026-10-25',title:'Joystick fix',notes:[
+    'Fixed the joystick sometimes getting stuck on phones after sliding your thumb down off the bottom of the screen, which kept your hero walking.',
+    'The joystick also lets go if you switch apps or the screen locks while you’re moving.']},
+  {v:'0.8.4',date:'2026-10-25',title:'Trading',notes:[
+    'Trade with other players in the Hold: Social → Nearby → Trade.',
+    'Both of you build your offers in a trade window and see each other’s offer live. Both must accept, and any change resets both accepts.',
+    'When both accept, the items and gold move for both of you at the same moment. Goal Relics and the admin party hats can’t be traded.',
+    'In a party dungeon, items you drop from your bag show up for your party right away, and they can pick them up straight away.']},
   {v:'0.8.3',date:'2026-10-24',title:'Fighting side by side',notes:[
     'In a party dungeon you now see your partners swing their blades, the damage they deal and the ore they chip.',
     'When a partner opens a chest, it pops open with their name over it.',
@@ -1010,12 +1023,27 @@ window.addEventListener('keydown',e=>{if(!started||!$('acct').hidden)return;cons
   if((k==='KeyI'||k==='KeyB')&&!e.repeat)openBag();if(k==='KeyH'&&!e.repeat)openHero();if(k==='KeyK'&&!e.repeat)openSkills();if(k==='KeyM'&&!e.repeat)toggleMute();if(k==='Escape')closeSheet();
   if(k.startsWith('Arrow'))e.preventDefault();});
 window.addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyR')retHeld=false;});
-const pad=$('pad'),knob=$('knob');let padId=null,padC={x:0,y:0};
-pad.addEventListener('pointerdown',e=>{padId=e.pointerId;pad.setPointerCapture(e.pointerId);const r=pad.getBoundingClientRect();padC={x:r.left+r.width/2,y:r.top+r.height/2};moveStick(e);});
-pad.addEventListener('pointermove',e=>{if(e.pointerId===padId)moveStick(e);});
-['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,e=>{if(e.pointerId!==padId)return;padId=null;stick={x:0,y:0,on:false};knob.style.transform='';}));
-function moveStick(e){const dx=e.clientX-padC.x,dy=e.clientY-padC.y,l=Math.hypot(dx,dy),max=40,k=Math.min(1,l/max);
+// ---- the joystick ----
+// Fingers use touch events (Android browsers and wallet-app browsers deliver these most reliably, and calling
+// preventDefault stops Chrome from treating a drag as a scroll, pull-down or address-bar gesture); a mouse or pen uses
+// pointer events. The joystick lets go whenever its finger is no longer on the screen, even if the phone never reports
+// the lift (a thumb sliding off the bottom edge into the home or back gesture), and when the game loses focus.
+const pad=$('pad'),knob=$('knob');let padId=null,padTouch=null;
+const padCenter=()=>{const r=pad.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};};   // fresh each time: the address bar can resize the screen mid-drag
+function moveStick(x,y){const c=padCenter(),dx=x-c.x,dy=y-c.y,l=Math.hypot(dx,dy),max=40,k=Math.min(1,l/max);
   stick={x:l?dx/l*k:0,y:l?dy/l*k:0,on:true};knob.style.transform=`translate(${stick.x*max}px,${stick.y*max}px)`;}
+const padRelease=()=>{padId=null;padTouch=null;stick={x:0,y:0,on:false};knob.style.transform='';};
+const findT=(list,id)=>{for(const t of list)if(t.identifier===id)return t;return null;};
+pad.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];if(!t)return;padTouch=t.identifier;padId=null;moveStick(t.clientX,t.clientY);},{passive:false});
+addEventListener('touchmove',e=>{if(padTouch==null)return;const t=findT(e.changedTouches,padTouch);if(!t)return;e.preventDefault();moveStick(t.clientX,t.clientY);},{passive:false,capture:true});
+['touchend','touchcancel'].forEach(n=>addEventListener(n,e=>{if(padTouch!=null&&(findT(e.changedTouches,padTouch)||!findT(e.touches,padTouch)))padRelease();},{passive:true,capture:true}));
+addEventListener('touchstart',e=>{if(padTouch!=null&&!findT(e.touches,padTouch))padRelease();},{passive:true,capture:true});   // a new touch, and the joystick's finger is gone
+pad.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;padId=e.pointerId;try{pad.setPointerCapture(e.pointerId);}catch(x){}moveStick(e.clientX,e.clientY);});
+pad.addEventListener('pointermove',e=>{if(e.pointerId===padId)moveStick(e.clientX,e.clientY);});
+['pointerup','pointercancel','lostpointercapture'].forEach(n=>pad.addEventListener(n,e=>{if(e.pointerId===padId)padRelease();}));
+addEventListener('blur',padRelease);document.addEventListener('visibilitychange',()=>{if(document.hidden)padRelease();});
+// Android: keep the controls a little further from the screen edges, where the back and home swipes start
+if(/Android/i.test(navigator.userAgent))document.documentElement.classList.add('android');
 $('bA').addEventListener('pointerdown',e=>{e.preventDefault();aPressed=true;});
 // Mouse wheel zooms (computers): scroll forward = closer, back = further. One step per notch; trackpads are smoothed.
 let wheelAcc=0,wheelT=0,wheelLast=0;
@@ -1124,7 +1152,7 @@ function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.la
   if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
   if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);}
-  if(e.d.boss){if(hit.includes(me))MP.feed('boss',map.pack.bossName);sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
+  if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
     setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
@@ -1497,17 +1525,17 @@ function openBag(tab){bagTab=tab||'items';
   else if(bagTab==='skills'){body=`<div class="list">${['woodcutting','fishing','farming','cooking','smithing'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
-   <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Trees at the Hold hold 150 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
+   <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
    <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
    <p class="small">Combat level ${S.lvl} · ${S.xp}/${xpNeed(S.lvl)} xp · deepest floor ${S.deepest||'—'}</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
    const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
-   body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>
+   body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
    ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
   openSheet(`<h2>${{hero:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
-  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));
+  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));if($('rewB'))$('rewB').onclick=()=>openRewards();
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
@@ -1536,7 +1564,7 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();r
    <ul class="info">${itemInfo(id).map(t=>`<li>${t}</li>`).join('')}</ul>
    ${itemSlot(id)?`<button class="btn big" id="eqIt">Equip${S.gear[itemSlot(id)]?' (swap with '+ITEMS[gearId(itemSlot(id),S.gear[itemSlot(id)])].n+')':''}</button>`:''}
    ${it.food||it.oil?`<h3>Quick slot</h3><div class="qslots">${S.quick.map((q,j)=>`<button class="qs ${q===id?'on':''}" data-qset="${j}" aria-label="Put in quick slot ${j+1}">${q?`<img alt="" src="${iconOf(q).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>`:''}
-   ${it.keep?'<p class="lead small" style="color:#ff77a8">Goal Relic. Earned only through goals. It can’t be sold, traded or dropped.</p>':`   <h3>Drop</h3><p class="lead small">It lands at your feet. Tap <b>Pick up</b> to take it back. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes. To get gold instead, sell it to Tallow.</p>
+   ${it.keep?'<p class="lead small" style="color:#ff77a8">Goal Relic. Earned only through goals. It can’t be sold, traded or dropped.</p>':`   <h3>Drop</h3><p class="lead small">It lands at your feet. Tap <b>Pick up</b> to take it back. ${scene==='delve'&&MP.shared()?'Your party sees it right away and can pick it up.':'After 30 seconds, other players nearby can see it and pick it up.'} It disappears after 3 minutes. ${scene==='hold'?'To swap items with a player, use Social → Nearby → Trade. To get gold instead, sell it to Tallow.':''}</p>
    ${n>1?`<div class="qty"><span>How many?</span><button class="btn alt sm" id="dm" aria-label="Fewer">−</button><output id="dn">${dropQty}</output><button class="btn alt sm" id="dp" aria-label="More">+</button><button class="btn alt sm" id="dx">All</button></div>`:''}
    <button class="btn big danger" id="drop">${dropArm?`Tap again to drop ${dropQty} ${it.n}`:`Drop ${dropQty>1?dropQty+' ':''}${it.n}`}</button>
 `}
@@ -2116,7 +2144,7 @@ if(window.NET){
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
   NET.onL('kicked',m=>{if(m.mod)return modRemoved(m);OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
-  NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
+  NET.onR('hi',m=>{if(MP.trade)tradeClear();MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
     // chat lives only for this session: nothing said before you signed in is shown, and your log carries over between rooms
     if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
@@ -2136,6 +2164,15 @@ if(window.NET){
   NET.onR('T',onTree);
   NET.onR('muted',onMuted);
   NET.onR('W',peerSwing);
+  NET.onR('TQ',m=>{MP.tradeReqs=(MP.tradeReqs||[]).filter(r=>r.from!==m.from);MP.tradeReqs.push({from:m.from,name:m.name,at:Date.now()});showPrompt();sfx('rare');buzz(40);});
+  NET.onR('TO',m=>{const prev=MP.trade;MP.trade=m;if(!prev||prev.ver!==m.ver)MP.tradeChanged=Date.now();if(!prev||tradeOpen())openTrade();showPrompt();});
+  NET.onR('TR',async()=>{MP.tradeBusy='saving';if(tradeOpen())openTrade();save(true);await ACC.tradeLock();MP.tradeLocked=true;clearTimeout(MP.tradeWD);
+    MP.tradeWD=setTimeout(()=>{if(MP.tradeLocked){tradeClear();toast('The trade timed out. Nothing changed.','bad');}},30000);NET.send({t:'tr'});});
+  NET.onR('TG',async m=>{MP.tradeBusy='sending';if(tradeOpen())openTrade();const r=await ACC.api.call(null,'trade',{method:'POST',body:{ticket:m.ticket}});
+    NET.send({t:'td',ok:!!r.ok,revs:r.ok?r.data.revs:null,why:r.ok?null:(r.data.msg||'The trade didn’t go through.')});});
+  NET.onR('TW',()=>{MP.tradeBusy='sending';if(tradeOpen())openTrade();});
+  NET.onR('TD',m=>tradeDone(m));
+  NET.onR('TX',m=>{const was=MP.trade;tradeClear();if(m.why==='busy')toast((m.by||'They')+' is busy right now.','bad');else if(was)toast((m.by||'The other player')+(m.why==='left'?' left, so the trade was cancelled.':' cancelled the trade.'),'bad');});
   NET.onR('F',m=>{const o=OTH.get(m.id);if(o)o.fish=fishOf(m.f);});
   NET.onR('say',m=>{const msg={id:MP.room+':'+m.n,name:m.name,text:m.text,at:m.at,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatLog.length>60)MP.chatLog.shift();if(MP.chatCb)MP.chatCb([msg]);
     const o=OTH.get(m.id);if(o){o.say=m.text;o.sayT=4.5;}});
@@ -2182,13 +2219,104 @@ MP.friendDo=async(action,name)=>{const r=await ACC.api.call(null,'friends',{meth
   refreshSocial();return true;};
 // ---- prompts: party invites and "your party went into the Depths" ----
 function showPrompt(){socBadge();const el=$('invite');MP.invites=MP.invites.filter(i=>Date.now()-i.at<85000);const inv=MP.invites[0],pd=MP.prompt;
-  if(!inv&&!pd){el.hidden=true;return;}el.hidden=false;
+  MP.tradeReqs=(MP.tradeReqs||[]).filter(r=>Date.now()-r.at<85000&&OTH.has(r.from));const tq=MP.tradeReqs[0],tOpen=MP.trade&&!tradeOpen();
+  if(!inv&&!pd&&!tq&&!tOpen){el.hidden=true;return;}el.hidden=false;
+  if(tOpen){const t=MP.trade,o=t.names[t.a===MP.me()?t.b:t.a];el.innerHTML=`<span>Trading with <b>${chatEsc(o)}</b></span><button class="btn sm" id="invY">Open</button><button class="btn alt sm" id="invN">Cancel trade</button>`;
+    $('invY').onclick=()=>openTrade();$('invN').onclick=()=>{NET.send({t:'tx'});tradeClear();};return;}
+  if(tq&&!inv){el.innerHTML=`<span><b>${chatEsc(tq.name)}</b> wants to trade with you</span><button class="btn sm" id="invY">Trade</button><button class="btn alt sm" id="invN">No thanks</button>`;
+    $('invY').onclick=()=>{NET.send({t:'ta',from:tq.from});MP.tradeReqs.shift();showPrompt();};$('invN').onclick=()=>{MP.tradeReqs.shift();showPrompt();};
+    clearTimeout(MP.invT);MP.invT=setTimeout(showPrompt,86000);return;}
   if(inv){el.innerHTML=`<span><b>${chatEsc(inv.name)}</b> invited you to their party</span><button class="btn sm" id="invY">Join</button><button class="btn alt sm" id="invN">No thanks</button>`;
     $('invY').onclick=()=>{NET.lsend({t:'accept',from:inv.from});MP.invites.shift();showPrompt();};$('invN').onclick=()=>{NET.lsend({t:'decline',from:inv.from});MP.invites.shift();showPrompt();};
     clearTimeout(MP.invT);MP.invT=setTimeout(showPrompt,86000);return;}
   el.innerHTML=`<span><b>${chatEsc(pd.by)}</b> led your party into floor ${pd.floor}</span><button class="btn sm" id="invY">Join them</button><button class="btn alt sm" id="invN">Later</button>`;
   $('invY').onclick=()=>MP.enterInst(pd.room,pd.floor,pd.seed);$('invN').onclick=()=>{MP.prompt=null;showPrompt();};}
 function hidePrompt(){if(!MP.invites.length&&!MP.prompt)$('invite').hidden=true;else showPrompt();}
+// ---- token rewards (Season 1) ----
+// The server rolls rewards from what you do (kills, chests, bosses, and now and then fish, logs and crops) and keeps
+// your balance; this just shows it. Claiming sends it to your wallet (see openRewards).
+const tokSym=()=>window.LH_TOKEN&&LH_TOKEN.symbol?'$'+LH_TOKEN.symbol:'tokens';
+const fmtTok=n=>(+n||0).toLocaleString(undefined,{maximumFractionDigits:n>=10000?0:2});
+let tokNote={rest:'',cap:''};
+window.LH_onTok=t=>{const T0=window.LH_TOK||{};window.LH_TOK=Object.assign({},T0,{balance:t.balance,today:t.today,cap:t.cap,earned:(T0.earned||0)+(t.got||0)});
+  if(t.got>0){floatText(P.x,P.y-30,'+'+fmtTok(t.got)+' '+tokSym(),'#a7f070');sfx(t.from&&t.from.some(k=>k==='mother'||k==='knight')?'rare':'coin');
+    if(t.from&&t.from.some(k=>k==='mother'||k==='knight'))toast('Boss reward: +'+fmtTok(t.got)+' '+tokSym(),'rare');}
+  const d=new Date().toISOString().slice(0,10);
+  if(t.today>=t.cap&&tokNote.cap!==d){tokNote.cap=d;toast('You’ve earned today’s full share of rewards. More tomorrow (midnight UTC).','good');}
+  else if(t.resting&&tokNote.rest!==d){tokNote.rest=d;toast('Today’s rewards are all handed out. The vault refills at midnight UTC.');}
+  if(!$('sheet').hidden&&$('rewSheet'))openRewards(true);};
+function tokLine(){const t=window.LH_TOK;if(!t)return '';
+  return `<div class="goldline tokl"><img class="ic" src="/favicon-32.png?v=2" alt=""><span><b>${fmtTok(t.balance)}</b> ${chatEsc(tokSym())} <em>rewards</em></span><button class="btn alt sm" id="rewB">Rewards</button></div>`;}
+function openRewards(fresh){const t=window.LH_TOK;if(!t)return;if(!fresh)refreshRewards();const sym=chatEsc(tokSym()),pct=t.cap?Math.min(100,Math.round(t.today/t.cap*100)):0;
+  openSheet(`<div id="rewSheet"></div><h2>Rewards</h2>
+   <div class="goldline tokl big"><img class="ic" src="/favicon-32.png?v=2" alt=""><span><b>${fmtTok(t.balance)}</b> ${sym} <em>ready to claim</em></span></div>
+   <h3>Today <small>${fmtTok(t.today)} / ${fmtTok(t.cap)} ${sym}</small></h3><div class="xpb"><i style="width:${pct}%;background:#a7f070"></i></div>
+   <p class="lead small">Everyone can earn up to 1% of the day’s rewards each day. Resets at midnight UTC.</p>
+   <h3>How you earn</h3><ul class="earn"><li><b>Bosses</b> always pay out</li><li><b>Chests</b> often</li><li><b>Monsters</b> you hit, now and then (deeper floors pay more)</li><li><b>Fishing, woodcutting and farming</b> once in a while</li></ul>
+   <h3>The rewards vault</h3><p class="lead small">${t.pool!=null?fmtTok(t.pool)+' '+sym+' left in the vault. ':''}Each day hands out 0.25% of what’s left, so rewards slowly get smaller as the vault empties and it lasts a long time. Every claim burns 5% and sends 5% back into the vault.</p>
+   ${claimBox()}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;wireClaim();}
+// claiming: one transaction from the wallet linked to your hero (the server signs a voucher, the vault pays it)
+let REW=null,claimV=null;
+async function refreshRewards(){const r=await ACC.api.call(null,'rewards');if(!r.ok||!r.data.on)return;REW=r.data;if(r.data.tok)window.LH_TOK=Object.assign({},window.LH_TOK||{},r.data.tok);
+  if(!$('sheet').hidden&&$('rewSheet'))openRewards(true);}
+function claimBox(){const c=REW&&REW.claims,t=window.LH_TOK||{},sym=chatEsc(tokSym());
+  if(!REW)return '<p class="lead small">Loading…</p>';
+  if(!c)return '<p class="lead small"><b>Claiming opens soon.</b> Your rewards are saved to your account until then.</p>';
+  if(claimV){const v=claimV;return `<div class="soon"><b>Claim ${fmtTok(v.gross)} ${sym}</b><ul><li>You receive <b>${fmtTok(v.net)}</b></li><li>${fmtTok(v.burn)} burned (5%)</li><li>${fmtTok(v.recycle)} back into the vault (5%)</li></ul></div>
+    <p class="lead small">Your wallet (${chatEsc(v.wallet.slice(0,6)+'…'+v.wallet.slice(-4))}) will ask you to confirm one transaction on Robinhood Chain. It costs a small gas fee in ETH.</p>
+    <button class="btn big" id="clGo">Open my wallet</button><button class="btn alt big" id="clNo">Not now</button>`;}
+  const can=t.balance>=c.min&&S.lvl>=c.minLevel;
+  return `<h3>Claim</h3><p class="lead small">Send your rewards to your wallet. 90% is yours; 5% is burned and 5% goes back into the vault. ${S.lvl<c.minLevel?`Reach combat level ${c.minLevel} to claim. `:''}${t.balance<c.min?`You can claim from ${fmtTok(c.min)} ${sym}.`:''}</p>
+   <button class="btn big" id="clB" ${can?'':'disabled'}>Claim ${fmtTok(t.balance)} ${sym}</button>`;}
+function wireClaim(){const b=$('clB');
+  if(b)b.onclick=async()=>{b.disabled=true;b.textContent='Preparing…';const r=await ACC.api.call(null,'rewards',{method:'POST',body:{action:'voucher'}});
+    if(!r.ok){toast(r.data.msg||'Couldn’t start the claim. Try again.','bad');return openRewards(true);}claimV=r.data;openRewards(true);};
+  if($('clNo'))$('clNo').onclick=()=>{claimV=null;openRewards(true);};
+  if($('clGo'))$('clGo').onclick=async()=>{const v=claimV,g=$('clGo');g.disabled=true;g.textContent='Confirm in your wallet…';let hash;
+    try{hash=await ACC.claimTx(v,REW.claims.contract);}catch(e){claimV=null;toast(e&&e.code===4001?'You cancelled the claim in your wallet.':(e&&e.message)||'The claim didn’t go through.','bad');return openRewards(true);}
+    claimV=null;openSheet(`<div id="rewSheet"></div><h2>Claim sent</h2><p class="lead">Waiting for Robinhood Chain to confirm it…</p><p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/tx/${chatEsc(hash)}" target="_blank" rel="noopener">View the transaction</a></p>`);
+    const r=await ACC.api.call(null,'rewards',{method:'POST',body:{action:'sync',tx:hash}});if(r.ok&&r.data.tok)window.LH_TOK=Object.assign({},window.LH_TOK,r.data.tok);
+    sfx('rare');toast('Claimed! '+fmtTok(v.net)+' '+tokSym()+' sent to your wallet.','rare');
+    openSheet(`<h2>Claimed</h2><p class="lead"><b>${fmtTok(v.net)} ${chatEsc(tokSym())}</b> are on their way to your wallet. ${fmtTok(v.burn)} were burned and ${fmtTok(v.recycle)} went back into the vault.</p>
+     <p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/tx/${chatEsc(hash)}" target="_blank" rel="noopener">View the transaction</a></p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;};}
+// ---- trading (in the Hold): both players build offers and both accept; the website then moves the items for both ----
+const tradeOpen=()=>!$('sheet').hidden&&!!$('tradeSheet');
+const tradable=id=>!!(ITEMS[id]&&!ITEMS[id].bound&&!ITEMS[id].keep);
+function tradeClear(){const locked=MP.tradeLocked;MP.trade=null;MP.tradeBusy=null;MP.tradeLocked=false;MP.tradePick=false;clearTimeout(MP.tradeWD);if(locked)ACC.tradeUnlock(null);if(tradeOpen())closeSheet();showPrompt();}
+function tradeDone(m){const me=MP.me(),them=m.a===me?m.b:m.a,give=m.off[me],get=m.off[them],name=(MP.trade&&MP.trade.names[them])||'them';
+  MP.tradeLocked=false;clearTimeout(MP.tradeWD);MP.trade=null;MP.tradeBusy=null;
+  if(!m.ok){ACC.tradeUnlock(null);if(tradeOpen())closeSheet();toast(m.why||'The trade didn’t go through. Nothing changed.','bad');showPrompt();return;}
+  for(const [id,n] of Object.entries(give.i)){S.bank[id]=Math.max(0,(S.bank[id]||0)-n);if(!S.bank[id])delete S.bank[id];}
+  for(const [id,n] of Object.entries(get.i))if(ITEMS[id])S.bank[id]=(S.bank[id]||0)+n;
+  S.gold=Math.max(0,S.gold-give.g)+get.g;ACC.tradeUnlock(m.revs[me]);save();sfx('level');
+  const list=o=>[...Object.entries(o.i).map(([id,n])=>n+' '+ITEMS[id].n),o.g?fmt(o.g)+' gold':''].filter(Boolean).join(', ')||'nothing';
+  openSheet(`<h2>Trade complete</h2><p class="lead">You gave ${chatEsc(name)} <b>${chatEsc(list(give))}</b> and got <b>${chatEsc(list(get))}</b>.</p><p class="lead small">Your new items are in your bag.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;showPrompt();}
+function tradeSend(i,g){NET.send({t:'tu',i,g});}
+function openTrade(){const t=MP.trade;if(!t)return;const me=MP.me(),them=t.a===me?t.b:t.a,mine=t.off[me],theirs=t.off[them],name=chatEsc(t.names[them]);
+  const row=(id,n,rm)=>`<div class="trrow">${iconImg(id)}<span>${chatEsc(ITEMS[id].n)} <b>×${fmt(n)}</b></span>${rm?`<button class="btn alt sm" data-trm="${id}">Remove</button>`:''}</div>`;
+  const list=(o,rm)=>(Object.entries(o.i).map(([id,n])=>ITEMS[id]?row(id,n,rm):'').join('')+(o.g?`<div class="trrow">${iconImg('gold')}<span><b>${fmt(o.g)}</b> gold</span></div>`:''))||'<p class="lead small">Nothing yet.</p>';
+  const wait=Date.now()-(MP.tradeChanged||0)<2500,iOk=t.ok[me]===t.ver,tOk=t.ok[them]===t.ver,busy=t.go||MP.tradeBusy;
+  const pick=MP.tradePick&&!busy?Object.entries(S.bank).filter(([id,n])=>tradable(id)&&n>(mine.i[id]||0)).map(([id,n])=>{const left=n-(mine.i[id]||0);
+    return `<div class="trrow">${iconImg(id)}<span>${chatEsc(ITEMS[id].n)} <small>${fmt(left)} left</small></span><button class="btn alt sm" data-tad="${id}" data-n="1">+1</button>${left>1?`<button class="btn alt sm" data-tad="${id}" data-n="${left}">All</button>`:''}</div>`;}).join('')||'<p class="lead small">Nothing else in your bag can be traded.</p>':'';
+  openSheet(`<div id="tradeSheet"></div><h2>Trade with ${name}</h2>
+   <h3>${name} offers ${tOk?'<small class="ok">✓ accepted</small>':''}</h3><div class="trbox">${list(theirs,false)}</div>
+   <h3>You offer ${iOk?'<small class="ok">✓ accepted</small>':''}</h3><div class="trbox">${list(mine,!busy)}</div>
+   ${busy?'':`<div class="row"><button class="btn alt" id="trPick">${MP.tradePick?'Done adding':'Add items from your bag'}</button></div>${pick?`<div class="trbox">${pick}</div>`:''}
+   <div class="setrow col"><span>Gold <small>(you have ${fmt(S.gold)})</small></span><div class="row" style="margin-top:4px"><input id="trG" type="number" min="0" max="${S.gold}" value="${mine.g||''}" placeholder="0" class="trg"><button class="btn alt sm" id="trGs">Set gold</button></div></div>`}
+   <p class="lead small">${busy?'<b>Completing the trade…</b> Both of you are saved, then the items move for both at once.':'Both of you must accept. Any change to either offer resets both accepts, so check what you’re getting before you accept.'}</p>
+   ${busy?'':`<div class="row"><button class="btn alt" id="trX">Cancel</button><button class="btn" id="trOk" ${iOk||wait?'disabled':''}>${iOk?'Waiting for '+name+'…':wait?'Check the offers…':'Accept trade'}</button></div>`}`);
+  if(busy)return;
+  const q=s=>$('sheet').querySelectorAll(s);
+  $('trX').onclick=()=>{NET.send({t:'tx'});tradeClear();};
+  $('trOk').onclick=()=>NET.send({t:'tk',ver:t.ver});
+  $('trPick').onclick=()=>{MP.tradePick=!MP.tradePick;openTrade();};
+  q('[data-trm]').forEach(b=>b.onclick=()=>{const i=Object.assign({},mine.i);delete i[b.dataset.trm];tradeSend(i,mine.g);});
+  q('[data-tad]').forEach(b=>b.onclick=()=>{const id=b.dataset.tad,i=Object.assign({},mine.i);if(!i[id]&&Object.keys(i).length>=12)return toast('Up to 12 kinds of items per trade.','bad');
+    i[id]=Math.min(S.bank[id]||0,(i[id]||0)+(+b.dataset.n));tradeSend(i,mine.g);});
+  $('trGs').onclick=()=>{const g=Math.max(0,Math.min(S.gold,Math.floor(+$('trG').value||0)));tradeSend(mine.i,g);};
+  $('trG').onkeydown=e=>e.stopPropagation();
+  if(wait)setTimeout(()=>{if(tradeOpen()&&MP.trade===t)openTrade();},2600);}
 // ---- moderation ----
 // a player an admin muted: chat is blocked by the realtime server until an admin unmutes them
 function onMuted(m){const was=!!MP.muted;MP.muted=!!m.on;if(m.said){chatSys('You’re muted by an admin.');return;}
@@ -2273,6 +2401,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
     body=near.length?near.map(o=>{const fr=F.friends.some(f=>f.name.toLowerCase()===o.id),pend=F.outgoing.some(n=>n.toLowerCase()===o.id),b=[];
         if(!fr&&!pend)b.push(`<button class="btn alt sm" data-fadd="${chatEsc(o.name)}">Add friend</button>`);
         if(!inParty(o.id)&&MP.isLeader())b.push(`<button class="btn sm" data-inv="${o.id}">Invite</button>`);
+        if(scene==='hold'&&!MP.trade)b.push(`<button class="btn alt sm" data-trq="${o.id}">Trade</button>`);
         if(ADMIN&&!o.adm)b.push(`<button class="btn danger sm" data-modp="${o.id}">Moderate</button>`);
         return row(o.name,fr?'Friend':pend?'Request sent':'Here with you',b.join(''),true);}).join('')
       :'<p class="lead small">No one else is here right now.</p>';
@@ -2287,6 +2416,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
   if($('faddB')){$('faddB').onclick=add;$('fadd').onkeydown=e=>{if(e.key==='Enter')add();e.stopPropagation();};if(keep&&typed)$('fadd').focus();}
   q('[data-fa]').forEach(b=>b.onclick=()=>{const a=b.dataset.fa,n=b.dataset.n;if(a==='remove'&&MP.rmArm!==n){MP.rmArm=n;return openSocial('friends');}MP.rmArm=null;MP.friendDo(a,n);});
   q('[data-fadd]').forEach(b=>b.onclick=()=>MP.friendDo('add',b.dataset.fadd));
+  q('[data-trq]').forEach(b=>b.onclick=()=>{NET.send({t:'tq',to:b.dataset.trq});b.disabled=true;b.textContent='Asked';toast('Trade request sent');});
   q('[data-modp]').forEach(b=>b.onclick=()=>{const o=OTH.get(b.dataset.modp);if(o){socOpen=false;openMod(o.id,o.name);}});
   q('[data-inv]').forEach(b=>b.onclick=()=>{NET.lsend({t:'invite',to:b.dataset.inv});b.disabled=true;b.textContent='Invited';});
   q('[data-jw]').forEach(b=>b.onclick=()=>{MP.wantWorld=b.dataset.jw;socOpen=false;closeSheet();NET.lsend({t:'world',want:b.dataset.jw});toast('Travelling to World '+b.dataset.jw.slice(1));});
@@ -2391,24 +2521,24 @@ async function claimName(name,look){
   const st=await nameStatus(name);if(!st.ok)return st;
   const r=await api('hero',{method:'POST',body:{name,look}});
   if(!r.ok)return {ok:false,msg:r.data.msg||(r.status===401?'Your sign-in expired. Sign in again.':'Couldn’t reach the server. Try again.')};
-  ACC.me=r.data;return {ok:true};
+  ACC.me=r.data;window.LH_TOK=r.data&&r.data.tok||null;return {ok:true};
 }
 
 // ---------- saving to the server ----------
 // At most one save every 10–14 s while playing (each player gets their own spacing), immediately on key moments
 // (return home, death, sign out). Nothing is sent when nothing changed, so idle players cost nothing.
-let cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
+let held=false,cloudTimer=null,cloudBusy=false,cloudPending=null,offlineWarned=false,lastSent=null,lastAt=0,fails=0,stopped=false;
 const SAVE_GAP=10000+Math.random()*4000;
 const strip=S=>{const d=JSON.parse(JSON.stringify(S));delete d.name;delete d.look;delete d.wallet;delete d.savedAt;return d;};
 function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.stringify(d);if(j===lastSent&&!cloudPending)return;cloudPending={d,j};
   if(now){clearTimeout(cloudTimer);cloudTimer=null;return flushCloud();}
   if(!cloudTimer)retry(Math.max(1000,lastAt+SAVE_GAP-Date.now()));}
 function retry(ms){clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>{cloudTimer=null;flushCloud();},ms);}
-async function flushCloud(){if(cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
+async function flushCloud(){if(held||cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
   if(p.j===lastSent){cloudBusy=false;return;}
   const r=await api('save',{method:'POST',body:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
   const stop=(t,ms)=>{stopped=true;notice(t);setTimeout(()=>location.reload(),ms);};
-  if(r.ok){ACC.rev=r.data.rev;lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
+  if(r.ok){ACC.rev=r.data.rev;if(r.data.tok&&window.LH_onTok)LH_onTok(r.data.tok);lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);
   else if(r.status===422)return stop('Some progress couldn’t be verified and was rolled back.',2500);
   else if(r.status===401)return stop('Your sign-in expired. Please sign in again.',2500);
@@ -2430,6 +2560,21 @@ const hexUtf8=s=>'0x'+Array.from(new TextEncoder().encode(s)).map(b=>b.toString(
 // a token approval, a chain switch or anything else, so a bug or an injected script can't use our wallet code to do more.
 const SAFE_METHODS=new Set(['eth_accounts','eth_requestAccounts','wallet_requestPermissions','personal_sign']);
 const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.reject({message:'Blocked wallet request: '+method});return pv.request(params?{method,params}:{method});};
+// Claiming rewards is the one transaction Lanternhold ever asks a wallet for: claim() on the rewards vault, with a
+// voucher from our server. It's checked here before the wallet sees it (that contract, that function, nothing else:
+// never a token approval), and it goes from the wallet linked to the hero.
+const CLAIM_SEL='0xfa6b3b53';   // claim(uint256,uint256,uint8,bytes32,bytes32)
+async function claimTx(v,vault){
+  if(!vault||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(vault).toLowerCase())throw {message:'That isn’t the rewards vault.'};
+  if(typeof v.data!=='string'||!v.data.startsWith(CLAIM_SEL)||v.data.length!==10+64*5)throw {message:'That isn’t a rewards claim.'};
+  const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;
+  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to claim.'};
+  const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(v.wallet).toLowerCase());
+  if(!from)throw {message:'Switch your wallet to '+short(v.wallet)+', the wallet linked to your hero.'};
+  const want='0x'+Number(v.chainId).toString(16),cur=String(await pv.request({method:'eth_chainId'})).toLowerCase();
+  if(cur!==want){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:want}]});}
+    catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
+  return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 async function pickAccount(pv){
@@ -2481,7 +2626,7 @@ async function signWithWallet(w,endpoint,onStage){
 async function connectWallet(w){
   ACC.err='';go('signing',{wname:w.info.name,stage:''});
   try{const r=await signWithWallet(w,'auth/verify',t=>{ACC.stage=t;render();});
-    ACC.me=r.me;setVia('wallet');rememberWallet(w);enter();}
+    ACC.me=r.me;window.LH_TOK=r.me&&r.me.tok||null;setVia('wallet');rememberWallet(w);enter();}
   catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':e&&e.plain?esc(e.message):'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
 }
 
@@ -2584,7 +2729,10 @@ window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=fals
     catch(e){return {ok:false,msg:e&&e.code===4001?'You declined in your wallet.':(e&&e.message)||'Couldn’t connect the wallet.'};}},
   async linkGoogle(){try{await flushCloud();}catch(e){}location.href='/api/auth/google/start?link=1';},
   async logout(){await flushCloud();if(window.NET)NET.stop();await api('auth/logout',{method:'POST'});location.reload();},
-  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api};
+  // trading: save now, then hold further saves until the website has moved the items (it writes both saves itself)
+  async tradeLock(){for(let i=0;i<20&&(cloudBusy||cloudPending);i++){await flushCloud();if(cloudBusy||cloudPending)await new Promise(r=>setTimeout(r,250));}held=true;return !cloudPending;},
+  tradeUnlock(rev){held=false;if(Number.isInteger(rev)){ACC.rev=rev;lastSent=null;}retry(2500);},
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx};
 
 // ---------- start ----------
 render();
