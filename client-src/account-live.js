@@ -110,16 +110,18 @@ async function signWithWallet(w,endpoint,onStage){
     throw {message:'Sign-in message didn’t match this site. Refresh the page and try again.'};
   const sig=await ask(pv,'personal_sign',[hexUtf8(msg),raw]);if(typeof sig!=='string'||!/^0x[0-9a-fA-F]+$/.test(sig))throw {message:'The wallet returned no signature'};
   const v=await api(endpoint,{method:'POST',body:{message:msg,signature:sig}});
-  if(!v.ok)throw {message:v.data.msg||(v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')')};
+  if(!v.ok)throw {plain:v.data.error==='banned',message:v.data.error==='banned'?banMsg(v.data):v.data.msg||(v.data.error==='banned'?'This wallet is banned':v.data.error==='bad_signature'?'The signature didn’t match this wallet':'Sign-in was refused ('+(v.data.detail||v.data.error||v.status)+')')};
   return {me:v.data,addr};
 }
 async function connectWallet(w){
   ACC.err='';go('signing',{wname:w.info.name,stage:''});
   try{const r=await signWithWallet(w,'auth/verify',t=>{ACC.stage=t;render();});
     ACC.me=r.me;setVia('wallet');rememberWallet(w);enter();}
-  catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
+  catch(e){const code=e&&e.code;ACC.err=code===4001?'You declined the request in your wallet. Try again when you’re ready.':e&&e.plain?esc(e.message):'Wallet error: '+esc((e&&e.message)||'unknown');go('welcome');}
 }
 
+// banned by an admin: when it ends, in the player's own time
+const banMsg=b=>b.perm?'This account is permanently banned.':b.until&&!isNaN(Date.parse(b.until))?'This account is banned until '+new Date(b.until).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'.':'This account is banned.';
 // ---------- flow ----------
 const ACC={screen:'welcome',pid:null,err:'',stage:'',draft:null,edit:false,cfg:{}};
 const newDraft=()=>({name:'',look:Object.assign({},DEFAULT_LOOK,{skin:(Math.random()*4)|0,hair:(Math.random()*6)|0,cloth:(Math.random()*8)|0})});
@@ -225,7 +227,7 @@ render();
   if(x){const u=(q.get('u')||'').replace(/[^A-Za-z0-9_]/g,'').slice(0,15);
     const msg={linked:`X account @${u} is now linked to your hero.`,taken:`@${u} is already linked to another hero.`,declined:'You didn’t approve the link on X, so nothing changed.',expired:'That link request expired. Try again from your bag’s Hero tab.',off:'X linking isn’t switched on yet.',error:'Couldn’t link your X account. Try again in a moment.'}[x];
     if(msg){ACC.note=msg;ACC.noteOk=x==='linked';}}
-  if(g){const msg={linked:'Google is now linked. You can sign in with it as well as your wallet.',taken:'That Google account already has its own hero.',has:'This account already has a Google account linked.',declined:'Google sign-in was cancelled.',expired:'That sign-in took too long. Try again.',off:'Google sign-in isn’t switched on yet.',banned:'This account is banned.',signin:'Sign in first, then link Google from your bag’s Hero tab.',error:'Google sign-in didn’t work. Try again in a moment.'}[g];
+  if(g){const msg={linked:'Google is now linked. You can sign in with it as well as your wallet.',taken:'That Google account already has its own hero.',has:'This account already has a Google account linked.',declined:'Google sign-in was cancelled.',expired:'That sign-in took too long. Try again.',off:'Google sign-in isn’t switched on yet.',banned:banMsg({until:q.get('until')}),signin:'Sign in first, then link Google from your bag’s Hero tab.',error:'Google sign-in didn’t work. Try again in a moment.'}[g];
     if(msg){ACC.note=msg;ACC.noteOk=g==='linked';}}
   if(x||g)history.replaceState(null,'',location.pathname);}
 try{const n=sessionStorage.getItem('lanternhold.notice');if(n){sessionStorage.removeItem('lanternhold.notice');ACC.err=esc(n);}}catch(e){}

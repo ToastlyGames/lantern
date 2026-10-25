@@ -1197,6 +1197,7 @@ if(window.NET){
   NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(MP.room)NET.lsend({t:'where',room:MP.room,floor:MP.inInst()&&run?run.floor:undefined});else if(scene==='hold')MP.toHold();MP.loadFriends();refreshSocial();});
   NET.onL('off',()=>{});
   NET.onL('world',m=>{if(MP.wantWorld){if(m.room!==MP.wantWorld)toast('World '+MP.wantWorld.slice(1)+' just filled up. You’re in World '+m.room.slice(1)+'.','bad');else if(m.room!==MP.room)toast('Welcome to World '+m.room.slice(1),'good');MP.wantWorld=null;}if(scene==='hold')NET.join(m.room);});
+  NET.onL('muted',onMuted);
   NET.onL('online',m=>{MP.online=m.n;refreshSocial();});
   NET.onL('worlds',m=>{MP.worlds={cap:m.cap||50,list:Array.isArray(m.list)?m.list:[]};refreshSocial();});
   NET.onL('status',m=>{for(const s of m.list)MP.status.set(s.id,s);refreshSocial();});
@@ -1208,7 +1209,7 @@ if(window.NET){
   NET.onL('pchat',m=>{const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
   NET.onL('feed',m=>{if(!SET.feed)return;const f=$('feed');f.textContent='★ '+m.text;f.classList.add('real');clearTimeout(MP.feedT);MP.feedT=setTimeout(()=>{f.textContent='';},9000);});
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
-  NET.onL('kicked',m=>{OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
+  NET.onL('kicked',m=>{if(m.mod)return modRemoved(m);OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
   NET.onR('hi',m=>{MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
     // chat lives only for this session: nothing said before you signed in is shown, and your log carries over between rooms
@@ -1228,6 +1229,7 @@ if(window.NET){
   NET.onR('gone',m=>{const d=drops.find(q=>q.did===m.did);if(d)d.taken=true;});
   NET.onR('nope',m=>{const d=drops.find(q=>q.did===m.did);if(d){d.pending=false;d.showAt=Date.now()+5000;}});
   NET.onR('T',onTree);
+  NET.onR('muted',onMuted);
   NET.onR('W',peerSwing);
   NET.onR('F',m=>{const o=OTH.get(m.id);if(o)o.fish=fishOf(m.f);});
   NET.onR('say',m=>{const msg={id:MP.room+':'+m.n,name:m.name,text:m.text,at:m.at,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatLog.length>60)MP.chatLog.shift();if(MP.chatCb)MP.chatCb([msg]);
@@ -1262,7 +1264,7 @@ if(window.NET){
 window.CHATNET={
   why(){if(!netOn())return 'Chat isn’t available right now.';if(!MP.room)return 'Connecting to the world…';return null;},
   join(ch,cb){MP.chatCb=cb;cb(MP.chatLog.slice());return ()=>{if(MP.chatCb===cb)MP.chatCb=null;};},
-  async send(ch,text){const pm=text.match(/^\/p\s+(.+)/i);if(pm){if(!MP.party)return {ok:false,msg:'You’re not in a party. Invite someone from the Social menu.'};NET.lsend({t:'pchat',text:pm[1]});return {ok:true,party:true};}
+  async send(ch,text){if(MP.muted)return {ok:false,msg:'You’re muted by an admin.'};const pm=text.match(/^\/p\s+(.+)/i);if(pm){if(!MP.party)return {ok:false,msg:'You’re not in a party. Invite someone from the Social menu.'};NET.lsend({t:'pchat',text:pm[1]});return {ok:true,party:true};}
     if(!NET.roomOpen())return {ok:false,msg:'Reconnecting… try again in a moment.'};NET.send({t:'say',text});if(/\blanternhold\b/i.test(text))secret('word');return {ok:true};}
 };
 // ---- friends ----
@@ -1282,6 +1284,49 @@ function showPrompt(){socBadge();const el=$('invite');MP.invites=MP.invites.filt
   el.innerHTML=`<span><b>${chatEsc(pd.by)}</b> led your party into floor ${pd.floor}</span><button class="btn sm" id="invY">Join them</button><button class="btn alt sm" id="invN">Later</button>`;
   $('invY').onclick=()=>MP.enterInst(pd.room,pd.floor,pd.seed);$('invN').onclick=()=>{MP.prompt=null;showPrompt();};}
 function hidePrompt(){if(!MP.invites.length&&!MP.prompt)$('invite').hidden=true;else showPrompt();}
+// ---- moderation ----
+// a player an admin muted: chat is blocked by the realtime server until an admin unmutes them
+function onMuted(m){const was=!!MP.muted;MP.muted=!!m.on;if(m.said){chatSys('You’re muted by an admin.');return;}
+  if(MP.muted!==was)toast(MP.muted?'An admin muted you. You can’t chat until you’re unmuted.':'An admin unmuted you. You can chat again.',MP.muted?'bad':'good');}
+const banWhen=b=>!b?'':b.perm?'permanently':'until '+new Date(b.until).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+// kicked or banned by an admin: save, sign out and say why on the sign-in screen (a kicked player can sign straight back in)
+function modRemoved(m){OTH.clear();MP.room=null;
+  const msg=m.mod==='ban'?'You were banned by an admin '+banWhen(m.perm?{perm:true}:m.until?{until:m.until}:null)+'.':'You were kicked by an admin. You can sign back in.';
+  try{sessionStorage.setItem('lanternhold.notice',msg);}catch(e){}
+  openSheet(`<h2>${m.mod==='ban'?'Banned':'Kicked'}</h2><p class="lead">${chatEsc(msg)}</p>`);
+  if(window.ACC&&ACC.logout)ACC.logout().catch(()=>location.reload());else location.reload();}
+// admins: right-click (or press and hold) a player, or use Moderate in Social → Nearby
+const BAN_LABEL=['Ban · 24 hours (strike 1 of 3)','Ban · 72 hours (strike 2 of 3)','Ban · permanent (strike 3 of 3)'];
+async function openMod(id,name,arm){if(!ADMIN)return;
+  openSheet(`<h2>${chatEsc(name)}</h2><p class="lead small">Checking…</p><div class="row"><button class="btn alt" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;
+  const r=await ACC.api.call(null,'admin/mod?name='+encodeURIComponent(name));
+  if(!r.ok){openSheet(`<h2>${chatEsc(name)}</h2><p class="lead">${chatEsc(r.data.msg||{is_admin:'Admins can’t be moderated.',self:'That’s you.',no_such_player:'No player by that name.',not_admin:'Only admins can do this.'}[r.data.error]||'Couldn’t load this player.')}</p><div class="row"><button class="btn alt" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;return;}
+  const st=r.data,strikes=st.strikes|0,o=OTH.get(id);
+  const lines=[o?'Here with you':'Not on this map',st.muted?'<b style="color:#ef7d57">Muted</b>':'Not muted',`Strikes: ${strikes} of 3`];if(st.ban)lines.push('Banned '+banWhen(st.ban));
+  const confirm=k=>arm===k;
+  openSheet(`<div class="npchd"><span><b>${chatEsc(st.name)}</b><small>Admin tools</small></span></div><p class="lead small">${lines.join(' · ')}</p>
+   <div class="list modl">
+    <button class="btn ${confirm('kick')?'danger':'alt'} big" data-mod="kick">${confirm('kick')?'Tap again to kick '+chatEsc(st.name):'Kick'}</button><p class="lead small">Disconnects them and signs them out. They can sign straight back in.</p>
+    <button class="btn alt big" data-mod="${st.muted?'unmute':'mute'}">${st.muted?'Unmute':'Mute'}</button><p class="lead small">${st.muted?'Lets them chat again.':'They can’t chat until an admin unmutes them.'}</p>
+    ${st.ban?'':`<button class="btn ${confirm('ban')?'danger':'alt'} big" data-mod="ban">${confirm('ban')?'Tap again to confirm: '+BAN_LABEL[Math.min(2,strikes)].replace('Ban · ','ban '):BAN_LABEL[Math.min(2,strikes)]}</button><p class="lead small">Three strikes: 24 hours, then 72 hours, then permanent. Bans are per account, not per IP.</p>`}
+   </div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;
+  $('sheet').querySelectorAll('[data-mod]').forEach(b=>b.onclick=async()=>{const act=b.dataset.mod;
+    if((act==='kick'||act==='ban')&&!confirm(act))return openMod(id,name,act);
+    b.disabled=true;const q=await ACC.api.call(null,'admin/mod',{method:'POST',body:{name,action:act}});
+    if(!q.ok){toast(q.data.msg||(q.data.error==='already_banned'?'They’re already banned.':'That didn’t work.'),'bad');return openMod(id,name);}
+    NET.lsend({t:'mod',act,to:q.data.id,until:q.data.ban&&q.data.ban.until||null,perm:!!(q.data.ban&&q.data.ban.perm)});
+    toast(act==='kick'?st.name+' was kicked':act==='ban'?st.name+' is banned '+banWhen(q.data.ban):act==='mute'?st.name+' is muted':st.name+' is unmuted','good');
+    if(act==='mute'||act==='unmute')openMod(id,name);else closeSheet();});}
+// which player is under the pointer (screen → world)
+function otherAt(cx,cy){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,wx=cx/k+camX,wy=cy/k+camY;let best=null,bd=14;
+  for(const o of OTH.values()){const d=Math.hypot(o.x-wx,o.y-8-wy);if(d<bd){bd=d;best=o;}}return best;}
+{let lp=null;const cvEl=$('cv');
+  cvEl.addEventListener('contextmenu',e=>{if(!ADMIN||!started)return;const o=otherAt(e.clientX,e.clientY);if(o){e.preventDefault();openMod(o.id,o.name);}});
+  cvEl.addEventListener('touchstart',e=>{if(!ADMIN||!started||e.touches.length!==1)return;const t=e.touches[0],o=otherAt(t.clientX,t.clientY);if(!o)return;
+    lp={x:t.clientX,y:t.clientY,o,tm:setTimeout(()=>{if(lp){buzz(30);openMod(lp.o.id,lp.o.name);lp=null;}},600)};},{passive:true});
+  const end=e=>{if(lp&&(e.type!=='touchmove'||Math.hypot(e.touches[0].clientX-lp.x,e.touches[0].clientY-lp.y)>10)){clearTimeout(lp.tm);lp=null;}};
+  cvEl.addEventListener('touchmove',end,{passive:true});cvEl.addEventListener('touchend',end);cvEl.addEventListener('touchcancel',end);}
 // ---- the Social menu: friends, party, players nearby ----
 let socTab='friends',socOpen=false;
 const where=s=>!s||!s.on?'Offline':s.room&&s.room[0]==='w'?'World '+s.room.slice(1):s.room&&s.room[0]==='d'?'In the Depths'+(s.floor?' · floor '+s.floor:''):'Online';
@@ -1323,6 +1368,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
     body=near.length?near.map(o=>{const fr=F.friends.some(f=>f.name.toLowerCase()===o.id),pend=F.outgoing.some(n=>n.toLowerCase()===o.id),b=[];
         if(!fr&&!pend)b.push(`<button class="btn alt sm" data-fadd="${chatEsc(o.name)}">Add friend</button>`);
         if(!inParty(o.id)&&MP.isLeader())b.push(`<button class="btn sm" data-inv="${o.id}">Invite</button>`);
+        if(ADMIN&&!o.adm)b.push(`<button class="btn danger sm" data-modp="${o.id}">Moderate</button>`);
         return row(o.name,fr?'Friend':pend?'Request sent':'Here with you',b.join(''),true);}).join('')
       :'<p class="lead small">No one else is here right now.</p>';
   }
@@ -1336,6 +1382,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
   if($('faddB')){$('faddB').onclick=add;$('fadd').onkeydown=e=>{if(e.key==='Enter')add();e.stopPropagation();};if(keep&&typed)$('fadd').focus();}
   q('[data-fa]').forEach(b=>b.onclick=()=>{const a=b.dataset.fa,n=b.dataset.n;if(a==='remove'&&MP.rmArm!==n){MP.rmArm=n;return openSocial('friends');}MP.rmArm=null;MP.friendDo(a,n);});
   q('[data-fadd]').forEach(b=>b.onclick=()=>MP.friendDo('add',b.dataset.fadd));
+  q('[data-modp]').forEach(b=>b.onclick=()=>{const o=OTH.get(b.dataset.modp);if(o){socOpen=false;openMod(o.id,o.name);}});
   q('[data-inv]').forEach(b=>b.onclick=()=>{NET.lsend({t:'invite',to:b.dataset.inv});b.disabled=true;b.textContent='Invited';});
   q('[data-jw]').forEach(b=>b.onclick=()=>{MP.wantWorld=b.dataset.jw;socOpen=false;closeSheet();NET.lsend({t:'world',want:b.dataset.jw});toast('Travelling to World '+b.dataset.jw.slice(1));});
   if(socTab==='worlds'&&!keep)NET.lsend({t:'worlds'});
