@@ -1,6 +1,14 @@
 # Lanternhold changelog
 
-Current build: **v0.8.8** · Season 0 (Beta)
+Current build: **v0.8.9** · Season 0 (Beta)
+
+## v0.8.9 · XP bars
+
+_2026-10-25_
+
+- A thin XP strip along the bottom of your health bar shows progress in whatever you’re training, combat included, in that skill’s colour.
+- Each time you gain XP, the goals pill briefly shows the skill, its level, a mini bar and how much XP is left to the next level. Tap it to open Skills.
+- The Skills tab now shows Combat too, and every skill shows XP left, progress (like 65 / 83) and a percentage. The skill you’re training is marked.
 
 ## v0.8.8 · Right-click to trade
 
