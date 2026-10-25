@@ -439,7 +439,8 @@ export class Room {
       const g = Number.isInteger(m.g) && m.g >= 0 && m.g <= 1e10 ? m.g : 0;
       tr.off[p.id] = { i, g }; tr.ver++; tr.ok = {}; tr.at = now; return this.tradeOut(tr);
     }
-    if (t === 'tk' && !tr.go && m.ver === tr.ver) {     // accept the offers as they are now
+    if (t === 'tk' && !tr.go && m.ver === tr.ver) {     // accept the offers as they are now (one side can be a gift, but not both empty)
+      const empty = o => !o.g && !Object.keys(o.i).length; if (empty(tr.off[tr.a]) && empty(tr.off[tr.b])) return;
       tr.ok[p.id] = tr.ver;
       if (tr.ok[tr.a] === tr.ver && tr.ok[tr.b] === tr.ver) { tr.go = true; this.tradeOut(tr); return this.tradeOut(tr, { t: 'TR', id: tr.id }); }
       return this.tradeOut(tr);
