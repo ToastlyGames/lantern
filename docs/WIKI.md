@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.6 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.8 · updated October 25, 2026
 
 ## Welcome
 
@@ -287,7 +287,7 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 
 **Bank everything but supplies** stores your loot but keeps Oil Flasks and food in your bag for the next delve. The Forge, Kitchen and Oil Press can use items straight from your Bank.
 
-**Trading with players.** In the Hold, open Social → Nearby and tap **Trade** next to a player. Once they accept, you both see a trade window: add items from your bag and some gold, and watch their offer update live. Both of you must tap **Accept trade**, and any change to either offer resets both accepts, so check what you're getting first. When both accept, the items move for both of you at the same moment. Goal Relics and the admin party hats can't be traded. Trades only happen in the Hold, never in the Depths.
+**Trading with players.** In the Hold, right-click a player and choose **Trade** (on a computer), or open Social → Nearby and tap **Trade** next to them (on a phone). Once they accept, you both see a trade window: add items from your bag and some gold, and watch their offer update live. Both of you must tap **Accept trade**, and any change to either offer resets both accepts, so check what you're getting first. When both accept, the items move for both of you at the same moment. One side can be empty, which makes it a gift (the window says so clearly), but a trade needs at least one item or some gold. Goal Relics and the admin party hats can't be traded. Trades only happen in the Hold, never in the Depths.
 
 **Tallow the trader.** Sell anything in your bag or Bank for gold (gear you're wearing isn't listed). He sells Wheat Seeds (5 gold), Lampseed (30), Oil Flasks (45) and Bread (20).
 
