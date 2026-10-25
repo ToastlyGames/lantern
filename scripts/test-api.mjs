@@ -191,6 +191,32 @@ try {
     ok((await y.req(`x/callback?state=${l4.searchParams.get('state')}&error=access_denied`, { manual: true })).location === '/?x=declined', 'declining on X is handled');
     ok((await x.req('x/unlink', { method: 'POST' })).status === 200 && !(await x.req('me')).data.hero.x, 'unlink removes it'); }
 
+  console.log('Moderation');
+  { const { jwtVerify } = await import('jose'); const vk = generatePrivateKey(), v = new Client(vk); await v.signIn(); await v.req('hero', { method: 'POST', body: { name: 'Villain' } });
+    ok((await v.req('admin/mod?name=test')).status === 403, 'players can’t use the admin tools');
+    let r = await t.req('admin/mod?name=villain');
+    ok(r.status === 200 && r.data.muted === false && r.data.strikes === 0 && !r.data.ban, 'an admin can look a player up');
+    ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Kush', action: 'ban' } })).data.error === 'is_admin', 'admins can’t be moderated');
+    ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Test', action: 'mute' } })).data.error === 'self', 'or moderate themselves');
+    const mu = async () => { const q = await v.req('rt-ticket'); return (await jwtVerify(q.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' })).payload.mu; };
+    r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'mute' } });
+    ok(r.status === 200 && r.data.muted === true && await mu() === 1, 'mute is stored and goes into their realtime pass');
+    r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'unmute' } });
+    ok(r.data.muted === false && await mu() === 0, 'unmute lifts it');
+    r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'kick' } });
+    ok(r.status === 200 && r.data.id === 'villain' && (await v.req('me')).data.hero, 'kick stores nothing (the player can sign straight back in)');
+    r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'ban' } });
+    const hrs = r.data.ban && (Date.parse(r.data.ban.until) - Date.now()) / 3600e3;
+    ok(r.status === 200 && r.data.strikes === 1 && hrs > 23.9 && hrs <= 24, 'first ban: 24 hours, strike 1');
+    ok((await v.req('rt-ticket')).status === 403 && (await v.req('me')).data.signedIn === false, 'a banned player can’t reconnect and is signed out');
+    const again = await new Client(vk).signIn();
+    ok(again.status === 403 && again.data.error === 'banned' && again.data.until === r.data.ban.until, 'and can’t sign back in until it ends');
+    ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'ban' } })).status === 409, 'no stacking a ban on a ban');
+    const fresh = new Client(); ok((await fresh.signIn()).status === 200, 'a different wallet can still sign in (bans aren’t per IP)');
+    const { nextBan } = await import('../lib/mod.js');
+    const b2 = nextBan(1), b3 = nextBan(2);
+    ok(Math.round((Date.parse(b2.until) - Date.now()) / 3600e3) === 72 && !b2.perm && b3.perm && b3.until === null && b3.strikes === 3, 'second ban 72 hours, third permanent'); }
+
   console.log('Google sign-in and linking');
   const google = async (c, who, q = '') => { const r = await c.req('auth/google/start' + q, { manual: true }); const u = new URL(r.location, BASE); if (u.pathname.startsWith('/?')) return r.location;
     gSeen.challenge = u.searchParams.get('code_challenge'); return (await c.req(`auth/google/callback?state=${u.searchParams.get('state')}&code=${who}`, { manual: true })).location; };
