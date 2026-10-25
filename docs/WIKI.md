@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.3 · updated October 24, 2026
+Season 0 (Beta) · build v0.8.6 · updated October 25, 2026
 
 ## Welcome
 
@@ -287,6 +287,8 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 
 **Bank everything but supplies** stores your loot but keeps Oil Flasks and food in your bag for the next delve. The Forge, Kitchen and Oil Press can use items straight from your Bank.
 
+**Trading with players.** In the Hold, open Social → Nearby and tap **Trade** next to a player. Once they accept, you both see a trade window: add items from your bag and some gold, and watch their offer update live. Both of you must tap **Accept trade**, and any change to either offer resets both accepts, so check what you're getting first. When both accept, the items move for both of you at the same moment. Goal Relics and the admin party hats can't be traded. Trades only happen in the Hold, never in the Depths.
+
 **Tallow the trader.** Sell anything in your bag or Bank for gold (gear you're wearing isn't listed). He sells Wheat Seeds (5 gold), Lampseed (30), Oil Flasks (45) and Bread (20).
 
 **Items on the ground**
@@ -294,6 +296,7 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 - **Monster loot in a party:** everyone who hit a monster at least once gets their own roll at its drops, bosses included. Your loot is yours alone: only you see it and pick it up.
 - **Chests, ore and glowcaps in a party:** what they drop appears for the whole party, and whoever walks over it first gets it.
 - **Dropping from your bag:** the item lands at your feet and you can tap **Pick up** to take it back straight away. After 30 seconds, other players nearby can see it and pick it up. It disappears after 3 minutes.
+- **Dropping in a party dungeon:** your party sees the item right away and can pick it up straight away. Handy for sharing food or oil mid-delve.
 - The server decides who gets each item, so nothing is ever picked up twice.
 
 ## Playing together
