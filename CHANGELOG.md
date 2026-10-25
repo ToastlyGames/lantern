@@ -1,6 +1,15 @@
 # Lanternhold changelog
 
-Current build: **v0.8.2** · Season 0 (Beta)
+Current build: **v0.8.3** · Season 0 (Beta)
+
+## v0.8.3 · Fighting side by side
+
+_2026-10-24_
+
+- In a party dungeon you now see your partners swing their blades, the damage they deal and the ore they chip.
+- When a partner opens a chest, it pops open with their name over it.
+- Monster loot is now personal: everyone who hit a monster at least once gets their own roll at its drops, bosses included. Only you see and pick up your loot.
+- Chests, ore and glowcaps still drop shared loot for the whole party.
 
 ## v0.8.2 · The official contract address
 
