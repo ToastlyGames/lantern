@@ -127,11 +127,11 @@ function capeLayer(k,dir,step,front){const key=[k,dir,step,front].join('|');if(k
   if(!any){return CAPE_CACHE[key]=null;}p.outline();return CAPE_CACHE[key]=p.canvas();}
 // Auras: legendary and one-of-one gear make the wearer glow.
 function auraColors(look,lantern){const out=[];const C=look.cape&&CAPES[look.cape];if(C&&(C.r==='legendary'||C.r==='mythic'))out.push(C.aura||'#ffcd75');
-  if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
+  if(look.flame==='founder')out.push('#b98cff');if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
 const HERO_CACHE={};
 function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
 // lantern carried by the hero (drawn separately so its glow can pulse)
-function lanternSprite(key){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=L.glow,p=new Px(6,8);
+function lanternSprite(key,flame){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=flame||L.glow,p=new Px(6,8);   // flame: the Founder's Flame colour
   p.rect(2,0,2,1,m).rect(1,1,4,1,m).rect(1,2,4,4,gl).rect(2,3,2,2,PAL.white).rect(1,6,4,1,m);if(L.r==='legendary'||L.r==='mythic'||L.r==='xrare')p.set(0,3,gl).set(5,3,gl);p.outline();return p.canvas();}
 function swordSprite(tier){const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:PAL.silver;
   for(let i=0;i<9;i++){p.set(4+i,11-i,blade);p.set(5+i,11-i,i<8?(tier==='ember'?PAL.red:PAL.silver):blade);}
@@ -366,6 +366,22 @@ function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT=
   // wide-brim hat with a gold band and a red feather
   p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
   p.outline();return p.canvas();}
+// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a violet hooded robe, a violet-flame lantern on his staff
+// and the big ledger of the first heroes under his arm ----
+function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',R='#4a2f6e',R2='#352150',R3='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',B=f?1:0;
+  // staff and its lantern (the flame flickers)
+  p.rect(3,5,1,24,'#8a5a3a');p.rect(2,4,4,1,'#6b3e26');p.set(4,5,'#3a3f55');p.rect(3,6,3,1,GD);p.rect(2,7,5,5,GD);p.rect(3,8,3,3,'#2a1b45');p.rect(4,9-B,1,2+B,FL);p.set(4,10,CORE);if(!f)p.set(3,9,FL);p.rect(2,12,5,1,GD);
+  // boots and robe, with a gold trim down the front
+  p.rect(9,28,3,2,'#2a1b45').rect(14,28,3,2,'#2a1b45');p.rect(8,14+B,11,14-B,R);p.rect(7,22,13,6,R);p.rect(8,14+B,1,14-B,R2);p.rect(18,14+B,1,14-B,R2);p.rect(7,27,13,1,R2);
+  p.rect(13,15+B,1,13-B,GD);p.set(13,18+B,'#f7c64a');p.rect(8,20,11,1,R3);
+  // left arm to the staff, the ledger under the right arm
+  p.rect(5,16+B,4,2,R);p.set(4,16+B,SK).set(4,17+B,SK);
+  p.rect(16,17+B,6,7,'#8f2d3f');p.rect(16,17+B,6,1,GD);p.rect(21,17+B,1,7,'#f4e4c1');p.rect(16,23+B,6,1,GD);p.rect(18,19+B,2,2,GD);p.rect(17,20+B,2,2,R);p.set(17,21+B,SK);
+  // hood and face: spectacles, kind eyes, a white moustache
+  p.ell(13,9+B,5.6,5.4,R);p.ell(13,10+B,4.2,4.2,R2);p.rect(10,8+B,6,5,SK);p.rect(10,12+B,6,1,SK2);
+  p.set(11,9+B,GD).set(12,9+B,GD).set(14,9+B,GD).set(15,9+B,GD);p.set(11,10+B,'#1a1c2c').set(14,10+B,'#1a1c2c');p.set(13,10+B,SK2);
+  p.rect(10,12+B,6,1,'#e9ecf1');p.set(10,13+B,'#c2c7cf').set(15,13+B,'#c2c7cf');p.rect(8,4+B,10,2,R);p.rect(9,3+B,8,1,R);p.set(12,2+B,R3).set(13,2+B,R3);p.rect(8,13+B,10,1,R);
+  p.outline();return p.canvas();}
 // Tallow's cart: a striped awning over crates of bread, oil and seed
 function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
   p.rect(3,6,2,24,W2).rect(35,6,2,24,W2);
@@ -451,6 +467,7 @@ function buildArt(){
   const dirs=['down','up','left','right'];
   
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
+  ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
   ART.sword={};for(const t of ['rusty','copper','iron','ember'])ART.sword[t]=swordSprite(t==='rusty'?'none':t);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
@@ -468,7 +485,7 @@ function buildArt(){
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};
@@ -596,8 +613,21 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.9',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.12',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.12',date:'2026-10-25',title:'Meet Wick',notes:[
+    'Wick, keeper of the Founders’ Ledger, now stands by the road up to the Delve Gate.',
+    'Talk to him to check whether your hero is on the Founder’s Lantern whitelist. When the mint opens, he’s where you mint it.',
+    'New heroes see a violet ! over Wick until they’ve paid him a visit.',
+    'The Founder’s Lantern art is now the same for every token: the lantern itself, burning violet.']},
+  {v:'0.8.11',date:'2026-10-25',title:'Founder’s Lantern',notes:[
+    'Every hero now has a hero number, in the order heroes were made. See yours on the Hero screen.',
+    'The Founder’s Lantern: a free NFT on Robinhood Chain for the first 1,000 heroes. If your hero number is 1,000 or lower, you’re on the whitelist. Your spot is saved, nothing to sign up for.',
+    'Your token’s number is your hero number. Free to mint, you only pay a tiny gas fee. One per wallet.',
+    'Holders get the Founder’s Flame: a violet light only Founders have, seen by every player. Purely cosmetic, and you can turn it off on the Hero screen.',
+    'Check your spot on the Bulletin. The mint opening will be posted here.']},
+  {v:'0.8.10',date:'2026-10-25',title:'Higher joystick sideways',notes:[
+    'With your phone held sideways, the joystick now sits higher up, where your thumb rests naturally.']},
   {v:'0.8.9',date:'2026-10-25',title:'XP bars',notes:[
     'A thin XP strip along the bottom of your health bar shows progress in whatever you’re training, combat included, in that skill’s colour.',
     'Each time you gain XP, the goals pill briefly shows the skill, its level, a mini bar and how much XP is left to the next level. Tap it to open Skills.',
@@ -757,6 +787,8 @@ function buildHold(){
   // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
   addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
   addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});
+  // Wick, keeper of the Founders' Ledger, by the road up to the Delve Gate (checks the Founder's Lantern whitelist; phase 2 later)
+  addObj(m,{type:'npc',npc:'wick',name:'Wick',x:10*T+8,y:7*T+13,act:{x:10*T+8,y:8*T+6,label:'Talk',id:'wick'}});
   // farm with fence
   for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:14*T+14,spr:'fence',block:[[x,14]]});addObj(m,{type:'fence',x:x*T+8,y:19*T+14,spr:'fence',block:[[x,19]]});}
   for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:y*T+14,spr:'fence',block:[[2,y]]});addObj(m,{type:'fence',x:9*T+8,y:y*T+14,spr:'fence',block:[[9,y]]});}
@@ -923,6 +955,7 @@ window.NET={
   send(o){if(room&&room.readyState===1)room.send(JSON.stringify(o));},
   join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;busyR=false;openRoom(id);},
   leave(){const old=room;roomId=null;room=null;clearTimeout(timerR);try{old&&old.close(1000,'leave');}catch(e){}},
+  refresh(){if(stopped)return;if(lobby)kill(lobby);if(room)kill(room);},   // reconnect with a fresh pass (e.g. just became a Founder)
   _kill(which){kill(which==='lobby'?lobby:room);}   // tests only
 };
 })();
@@ -947,7 +980,7 @@ const fresh=()=>JSON.parse(JSON.stringify(DEF));
 const num=(v,lo,hi,d)=>{v=Number(v);return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;};
 const int=(v,lo,hi,d)=>Math.floor(num(v,lo,hi,d));
 const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
-const SET_DEF={zoom:2,bright:100,shake:true,pnames:false,feed:true,vib:true,sound:true};
+const SET_DEF={zoom:2,bright:100,shake:true,pnames:false,feed:true,vib:true,sound:true,flame:true};
 function cleanSet(v){if(!v||typeof v!=='object')return null;const o={};for(const k of Object.keys(SET_DEF))o[k]=typeof SET_DEF[k]==='boolean'?(v[k]===undefined?SET_DEF[k]:!!v[k]):SET_DEF[k];
   o.zoom=Math.max(0,Math.min(4,Math.round(+v.zoom)||0));if(v.zoom===undefined)o.zoom=SET_DEF.zoom;o.bright=Math.max(60,Math.min(160,Math.round(+v.bright)||100));return o;}
 function normalize(raw){const o=obj(raw),s=fresh();
@@ -984,7 +1017,10 @@ const maxHp=()=>60+8*(S.lvl-1)+A('hp');
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
 const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100);
 const defOf=()=>GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def');
-const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm});
+const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm,flame:flameOn()?'founder':null});
+// The Founder's Flame: a violet light only Founder's Lantern holders have (the realtime server hides it for anyone else)
+const FLAME='#b98cff',FLAMEC='185,140,255';
+let FND=null;const isFounder=()=>!!(FND&&FND.holder),flameOn=()=>isFounder()&&SET.flame!==false;
 
 // ---------- sound: tiny synth, no files ----------
 let AC=null,muted=false;try{muted=localStorage.getItem('lanternhold.mute')==='1';}catch(e){}
@@ -1123,7 +1159,7 @@ function nearestAct(){
 }
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -1529,7 +1565,7 @@ function openBag(tab){bagTab=tab||'items';
   const bl=S.gear.blade,ml=S.gear.mail,ln=S.gear.lantern,cp=S.gear.cape;
   const owned=t=>allKeys().filter(id=>ITEMS[id][t]).length;
   let body='';
-  if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
+  if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${FND&&FND.no?'Hero #'+nfmt(FND.no)+' · ':''}${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
    <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span><span>Damage <b>${Math.round(dmgOf())}</b></span><span>Defense <b>${defOf()}</b></span></div>
    <div class="gears">
     ${row(iconImg(gearId('blade',bl)),'Blade',ITEMS[gearId('blade',bl)].n,'Damage '+GEAR.blade[bl].dmg,`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
@@ -1539,6 +1575,7 @@ function openBag(tab){bagTab=tab||'items';
         :row('<i class="ic blank"></i>','Cape','No cape',owned('cape')?'You have '+owned('cape')+' to wear':'Capes are rare finds in the Depths',owned('cape')?`<button class="btn alt sm" data-eq="cape">Wear</button>`:'')}
     ${S.gear.helm?row(iconImg(gearId('helm',S.gear.helm)),'Helmet '+rTag(gearId('helm',S.gear.helm)),ITEMS[gearId('helm',S.gear.helm)].n,helmStat(S.gear.helm),'<button class="btn alt sm" data-eq="helm">Change</button>',gearId('helm',S.gear.helm))
        :row('<i class="ic blank"></i>','Helmet','No helmet',allKeys().some(id=>itemSlot(id)==='helm')?'You have one to wear':'Forge one from Smithing 3',allKeys().some(id=>itemSlot(id)==='helm')?'<button class="btn alt sm" data-eq="helm">Wear</button>':'')}
+    ${isFounder()?row('<i class="ic flameic"></i>','Founder','Founder’s Flame',SET.flame!==false?'Lit: your light burns violet':'Off',`<button class="btn alt sm" id="flH">${SET.flame!==false?'Turn off':'Light it'}</button>`):''}
    </div>
    ${ADMIN?'<button class="btn big admin" id="adm">Admin powers</button>':''}
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
@@ -1561,6 +1598,7 @@ function openBag(tab){bagTab=tab||'items';
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
+  if($('flH'))$('flH').onclick=()=>{SET.flame=SET.flame===false;saveSet();sfx('pick');toast(SET.flame?'Founder’s Flame lit':'Founder’s Flame off');openBag('hero');};
   if($('adm'))$('adm').onclick=openAdmin;
   if($('setO'))$('setO').onclick=openSettings;if($('gLn'))$('gLn').onclick=()=>{$('gLn').disabled=true;ACC.linkGoogle();};
   if($('wLn'))$('wLn').onclick=async()=>{const b=$('wLn');b.disabled=true;b.textContent='Check wallet…';const r=await ACC.linkWallet();toast(r.ok?'Wallet connected: '+r.addr.slice(0,6)+'…'+r.addr.slice(-4):r.msg,r.ok?'good':'bad');openHero();};if($('xLn'))$('xLn').onclick=()=>{$('xLn').disabled=true;$('xLn').textContent='Opening X…';ACC.xLink();};
@@ -1778,10 +1816,10 @@ let goalTab='start';
 const SEENV='lanternhold.seenBuild';
 const bulletinNew=()=>{try{return localStorage.getItem(SEENV)!==BUILD.version;}catch(e){return false;}};
 function openBulletin(){try{localStorage.setItem(SEENV,BUILD.version);}catch(e){}
-  openSheet(`<h2>The Bulletin</h2>${tokenCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
+  openSheet(`<h2>The Bulletin</h2>${tokenCard()}${founderCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
    <p class="lead small">Every update we ship is posted here, newest first.</p>
    <div class="changelog">${CHANGELOG.map((e,i)=>`<section class="${i===0?'latest':''}"><h3>v${e.v} · ${chatEsc(e.title)} <small>${e.date}</small></h3><ul>${e.notes.map(n=>`<li>${chatEsc(n)}</li>`).join('')}</ul></section>`).join('')}</div>
-   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}if($('fndB'))$('fndB').onclick=()=>openFounders();if(!FND)refreshFounder(true);}
 // one line, always: if the whole address doesn't fit (phones), show the first 4 and last 4 (tapping still copies all of it)
 const caShort=ca=>ca.slice(0,6)+'…'+ca.slice(-4);
 function caFit(el){const t=tokenInfo();if(!t)return;el.textContent=t.ca;el.title=t.ca;el.style.fontSize='';
@@ -1798,6 +1836,64 @@ async function copyCA(){const t=tokenInfo();if(!t)return;let ok=false;
   if(!ok){try{const ta=document.createElement('textarea');ta.value=t.ca;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99);ok=document.execCommand('copy');ta.remove();}catch(e){}}
   const m=$('caMsg');if(m){m.textContent=ok?'Copied! Paste it into your wallet or Pons to check it.':'Couldn\'t copy automatically. Press and hold the address to copy it.';m.classList.toggle('ok',ok);}
   if(ok){sfx('pick');toast('Contract address copied','good');}}
+// ---- the Founder's Lantern: a free NFT on Robinhood Chain for the first 1,000 heroes (token ID = hero number) ----
+// The server knows each hero's number and whether their wallet holds one (lib/founders.js). Holders get the Founder's Flame.
+async function refreshFounder(rerender){if(!window.ACC||!ACC.online())return;const r=await ACC.api.call(null,'founders');if(!r.ok||!r.data.on)return;
+  const was=isFounder();FND=r.data;if(isFounder()!==was&&isFounder())toast('Founder’s Flame lit. Your light burns violet.','rare');
+  if(rerender&&!$('sheet').hidden){if($('fndSheet'))openFounders(true);else if($('fndCard'))openBulletin();}}
+const nfmt=n=>Number(n).toLocaleString('en-US');
+function founderCard(){if(!FND||!FND.on)return '';const F=FND;
+  const line=isFounder()?'You hold a Founder’s Lantern. Your Founder’s Flame is '+(SET.flame!==false?'lit':'off')+'.':F.listed&&F.no<=F.wl?`You’re Hero #${nfmt(F.no)}: you’re on the whitelist. ${F.open?'The free mint is open.':'The free mint opens soon.'} Wick keeps the ledger, by the road to the Delve Gate.`:`The whitelist is the first ${nfmt(F.wl)} heroes. You’re Hero #${nfmt(F.no)}.`;
+  return `<div class="ca fnd" id="fndCard"><b>Founder’s Lantern <small>free NFT</small></b><small>${line}</small><button class="btn alt sm" id="fndB">${isFounder()?'Founder’s Lantern':F.listed&&F.no<=F.wl?(F.open?'Mint for free':'See my spot'):'Learn more'}</button></div>`;}
+// Wick, keeper of the Founders' Ledger (by the road up to the Delve Gate): checks your whitelist spot, and opens the mint.
+// He'll also be the one to see for the Founder's Lantern's phase 2.
+const WICK_SAY=['The Founders’ Ledger is open.','The first thousand heroes… are you one?','A violet flame burns for the Founders.','Come, let me find your name.'];
+const wickKey=()=>'lanternhold.wick.'+(S&&S.name||'');
+function wickSeen(){try{return localStorage.getItem(wickKey())==='1';}catch(e){return true;}}
+const wickHd=q=>`<div class="npchd wick"><img alt="" src="${ART.wick[0].toDataURL()}"><span><b>Wick</b><small>Keeper of the Founders’ Ledger</small><em>“${chatEsc(q)}”</em></span></div>`;
+let wickChecked=false;
+async function openWick(){try{localStorage.setItem(wickKey(),'1');}catch(e){}
+  if(FND&&wickChecked)return openFounders();
+  openSheet(`<div id="fndSheet"></div>${wickHd('Welcome, '+(S.name||'traveller')+'. Let me find your name in the ledger…')}<p class="lead small wickchk">Wick runs a finger down the pages of the Founders’ Ledger…</p><div class="row"><button class="btn" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;
+  const t0=Date.now();await refreshFounder();await new Promise(r=>setTimeout(r,Math.max(0,1100-(Date.now()-t0))));
+  if(!$('fndSheet'))return;
+  if(!FND||!FND.on){openSheet(`<div id="fndSheet"></div>${wickHd(window.ACC&&ACC.online()?'The ledger isn’t ready for new names just yet. Come back soon.':'I can only read the ledger while you’re signed in and online.')}<div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;return;}
+  wickChecked=true;sfx(FND.listed||isFounder()?'rare':'pick');openFounders(true);}
+let fndV=null;
+function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refreshFounder(true);const F=FND,c=F.chain||{},listed=F.no<=F.wl;
+  let st='';
+  if(isFounder())st=`<div class="soon fnd"><b>You hold a Founder’s Lantern</b><p>Your Founder’s Flame: a violet light at your shoulder and around your lantern, that every other player sees. Only holders have it.</p>
+    <button class="btn big" id="flT">${SET.flame!==false?'Turn the flame off':'Light the flame'}</button></div>`;
+  else if(!listed)st=`<p class="lead small">The whitelist is the first <b>${nfmt(F.wl)}</b> heroes ever made, and you’re Hero #${nfmt(F.no)}. If you pick up a Founder’s Lantern from another player, the flame is yours while you hold it.</p>`;
+  else if(!F.open)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re on the whitelist</b><p>The mint opens soon. Your spot is saved to your hero, so there’s nothing to do yet. We’ll post it in the Bulletin.</p></div>`;
+  else if(!F.wallet)st=`<p class="lead small">Connect a wallet to your hero first (Hero screen). Your Founder’s Lantern is minted to it.</p><button class="btn big" id="fnHero">Open my hero</button>`;
+  else if(c.taken)st=`<p class="lead small">Founder’s Lantern #${nfmt(F.no)} has been minted${c.owner?' to '+chatEsc(c.owner.slice(0,6)+'…'+c.owner.slice(-4)):''}. To light the flame, the hero’s linked wallet (${chatEsc(F.wallet.slice(0,6)+'…'+F.wallet.slice(-4))}) needs to hold a Founder’s Lantern.</p>`;
+  else if(c.walletUsed)st=`<p class="lead small">The wallet linked to your hero has already minted a Founder’s Lantern. It’s one per wallet.</p>`;
+  else if(c.ended)st=`<p class="lead small">The Founder’s Lantern mint has ended.</p>`;
+  else if(c.paused)st=`<p class="lead small">Minting is paused for a moment. Try again soon.</p>`;
+  else if(fndV)st=`<div class="soon fnd"><b>Mint Founder’s Lantern #${nfmt(fndV.no)}</b><ul><li>Free: you only pay a tiny gas fee in ETH</li><li>Minted to your wallet ${chatEsc(fndV.wallet.slice(0,6)+'…'+fndV.wallet.slice(-4))}</li><li>On Robinhood Chain</li></ul></div>
+    <button class="btn big" id="fnGo">Open my wallet</button><button class="btn alt big" id="fnNo">Not now</button>`;
+  else st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re on the whitelist</b><p>Mint Founder’s Lantern #${nfmt(F.no)} for free. You only pay a tiny gas fee.</p></div><button class="btn big" id="fnM">Mint for free</button>`;
+  const q=isFounder()?'That violet flame suits you, Founder. The ledger remembers.':!listed?`Hero #${nfmt(F.no)}… The ledger holds the first ${nfmt(F.wl)} names, and yours came after. But a Founder’s Lantern can still change hands.`:`Hero #${nfmt(F.no)}… ah, here you are. Your name is written in the Founders’ Ledger.`;
+  openSheet(`<div id="fndSheet"></div>${wickHd(q)}<h2>Founder’s Lantern</h2>
+   <div class="fndart"><img src="/api/founders?img=${F.no}" alt="Founder’s Lantern #${F.no}" width="160" height="160"><span><b>#${nfmt(F.no)}</b><small>Your hero number: Hero #${nfmt(F.no)}</small>${c.supply!=null?`<small>${nfmt(c.supply)} / ${nfmt(F.wl)} minted</small>`:''}</span></div>
+   <p class="lead small">A free NFT on Robinhood Chain for the first ${nfmt(F.wl)} heroes. Its number is your hero number, so there’s only ever one of each. Whoever holds one gets the <b class="flamet">Founder’s Flame</b> in the game: a light colour no one else has.</p>
+   ${st}${F.open&&F.contract?`<p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/token/${chatEsc(F.contract)}" target="_blank" rel="noopener">View the collection</a></p>`:''}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;
+  if($('flT'))$('flT').onclick=()=>{SET.flame=SET.flame===false;saveSet();sfx('pick');toast(SET.flame?'Founder’s Flame lit':'Founder’s Flame off');openFounders(true);};
+  if($('fnHero'))$('fnHero').onclick=()=>openHero();
+  if($('fnNo'))$('fnNo').onclick=()=>{fndV=null;openFounders(true);};
+  const m=$('fnM');if(m)m.onclick=async()=>{m.disabled=true;m.textContent='Preparing…';const r=await ACC.api.call(null,'founders',{method:'POST',body:{action:'voucher'}});
+    if(!r.ok){toast(r.data.msg||'Couldn’t start the mint. Try again.','bad');refreshFounder(true);return;}fndV=r.data;openFounders(true);};
+  const go=$('fnGo');if(go)go.onclick=async()=>{const v=fndV;go.disabled=true;go.textContent='Confirm in your wallet…';let hash;
+    try{hash=await ACC.mintTx(v,FND.contract);}catch(e){fndV=null;toast(e&&e.code===4001?'You cancelled the mint in your wallet.':(e&&e.message)||'The mint didn’t go through.','bad');return openFounders(true);}
+    fndV=null;openSheet(`<div id="fndSheet"></div><h2>Minting…</h2><p class="lead">Waiting for Robinhood Chain to confirm Founder’s Lantern #${nfmt(v.no)}…</p><p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/tx/${chatEsc(hash)}" target="_blank" rel="noopener">View the transaction</a></p>`);
+    const r=await ACC.api.call(null,'founders',{method:'POST',body:{action:'sync',tx:hash}});if(r.ok&&r.data.on)FND=r.data;
+    if(isFounder()){sfx('rare');toast('Founder’s Lantern #'+nfmt(v.no)+' is yours. Founder’s Flame lit!','rare');if(window.NET&&NET.refresh)NET.refresh();}
+    else toast('Sent! It can take a moment to show up. Check back here soon.','good');
+    openFounders(true);};}
 function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
    <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
@@ -1987,8 +2083,10 @@ function drawObj(o){
   else if(o.type==='press')spr(ART.press,o.x-16,o.y-32);
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
-  else if(o.type==='npc'){const fr=Math.floor(time*1.6+Math.sin(time*.7))%2;spr(ART.merchant[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
-    if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
+  else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
+    if(W){if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x-9),Y=Math.round(o.y-20),gr=g.createRadialGradient(X,Y,0,X,Y,10);gr.addColorStop(0,`rgba(${FLAMEC},${.35+.08*Math.sin(time*7)})`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(X-10,Y-10,20,20);g.restore();}
+      if(!wickSeen()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-52+b),7,9);g.fillStyle='#b98cff';g.fillRect(Math.round(o.x-2),Math.round(o.y-51+b),5,7);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x),Math.round(o.y-50+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-46+b),1,1);}}
+    if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=W?WICK_SAY[ri(0,WICK_SAY.length-1)]:['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
     if(o.sayT>0){o.sayT-=1/60;TAGS.push({x:o.x,y:o.y-45,say:o.say});}}
   else if(o.type==='sign')spr(ART.sign,o.x-9,o.y-22);
   else if(o.type==='barricade')spr(ART.barricade,o.x-10,o.y-60);
@@ -2042,14 +2140,20 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17+yb);
   spr(img,x-8,y-15+yb);
   const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
+  if(look&&look.flame==='founder')drawFlame(x,y,dir,(npc?npc.name.length:0));
   // Name tags are collected here and drawn on a sharp overlay after the world (see drawTags). Off by default
   // (Settings → Player names), except admins, whose names everyone always sees.
   {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames))TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?30:20),name,lv:me?S.lvl:look&&look.lvl,adm,me});}
   if(npc&&npc.sayT>0)TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?28:18)-(npc.adm||SET.pnames?5:0),say:npc.say});
 }
+// A small violet flame that floats at the Founder's shoulder, with sparks drifting up from it
+function drawFlame(x,y,dir,seed){const t=time+seed*.7,bx=Math.round(x+(dir==='left'?7:-8)),by=Math.round(y-17+Math.sin(t*2.4)*1.5);
+  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(bx+1,by+2,0,bx+1,by+2,9);gr.addColorStop(0,`rgba(${FLAMEC},.55)`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(bx-8,by-7,18,18);
+  if(!reduceMotion)for(let i=0;i<3;i++){const ph=(t*.7+i/3)%1,sx=bx+1+Math.round(Math.sin(t*3+i*2.1)*2),sy=Math.round(by-1-ph*9);g.globalAlpha=1-ph;g.fillStyle=i%2?FLAME:'#f1e4ff';g.fillRect(sx,sy,1,1);}
+  g.restore();const fl=Math.floor(t*8)%2;g.fillStyle='#5d275d';g.fillRect(bx-1,by+1,4,4);g.fillStyle=FLAME;g.fillRect(bx,by-1+fl,2,5-fl);g.fillRect(bx-1,by+2,4,2);g.fillStyle='#f1e4ff';g.fillRect(bx,by+2,2,2);}
 function drawPlayer(){
   if(P.inv>0&&Math.floor(P.inv*20)%2)return;
-  const look=myLook(),d=P.dir,lan=ART.lantern[S.gear.lantern]||ART.lantern.basic;
+  const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
   if(d==='up')spr(lan,P.x+lx,P.y+ly);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
@@ -2091,7 +2195,8 @@ function drawLight(cx,cy){
   // warm firelight: soft orange pools around torches (flickering) and a golden one around your lantern
   const glow=(x,y,r,c,a)=>{const X=x-cx,Y=y-cy,gr=g.createRadialGradient(X,Y,0,X,Y,r);gr.addColorStop(0,`rgba(${c},${a})`);gr.addColorStop(.5,`rgba(${c},${a*.4})`);gr.addColorStop(1,`rgba(${c},0)`);g.globalAlpha=1;g.fillStyle=gr;g.fillRect(X-r,Y-r,r*2,r*2);};
   for(const o of map.objs){if(o.light&&o.light.c==='warm'&&!o.gone){const yy=o.onWall?o.tile[1]*T+6:o.y-6;if(Math.abs(o.x-P.x)>VW||Math.abs(yy-P.y)>VH)continue;const f=.85+.15*Math.sin(time*11+o.x)*Math.sin(time*7.3+o.y);glow(o.x,yy,o.light.r*.9*f,'255,140,60',.22*f);}}
-  {const L=(10+44*run.oil/100)*LAN().light;glow(P.x,P.y-8,L*1.15,'255,205,120',.16+.03*Math.sin(time*9));}
+  {const L=(10+44*run.oil/100)*LAN().light;glow(P.x,P.y-8,L*1.15,flameOn()?FLAMEC:'255,205,120',(flameOn()?.2:.16)+.03*Math.sin(time*9));}
+  for(const o of OTH.values())if(o.look&&o.look.flame==='founder'&&Math.abs(o.x-P.x)<VW)glow(o.x,o.y-8,40,FLAMEC,.18+.03*Math.sin(time*9+o.x));
   g.restore();
 }
 
@@ -2529,9 +2634,9 @@ setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
   $('chatIc').src=p.canvas().toDataURL();}
 $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('chatGo').onclick=()=>{chatSend();if(!(window.matchMedia&&matchMedia('(hover:hover)').matches))$('chatIn').focus();};
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
-window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();if(o.isNew)setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);else toast('Welcome back, '+S.name,'good');},
+window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},set FND(v){FND=v},myLook,closeSheet};
 })();
 
 // ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
@@ -2604,18 +2709,21 @@ const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.rejec
 // Claiming rewards is the one transaction Lanternhold ever asks a wallet for: claim() on the rewards vault, with a
 // voucher from our server. It's checked here before the wallet sees it (that contract, that function, nothing else:
 // never a token approval), and it goes from the wallet linked to the hero.
-const CLAIM_SEL='0xfa6b3b53';   // claim(uint256,uint256,uint8,bytes32,bytes32)
-async function claimTx(v,vault){
-  if(!vault||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(vault).toLowerCase())throw {message:'That isn’t the rewards vault.'};
-  if(typeof v.data!=='string'||!v.data.startsWith(CLAIM_SEL)||v.data.length!==10+64*5)throw {message:'That isn’t a rewards claim.'};
+const CLAIM_SEL='0xfa6b3b53',MINT_SEL='0x7fb9a063';   // claim(...) on the rewards vault, mint(...) on the Founder's Lantern: both (uint256,uint256,uint8,bytes32,bytes32)
+// Send a transaction the server prepared, after checking it goes to the contract we expect and calls the function we expect.
+async function contractTx(v,to,sel,what){
+  if(!to||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(to).toLowerCase())throw {message:'That isn’t the '+what+' contract.'};
+  if(typeof v.data!=='string'||!v.data.startsWith(sel)||v.data.length!==10+64*5)throw {message:'That isn’t a '+what+' transaction.'};
   const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;
-  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to claim.'};
+  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to do this.'};
   const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(v.wallet).toLowerCase());
   if(!from)throw {message:'Switch your wallet to '+short(v.wallet)+', the wallet linked to your hero.'};
   const want='0x'+Number(v.chainId).toString(16),cur=String(await pv.request({method:'eth_chainId'})).toLowerCase();
   if(cur!==want){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:want}]});}
     catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
   return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
+const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
+const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern');
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 async function pickAccount(pv){
@@ -2773,7 +2881,7 @@ window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=fals
   // trading: save now, then hold further saves until the website has moved the items (it writes both saves itself)
   async tradeLock(){for(let i=0;i<20&&(cloudBusy||cloudPending);i++){await flushCloud();if(cloudBusy||cloudPending)await new Promise(r=>setTimeout(r,250));}held=true;return !cloudPending;},
   tradeUnlock(rev){held=false;if(Number.isInteger(rev)){ACC.rev=rev;lastSent=null;}retry(2500);},
-  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx};
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx,mintTx};
 
 // ---------- start ----------
 render();
