@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.15 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.18 · updated October 25, 2026
 
 ## Welcome
 
@@ -28,7 +28,7 @@ Sign in, choose a name and a look, and you start in the Hold with 40 gold, 20 Wh
 
 You can also link your X account from the Hero screen so friends can see your @handle.
 
-**Your hero.** Names are 3 to 16 characters (letters, numbers or \_). They are unique and can't be changed. You choose a skin tone, hair colour, hair style (short, long, spiky or hood) and clothes, and you can change your look later at the house in the Hold.
+**Your hero.** Names are 3 to 16 characters (letters, numbers or \_). They are unique and can't be changed. You choose a skin tone, hair colour, hair style (short, long, spiky, hood, pigtails, ponytail, bun or bob) and clothes, and you can change your look later at the house in the Hold.
 
 **First things to try**
 
@@ -45,6 +45,7 @@ The goals pill at the top of the screen always suggests a good next step.
 | --- | --- | --- |
 | Move | Joystick (bottom left) | WASD or arrow keys |
 | Attack, chop, fish, use | Big round action button | Space or left click |
+| See what something is | | Point at it with the mouse: its name shows above it |
 | Quick slots (food, oil) | 5 buttons around the action button | 1 to 5 |
 | Return Flame (leave the Depths) | Hold the flame button for 2 seconds | Hold R |
 | Bag | Chest button | B |
