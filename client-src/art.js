@@ -38,7 +38,7 @@ const LOOKS={
   skin:['#f6d7bb','#f0c8a0','#d9a066','#b5764a','#8a5634','#5e3a24'],
   hair:['#2a2230','#6b3e26','#a0522d','#e8c66a','#f4f4f4','#b13e53','#3b5dc9','#e86fd0','#38b764','#ef7d57'],
   cloth:['#257179','#3b5dc9','#38b764','#b13e53','#7a3b8f','#ef7d57','#566c86','#333c57','#d9a066','#e86fd0'],
-  style:['short','long','spiky','hood']
+  style:['short','long','spiky','hood','pigtails','ponytail','bun','bob']
 };
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
@@ -65,41 +65,54 @@ function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=s
 }
 function heroFrame(dir,step,look){
   look=look||{};const p=new Px(16,16);
-  const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82);
+  const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82),faceHi=shade(face,1.08),blush=mix(face,'#e8707a',.28);
   const hair=LOOKS.hair[look.hair??1]||LOOKS.hair[1],hair2=shade(hair,.7),hairHi=shade(hair,1.35);
-  const tun=LOOKS.cloth[look.cloth??0]||LOOKS.cloth[0],tun2=shade(tun,.68),trim=shade(tun,1.45);
-  const style=LOOKS.style[look.style??0]||'short',A=ARMOR[look.armor];
-  const lf=step===1?1:0,rf=step===2?1:0,C=look.cape&&CAPES[look.cape];
-  // cape behind the body (front view)
-  // legs + boots
-  p.rect(5,12,2,3-lf,PAL.navy).rect(9,12,2,3-rf,PAL.navy);
-  p.rect(5,15-lf,2,1,PAL.bark).rect(9,15-rf,2,1,PAL.bark);
-  // long hair behind the body
-  if(style==='long'){if(dir==='up')p.rect(4,6,8,5,hair).rect(4,10,8,1,hair2);else if(dir==='down')p.rect(4,5,1,5,hair).rect(11,5,1,5,hair);else p.rect(dir==='left'?8:4,5,4,5,hair);}
-  // tunic
-  p.rect(4,8,8,5,tun).rect(4,12,8,1,tun2).rect(4,8,1,5,tun2);
-  if(dir==='down')p.rect(7,8,2,3,trim);
+  const tun=LOOKS.cloth[look.cloth??0]||LOOKS.cloth[0],tun2=shade(tun,.68),tunHi=shade(tun,1.18),trim=shade(tun,1.45);
+  const style=LOOKS.style[look.style??0]||'short',A=ARMOR[look.armor],girl=FEM_STYLES.includes(style);
+  const pants=PAL.navy,pants2=shade(PAL.navy,.72),boot=PAL.bark,boot2=PAL.wood,sole=PAL.soil;
+  const lf=step===1?1:0,rf=step===2?1:0;
+  const side=dir==='left'||dir==='right',R=dir==='right',X=x=>R?15-x:x;   // side views are drawn facing left, mirrored for right
+  const set=(x,y,c)=>p.set(side?X(x):x,y,c),rect=(x,y,w,h,c)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++)set(x+i,y+j,c);};
+  // legs (shaded on the inside) and boots (a toe highlight, a darker sole)
+  p.rect(5,12,2,3-lf,pants).rect(9,12,2,3-rf,pants);p.rect(6,12,1,3-lf,pants2).rect(10,12,1,3-rf,pants2);
+  p.rect(5,15-lf,2,1,boot).rect(9,15-rf,2,1,boot);p.set(5,15-lf,boot2).set(9,15-rf,boot2);
+  if(dir==='down'){p.set(6,15-lf,sole).set(10,15-rf,sole);}
+  // long hair and tails behind the body
+  backHair(p,dir,style,hair,hair2,hairHi,set,rect);
+  // tunic: shaded side, a lighter front panel, a hem, a neckline
+  p.rect(4,8,8,5,tun).rect(4,12,8,1,tun2).rect(4,8,1,5,tun2);p.rect(11,9,1,3,shade(tun,.84));
+  if(dir==='down'){p.rect(6,9,4,2,tunHi);p.rect(7,8,2,1,face2);p.set(6,8,trim).set(9,8,trim);p.rect(7,9,2,2,trim);p.set(7,10,tun2).set(8,10,tun2);}
+  else if(dir==='up'){p.rect(5,8,6,1,tun2);p.rect(6,9,4,2,tunHi);}
+  else{rect(5,9,4,2,tunHi);set(5,8,trim);}
   // armor over the clothes
-  if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down')p.rect(6,8,4,1,A.hi);else p.rect(5,8,6,1,A.hi);}
-  p.rect(4,11,8,1,PAL.bark).set(8,11,PAL.yellow);
-  // arms
-  const sl=A?A.m2:tun2;
-  if(dir==='left'){p.rect(6,9,2,3,sl).set(6,12,face);}
-  else if(dir==='right'){p.rect(8,9,2,3,sl).set(9,12,face);}
-  else{p.rect(3,9,1,3,sl).set(3,12,face).rect(12,9,1,3,sl).set(12,12,face);}
-  // cape over the back / trailing to the side
-  // (capes are drawn as their own layer around the hero: capeLayer)
+  if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down'){p.rect(6,8,4,1,A.hi);p.set(7,9,A.hi);}else p.rect(5,8,6,1,A.hi);p.set(10,9,A.m2);}
+  // belt with a buckle that catches the light
+  p.rect(4,11,8,1,boot);if(dir==='down'){p.set(7,11,PAL.gold).set(8,11,PAL.yellow);}else if(dir!=='up')set(5,11,PAL.yellow);
+  // arms: sleeve, cuff, hand
+  const sl=A?A.m2:tun2,cuff=A?A.m:tun;
+  if(side){rect(6,9,2,3,sl);set(6,9,cuff);set(6,12,face);set(7,12,face2);}
+  else{p.rect(3,9,1,3,sl).rect(12,9,1,3,sl);p.set(3,9,cuff).set(12,9,shade(cuff,.85));p.set(3,12,face).set(12,12,face2);}
   // head
-  const cap=style==='hood'?tun:hair,cap2=style==='hood'?tun2:hair2;
-  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}else{
-  p.ell(8,5,4.2,4,cap);
-  if(dir==='down'){p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(5,6,shade(face,.9)).set(10,6,shade(face,.9));p.rect(5,3,6,1,cap2);
-    if(style!=='hood'){p.set(5,4,hair).set(10,4,hair);}if(style==='hood')p.rect(4,4,1,4,cap).rect(11,4,1,4,cap);}
-  else if(dir==='up'){p.rect(5,7,6,1,cap2);}
-  else if(dir==='left'){p.rect(4,4,4,4,face).rect(4,7,4,1,face2);p.set(5,5,PAL.ink);p.rect(4,3,5,1,cap2);}
-  else{p.rect(8,4,4,4,face).rect(8,7,4,1,face2);p.set(10,5,PAL.ink);p.rect(7,3,5,1,cap2);}
-  if(style==='spiky'){p.set(5,0,hair).set(8,0,hair).set(11,1,hair).set(4,1,hair).set(7,1,hair).set(10,1,hair);}
-  p.set(6,2,hairHi).set(7,2,hairHi);}
+  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}
+  else{
+    p.ell(8,5,4.2,4,hair);
+    if(dir==='down'){
+      p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(5,4,face2).set(10,4,face2);
+      p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(6,4,hair2).set(9,4,hair2);                       // eyes and brows
+      p.set(5,6,blush).set(10,6,blush);p.set(7,7,shade(face,.7)).set(8,7,shade(face,.7));      // cheeks, mouth
+      p.set(7,5,faceHi).set(8,5,faceHi);
+      if(girl)p.set(6,4,PAL.ink).set(9,4,PAL.ink);   // taller eyes with lashes
+      p.rect(5,3,6,1,hair2);if(style!=='bob'){p.set(5,4,hair).set(10,4,hair);}
+      if(style==='short'||style==='spiky')p.set(4,5,face2).set(11,5,face2);                  // ears
+    }
+    else if(dir==='up'){p.rect(5,7,6,1,hair2);p.rect(10,3,2,4,hair2);}
+    else{rect(4,4,4,4,face);rect(4,7,4,1,face2);set(5,5,PAL.ink);set(5,4,hair2);set(4,6,blush);set(4,7,shade(face,.7));rect(4,3,5,1,hair2);
+      if(girl)set(4,5,PAL.ink);
+      if(style==='short'||style==='spiky')set(8,5,face2);}
+    // shine on top, shading on the far side
+    p.set(6,2,hairHi).set(7,2,hairHi).set(5,3,dir==='up'?hairHi:p.get(5,3));if(dir!=='down'&&dir!=='up')set(10,2,hair2);
+    frontHair(p,dir,style,hair,hair2,hairHi,set,rect);
+  }
   // helmet on top of the head
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
@@ -107,6 +120,32 @@ function heroFrame(dir,step,look){
   if(look.helm==='greenhat'){p.rect(5,1,6,2,'#38b764');p.set(6,1,'#a7f070').set(9,2,'#a7f070');p.rect(4,3,8,1,'#257179');}
   p.outline();
   return p.canvas();
+}
+const FEM_STYLES=['long','pigtails','ponytail','bun','bob'];
+function mix(a,b,t){const A=hex(a),B=hex(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+// hair that hangs behind the body (drawn before the tunic)
+const tieOf=h=>{const [r,g,b]=hex(h);return r>200&&b>150&&g<160?'#73eff7':'#e86fd0';};   // hair ties: pink, or cyan on pink hair
+function backHair(p,dir,style,h,h2,hi,set,rect){
+  const tie=tieOf(h);
+  if(style==='long'){if(dir==='up'){p.rect(4,6,8,5,h).rect(4,10,8,1,h2);p.set(7,7,h2).set(8,8,h2);}else if(dir==='down'){p.rect(4,5,1,5,h).rect(11,5,1,5,h);p.set(4,9,h2).set(11,9,h2);}else{rect(8,5,4,5,h);rect(8,9,4,1,h2);}}
+  if(style==='ponytail'){
+    if(dir==='up'){p.rect(7,6,2,5,h);p.set(8,9,h2).set(7,10,h2);p.rect(7,5,2,1,tie);}
+    else if(dir!=='down'){rect(12,3,2,2,h);rect(12,5,2,4,h);set(13,8,h2);set(12,9,h);set(12,4,tie);}}
+  if(style==='bob'){if(dir==='up'){p.rect(4,6,8,2,h).rect(4,8,8,1,h2);}}
+}
+// hair over the head (after the face): spikes, bangs, buns, the tails' ties from the front
+function frontHair(p,dir,style,h,h2,hi,set,rect){
+  const tie=tieOf(h);
+  if(style==='spiky'){p.set(5,0,h).set(8,0,h).set(11,1,h).set(4,1,h).set(7,1,h).set(10,1,h);p.set(8,0,hi);}
+  if(style==='long'&&dir==='down'){p.set(5,4,h).set(10,4,h).set(10,3,h);}
+  if(style==='bun'){if(dir==='down'||dir==='up'){p.ell(8,1.2,2.2,1.6,h);p.set(7,0,hi);p.rect(7,2,2,1,tie);}else{rect(9,0,3,3,h);set(10,0,hi);set(9,2,tie);}}
+  if(style==='bob'){
+    if(dir==='down'){p.rect(4,4,1,5,h).rect(11,4,1,5,h);p.set(4,8,h2).set(11,8,h2);p.rect(5,3,6,1,h);p.set(6,3,h2).set(9,3,h2);}
+    else if(dir!=='up'){rect(8,4,4,5,h);set(9,8,h2);set(11,8,h2);rect(4,3,4,1,h);set(8,5,h2);}}
+  if(style==='pigtails'){   // two tails tied at the sides of the head, hanging over the shoulders
+    if(dir==='down'||dir==='up'){for(const [x,o] of [[3,-1],[12,1]]){p.rect(x,5,1,4,h);p.rect(x+o,6,1,3,h);p.set(x+o,8,h2).set(x,8,h2);p.set(x+o,9,h2);p.set(x,5,tie);}}
+    else{rect(11,5,1,4,h);rect(12,6,1,3,h);set(12,8,h2);set(12,9,h2);set(11,5,tie);}}
+  if(style==='ponytail'&&dir==='down'){p.set(11,3,tie);}
 }
 // Capes: a separate 20x20 layer around the hero (hero sits at 2,2), so a cape can be wider and longer than the body and sway.
 const CAPE_CACHE={};

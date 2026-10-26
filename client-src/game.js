@@ -136,6 +136,30 @@ cv.addEventListener('wheel',e=>{if(!started||!$('sheet').hidden||!$('acct').hidd
   const now=performance.now();if(now-wheelLast>250)wheelAcc=0;wheelLast=now;wheelAcc+=e.deltaMode===1?e.deltaY*30:e.deltaY;
   if(Math.abs(wheelAcc)<50||now-wheelT<120)return;const z=Math.max(0,Math.min(4,SET.zoom+(wheelAcc<0?1:-1)));wheelAcc=0;wheelT=now;
   if(z===SET.zoom)return toast(z===4?'Zoomed in all the way':'Zoomed out all the way');SET.zoom=z;saveSet(true);toast('Zoom: '+ZOOMS[z]);},{passive:false});
+// Mouse hover (computers only): the name of whatever you point at shows above it, in the same green as NPC names.
+const HOVER_OK=window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches,HOV={on:false,x:0,y:0};
+cv.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;HOV.on=true;HOV.x=e.clientX;HOV.y=e.clientY;});
+cv.addEventListener('pointerleave',()=>{HOV.on=false;cv.style.cursor='';});
+// [left, top, width, height] from the object's x/y (its feet), and the name to show
+const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],forge:[-22,-38,44,38,'Forge'],kitchen:[-14,-30,28,30,'Kitchen'],press:[-14,-30,28,30,'Oil Press'],
+  board:[-14,-30,28,30,'Bulletin Board'],stall:[-20,-30,40,32,'Tallow’s Cart'],sign:[-8,-22,16,22,'The Road East'],barricade:[-10,-58,20,58,'The Road East (closed)'],
+  tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap']};
+function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
+  for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
+    if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
+    else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=H[4];}
+    if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
+  if(best)return best;
+  const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
+  if(scene==='hold'){
+    if(map.plots&&map.plots.some(p=>p.tx===tx&&p.ty===ty))return {x:tx*T+8,y:ty*T-2,name:'Farm'};
+    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};}
+  if(scene==='delve'&&map.stairs&&!map.stairs.hidden&&tx===map.stairs.tx&&ty===map.stairs.ty)return {x:tx*T+8,y:ty*T-2,name:'Stairs down'};
+  return null;}
+function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acct').hidden){if(cv.style.cursor)cv.style.cursor='';return;}
+  const r=cv.getBoundingClientRect();if(!r.width)return;const wx=camX+(HOV.x-r.left)*VW/r.width,wy=camY+(HOV.y-r.top)*VH/r.height;
+  const h=hoverTarget(wx,wy);cv.style.cursor=h?'pointer':'';if(h)TAGS.push({x:h.x,y:h.y,name:h.name,npc:true,hov:true});}
 // Mouse: left-click on the game attacks / acts, same as Space. In the Depths the hero turns toward the click first.
 let camX=0,camY=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||!started||!$('sheet').hidden||!$('acct').hidden)return;
@@ -965,7 +989,7 @@ $('guide').addEventListener('click',()=>{if(!started)return;if($('guide').classL
 // ---------- simulated town ----------
 // ---------- update ----------
 function update(dt){
-  time+=dt;MP.tick(dt);
+  time+=dt;if(S&&(S.gold|0)!==goldHud.g){goldHud.g=S.gold|0;goldHud();}MP.tick(dt);
   if(paused&&!(scene==='delve'&&MP.shared()))return;
   // movement
   let mx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0),my=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
@@ -1044,10 +1068,13 @@ function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S
   $('quick').innerHTML=S.quick.map((id,i)=>{const n=id?S.bank[id]||0:0;return `<button class="qs ${id&&!n?'empty':''}" data-q="${i}" aria-label="Quick slot ${i+1}${id?': '+ITEMS[id].n+', '+n:' (empty)'}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:'<b>+</b>'}${id?`<span class="cnt"><canvas class="pt"></canvas></span>`:''}<i>${i+1}</i></button>`;}).join('');
   $('quick').querySelectorAll('.qs').forEach(b=>{const i=+b.dataset.q,id=S.quick[i];const c=b.querySelector('canvas');if(c)ptSet(c,S.bank[id]||0,{font:'small',px:9,color:'#ffcd75'});
     b.addEventListener('pointerdown',e=>{e.preventDefault();useQuick(i);});});}
+// gold on the HUD, short: 9,850 · 12.4k · 1.25M
+const fmtGold=n=>n<10000?n.toLocaleString('en-US'):n<1e6?(Math.floor(n/100)/10)+'k':(Math.floor(n/1e4)/100)+'M';
+function goldHud(){const gv=fmtGold(S.gold|0),gb=$('goldV');if(gb&&gb._v!==gv){gb._v=gv;gb.lastChild.textContent=gv;gb.title=(S.gold|0).toLocaleString('en-US')+' gold';if(!gb.firstChild.getAttribute('src'))gb.firstChild.src=iconOf('gold').toDataURL();}}
 function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
-  $('lvl').textContent='Lv '+S.lvl;{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
+  $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
   $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
@@ -1066,10 +1093,10 @@ function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.clas
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
     const e=tagEl(n++);if(e.hidden)e.hidden=false;   // unhide first: a hidden tag measures 0 wide and the level badge would cover the name
-    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
+    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0)+'|'+(t.hov?1:0);
     if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
     else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
-      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';
+      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.classList.toggle('hov',!!t.hov);e.children[0].style.display=t.adm?'':'none';
       const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
     const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
   for(let i=n;i<tagPool.length;i++)if(!tagPool[i].hidden)tagPool[i].hidden=true;}
@@ -1096,7 +1123,7 @@ function render(){TAGS.length=0;
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0];if(swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);drawHero(o.x+lx,o.y+ly,o.dir,o.moving,o.anim,o.look,o.name,o);if(sw&&!swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=dun&&!sw,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
@@ -1113,7 +1140,7 @@ function render(){TAGS.length=0;
     ptDraw(g,map.pack.bossName,VW/2,y-9,{color:'#f4f4f4'});}
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
   if(scene==='delve'&&!reduceMotion)drawDelveAmbient(camX,camY);
-  drawTags();
+  hoverTag();drawTags();
 }
 // ---- life in the Depths: dust drifting through your lantern light, sparks rising from torches ----
 function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
@@ -1208,16 +1235,25 @@ function drawPlayer(){
 function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
-  if(d==='up')spr(lan,P.x+lx,P.y+ly);
+  const dun=scene!=='hold',held=dun&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always
+  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);
+  if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames?5:0),say:P.say});
-  if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
+  if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
+  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
 function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
+// The blade at rest in the free hand (the lantern is in the other): tilted up, bobbing with each step, swaying a little.
+// Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
+const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
+function drawHeldBlade(x,y,dir,blade,moving,anim){const h=HELD[dir]||HELD.down,sw=ART.sword[blade]||ART.sword.rusty;
+  const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
+  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-14);g.restore();}
 function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
   const sw=ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=BLADE_FX[blade]||'#f4f4f4',fade=1-t;
   // the smear: a crescent from where the swing started to the blade, brightest at the edge

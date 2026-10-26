@@ -85,17 +85,17 @@ const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
 const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern');
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
-async function pickAccount(pv){
-  let known=[];try{known=(await ask(pv,'eth_accounts'))||[];}catch(e){}
-  if(known.length){
-    try{const perms=await ask(pv,'wallet_requestPermissions',[{eth_accounts:{}}]);
-      let now=[];try{now=(await ask(pv,'eth_accounts'))||[];}catch(e){}
-      const cav=(perms||[]).flatMap(p=>(p&&p.caveats)||[]).find(c=>c&&c.type==='restrictReturnedAccounts');
-      const pick=now[0]||(cav&&Array.isArray(cav.value)&&cav.value[0]);if(pick)return String(pick);}
-    catch(e){if(e&&e.code===4001)throw e;}
-  }
-  const accts=await ask(pv,'eth_requestAccounts');return String(accts&&accts[0]||'');
-}
+// Which account: the one the wallet has selected (eth_requestAccounts lists it first). If this site is already
+// connected there's no pop-up at all, so a returning player sees just one request: the free sign-in signature.
+// To play as another account, switch accounts in the wallet (the game signs you out and you connect again).
+async function pickAccount(pv){const accts=(await ask(pv,'eth_requestAccounts'))||[];
+  // Only if the wallet has switched to an account that isn't connected to this site yet: ask it to connect that one
+  // (otherwise the wallet would quietly hand back the old account). Normal sign-ins never see this extra pop-up.
+  const sel=typeof pv.selectedAddress==='string'?pv.selectedAddress:'';
+  if(/^0x[0-9a-fA-F]{40}$/.test(sel)&&!accts.some(a=>String(a).toLowerCase()===sel.toLowerCase())){
+    try{await ask(pv,'wallet_requestPermissions',[{eth_accounts:{}}]);const now=(await ask(pv,'eth_accounts'))||[];const hit=now.find(a=>String(a).toLowerCase()===sel.toLowerCase());if(hit)return String(hit);}
+    catch(e){if(e&&e.code===4001)throw e;}}
+  return String(accts[0]||'');}
 // Watch the wallet a player signed in with: switching or disconnecting its account signs them out.
 const LW='lanternhold.wallet';let watched=null;
 const signedInWithWallet=()=>{try{return localStorage.getItem('lanternhold.via')==='wallet';}catch(e){return false;}};
@@ -113,7 +113,7 @@ async function onAccounts(accts){const me=ACC.me&&ACC.me.wallet;if(!me||switchin
   try{sessionStorage.setItem('lanternhold.notice',now?'You switched wallets, so you were signed out. Connect again to sign in with '+short(now)+'.':'Your wallet disconnected, so you were signed out.');}catch(e){}
   location.reload();}
 // Signs a Sign-In with Ethereum message. endpoint: 'auth/verify' to sign in, 'auth/link-wallet' to add the wallet to this account.
-// At most two wallet pop-ups: pick/connect the account, then one free signature. The server writes the exact message
+// At most two wallet pop-ups the first time (connect, then one free signature); after that, just the signature. The server writes the exact message
 // (this site's address, your checksummed address, a one-time code, 5-minute expiry), so the wallet can show it as a
 // verified sign-in request for this site instead of a warning. No network switch is needed just to sign in.
 async function signWithWallet(w,endpoint,onStage){
@@ -148,7 +148,7 @@ function enter(){
   if(me.hero&&me.save){ACC.pid='h_'+me.hero.name.toLowerCase();finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
   ACC.draft=newDraft();go('creator');
 }
-function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
+function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;try{localStorage.setItem('lanternhold.lastHero',JSON.stringify({name:ACC.me.hero.name,wallet:ACC.me.wallet||null,google:!!ACC.me.google&&!ACC.me.wallet}));}catch(e){}lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
   box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin,hat:ACC.me.hero.hat});
   if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
@@ -186,7 +186,9 @@ function render(){
   }else if(s==='creator'){
     const d=ACC.draft,L=d.look;
     const sw=(k,arr)=>`<div class="swrow" role="radiogroup" aria-label="${k}">${arr.map((c,i)=>`<button class="sw" role="radio" aria-checked="${L[k]===i}" aria-label="${k} ${i+1}" data-k="${k}" data-i="${i}" style="--c:${c}"></button>`).join('')}</div>`;
-    h=`<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
+    let last=null;try{last=JSON.parse(localStorage.getItem('lanternhold.lastHero')||'null');}catch(e){}
+    const other=!ACC.edit&&last&&last.name&&ACC.me&&!(last.wallet&&ACC.me.wallet&&last.wallet===ACC.me.wallet);
+    h=`${other?`<div class="warnbox"><b>Looking for ${esc(last.name)}?</b> ${last.wallet?`${esc(last.name)} is on wallet <b>${short(last.wallet)}</b>, but you’re signed in with ${ACC.me.wallet?'<b>'+short(ACC.me.wallet)+'</b>':'Google'}.`:`${esc(last.name)} was signed in with Google, not this wallet.`} Making a hero here starts a new one. To get back to ${esc(last.name)}, ${last.wallet?'switch to that wallet in your wallet app, then ':''}<button class="link inl" id="signout">sign out</button> and connect again.</div>`:''}<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
     <div class="creator"><div class="pvWrap"><canvas id="pv" width="24" height="24"></canvas><button class="btn alt sm" id="rnd">Shuffle</button></div>
     <div class="opts">
       ${ACC.edit?`<p class="lead"><b>${esc(d.name)}</b><br><small>Names are permanent.</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">Names are permanent and unique. Other players will see it.</small></label>`}

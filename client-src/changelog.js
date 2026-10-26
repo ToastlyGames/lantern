@@ -1,8 +1,21 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.15',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.18',season:'Season 0 (Beta)',date:'2026-10-26'};
 const CHANGELOG=[
+  {v:'0.8.18',date:'2026-10-26',title:'Gold on screen',notes:[
+    'Your gold now shows next to your level at the top of the screen, in the Hold and in the Depths. Big amounts are shortened (12.4k, 1.25M); hover it on a computer for the exact number.',
+    'Fixed the health card being cut off on the right on some screens.']},
+  {v:'0.8.17',date:'2026-10-26',title:'Hover to see names',notes:[
+    'On a computer, point your mouse at anything you can use and its name shows above it in green: the Kitchen, Oil Press, Forge, Bank, Bulletin Board, Delve Gate, Tallow’s Cart, the Farm, the Lake, the Dock and the oak trees.',
+    'In the Depths it works for chests, ore, glowcaps and the stairs down.']},
+  {v:'0.8.16',date:'2026-10-26',title:'Sharper heroes, new hair',notes:[
+    'Heroes are crisper and more detailed: brows, cheeks and a mouth, shaded boots and trousers, a lit front on your tunic, cuffs, a shining belt buckle and highlights in your hair.',
+    'Four new hair styles: pigtails, ponytail, bun and bob. The long, pigtail, ponytail, bun and bob styles have softer eyes with lashes.',
+    'In the Depths your hero now always holds their blade in one hand and their lantern in the other. The blade moves with you as you walk, and swings when you attack.',
+    'Other players in the Depths show their lantern and blade too.',
+    'Change your look any time from the Hero screen (in the Hold).',
+    'Signing in with a wallet is simpler: one connect the first time, then just one free signature.']},
   {v:'0.8.15',date:'2026-10-25',title:'See Wick for your spot',notes:[
     'Your Founder’s Lantern spot is now only checked with Wick, by the road up to the Delve Gate. The Bulletin no longer shows it.',
     'Updates about the Founder’s Lantern, including when the mint opens, are still posted here.']},
