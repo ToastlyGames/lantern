@@ -7,7 +7,7 @@
 //  GET  /api/founders?contract=1      collection metadata
 import { db } from '../lib/db.js';
 import { guard, send, fail, body, appDomain } from '../lib/http.js';
-import { foundersContract, foundersWl, onWhitelist, mintOpen, chainId, chainState, voucher, waitTx, svg, meta, contractMeta } from '../lib/founders.js';
+import { foundersContract, foundersWl, foundersMinLevel, onWhitelist, mintOpen, chainId, chainState, voucher, waitTx, svg, meta, contractMeta } from '../lib/founders.js';
 import { getAddress } from 'viem';
 
 const origin = req => 'https://' + (appDomain(req) || 'lanternhold.fun');
@@ -24,8 +24,8 @@ export default async function handler(req, res) {
     if (!st.hero) return fail(res, 404, 'no_hero');
     let f; try { f = await db().founder(s.accountId); } catch { return send(res, 200, { on: false }); }   // the SQL hasn't been run yet
     if (!f.no) return send(res, 200, { on: false });
-    const wl = foundersWl(), listed = onWhitelist(f.no) || !!st.hero.is_admin;
-    const base = { on: true, no: f.no, wl, listed, open: mintOpen(), contract: foundersContract(), chainId: chainId(), wallet: st.wallet || null };
+    const wl = foundersWl(), listed = onWhitelist(f.no) || !!st.hero.is_admin, minLvl = foundersMinLevel(), lvl = st.save && st.save.data ? st.save.data.lvl | 0 : 0;
+    const base = { on: true, no: f.no, wl, listed, minLvl, lvl, ready: listed && lvl >= minLvl, open: mintOpen(), contract: foundersContract(), chainId: chainId(), wallet: st.wallet || null };
 
     if (req.method === 'GET') {
       if (!mintOpen()) return send(res, 200, base);
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
     }
     if (b.action !== 'voucher') return fail(res, 400, 'bad_action');
     if (!onWhitelist(f.no)) return fail(res, 409, 'not_listed', { msg: `The whitelist is the first ${wl.toLocaleString('en-US')} heroes. You’re Hero #${f.no.toLocaleString('en-US')}.` });
+    if (lvl < minLvl) return fail(res, 409, 'level', { msg: `Reach combat level ${minLvl} to lock in your whitelist spot. You’re level ${lvl}.` });
     const c = await chainState(f.no, wallet);
     if (c.paused) return fail(res, 409, 'paused', { msg: 'Minting is paused for a moment. Try again soon.' });
     if (c.ended) return fail(res, 409, 'ended', { msg: 'The Founder’s Lantern mint has ended.' });
