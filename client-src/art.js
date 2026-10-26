@@ -106,11 +106,11 @@ function capeLayer(k,dir,step,front){const key=[k,dir,step,front].join('|');if(k
   if(!any){return CAPE_CACHE[key]=null;}p.outline();return CAPE_CACHE[key]=p.canvas();}
 // Auras: legendary and one-of-one gear make the wearer glow.
 function auraColors(look,lantern){const out=[];const C=look.cape&&CAPES[look.cape];if(C&&(C.r==='legendary'||C.r==='mythic'))out.push(C.aura||'#ffcd75');
-  if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
+  if(look.flame==='founder')out.push('#b98cff');if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
 const HERO_CACHE={};
 function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
 // lantern carried by the hero (drawn separately so its glow can pulse)
-function lanternSprite(key){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=L.glow,p=new Px(6,8);
+function lanternSprite(key,flame){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=flame||L.glow,p=new Px(6,8);   // flame: the Founder's Flame colour
   p.rect(2,0,2,1,m).rect(1,1,4,1,m).rect(1,2,4,4,gl).rect(2,3,2,2,PAL.white).rect(1,6,4,1,m);if(L.r==='legendary'||L.r==='mythic'||L.r==='xrare')p.set(0,3,gl).set(5,3,gl);p.outline();return p.canvas();}
 function swordSprite(tier){const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:PAL.silver;
   for(let i=0;i<9;i++){p.set(4+i,11-i,blade);p.set(5+i,11-i,i<8?(tier==='ember'?PAL.red:PAL.silver):blade);}
@@ -345,6 +345,22 @@ function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT=
   // wide-brim hat with a gold band and a red feather
   p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
   p.outline();return p.canvas();}
+// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a violet hooded robe, a violet-flame lantern on his staff
+// and the big ledger of the first heroes under his arm ----
+function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',R='#4a2f6e',R2='#352150',R3='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',B=f?1:0;
+  // staff and its lantern (the flame flickers)
+  p.rect(3,5,1,24,'#8a5a3a');p.rect(2,4,4,1,'#6b3e26');p.set(4,5,'#3a3f55');p.rect(3,6,3,1,GD);p.rect(2,7,5,5,GD);p.rect(3,8,3,3,'#2a1b45');p.rect(4,9-B,1,2+B,FL);p.set(4,10,CORE);if(!f)p.set(3,9,FL);p.rect(2,12,5,1,GD);
+  // boots and robe, with a gold trim down the front
+  p.rect(9,28,3,2,'#2a1b45').rect(14,28,3,2,'#2a1b45');p.rect(8,14+B,11,14-B,R);p.rect(7,22,13,6,R);p.rect(8,14+B,1,14-B,R2);p.rect(18,14+B,1,14-B,R2);p.rect(7,27,13,1,R2);
+  p.rect(13,15+B,1,13-B,GD);p.set(13,18+B,'#f7c64a');p.rect(8,20,11,1,R3);
+  // left arm to the staff, the ledger under the right arm
+  p.rect(5,16+B,4,2,R);p.set(4,16+B,SK).set(4,17+B,SK);
+  p.rect(16,17+B,6,7,'#8f2d3f');p.rect(16,17+B,6,1,GD);p.rect(21,17+B,1,7,'#f4e4c1');p.rect(16,23+B,6,1,GD);p.rect(18,19+B,2,2,GD);p.rect(17,20+B,2,2,R);p.set(17,21+B,SK);
+  // hood and face: spectacles, kind eyes, a white moustache
+  p.ell(13,9+B,5.6,5.4,R);p.ell(13,10+B,4.2,4.2,R2);p.rect(10,8+B,6,5,SK);p.rect(10,12+B,6,1,SK2);
+  p.set(11,9+B,GD).set(12,9+B,GD).set(14,9+B,GD).set(15,9+B,GD);p.set(11,10+B,'#1a1c2c').set(14,10+B,'#1a1c2c');p.set(13,10+B,SK2);
+  p.rect(10,12+B,6,1,'#e9ecf1');p.set(10,13+B,'#c2c7cf').set(15,13+B,'#c2c7cf');p.rect(8,4+B,10,2,R);p.rect(9,3+B,8,1,R);p.set(12,2+B,R3).set(13,2+B,R3);p.rect(8,13+B,10,1,R);
+  p.outline();return p.canvas();}
 // Tallow's cart: a striped awning over crates of bread, oil and seed
 function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
   p.rect(3,6,2,24,W2).rect(35,6,2,24,W2);
@@ -430,6 +446,7 @@ function buildArt(){
   const dirs=['down','up','left','right'];
   
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
+  ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
   ART.sword={};for(const t of ['rusty','copper','iron','ember'])ART.sword[t]=swordSprite(t==='rusty'?'none':t);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
@@ -447,7 +464,7 @@ function buildArt(){
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};

@@ -1,8 +1,21 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.9',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.12',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.12',date:'2026-10-25',title:'Meet Wick',notes:[
+    'Wick, keeper of the Founders’ Ledger, now stands by the road up to the Delve Gate.',
+    'Talk to him to check whether your hero is on the Founder’s Lantern whitelist. When the mint opens, he’s where you mint it.',
+    'New heroes see a violet ! over Wick until they’ve paid him a visit.',
+    'The Founder’s Lantern art is now the same for every token: the lantern itself, burning violet.']},
+  {v:'0.8.11',date:'2026-10-25',title:'Founder’s Lantern',notes:[
+    'Every hero now has a hero number, in the order heroes were made. See yours on the Hero screen.',
+    'The Founder’s Lantern: a free NFT on Robinhood Chain for the first 1,000 heroes. If your hero number is 1,000 or lower, you’re on the whitelist. Your spot is saved, nothing to sign up for.',
+    'Your token’s number is your hero number. Free to mint, you only pay a tiny gas fee. One per wallet.',
+    'Holders get the Founder’s Flame: a violet light only Founders have, seen by every player. Purely cosmetic, and you can turn it off on the Hero screen.',
+    'Check your spot on the Bulletin. The mint opening will be posted here.']},
+  {v:'0.8.10',date:'2026-10-25',title:'Higher joystick sideways',notes:[
+    'With your phone held sideways, the joystick now sits higher up, where your thumb rests naturally.']},
   {v:'0.8.9',date:'2026-10-25',title:'XP bars',notes:[
     'A thin XP strip along the bottom of your health bar shows progress in whatever you’re training, combat included, in that skill’s colour.',
     'Each time you gain XP, the goals pill briefly shows the skill, its level, a mini bar and how much XP is left to the next level. Tap it to open Skills.',

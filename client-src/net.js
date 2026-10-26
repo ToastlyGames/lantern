@@ -67,6 +67,7 @@ window.NET={
   send(o){if(room&&room.readyState===1)room.send(JSON.stringify(o));},
   join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;busyR=false;openRoom(id);},
   leave(){const old=room;roomId=null;room=null;clearTimeout(timerR);try{old&&old.close(1000,'leave');}catch(e){}},
+  refresh(){if(stopped)return;if(lobby)kill(lobby);if(room)kill(room);},   // reconnect with a fresh pass (e.g. just became a Founder)
   _kill(which){kill(which==='lobby'?lobby:room);}   // tests only
 };
 })();

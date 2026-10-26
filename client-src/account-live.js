@@ -68,18 +68,21 @@ const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.rejec
 // Claiming rewards is the one transaction Lanternhold ever asks a wallet for: claim() on the rewards vault, with a
 // voucher from our server. It's checked here before the wallet sees it (that contract, that function, nothing else:
 // never a token approval), and it goes from the wallet linked to the hero.
-const CLAIM_SEL='0xfa6b3b53';   // claim(uint256,uint256,uint8,bytes32,bytes32)
-async function claimTx(v,vault){
-  if(!vault||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(vault).toLowerCase())throw {message:'That isn’t the rewards vault.'};
-  if(typeof v.data!=='string'||!v.data.startsWith(CLAIM_SEL)||v.data.length!==10+64*5)throw {message:'That isn’t a rewards claim.'};
+const CLAIM_SEL='0xfa6b3b53',MINT_SEL='0x7fb9a063';   // claim(...) on the rewards vault, mint(...) on the Founder's Lantern: both (uint256,uint256,uint8,bytes32,bytes32)
+// Send a transaction the server prepared, after checking it goes to the contract we expect and calls the function we expect.
+async function contractTx(v,to,sel,what){
+  if(!to||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(to).toLowerCase())throw {message:'That isn’t the '+what+' contract.'};
+  if(typeof v.data!=='string'||!v.data.startsWith(sel)||v.data.length!==10+64*5)throw {message:'That isn’t a '+what+' transaction.'};
   const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;
-  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to claim.'};
+  if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to do this.'};
   const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(v.wallet).toLowerCase());
   if(!from)throw {message:'Switch your wallet to '+short(v.wallet)+', the wallet linked to your hero.'};
   const want='0x'+Number(v.chainId).toString(16),cur=String(await pv.request({method:'eth_chainId'})).toLowerCase();
   if(cur!==want){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:want}]});}
     catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
   return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
+const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
+const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern');
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 async function pickAccount(pv){
@@ -237,7 +240,7 @@ window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=fals
   // trading: save now, then hold further saves until the website has moved the items (it writes both saves itself)
   async tradeLock(){for(let i=0;i<20&&(cloudBusy||cloudPending);i++){await flushCloud();if(cloudBusy||cloudPending)await new Promise(r=>setTimeout(r,250));}held=true;return !cloudPending;},
   tradeUnlock(rev){held=false;if(Number.isInteger(rev)){ACC.rev=rev;lastSent=null;}retry(2500);},
-  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx};
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx,mintTx};
 
 // ---------- start ----------
 render();
