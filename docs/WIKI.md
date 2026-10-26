@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.12 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.13 · updated October 25, 2026
 
 ## Welcome
 
