@@ -29,6 +29,9 @@ for (const f of readdirSync(new URL('../client-src/icons/', import.meta.url))) c
 mkdirSync(new URL('../public/tools/', import.meta.url), { recursive: true });
 copyFileSync(new URL('../client-src/tools/vault.html', import.meta.url), new URL('../public/tools/vault.html', import.meta.url));
 writeFileSync(new URL('../public/tools/vault.js', import.meta.url), src('tools/vault.js').replace('__BYTECODE__', JSON.parse(readFileSync(new URL('../contracts/LanternRewards.json', import.meta.url), 'utf8')).bytecode));
+// owner tool: deploy + control the Founder's Lantern NFT (/tools/founders.html)
+copyFileSync(new URL('../client-src/tools/founders.html', import.meta.url), new URL('../public/tools/founders.html', import.meta.url));
+writeFileSync(new URL('../public/tools/founders.js', import.meta.url), src('tools/founders.js').replace('__BYTECODE__', JSON.parse(readFileSync(new URL('../contracts/LanternFounders.json', import.meta.url), 'utf8')).bytecode));
 // 5) the public wiki at /wiki, from docs/WIKI.md + the update history
 buildWiki();
 console.log('built public/index.html, public/game.js (' + (js.length / 1024).toFixed(0) + ' KB), lib/gamedata.js, public/wiki/');

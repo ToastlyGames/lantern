@@ -210,6 +210,19 @@ try {
     r = await t0.req('save', { method: 'POST', body: { data: ag, rev: am.save.rev } });
     ok(r.status === 200 && !r.data.tok, 'admins don’t earn from the pool'); }
 
+  console.log('Founder’s Lantern');
+  { const p = new Client(); await p.signIn();
+    ok((await p.req('founders')).status === 404, 'no hero yet: nothing to show');
+    await p.req('hero', { method: 'POST', body: { name: 'Founder' } });
+    const f = (await p.req('founders')).data;
+    ok(f.on && Number.isInteger(f.no) && f.no > 1 && f.wl === 1000 && f.listed && f.open === false, `every hero gets a number (#${f.no}), the first 1,000 are on the whitelist, mint not open yet`);
+    const v = await p.req('founders', { method: 'POST', body: { action: 'voucher' } });
+    ok(v.status === 409 && v.data.error === 'not_open', 'no mint vouchers until the contract is set');
+    const anon = new Client();
+    const m = await anon.req('founders?id=' + f.no); ok(m.status === 200 && m.data.name === 'Founder’s Lantern #' + f.no && m.data.attributes.some(a => a.value === 'Founder'), 'token metadata is public and names the hero');
+    const im = await fetch(BASE + '/api/founders?img=5'); ok(im.headers.get('content-type') === 'image/svg+xml' && (await im.text()).startsWith('<svg'), 'the token image is public');
+    ok((await anon.req('founders?id=0')).status === 404 && (await anon.req('founders')).status === 401, 'bad ids are refused; your own status needs sign-in'); }
+
   console.log('Trading');
   { const { SignJWT } = await import('jose');
     const tk = (payload, exp = '1m', secret = 'r'.repeat(40)) => new SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setIssuer('lanternhold-trade').setExpirationTime(exp).sign(new TextEncoder().encode(secret));
