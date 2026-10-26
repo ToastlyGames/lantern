@@ -64,6 +64,26 @@ const LOOKS={
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
 const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember}};
+// The hood style: a real hood with a pointed tip that flops back, a lit rim around a shadowed opening, and a short drape
+// over the shoulders that ends in a point (front) or falls down the back.
+function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=shade(c,.42);
+  const row=(y,x0,x1,col)=>{for(let x=x0;x<=x1;x++)p.set(x,y,col);};
+  const mir=dir==='right',X=x=>mir?15-x:x,set=(x,y,col)=>p.set(X(x),y,col),run=(y,x0,x1,col)=>{for(let x=x0;x<=x1;x++)set(x,y,col);};
+  if(dir==='down'){
+    row(0,8,9,c);row(1,6,10,c);p.set(10,0,c2);row(2,5,11,c);for(let y=3;y<=8;y++)row(y,4,11,c);row(9,5,10,c);p.set(7,10,c).set(8,10,c);   // tip, hood, drape to a point
+    row(2,6,9,hi);for(let y=3;y<=7;y++){p.set(4,y,c2);p.set(11,y,c2);}row(8,4,11,c2);p.set(7,9,c2).set(8,9,c2);
+    row(3,5,10,dk);for(let y=4;y<=7;y++){p.set(5,y,dk);p.set(10,y,dk);}                // the dark opening
+    row(4,6,9,shade(face,.78));row(5,6,9,face);row(6,6,9,face);row(7,6,9,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);
+    for(let y=3;y<=7;y++){p.set(4,y,hi);p.set(11,y,c2);}}
+  else if(dir==='up'){
+    row(0,7,8,c);row(1,6,10,c);p.set(10,1,c2);row(2,5,11,c);for(let y=3;y<=7;y++)row(y,4,11,c);row(8,5,10,c2);p.set(7,9,c2).set(8,9,c2);
+    for(let y=2;y<=7;y++)p.set(8,y,c2);row(1,6,8,hi);for(let y=3;y<=6;y++)p.set(4,y,hi);for(let y=3;y<=7;y++)p.set(11,y,c2);}
+  else{ // side view (drawn facing left, mirrored for right): the opening at the front, the tip trailing back
+    run(0,10,11,c);run(1,7,12,c);set(12,0,c2);set(13,1,c2);run(2,5,12,c);for(let y=3;y<=8;y++)run(y,4,11,c);run(9,5,11,c);run(10,9,11,c);
+    run(2,6,9,hi);for(let y=3;y<=7;y++)set(4,y,hi);for(let y=3;y<=9;y++)set(11,y,c2);run(8,5,10,c2);
+    run(3,4,8,dk);for(let y=4;y<=7;y++)set(8,y,dk);
+    run(4,4,7,shade(face,.78));run(5,4,7,face);run(6,4,7,face);run(7,4,7,face2);set(5,5,PAL.ink);for(let y=4;y<=7;y++)set(4,y,face);set(4,4,shade(face,.78));}
+}
 function heroFrame(dir,step,look){
   look=look||{};const p=new Px(16,16);
   const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82);
@@ -92,6 +112,7 @@ function heroFrame(dir,step,look){
   // (capes are drawn as their own layer around the hero: capeLayer)
   // head
   const cap=style==='hood'?tun:hair,cap2=style==='hood'?tun2:hair2;
+  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}else{
   p.ell(8,5,4.2,4,cap);
   if(dir==='down'){p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(5,6,shade(face,.9)).set(10,6,shade(face,.9));p.rect(5,3,6,1,cap2);
     if(style!=='hood'){p.set(5,4,hair).set(10,4,hair);}if(style==='hood')p.rect(4,4,1,4,cap).rect(11,4,1,4,cap);}
@@ -99,7 +120,7 @@ function heroFrame(dir,step,look){
   else if(dir==='left'){p.rect(4,4,4,4,face).rect(4,7,4,1,face2);p.set(5,5,PAL.ink);p.rect(4,3,5,1,cap2);}
   else{p.rect(8,4,4,4,face).rect(8,7,4,1,face2);p.set(10,5,PAL.ink);p.rect(7,3,5,1,cap2);}
   if(style==='spiky'){p.set(5,0,hair).set(8,0,hair).set(11,1,hair).set(4,1,hair).set(7,1,hair).set(10,1,hair);}
-  p.set(6,2,style==='hood'?trim:hairHi).set(7,2,style==='hood'?trim:hairHi);
+  p.set(6,2,hairHi).set(7,2,hairHi);}
   // helmet on top of the head
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
@@ -366,21 +387,34 @@ function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT=
   // wide-brim hat with a gold band and a red feather
   p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
   p.outline();return p.canvas();}
-// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a violet hooded robe, a violet-flame lantern on his staff
-// and the big ledger of the first heroes under his arm ----
-function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',R='#4a2f6e',R2='#352150',R3='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',B=f?1:0;
-  // staff and its lantern (the flame flickers)
-  p.rect(3,5,1,24,'#8a5a3a');p.rect(2,4,4,1,'#6b3e26');p.set(4,5,'#3a3f55');p.rect(3,6,3,1,GD);p.rect(2,7,5,5,GD);p.rect(3,8,3,3,'#2a1b45');p.rect(4,9-B,1,2+B,FL);p.set(4,10,CORE);if(!f)p.set(3,9,FL);p.rect(2,12,5,1,GD);
-  // boots and robe, with a gold trim down the front
-  p.rect(9,28,3,2,'#2a1b45').rect(14,28,3,2,'#2a1b45');p.rect(8,14+B,11,14-B,R);p.rect(7,22,13,6,R);p.rect(8,14+B,1,14-B,R2);p.rect(18,14+B,1,14-B,R2);p.rect(7,27,13,1,R2);
-  p.rect(13,15+B,1,13-B,GD);p.set(13,18+B,'#f7c64a');p.rect(8,20,11,1,R3);
-  // left arm to the staff, the ledger under the right arm
-  p.rect(5,16+B,4,2,R);p.set(4,16+B,SK).set(4,17+B,SK);
-  p.rect(16,17+B,6,7,'#8f2d3f');p.rect(16,17+B,6,1,GD);p.rect(21,17+B,1,7,'#f4e4c1');p.rect(16,23+B,6,1,GD);p.rect(18,19+B,2,2,GD);p.rect(17,20+B,2,2,R);p.set(17,21+B,SK);
-  // hood and face: spectacles, kind eyes, a white moustache
-  p.ell(13,9+B,5.6,5.4,R);p.ell(13,10+B,4.2,4.2,R2);p.rect(10,8+B,6,5,SK);p.rect(10,12+B,6,1,SK2);
-  p.set(11,9+B,GD).set(12,9+B,GD).set(14,9+B,GD).set(15,9+B,GD);p.set(11,10+B,'#1a1c2c').set(14,10+B,'#1a1c2c');p.set(13,10+B,SK2);
-  p.rect(10,12+B,6,1,'#e9ecf1');p.set(10,13+B,'#c2c7cf').set(15,13+B,'#c2c7cf');p.rect(8,4+B,10,2,R);p.rect(9,3+B,8,1,R);p.set(12,2+B,R3).set(13,2+B,R3);p.rect(8,13+B,10,1,R);
+// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a long violet robe with a deep pointed hood, a long white
+// beard, a violet-flame lantern on his staff and the big ledger of the first heroes under his arm ----
+function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#c99572',H='#6a4596',H2='#4d2f73',HI='#8a63b8',IN='#1f1430',R='#4a2f6e',R2='#36214f',RH='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',BD='#eef1f5',BD2='#c2c7cf',B=f?1:0;
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
+  // staff with a hanging lantern (the flame flickers)
+  p.rect(3,6,1,24,'#8a5a3a');p.set(3,29,'#6b3e26');p.rect(2,4,3,1,'#6b3e26');p.set(4,5,'#3a3f55');
+  p.rect(1,6,5,1,GD);p.rect(1,7,1,4,GD);p.rect(5,7,1,4,GD);p.rect(2,7,3,4,'#2a1b45');p.rect(3,8-B,1,3+B,FL);p.set(3,9,CORE);if(!f)p.set(2,9,FL);else p.set(4,9,FL);p.rect(1,11,5,1,GD);
+  // the robe: narrow at the shoulders, flaring to the ground, with deep folds and a hem that pools over the boots
+  for(let y=14;y<=28;y++){const k=Math.floor((y-14)/3),l=8-k,r=18+k;row(y,l,r,R);p.set(l,y,R2);p.set(r,y,R2);}
+  for(let y=17;y<=28;y++){p.set(10-(y>23?1:0),y,R2);p.set(16+(y>23?1:0),y,R2);p.set(12,y,RH);}
+  row(28,4,22,R2);for(let x=5;x<=21;x+=3)p.set(x,28,R);p.rect(10,29,2,1,'#2a1b45');p.rect(15,29,2,1,'#2a1b45');
+  p.rect(13,15,1,13,GD);p.set(13,28,'#f7c64a');
+  // a rope belt with a hanging tassel
+  row(20,8,18,'#b07c4f');p.set(13,20,'#d9a066');p.set(14,21,'#b07c4f');p.set(14,22,'#d9a066');p.set(14,23,'#d9a066');p.set(13,24,'#b07c4f').set(15,24,'#b07c4f');
+  // wide bell sleeves: one reaching for the staff, one cradling the ledger
+  row(15,6,9,R);row(16,5,9,R);row(17,4,8,R);row(18,4,7,R2);p.set(4,16,SK).set(4,17,SK);p.set(5,18,IN);
+  p.rect(16,17,7,8,'#8f2d3f');p.rect(16,17,7,1,GD);p.rect(16,24,7,1,GD);p.rect(22,18,1,6,'#f4e4c1');p.rect(18,19,3,3,GD);p.set(19,20,'#8f2d3f');
+  row(16,17,19,R);row(17,18,20,R);row(18,19,21,R2);p.set(17,21,SK).set(16,21,SK);
+  // the hood's drape over the shoulders, its edge falling in points
+  row(12+B,8,18,H);row(13+B,7,19,H);row(14+B,7,19,H2);for(let x=7;x<=19;x+=2)p.set(x,15+B,H2);
+  // the hood: tall and pointed, the tip flopping back, with a lit rim around a deep dark opening
+  row(1+B,15,16,H);row(2+B,13,16,H);row(3+B,11,16,H);row(4+B,10,17,H);for(let y=5;y<=11;y++)row(y+B,9,18,H);
+  p.set(17,1+B,H2).set(17,2+B,H2);for(let y=4;y<=11;y++){p.set(9,y+B,H2);p.set(18,y+B,H2);}
+  for(let y=5;y<=11;y++)row(y+B,11,16,IN);row(4+B,11,16,HI);for(let y=5;y<=11;y++){p.set(10,y+B,HI);p.set(17,y+B,HI);}
+  // the face in the hood's shadow: bushy white brows, kind eyes, a long white beard
+  p.rect(12,6+B,4,4,SK);p.rect(12,6+B,4,1,SK2);p.set(12,7+B,BD).set(15,7+B,BD);p.set(12,8+B,IN).set(15,8+B,IN);p.set(13,9+B,SK2).set(14,9+B,SK2);
+  row(10+B,11,16,BD);row(11+B,11,16,BD);row(12+B,12,15,BD);row(13+B,12,15,BD);row(14+B,12,15,BD);row(15+B,13,14,BD);p.set(13,16+B,BD);
+  p.set(11,11+B,BD2).set(16,11+B,BD2).set(12,14+B,BD2).set(15,14+B,BD2).set(14,16+B,BD2);p.set(13,12+B,BD2);
   p.outline();return p.canvas();}
 // Tallow's cart: a striped awning over crates of bread, oil and seed
 function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
@@ -613,8 +647,14 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.12',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.13',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.13',date:'2026-10-25',title:'Sharper swings, better hoods',notes:[
+    'Swinging your blade feels better: your hero steps into each swing, the blade leaves a smear in its own colour, and every hit flashes, throws sparks and lands with a short punch.',
+    'Monsters squash when you hit them. Ember blades trail embers as they swing.',
+    'Party members’ swings get the same effects.',
+    'The Hood look now looks like a real hood: a pointed tip, a shadowed opening around your face and a drape over your shoulders.',
+    'Wick has a new look: a long flowing robe, a deep pointed hood and a long white beard.']},
   {v:'0.8.12',date:'2026-10-25',title:'Meet Wick',notes:[
     'Wick, keeper of the Founders’ Ledger, now stands by the road up to the Delve Gate.',
     'Talk to him to check whether your hero is on the Founder’s Lantern whitelist. When the mint opens, he’s where you mint it.',
@@ -1120,7 +1160,7 @@ $('bBag').addEventListener('click',()=>openBag());$('bHero').addEventListener('c
 
 // ---------- world state ----------
 const HOLD=buildHold();bakeGround(HOLD);
-let scene='hold',map=HOLD,ents=[],drops=[],fx=[],texts=[],npcs=[],run=null,time=0;
+let scene='hold',map=HOLD,ents=[],drops=[],fx=[],texts=[],npcs=[],run=null,time=0,slashes=[],hitStop=0;
 const P={x:HOLD.spawn.x,y:HOLD.spawn.y,dir:'down',moving:false,anim:0,hp:maxHp(),inv:0,swing:0,swingCD:0,chan:0,hitDone:false};
 
 // ---------- toasts ----------
@@ -1128,13 +1168,13 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
+function enterHold(){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
   updateHud();MP.toHold();}
 function startDelve(from,seed){run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
   const sc=1+.12*(f-1);
-  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
+  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];slashes=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
   if(f>S.deepest){S.deepest=f;save();if(f>=3)MP.feed('deep',String(f));}updateHud();MP.floorEntered(f);
   if(map.pack.boss&&f===map.pack.to)setTimeout(()=>toast(map.pack.bossName+' awaits','bad'),400);
 }
@@ -1171,11 +1211,20 @@ function doAct(a){
 
 // ---------- combat ----------
 function swing(){if(P.swingCD>0)return;P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
+// ---- swing feel: the hero steps into the swing, the blade leaves a smear, and a hit flashes, sparks and briefly freezes ----
+const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d'};
+const easeOut=t=>1-(1-t)*(1-t);
+function lungeOff(dir,left){const k=Math.round(Math.sin((1-left/.2)*Math.PI)*2);return [dir==='left'?-k:dir==='right'?k:0,dir==='up'?-k:dir==='down'?k:0];}
+function impact(x,y,a,col,big,mine){
+  slashes.push({x,y,a:a+Math.PI/2,t:0,col,big});
+  if(!reduceMotion)for(let i=0;i<(big?9:6);i++){const b=a+(rand()-.5)*1.4,s=60+rand()*70;fx.push({x,y,vx:Math.cos(b)*s,vy:Math.sin(b)*s-10,t:0,life:.18+rand()*.14,col:i%3?col:'#fff3c4'});}
+  if(mine){hitStop=Math.max(hitStop,big?.07:.045);if(SET.shake)shake=Math.max(shake,big?2.5:1.5);}}
 function hitBox(){const d=P.dir,cx=P.x+(d==='left'?-11:d==='right'?11:0),cy=P.y-5+(d==='up'?-11:d==='down'?9:0);return {x:cx-10,y:cy-9,w:20,h:18};}
 function resolveSwing(){
   const b=hitBox(),dmg=dmgOf(),hits=[];let ore=-1;
   for(const e of ents){if(e.dead)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
-    const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;
+    const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;e.sq=.16;
+    impact(e.x,e.y-(e.d.big?12:6),a,BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
     hits.push([e.id,d]);
     if(MP.client()){e.hp-=d;NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
     applyHit(e,d,a,MP.me());}}
@@ -1186,7 +1235,7 @@ function resolveSwing(){
 }
 // another party member swung: show their blade, the damage they did and the ore they chipped
 function peerSwing(m){const o=OTH.get(m.id);if(!o||scene!=='delve')return;o.dir=m.d||o.dir;o.swT=.2;
-  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;}}
+  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
   if(Math.hypot(o.x-P.x,o.y-P.y)<160)sfx((m.h&&m.h.length)?'hit':'swing',.5);}
 // Everyone who hit a monster at least once gets the full XP and their own roll at its drops (only they see and pick up
@@ -1951,11 +2000,14 @@ function update(dt){
   for(const f of fx){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=90*dt;}fx=fx.filter(f=>f.t<f.life);
   for(const t of texts)t.t+=dt;texts=texts.filter(t=>t.t<.9);
   if(shake>0)shake=Math.max(0,shake-dt*12);
+  for(const k of slashes)k.t+=dt;if(slashes.length)slashes=slashes.filter(k=>k.t<.16);
+  if(P.swing>0&&S.gear.blade==='ember'&&!reduceMotion&&rand()<.7){const t=easeOut(1-P.swing/.2),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir]||0,a=base-1.2+t*2.4;
+    fx.push({x:P.x+Math.cos(a)*14,y:P.y-6+Math.sin(a)*14,vx:(rand()-.5)*20,vy:-20-rand()*25,t:0,life:.3+rand()*.2,col:rand()<.5?'#ff9f3d':'#ffcd75'});}
   updateHud();
 }
 function updateEnemies(dt){
   if(MP.client())return followEnemies(dt);
-  for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;
+  for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;
     e.kb.x*=.82;e.kb.y*=.82;moveBody(e,e.kb.x*dt,e.kb.y*dt,e.r>6?8:4);
     const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd;let vx=0,vy=0;
     e.losT=(e.losT||0)-dt;if(e.losT<=0){e.losT=.25;e.los=d<(e.d.boss?400:130)&&lineOfSight(e.x,e.y-6,TG.x,TG.y-6);if(e.los)e.mem=3;}
@@ -2047,12 +2099,13 @@ function render(){TAGS.length=0;
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';if(swB)drawSwingAt(o.x,o.y,o.dir,o.swT,bl);drawHero(o.x,o.y,o.dir,o.moving,o.anim,o.look,o.name,o);if(sw&&!swB)drawSwingAt(o.x,o.y,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0];if(swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);drawHero(o.x+lx,o.y+ly,o.dir,o.moving,o.anim,o.look,o.name,o);if(sw&&!swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
+  if(slashes.length)drawSlashes();
   g.restore();
   if(scene==='delve')drawLight(cx,cy);
   g.save();g.translate(-cx,-cy);
@@ -2153,6 +2206,9 @@ function drawFlame(x,y,dir,seed){const t=time+seed*.7,bx=Math.round(x+(dir==='le
   g.restore();const fl=Math.floor(t*8)%2;g.fillStyle='#5d275d';g.fillRect(bx-1,by+1,4,4);g.fillStyle=FLAME;g.fillRect(bx,by-1+fl,2,5-fl);g.fillRect(bx-1,by+2,4,2);g.fillStyle='#f1e4ff';g.fillRect(bx,by+2,2,2);}
 function drawPlayer(){
   if(P.inv>0&&Math.floor(P.inv*20)%2)return;
+  const [lx0,ly0]=P.swing>0&&!reduceMotion?lungeOff(P.dir,P.swing):[0,0];if(lx0||ly0){const ox=P.x,oy=P.y;P.x+=lx0;P.y+=ly0;try{drawPlayerAt();}finally{P.x=ox;P.y=oy;}return;}
+  drawPlayerAt();}
+function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
   if(d==='up')spr(lan,P.x+lx,P.y+ly);
@@ -2165,13 +2221,27 @@ function drawPlayer(){
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
 function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
-function drawSwingAt(x,y,dir,left,blade){const t=1-left/.2,base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a=base-1.2+t*2.4;
-  const sw=ART.sword[blade]||ART.sword.rusty;g.save();g.translate(Math.round(x),Math.round(y-6));g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();
-  g.strokeStyle='rgba(244,244,244,'+(1-t)*.8+')';g.lineWidth=1;g.beginPath();g.arc(Math.round(x),Math.round(y-6),13,base-1.2,a);g.stroke();}
+function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
+  const sw=ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=BLADE_FX[blade]||'#f4f4f4',fade=1-t;
+  // the smear: a crescent from where the swing started to the blade, brightest at the edge
+  if(!reduceMotion&&a-a0>.15){g.save();g.globalCompositeOperation='lighter';
+    for(const [r,w,al] of [[15,3,.22],[12,2,.32],[16,1,.6]]){g.strokeStyle=col;g.globalAlpha=al*fade+.05;g.lineWidth=w;g.beginPath();g.arc(X,Y,r,Math.max(a0,a-1.5),a);g.stroke();}
+    g.restore();
+    // afterimages of the blade
+    for(const [k,al] of [[.5,.35],[1,.15]]){const b=a-k;if(b<a0)continue;g.save();g.globalAlpha=al*fade;g.translate(X,Y);g.rotate(b+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();}}
+  g.save();g.translate(X,Y);g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();
+  if(t<.85){g.fillStyle='#fff3c4';g.globalAlpha=fade;g.fillRect(Math.round(X+Math.cos(a)*15),Math.round(Y+Math.sin(a)*15),1,1);g.globalAlpha=1;}}   // a glint at the tip
+// a hit: a bright slash across the target that flashes and fades
+function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.6+p*.6),cx=Math.round(k.x),cy=Math.round(k.y),dx=Math.cos(k.a),dy=Math.sin(k.a);
+  g.save();g.globalCompositeOperation='lighter';g.globalAlpha=1-p;g.strokeStyle='#fff3c4';g.lineWidth=p<.4?2:1;g.beginPath();g.moveTo(cx-dx*L,cy-dy*L);g.lineTo(cx+dx*L,cy+dy*L);g.stroke();
+  g.strokeStyle=k.col;g.lineWidth=1;g.beginPath();g.moveTo(cx-dy*L*.5,cy+dx*L*.5);g.lineTo(cx+dy*L*.5,cy-dx*L*.5);g.stroke();
+  if(p<.35){g.fillStyle='#ffffff';g.fillRect(cx-1,cy-1,3,3);}g.restore();}}
 function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=e.d.big;
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(e.x-(big?10:4)),Math.round(e.y),big?20:8,1);
   const ox=big?16:8,oy=big?31:15;
+  const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
   if(e.flash>0&&Math.floor(e.flash*30)%2){g.save();g.filter='brightness(3)';spr(img,e.x-ox,e.y-oy);g.restore();}else spr(img,e.x-ox,e.y-oy);
+  if(sq)g.restore();
   if(!e.d.boss&&e.hp<e.max){g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),Math.round(12*e.hp/e.max),2);}
 }
 function drawLight(cx,cy){
@@ -2238,7 +2308,7 @@ MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OT
 MP.askDown=()=>{const h=OTH.get(MP.host);toast((h?h.name:'Your host')+' leads the way down. Wait at the stairs.');if(!MP.downT||time-MP.downT>4){MP.downT=time;NET.send({t:'down'});}};
 MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
 // followers: monsters come from the host's snapshots and glide to their new spots
-function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
+function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
 // ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
 MP.tick=dt=>{
   for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>80||Math.abs(dy)>80){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
@@ -2578,7 +2648,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
 $('socB').onclick=()=>{if(!$('sheet').hidden&&$('socialSheet')){socOpen=false;closeSheet();}else openSocial();};
 
 let last=0;
-function frame(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(started)update(dt);else time+=dt;render();requestAnimationFrame(frame);}
+function frame(ts){let dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(hitStop>0){hitStop-=dt;dt*=.12;}if(started)update(dt);else time+=dt;render();requestAnimationFrame(frame);}
 let started=false;
 fit();applySet();enterHold();requestAnimationFrame(frame);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
