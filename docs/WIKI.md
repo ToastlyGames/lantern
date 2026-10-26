@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.13 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.14 · updated October 25, 2026
 
 ## Welcome
 
@@ -385,12 +385,13 @@ There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each one 
 
 ## Founder's Lantern
 
-The **Founder's Lantern** is a free NFT on Robinhood Chain for the **first 1,000 heroes** ever made.
+The **Founder's Lantern** is a free NFT on Robinhood Chain for the **first 1,000 heroes** ever made who reach **combat level 10**. It can only be minted inside the game.
 
 - **Hero numbers:** every hero has a number, in the order heroes were made. The very first hero is Hero #1. You can see yours on the Hero screen.
-- **The whitelist** is Heroes #1 to #1,000. There's nothing to sign up for: if your hero number is 1,000 or lower, your spot is saved.
+- **The whitelist:** make a hero and play. If your hero number is 1,000 or lower, your spot is held; reach **combat level 10** to lock it in. There's nothing else to sign up for.
 - **Your token's number is your hero number** (Founder's Lantern #123 for Hero #123), so there is only ever one of each, from #1 to #1,000. Every token shares the same art: the Founder's Lantern, burning violet.
-- **Free to mint:** you only pay a tiny gas fee in ETH on Robinhood Chain. It's one per wallet, minted to the wallet linked to your hero.
+- **Free to mint, in the game only:** you only pay a tiny gas fee in ETH on Robinhood Chain. It's **one per hero** (and one per wallet), minted to the wallet linked to your hero. Every mint needs a pass the game signs for that hero, so it can't be botted or faked, and the team gets no extras: the same one per hero as everyone.
+- **More to come:** as the game grows, the Founder's Lantern will unlock trinkets and easter eggs for its holders.
 - **Check your spot with Wick:** Wick, the keeper of the Founders' Ledger, stands by the road up to the Delve Gate. Talk to him and he'll look up your name. New heroes see a violet **!** over him until they've visited.
 - **How to mint:** talk to Wick (or open the Bulletin at the crossroads and tap **Founder's Lantern**). When the mint is open, tap **Mint for free** and confirm in your wallet. The mint opening will be announced on the Bulletin.
 
