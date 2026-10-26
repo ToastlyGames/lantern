@@ -1,8 +1,10 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.18',season:'Season 0 (Beta)',date:'2026-10-26'};
+const BUILD={version:'0.8.19',season:'Season 0 (Beta)',date:'2026-10-26'};
 const CHANGELOG=[
+  {v:'0.8.19',date:'2026-10-26',title:'Wider top bar',notes:[
+    'The health card at the top is a little wider, so your level, gold and the world you’re in (like “The Hold · World 1”) all fit.']},
   {v:'0.8.18',date:'2026-10-26',title:'Gold on screen',notes:[
     'Your gold now shows next to your level at the top of the screen, in the Hold and in the Depths. Big amounts are shortened (12.4k, 1.25M); hover it on a computer for the exact number.',
     'Fixed the health card being cut off on the right on some screens.']},

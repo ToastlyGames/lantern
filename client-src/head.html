@@ -59,7 +59,7 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 /* HUD */
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(var(--st) + 8px) calc(var(--sr) + 10px) 0 calc(var(--sl) + 10px);display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:2}
 .card{padding:6px 8px;border-radius:2px}
-#vit{flex:1;max-width:260px;display:grid;gap:5px;position:relative;overflow:hidden}
+#vit{flex:1;max-width:290px;display:grid;gap:5px;position:relative;overflow:hidden}
 /* XP: a thin strip along the bottom of the health card for the skill you're training */
 #xpb{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(10,12,20,.75)}
 #xpb i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--green);box-shadow:0 0 6px currentColor;transition:width .35s ease-out}
@@ -173,13 +173,13 @@ button.cell{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .qs.empty img{opacity:.35}.qs.on{box-shadow:inset 0 0 0 2px var(--gold),0 3px 0 var(--ink)}.qs:active{transform:translateY(2px)}
 .qslots{display:flex;gap:8px;margin:4px 0 8px}
 /* sideways phones: compact HUD, goal chip shrinks to a tag */
-.land #vit{max-width:200px;padding:4px 6px;gap:3px}
-.land .top{font-size:16px}.land #where{max-width:110px}
+.land #vit{max-width:270px;padding:4px 6px;gap:3px}
+.land .top{font-size:16px}.land #where{max-width:170px}
 .land .bar{height:11px}.land .lbl{font-size:14px}
 .land #goldC{min-height:30px;padding:3px 7px}
 .land #guide{top:auto;bottom:auto;left:auto;right:calc(var(--sr) + 10px);top:calc(var(--st) + 128px);font-size:16px;padding:3px 8px;max-width:150px}
 .land #quick{bottom:calc(var(--sb) + 10px)}
-.land.short #vit{max-width:180px}
+.land.short #vit{max-width:250px}
 @media (hover:hover) and (pointer:fine){#quick{bottom:calc(var(--sb) + 14px)}}
 /* toast */
 .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--st) + 156px);padding:8px 14px;font-size:20px;max-width:calc(100vw - 32px);text-align:center;pointer-events:none;z-index:5;background:var(--panel);border:2px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
