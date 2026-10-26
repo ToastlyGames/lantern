@@ -1,8 +1,11 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.14',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.15',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.15',date:'2026-10-25',title:'See Wick for your spot',notes:[
+    'Your Founder’s Lantern spot is now only checked with Wick, by the road up to the Delve Gate. The Bulletin no longer shows it.',
+    'Updates about the Founder’s Lantern, including when the mint opens, are still posted here.']},
   {v:'0.8.14',date:'2026-10-25',title:'Founder’s whitelist: combat level 10',notes:[
     'The Founder’s Lantern whitelist is the first 1,000 heroes who reach combat level 10. If your hero number is 1,000 or lower, your spot is held; reach combat level 10 to lock it in.',
     'Wick shows your progress: your hero number and your combat level, with a bar to level 10.',
