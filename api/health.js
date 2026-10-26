@@ -1,6 +1,7 @@
 // GET /api/health: a setup check you can open in a browser (https://your-site/api/health).
 // Reports which settings are present and whether the database is reachable. Never shows secret values.
 import { rewardsOn } from '../lib/rewards.js';
+import * as FDR from '../lib/founders.js';
 import { claimsOn, claimContract, signerAddress } from '../lib/claim.js';
 import { db, supabaseUrl, supabaseKey } from '../lib/db.js';
 import { send, appDomain, appDomains, reqHost, hostAllowed } from '../lib/http.js';
@@ -58,5 +59,8 @@ export default async function handler(req, res) {
   // token rewards: is earning on, and is claiming set up (the signer's address is public: it goes into the vault contract)
   let rewards = { on: rewardsOn(), claims: claimsOn(), contract: claimContract(), signer: signerAddress() };
   if (rewards.on) { try { const t = await db().tok('00000000-0000-0000-0000-000000000000'); rewards.pool = t ? +t.pool : null; rewards.ledger = 'ok'; } catch (e) { rewards.ledger = 'run supabase/rewards.sql: ' + (e.message || e); } }
-  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, node: process.version });
+  // Founder's Lantern: is the mint set up, the whitelist size, and is supabase/founders.sql run (hero numbers)
+  const founders = { open: FDR.mintOpen(), contract: FDR.foundersContract(), signer: FDR.signerAddress(), whitelist: FDR.foundersWl() };
+  try { await db().heroByNo(1); founders.heroNumbers = 'ok'; } catch (e) { founders.heroNumbers = 'run supabase/founders.sql: ' + (e.message || e); }
+  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, founders, node: process.version });
 }
