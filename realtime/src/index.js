@@ -25,7 +25,7 @@ async function verifyTicket(token, secret) {
     if (JSON.parse(new TextDecoder().decode(b64uDecode(h))).alg !== 'HS256') return null;
     const c = JSON.parse(new TextDecoder().decode(b64uDecode(p)));
     if (c.iss !== 'lanternhold-rt' || !(c.exp > Date.now() / 1000) || !/^[a-z0-9_]{3,16}$/.test(c.sub) || typeof c.n !== 'string' || c.n.toLowerCase() !== c.sub) return null;
-    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu };
+    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu, fd: !!c.adm || !!c.fd };
   } catch { return null; }
 }
 export function cleanText(t) {
@@ -339,7 +339,7 @@ export class Room {
       }
     });
   }
-  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
+  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, fd: !!p.fd, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
   async fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === '/setup' && req.method === 'POST') {          // called by the Lobby only (not reachable from outside)
@@ -485,7 +485,7 @@ export class Room {
   join(who, ws) {
     const old = this.players.get(who.id);
     if (old) { try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, fd: !!who.fd, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
     this.players.set(who.id, p); this.att(p);
     if (this.inst && !this.host()) this.pick();
     send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
@@ -503,7 +503,7 @@ export class Room {
       if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
       return;
     }
-    if (t === 'look') { p.look = cleanLook(m.look, p.hat); this.att(p); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
+    if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd); this.att(p); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
     if (t === 'say') {
       if (p.mu) return send(p.ws, { t: 'muted', on: true, said: 1 });
       const now = Date.now(); if (now - (p.lastSay || 0) < 1200) return send(p.ws, { t: 'slow' }); p.lastSay = now;
@@ -542,9 +542,9 @@ export class Room {
   }
 }
 const ADMIN_HATS = ['partyhat', 'greenhat'];
-function cleanLook(l, hat) {
+function cleanLook(l, hat, fd) {   // fd: holds a Founder's Lantern, so may show the Founder's Flame
   if (!l || typeof l !== 'object') return null;
   const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null;
   const helm = s(l.helm);
-  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1 };
+  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1, flame: fd && l.flame === 'founder' ? 'founder' : null };
 }
