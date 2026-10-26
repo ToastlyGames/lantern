@@ -70,5 +70,15 @@
       "destination": "/wiki/",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/tools",
+      "destination": "/api/tools"
+    },
+    {
+      "source": "/tools/:file*",
+      "destination": "/api/tools?f=:file*"
+    }
   ]
 }
