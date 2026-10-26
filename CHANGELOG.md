@@ -1,6 +1,16 @@
 # Lanternhold changelog
 
-Current build: **v0.8.12** · Season 0 (Beta)
+Current build: **v0.8.13** · Season 0 (Beta)
+
+## v0.8.13 · Sharper swings, better hoods
+
+_2026-10-25_
+
+- Swinging your blade feels better: your hero steps into each swing, the blade leaves a smear in its own colour, and every hit flashes, throws sparks and lands with a short punch.
+- Monsters squash when you hit them. Ember blades trail embers as they swing.
+- Party members’ swings get the same effects.
+- The Hood look now looks like a real hood: a pointed tip, a shadowed opening around your face and a drape over your shoulders.
+- Wick has a new look: a long flowing robe, a deep pointed hood and a long white beard.
 
 ## v0.8.12 · Meet Wick
 
