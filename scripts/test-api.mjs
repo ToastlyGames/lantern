@@ -215,7 +215,7 @@ try {
     ok((await p.req('founders')).status === 404, 'no hero yet: nothing to show');
     await p.req('hero', { method: 'POST', body: { name: 'Founder' } });
     const f = (await p.req('founders')).data;
-    ok(f.on && Number.isInteger(f.no) && f.no > 1 && f.wl === 1000 && f.listed && f.open === false, `every hero gets a number (#${f.no}), the first 1,000 are on the whitelist, mint not open yet`);
+    ok(f.on && Number.isInteger(f.no) && f.no > 1 && f.wl === 1000 && f.listed && f.open === false && f.minLvl === 10 && f.ready === false, `every hero gets a number (#${f.no}), the first 1,000 are on the whitelist, mint not open yet`);
     const v = await p.req('founders', { method: 'POST', body: { action: 'voucher' } });
     ok(v.status === 409 && v.data.error === 'not_open', 'no mint vouchers until the contract is set');
     const anon = new Client();
