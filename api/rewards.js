@@ -4,7 +4,7 @@
 import { db } from '../lib/db.js';
 import { guard, send, fail, body } from '../lib/http.js';
 import { rewardsOn, split } from '../lib/rewards.js';
-import { claimsOn, claimContract, chainId, claimMin, claimMinLevel, voucher, onChain, waitTx } from '../lib/claim.js';
+import { claimsOn, claimContract, chainId, claimMin, claimMinLevel, voucher, onChain, waitTx, vaultBalance } from '../lib/claim.js';
 import { getAddress } from 'viem';
 
 const info = () => claimsOn() ? { contract: claimContract(), chainId: chainId(), min: claimMin(), minLevel: claimMinLevel() } : null;
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     if (!st || st.banned) return fail(res, 403, 'banned');
     if (!st.hero) return fail(res, 404, 'no_hero');
     if (st.hero.is_admin) return send(res, 200, { on: true, admin: true });
-    if (req.method === 'GET') return send(res, 200, { on: true, claims: info(), tok: await db().tok(s.accountId) });
+    if (req.method === 'GET') return send(res, 200, { on: true, claims: info(), tok: await db().tok(s.accountId, await vaultBalance()) });
 
     const b = (await body(req)) || {};
     if (!claimsOn()) return fail(res, 409, 'claims_off', { msg: 'Claiming isn’t open yet.' });
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       if (typeof b.tx === 'string' && /^0x[0-9a-fA-F]{64}$/.test(b.tx)) await waitTx(b.tx);
       const c = await onChain(wallet);
       await db().tokSync(s.accountId, c.claimed, c.totalGross);
-      return send(res, 200, { ok: true, tok: await db().tok(s.accountId) });
+      return send(res, 200, { ok: true, tok: await db().tok(s.accountId, await vaultBalance()) });
     }
     if (b.action !== 'voucher') return fail(res, 400, 'bad_action');
     const lvl = st.save && st.save.data ? st.save.data.lvl | 0 : 0;

@@ -6,6 +6,7 @@ import { db } from '../lib/db.js';
 import { guard, send, fail, body } from '../lib/http.js';
 import { sanitize, plausible } from '../lib/validate.js';
 import { rewardsOn, events, roll } from '../lib/rewards.js';
+import { vaultBalance } from '../lib/claim.js';
 
 export default async function handler(req, res) {
   const s = await guard(req, res, { methods: ['POST'] });
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     if (rewardsOn() && !admin) {
       const ev = events(prev, next, dt), r = roll(ev, next.deepest);
       if (r.units > 0) {
-        try { const e = await d.earn(s.accountId, r.units); if (e) tok = { got: +e.got, balance: +e.balance, today: +e.today, cap: +e.cap, resting: !!e.resting, from: Object.keys(r.got) }; }
+        try { const e = await d.earn(s.accountId, r.units, await vaultBalance()); if (e) tok = { got: +e.got, balance: +e.balance, today: +e.today, cap: +e.cap, resting: !!e.resting, from: Object.keys(r.got) }; }
         catch (e) { console.error('rewards', e.message || e); }
       }
     }
