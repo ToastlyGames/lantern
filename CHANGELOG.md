@@ -1,6 +1,31 @@
 # Lanternhold changelog
 
-Current build: **v0.8.9** · Season 0 (Beta)
+Current build: **v0.8.12** · Season 0 (Beta)
+
+## v0.8.12 · Meet Wick
+
+_2026-10-25_
+
+- Wick, keeper of the Founders’ Ledger, now stands by the road up to the Delve Gate.
+- Talk to him to check whether your hero is on the Founder’s Lantern whitelist. When the mint opens, he’s where you mint it.
+- New heroes see a violet ! over Wick until they’ve paid him a visit.
+- The Founder’s Lantern art is now the same for every token: the lantern itself, burning violet.
+
+## v0.8.11 · Founder’s Lantern
+
+_2026-10-25_
+
+- Every hero now has a hero number, in the order heroes were made. See yours on the Hero screen.
+- The Founder’s Lantern: a free NFT on Robinhood Chain for the first 1,000 heroes. If your hero number is 1,000 or lower, you’re on the whitelist. Your spot is saved, nothing to sign up for.
+- Your token’s number is your hero number. Free to mint, you only pay a tiny gas fee. One per wallet.
+- Holders get the Founder’s Flame: a violet light only Founders have, seen by every player. Purely cosmetic, and you can turn it off on the Hero screen.
+- Check your spot on the Bulletin. The mint opening will be posted here.
+
+## v0.8.10 · Higher joystick sideways
+
+_2026-10-25_
+
+- With your phone held sideways, the joystick now sits higher up, where your thumb rests naturally.
 
 ## v0.8.9 · XP bars
 
