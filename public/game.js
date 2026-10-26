@@ -647,8 +647,11 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.14',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.15',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.15',date:'2026-10-25',title:'See Wick for your spot',notes:[
+    'Your Founder’s Lantern spot is now only checked with Wick, by the road up to the Delve Gate. The Bulletin no longer shows it.',
+    'Updates about the Founder’s Lantern, including when the mint opens, are still posted here.']},
   {v:'0.8.14',date:'2026-10-25',title:'Founder’s whitelist: combat level 10',notes:[
     'The Founder’s Lantern whitelist is the first 1,000 heroes who reach combat level 10. If your hero number is 1,000 or lower, your spot is held; reach combat level 10 to lock it in.',
     'Wick shows your progress: your hero number and your combat level, with a bar to level 10.',
@@ -1869,10 +1872,10 @@ let goalTab='start';
 const SEENV='lanternhold.seenBuild';
 const bulletinNew=()=>{try{return localStorage.getItem(SEENV)!==BUILD.version;}catch(e){return false;}};
 function openBulletin(){try{localStorage.setItem(SEENV,BUILD.version);}catch(e){}
-  openSheet(`<h2>The Bulletin</h2>${tokenCard()}${founderCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
+  openSheet(`<h2>The Bulletin</h2>${tokenCard()}<div class="buildv"><b>v${BUILD.version}</b><span>${BUILD.season} · current build</span></div>
    <p class="lead small">Every update we ship is posted here, newest first.</p>
    <div class="changelog">${CHANGELOG.map((e,i)=>`<section class="${i===0?'latest':''}"><h3>v${e.v} · ${chatEsc(e.title)} <small>${e.date}</small></h3><ul>${e.notes.map(n=>`<li>${chatEsc(n)}</li>`).join('')}</ul></section>`).join('')}</div>
-   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}if($('fndB'))$('fndB').onclick=()=>openFounders();if(!FND)refreshFounder(true);}
+   <div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;if($('caCopy')){$('caCopy').onclick=copyCA;caFit($('caCopy'));}}
 // one line, always: if the whole address doesn't fit (phones), show the first 4 and last 4 (tapping still copies all of it)
 const caShort=ca=>ca.slice(0,6)+'…'+ca.slice(-4);
 function caFit(el){const t=tokenInfo();if(!t)return;el.textContent=t.ca;el.title=t.ca;el.style.fontSize='';
@@ -1893,11 +1896,8 @@ async function copyCA(){const t=tokenInfo();if(!t)return;let ok=false;
 // The server knows each hero's number and whether their wallet holds one (lib/founders.js). Holders get the Founder's Flame.
 async function refreshFounder(rerender){if(!window.ACC||!ACC.online())return;const r=await ACC.api.call(null,'founders');if(!r.ok||!r.data.on)return;
   const was=isFounder();FND=r.data;if(isFounder()!==was&&isFounder())toast('Founder’s Flame lit. Your light burns violet.','rare');
-  if(rerender&&!$('sheet').hidden){if($('fndSheet'))openFounders(true);else if($('fndCard'))openBulletin();}}
+  if(rerender&&!$('sheet').hidden&&$('fndSheet'))openFounders(true);}
 const nfmt=n=>Number(n).toLocaleString('en-US');
-function founderCard(){if(!FND||!FND.on)return '';const F=FND;
-  const minL=F.minLvl||10,listed=F.listed&&F.no<=F.wl,line=isFounder()?'You hold a Founder’s Lantern. Your Founder’s Flame is '+(SET.flame!==false?'lit':'off')+'.':listed&&S.lvl<minL?`You’re Hero #${nfmt(F.no)}: your whitelist spot is held. Reach combat level ${minL} to lock it in. Talk to Wick by the road to the Delve Gate.`:listed?`You’re Hero #${nfmt(F.no)}: you’re whitelisted. ${F.open?'The free mint is open.':'The free mint opens soon.'} Wick keeps the ledger, by the road to the Delve Gate.`:`The whitelist is the first ${nfmt(F.wl)} heroes. You’re Hero #${nfmt(F.no)}.`;
-  return `<div class="ca fnd" id="fndCard"><b>Founder’s Lantern <small>free NFT</small></b><small>${line}</small><button class="btn alt sm" id="fndB">${isFounder()?'Founder’s Lantern':F.listed&&F.no<=F.wl?(F.open?'Mint for free':'See my spot'):'Learn more'}</button></div>`;}
 // Wick, keeper of the Founders' Ledger (by the road up to the Delve Gate): checks your whitelist spot, and opens the mint.
 // He'll also be the one to see for the Founder's Lantern's phase 2.
 const WICK_SAY=['The Founders’ Ledger is open.','The first thousand heroes… are you one?','A violet flame burns for the Founders.','Come, let me find your name.'];
