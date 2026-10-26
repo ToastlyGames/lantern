@@ -35,7 +35,9 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .tag.say b{transform:translate(-50%,-100%);font:500 10.5px/1.25 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;background:rgba(20,22,34,.14);padding:1px 4px;border-radius:5px;
   white-space:normal;width:max-content;max-width:150px;text-align:center;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
   text-shadow:0 1px 1px rgba(8,10,18,.95),0 0 3px rgba(8,10,18,.85),1px 0 1px rgba(8,10,18,.7),-1px 0 1px rgba(8,10,18,.7)}
+.tag.hov b{color:#a7f070;background:rgba(12,14,24,.86);padding:3px 7px 3px;border-radius:5px;box-shadow:0 1px 0 rgba(0,0,0,.35)}
 .tag.adm b{color:#ffe9a8}.tag.me b{color:#ffd98a}.tag.npc b{color:#a7f070;background:rgba(20,22,34,.5)}
+.warnbox{background:#3a2a1c;border:2px solid #ef7d57;color:#f4e4c1;padding:10px 12px;margin:0 0 12px;font-size:17px;line-height:1.3}.warnbox b{color:#ffcd75}
 .npchd{display:flex;gap:12px;align-items:center;margin:0 0 10px}.npchd img{width:78px;height:90px;image-rendering:pixelated;background:var(--ink);border:2px solid var(--line);padding:4px}
 .npchd b{display:block;font-size:26px;color:var(--gold)}.npchd.wick img{border-color:#b98cff}.npchd.wick b{color:#d7bcff}.wickchk{animation:wk 1s steps(2) infinite}@keyframes wk{50%{opacity:.55}}.npchd small{display:block;color:var(--muted);font-size:15px}.npchd em{display:block;font-style:normal;margin-top:6px;font-size:17px;color:var(--text)}
 .ca{background:var(--ink);border:2px solid var(--gold);box-shadow:inset 0 0 0 2px rgba(255,205,117,.15);padding:10px 12px;margin:4px 0 10px}.ca b{display:block;color:var(--gold);font-size:21px;margin-bottom:6px}
@@ -67,7 +69,8 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .skl.cur{box-shadow:inset 3px 0 0 var(--gold)}.skl .trn{color:#a7f070;font-size:.75em;margin-left:4px}
 .xpm{display:inline-block;position:relative;width:46px;height:5px;background:var(--ink);margin:0 6px 1px;vertical-align:middle;box-shadow:0 0 0 1px rgba(86,108,134,.6)}.xpm i{position:absolute;left:0;top:0;bottom:0}
 .top{display:flex;justify-content:space-between;gap:8px;font-size:18px;color:var(--muted)}.top span:first-child{color:var(--text);font-weight:600}
-#where{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#where{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:auto}
+#lvl{white-space:nowrap;flex:none}#where{min-width:0}#vit{grid-template-columns:minmax(0,1fr)}#vit .top{min-width:0}.goldv{flex:none;display:inline-flex;align-items:center;gap:3px;color:#ffcd75;white-space:nowrap}.goldv img{width:12px;height:12px;image-rendering:pixelated}.goldv b{font-weight:400}
 .bar{position:relative;height:14px;background:var(--ink);border:1px solid var(--ink)}
 .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--red);box-shadow:inset 0 2px 0 rgba(255,255,255,.25)}
 #oilFill{background:var(--oil)}#oilFill.low{background:var(--ember);animation:blink 1s steps(2) infinite}
@@ -328,7 +331,7 @@ small{font-size:17px;color:var(--muted)}
 <div id="tags" aria-hidden="true"></div>
 <div id="hud">
   <div id="vit" class="px card">
-    <div class="top"><span id="lvl">Lv 1</span><span id="where">The Hold</span></div>
+    <div class="top"><span id="lvl">Lv 1</span><span id="goldV" class="goldv" aria-label="Gold"><img id="goldIc" alt=""><b>0</b></span><span id="where">The Hold</span></div>
     <div class="bar" aria-label="Health"><i id="hpFill"></i><canvas class="pt" id="hpTxt"></canvas></div>
     <div id="xpb" hidden aria-hidden="true"><i id="xpFill"></i></div>
     <div class="lbl" id="oilRow" hidden><span>OIL</span><div class="bar" aria-label="Lantern oil"><i id="oilFill"></i><canvas class="pt" id="oilTxt"></canvas></div></div>
@@ -359,4 +362,4 @@ small{font-size:17px;color:var(--muted)}
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=4196c8d79c"></script></body></html>
+<script src="/game.js?v=bdc44e429c"></script></body></html>

@@ -59,7 +59,7 @@ const LOOKS={
   skin:['#f6d7bb','#f0c8a0','#d9a066','#b5764a','#8a5634','#5e3a24'],
   hair:['#2a2230','#6b3e26','#a0522d','#e8c66a','#f4f4f4','#b13e53','#3b5dc9','#e86fd0','#38b764','#ef7d57'],
   cloth:['#257179','#3b5dc9','#38b764','#b13e53','#7a3b8f','#ef7d57','#566c86','#333c57','#d9a066','#e86fd0'],
-  style:['short','long','spiky','hood']
+  style:['short','long','spiky','hood','pigtails','ponytail','bun','bob']
 };
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
@@ -86,41 +86,54 @@ function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=s
 }
 function heroFrame(dir,step,look){
   look=look||{};const p=new Px(16,16);
-  const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82);
+  const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82),faceHi=shade(face,1.08),blush=mix(face,'#e8707a',.28);
   const hair=LOOKS.hair[look.hair??1]||LOOKS.hair[1],hair2=shade(hair,.7),hairHi=shade(hair,1.35);
-  const tun=LOOKS.cloth[look.cloth??0]||LOOKS.cloth[0],tun2=shade(tun,.68),trim=shade(tun,1.45);
-  const style=LOOKS.style[look.style??0]||'short',A=ARMOR[look.armor];
-  const lf=step===1?1:0,rf=step===2?1:0,C=look.cape&&CAPES[look.cape];
-  // cape behind the body (front view)
-  // legs + boots
-  p.rect(5,12,2,3-lf,PAL.navy).rect(9,12,2,3-rf,PAL.navy);
-  p.rect(5,15-lf,2,1,PAL.bark).rect(9,15-rf,2,1,PAL.bark);
-  // long hair behind the body
-  if(style==='long'){if(dir==='up')p.rect(4,6,8,5,hair).rect(4,10,8,1,hair2);else if(dir==='down')p.rect(4,5,1,5,hair).rect(11,5,1,5,hair);else p.rect(dir==='left'?8:4,5,4,5,hair);}
-  // tunic
-  p.rect(4,8,8,5,tun).rect(4,12,8,1,tun2).rect(4,8,1,5,tun2);
-  if(dir==='down')p.rect(7,8,2,3,trim);
+  const tun=LOOKS.cloth[look.cloth??0]||LOOKS.cloth[0],tun2=shade(tun,.68),tunHi=shade(tun,1.18),trim=shade(tun,1.45);
+  const style=LOOKS.style[look.style??0]||'short',A=ARMOR[look.armor],girl=FEM_STYLES.includes(style);
+  const pants=PAL.navy,pants2=shade(PAL.navy,.72),boot=PAL.bark,boot2=PAL.wood,sole=PAL.soil;
+  const lf=step===1?1:0,rf=step===2?1:0;
+  const side=dir==='left'||dir==='right',R=dir==='right',X=x=>R?15-x:x;   // side views are drawn facing left, mirrored for right
+  const set=(x,y,c)=>p.set(side?X(x):x,y,c),rect=(x,y,w,h,c)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++)set(x+i,y+j,c);};
+  // legs (shaded on the inside) and boots (a toe highlight, a darker sole)
+  p.rect(5,12,2,3-lf,pants).rect(9,12,2,3-rf,pants);p.rect(6,12,1,3-lf,pants2).rect(10,12,1,3-rf,pants2);
+  p.rect(5,15-lf,2,1,boot).rect(9,15-rf,2,1,boot);p.set(5,15-lf,boot2).set(9,15-rf,boot2);
+  if(dir==='down'){p.set(6,15-lf,sole).set(10,15-rf,sole);}
+  // long hair and tails behind the body
+  backHair(p,dir,style,hair,hair2,hairHi,set,rect);
+  // tunic: shaded side, a lighter front panel, a hem, a neckline
+  p.rect(4,8,8,5,tun).rect(4,12,8,1,tun2).rect(4,8,1,5,tun2);p.rect(11,9,1,3,shade(tun,.84));
+  if(dir==='down'){p.rect(6,9,4,2,tunHi);p.rect(7,8,2,1,face2);p.set(6,8,trim).set(9,8,trim);p.rect(7,9,2,2,trim);p.set(7,10,tun2).set(8,10,tun2);}
+  else if(dir==='up'){p.rect(5,8,6,1,tun2);p.rect(6,9,4,2,tunHi);}
+  else{rect(5,9,4,2,tunHi);set(5,8,trim);}
   // armor over the clothes
-  if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down')p.rect(6,8,4,1,A.hi);else p.rect(5,8,6,1,A.hi);}
-  p.rect(4,11,8,1,PAL.bark).set(8,11,PAL.yellow);
-  // arms
-  const sl=A?A.m2:tun2;
-  if(dir==='left'){p.rect(6,9,2,3,sl).set(6,12,face);}
-  else if(dir==='right'){p.rect(8,9,2,3,sl).set(9,12,face);}
-  else{p.rect(3,9,1,3,sl).set(3,12,face).rect(12,9,1,3,sl).set(12,12,face);}
-  // cape over the back / trailing to the side
-  // (capes are drawn as their own layer around the hero: capeLayer)
+  if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down'){p.rect(6,8,4,1,A.hi);p.set(7,9,A.hi);}else p.rect(5,8,6,1,A.hi);p.set(10,9,A.m2);}
+  // belt with a buckle that catches the light
+  p.rect(4,11,8,1,boot);if(dir==='down'){p.set(7,11,PAL.gold).set(8,11,PAL.yellow);}else if(dir!=='up')set(5,11,PAL.yellow);
+  // arms: sleeve, cuff, hand
+  const sl=A?A.m2:tun2,cuff=A?A.m:tun;
+  if(side){rect(6,9,2,3,sl);set(6,9,cuff);set(6,12,face);set(7,12,face2);}
+  else{p.rect(3,9,1,3,sl).rect(12,9,1,3,sl);p.set(3,9,cuff).set(12,9,shade(cuff,.85));p.set(3,12,face).set(12,12,face2);}
   // head
-  const cap=style==='hood'?tun:hair,cap2=style==='hood'?tun2:hair2;
-  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}else{
-  p.ell(8,5,4.2,4,cap);
-  if(dir==='down'){p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(5,6,shade(face,.9)).set(10,6,shade(face,.9));p.rect(5,3,6,1,cap2);
-    if(style!=='hood'){p.set(5,4,hair).set(10,4,hair);}if(style==='hood')p.rect(4,4,1,4,cap).rect(11,4,1,4,cap);}
-  else if(dir==='up'){p.rect(5,7,6,1,cap2);}
-  else if(dir==='left'){p.rect(4,4,4,4,face).rect(4,7,4,1,face2);p.set(5,5,PAL.ink);p.rect(4,3,5,1,cap2);}
-  else{p.rect(8,4,4,4,face).rect(8,7,4,1,face2);p.set(10,5,PAL.ink);p.rect(7,3,5,1,cap2);}
-  if(style==='spiky'){p.set(5,0,hair).set(8,0,hair).set(11,1,hair).set(4,1,hair).set(7,1,hair).set(10,1,hair);}
-  p.set(6,2,hairHi).set(7,2,hairHi);}
+  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}
+  else{
+    p.ell(8,5,4.2,4,hair);
+    if(dir==='down'){
+      p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(5,4,face2).set(10,4,face2);
+      p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(6,4,hair2).set(9,4,hair2);                       // eyes and brows
+      p.set(5,6,blush).set(10,6,blush);p.set(7,7,shade(face,.7)).set(8,7,shade(face,.7));      // cheeks, mouth
+      p.set(7,5,faceHi).set(8,5,faceHi);
+      if(girl)p.set(6,4,PAL.ink).set(9,4,PAL.ink);   // taller eyes with lashes
+      p.rect(5,3,6,1,hair2);if(style!=='bob'){p.set(5,4,hair).set(10,4,hair);}
+      if(style==='short'||style==='spiky')p.set(4,5,face2).set(11,5,face2);                  // ears
+    }
+    else if(dir==='up'){p.rect(5,7,6,1,hair2);p.rect(10,3,2,4,hair2);}
+    else{rect(4,4,4,4,face);rect(4,7,4,1,face2);set(5,5,PAL.ink);set(5,4,hair2);set(4,6,blush);set(4,7,shade(face,.7));rect(4,3,5,1,hair2);
+      if(girl)set(4,5,PAL.ink);
+      if(style==='short'||style==='spiky')set(8,5,face2);}
+    // shine on top, shading on the far side
+    p.set(6,2,hairHi).set(7,2,hairHi).set(5,3,dir==='up'?hairHi:p.get(5,3));if(dir!=='down'&&dir!=='up')set(10,2,hair2);
+    frontHair(p,dir,style,hair,hair2,hairHi,set,rect);
+  }
   // helmet on top of the head
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
@@ -128,6 +141,32 @@ function heroFrame(dir,step,look){
   if(look.helm==='greenhat'){p.rect(5,1,6,2,'#38b764');p.set(6,1,'#a7f070').set(9,2,'#a7f070');p.rect(4,3,8,1,'#257179');}
   p.outline();
   return p.canvas();
+}
+const FEM_STYLES=['long','pigtails','ponytail','bun','bob'];
+function mix(a,b,t){const A=hex(a),B=hex(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+// hair that hangs behind the body (drawn before the tunic)
+const tieOf=h=>{const [r,g,b]=hex(h);return r>200&&b>150&&g<160?'#73eff7':'#e86fd0';};   // hair ties: pink, or cyan on pink hair
+function backHair(p,dir,style,h,h2,hi,set,rect){
+  const tie=tieOf(h);
+  if(style==='long'){if(dir==='up'){p.rect(4,6,8,5,h).rect(4,10,8,1,h2);p.set(7,7,h2).set(8,8,h2);}else if(dir==='down'){p.rect(4,5,1,5,h).rect(11,5,1,5,h);p.set(4,9,h2).set(11,9,h2);}else{rect(8,5,4,5,h);rect(8,9,4,1,h2);}}
+  if(style==='ponytail'){
+    if(dir==='up'){p.rect(7,6,2,5,h);p.set(8,9,h2).set(7,10,h2);p.rect(7,5,2,1,tie);}
+    else if(dir!=='down'){rect(12,3,2,2,h);rect(12,5,2,4,h);set(13,8,h2);set(12,9,h);set(12,4,tie);}}
+  if(style==='bob'){if(dir==='up'){p.rect(4,6,8,2,h).rect(4,8,8,1,h2);}}
+}
+// hair over the head (after the face): spikes, bangs, buns, the tails' ties from the front
+function frontHair(p,dir,style,h,h2,hi,set,rect){
+  const tie=tieOf(h);
+  if(style==='spiky'){p.set(5,0,h).set(8,0,h).set(11,1,h).set(4,1,h).set(7,1,h).set(10,1,h);p.set(8,0,hi);}
+  if(style==='long'&&dir==='down'){p.set(5,4,h).set(10,4,h).set(10,3,h);}
+  if(style==='bun'){if(dir==='down'||dir==='up'){p.ell(8,1.2,2.2,1.6,h);p.set(7,0,hi);p.rect(7,2,2,1,tie);}else{rect(9,0,3,3,h);set(10,0,hi);set(9,2,tie);}}
+  if(style==='bob'){
+    if(dir==='down'){p.rect(4,4,1,5,h).rect(11,4,1,5,h);p.set(4,8,h2).set(11,8,h2);p.rect(5,3,6,1,h);p.set(6,3,h2).set(9,3,h2);}
+    else if(dir!=='up'){rect(8,4,4,5,h);set(9,8,h2);set(11,8,h2);rect(4,3,4,1,h);set(8,5,h2);}}
+  if(style==='pigtails'){   // two tails tied at the sides of the head, hanging over the shoulders
+    if(dir==='down'||dir==='up'){for(const [x,o] of [[3,-1],[12,1]]){p.rect(x,5,1,4,h);p.rect(x+o,6,1,3,h);p.set(x+o,8,h2).set(x,8,h2);p.set(x+o,9,h2);p.set(x,5,tie);}}
+    else{rect(11,5,1,4,h);rect(12,6,1,3,h);set(12,8,h2);set(12,9,h2);set(11,5,tie);}}
+  if(style==='ponytail'&&dir==='down'){p.set(11,3,tie);}
 }
 // Capes: a separate 20x20 layer around the hero (hero sits at 2,2), so a cape can be wider and longer than the body and sway.
 const CAPE_CACHE={};
@@ -647,8 +686,21 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.15',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.18',season:'Season 0 (Beta)',date:'2026-10-26'};
 const CHANGELOG=[
+  {v:'0.8.18',date:'2026-10-26',title:'Gold on screen',notes:[
+    'Your gold now shows next to your level at the top of the screen, in the Hold and in the Depths. Big amounts are shortened (12.4k, 1.25M); hover it on a computer for the exact number.',
+    'Fixed the health card being cut off on the right on some screens.']},
+  {v:'0.8.17',date:'2026-10-26',title:'Hover to see names',notes:[
+    'On a computer, point your mouse at anything you can use and its name shows above it in green: the Kitchen, Oil Press, Forge, Bank, Bulletin Board, Delve Gate, Tallow’s Cart, the Farm, the Lake, the Dock and the oak trees.',
+    'In the Depths it works for chests, ore, glowcaps and the stairs down.']},
+  {v:'0.8.16',date:'2026-10-26',title:'Sharper heroes, new hair',notes:[
+    'Heroes are crisper and more detailed: brows, cheeks and a mouth, shaded boots and trousers, a lit front on your tunic, cuffs, a shining belt buckle and highlights in your hair.',
+    'Four new hair styles: pigtails, ponytail, bun and bob. The long, pigtail, ponytail, bun and bob styles have softer eyes with lashes.',
+    'In the Depths your hero now always holds their blade in one hand and their lantern in the other. The blade moves with you as you walk, and swings when you attack.',
+    'Other players in the Depths show their lantern and blade too.',
+    'Change your look any time from the Hero screen (in the Hold).',
+    'Signing in with a wallet is simpler: one connect the first time, then just one free signature.']},
   {v:'0.8.15',date:'2026-10-25',title:'See Wick for your spot',notes:[
     'Your Founder’s Lantern spot is now only checked with Wick, by the road up to the Delve Gate. The Bulletin no longer shows it.',
     'Updates about the Founder’s Lantern, including when the mint opens, are still posted here.']},
@@ -1145,6 +1197,30 @@ cv.addEventListener('wheel',e=>{if(!started||!$('sheet').hidden||!$('acct').hidd
   const now=performance.now();if(now-wheelLast>250)wheelAcc=0;wheelLast=now;wheelAcc+=e.deltaMode===1?e.deltaY*30:e.deltaY;
   if(Math.abs(wheelAcc)<50||now-wheelT<120)return;const z=Math.max(0,Math.min(4,SET.zoom+(wheelAcc<0?1:-1)));wheelAcc=0;wheelT=now;
   if(z===SET.zoom)return toast(z===4?'Zoomed in all the way':'Zoomed out all the way');SET.zoom=z;saveSet(true);toast('Zoom: '+ZOOMS[z]);},{passive:false});
+// Mouse hover (computers only): the name of whatever you point at shows above it, in the same green as NPC names.
+const HOVER_OK=window.matchMedia&&matchMedia('(hover:hover) and (pointer:fine)').matches,HOV={on:false,x:0,y:0};
+cv.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;HOV.on=true;HOV.x=e.clientX;HOV.y=e.clientY;});
+cv.addEventListener('pointerleave',()=>{HOV.on=false;cv.style.cursor='';});
+// [left, top, width, height] from the object's x/y (its feet), and the name to show
+const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],forge:[-22,-38,44,38,'Forge'],kitchen:[-14,-30,28,30,'Kitchen'],press:[-14,-30,28,30,'Oil Press'],
+  board:[-14,-30,28,30,'Bulletin Board'],stall:[-20,-30,40,32,'Tallow’s Cart'],sign:[-8,-22,16,22,'The Road East'],barricade:[-10,-58,20,58,'The Road East (closed)'],
+  tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap']};
+function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
+  for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
+    if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
+    else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=H[4];}
+    if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
+  if(best)return best;
+  const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
+  if(scene==='hold'){
+    if(map.plots&&map.plots.some(p=>p.tx===tx&&p.ty===ty))return {x:tx*T+8,y:ty*T-2,name:'Farm'};
+    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};}
+  if(scene==='delve'&&map.stairs&&!map.stairs.hidden&&tx===map.stairs.tx&&ty===map.stairs.ty)return {x:tx*T+8,y:ty*T-2,name:'Stairs down'};
+  return null;}
+function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acct').hidden){if(cv.style.cursor)cv.style.cursor='';return;}
+  const r=cv.getBoundingClientRect();if(!r.width)return;const wx=camX+(HOV.x-r.left)*VW/r.width,wy=camY+(HOV.y-r.top)*VH/r.height;
+  const h=hoverTarget(wx,wy);cv.style.cursor=h?'pointer':'';if(h)TAGS.push({x:h.x,y:h.y,name:h.name,npc:true,hov:true});}
 // Mouse: left-click on the game attacks / acts, same as Space. In the Depths the hero turns toward the click first.
 let camX=0,camY=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||!started||!$('sheet').hidden||!$('acct').hidden)return;
@@ -1974,7 +2050,7 @@ $('guide').addEventListener('click',()=>{if(!started)return;if($('guide').classL
 // ---------- simulated town ----------
 // ---------- update ----------
 function update(dt){
-  time+=dt;MP.tick(dt);
+  time+=dt;if(S&&(S.gold|0)!==goldHud.g){goldHud.g=S.gold|0;goldHud();}MP.tick(dt);
   if(paused&&!(scene==='delve'&&MP.shared()))return;
   // movement
   let mx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0),my=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
@@ -2053,10 +2129,13 @@ function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S
   $('quick').innerHTML=S.quick.map((id,i)=>{const n=id?S.bank[id]||0:0;return `<button class="qs ${id&&!n?'empty':''}" data-q="${i}" aria-label="Quick slot ${i+1}${id?': '+ITEMS[id].n+', '+n:' (empty)'}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:'<b>+</b>'}${id?`<span class="cnt"><canvas class="pt"></canvas></span>`:''}<i>${i+1}</i></button>`;}).join('');
   $('quick').querySelectorAll('.qs').forEach(b=>{const i=+b.dataset.q,id=S.quick[i];const c=b.querySelector('canvas');if(c)ptSet(c,S.bank[id]||0,{font:'small',px:9,color:'#ffcd75'});
     b.addEventListener('pointerdown',e=>{e.preventDefault();useQuick(i);});});}
+// gold on the HUD, short: 9,850 · 12.4k · 1.25M
+const fmtGold=n=>n<10000?n.toLocaleString('en-US'):n<1e6?(Math.floor(n/100)/10)+'k':(Math.floor(n/1e4)/100)+'M';
+function goldHud(){const gv=fmtGold(S.gold|0),gb=$('goldV');if(gb&&gb._v!==gv){gb._v=gv;gb.lastChild.textContent=gv;gb.title=(S.gold|0).toLocaleString('en-US')+' gold';if(!gb.firstChild.getAttribute('src'))gb.firstChild.src=iconOf('gold').toDataURL();}}
 function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
-  $('lvl').textContent='Lv '+S.lvl;{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
+  $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
   $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
@@ -2075,10 +2154,10 @@ function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.clas
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
     const e=tagEl(n++);if(e.hidden)e.hidden=false;   // unhide first: a hidden tag measures 0 wide and the level badge would cover the name
-    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0);
+    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0)+'|'+(t.hov?1:0);
     if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
     else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
-      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.children[0].style.display=t.adm?'':'none';
+      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.classList.toggle('hov',!!t.hov);e.children[0].style.display=t.adm?'':'none';
       const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
     const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
   for(let i=n;i<tagPool.length;i++)if(!tagPool[i].hidden)tagPool[i].hidden=true;}
@@ -2105,7 +2184,7 @@ function render(){TAGS.length=0;
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0];if(swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);drawHero(o.x+lx,o.y+ly,o.dir,o.moving,o.anim,o.look,o.name,o);if(sw&&!swB)drawSwingAt(o.x+lx,o.y+ly,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=dun&&!sw,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
@@ -2122,7 +2201,7 @@ function render(){TAGS.length=0;
     ptDraw(g,map.pack.bossName,VW/2,y-9,{color:'#f4f4f4'});}
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
   if(scene==='delve'&&!reduceMotion)drawDelveAmbient(camX,camY);
-  drawTags();
+  hoverTag();drawTags();
 }
 // ---- life in the Depths: dust drifting through your lantern light, sparks rising from torches ----
 function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
@@ -2217,16 +2296,25 @@ function drawPlayer(){
 function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
-  if(d==='up')spr(lan,P.x+lx,P.y+ly);
+  const dun=scene!=='hold',held=dun&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always
+  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);
+  if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames?5:0),say:P.say});
-  if(d!=='up'&&scene!=='hold')spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
+  if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
+  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
 function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
+// The blade at rest in the free hand (the lantern is in the other): tilted up, bobbing with each step, swaying a little.
+// Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
+const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
+function drawHeldBlade(x,y,dir,blade,moving,anim){const h=HELD[dir]||HELD.down,sw=ART.sword[blade]||ART.sword.rusty;
+  const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
+  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-14);g.restore();}
 function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
   const sw=ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=BLADE_FX[blade]||'#f4f4f4',fade=1-t;
   // the smear: a crescent from where the swing started to the blade, brightest at the edge
@@ -2802,17 +2890,17 @@ const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
 const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern');
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
-async function pickAccount(pv){
-  let known=[];try{known=(await ask(pv,'eth_accounts'))||[];}catch(e){}
-  if(known.length){
-    try{const perms=await ask(pv,'wallet_requestPermissions',[{eth_accounts:{}}]);
-      let now=[];try{now=(await ask(pv,'eth_accounts'))||[];}catch(e){}
-      const cav=(perms||[]).flatMap(p=>(p&&p.caveats)||[]).find(c=>c&&c.type==='restrictReturnedAccounts');
-      const pick=now[0]||(cav&&Array.isArray(cav.value)&&cav.value[0]);if(pick)return String(pick);}
-    catch(e){if(e&&e.code===4001)throw e;}
-  }
-  const accts=await ask(pv,'eth_requestAccounts');return String(accts&&accts[0]||'');
-}
+// Which account: the one the wallet has selected (eth_requestAccounts lists it first). If this site is already
+// connected there's no pop-up at all, so a returning player sees just one request: the free sign-in signature.
+// To play as another account, switch accounts in the wallet (the game signs you out and you connect again).
+async function pickAccount(pv){const accts=(await ask(pv,'eth_requestAccounts'))||[];
+  // Only if the wallet has switched to an account that isn't connected to this site yet: ask it to connect that one
+  // (otherwise the wallet would quietly hand back the old account). Normal sign-ins never see this extra pop-up.
+  const sel=typeof pv.selectedAddress==='string'?pv.selectedAddress:'';
+  if(/^0x[0-9a-fA-F]{40}$/.test(sel)&&!accts.some(a=>String(a).toLowerCase()===sel.toLowerCase())){
+    try{await ask(pv,'wallet_requestPermissions',[{eth_accounts:{}}]);const now=(await ask(pv,'eth_accounts'))||[];const hit=now.find(a=>String(a).toLowerCase()===sel.toLowerCase());if(hit)return String(hit);}
+    catch(e){if(e&&e.code===4001)throw e;}}
+  return String(accts[0]||'');}
 // Watch the wallet a player signed in with: switching or disconnecting its account signs them out.
 const LW='lanternhold.wallet';let watched=null;
 const signedInWithWallet=()=>{try{return localStorage.getItem('lanternhold.via')==='wallet';}catch(e){return false;}};
@@ -2830,7 +2918,7 @@ async function onAccounts(accts){const me=ACC.me&&ACC.me.wallet;if(!me||switchin
   try{sessionStorage.setItem('lanternhold.notice',now?'You switched wallets, so you were signed out. Connect again to sign in with '+short(now)+'.':'Your wallet disconnected, so you were signed out.');}catch(e){}
   location.reload();}
 // Signs a Sign-In with Ethereum message. endpoint: 'auth/verify' to sign in, 'auth/link-wallet' to add the wallet to this account.
-// At most two wallet pop-ups: pick/connect the account, then one free signature. The server writes the exact message
+// At most two wallet pop-ups the first time (connect, then one free signature); after that, just the signature. The server writes the exact message
 // (this site's address, your checksummed address, a one-time code, 5-minute expiry), so the wallet can show it as a
 // verified sign-in request for this site instead of a warning. No network switch is needed just to sign in.
 async function signWithWallet(w,endpoint,onStage){
@@ -2865,7 +2953,7 @@ function enter(){
   if(me.hero&&me.save){ACC.pid='h_'+me.hero.name.toLowerCase();finish(Object.assign({},me.save.data,{name:me.hero.name,look:me.hero.look,wallet:me.wallet}),false,me.save.rev);return;}
   ACC.draft=newDraft();go('creator');
 }
-function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
+function finish(data,isNew,rev){if(rev!==undefined)ACC.rev=rev;try{localStorage.setItem('lanternhold.lastHero',JSON.stringify({name:ACC.me.hero.name,wallet:ACC.me.wallet||null,google:!!ACC.me.google&&!ACC.me.wallet}));}catch(e){}lastAt=Date.now();ACC.pid='h_'+ACC.me.hero.name.toLowerCase();
   box.hidden=true;stopPreview();window.LH.start(ACC.pid,data,{isNew,wallet:ACC.me.wallet,online:true,admin:!!ACC.me.hero.admin,hat:ACC.me.hero.hat});
   if(window.NET)NET.start(ACC.me.hero.name);}
 function go(s,extra){ACC.screen=s;Object.assign(ACC,extra||{});render();}
@@ -2903,7 +2991,9 @@ function render(){
   }else if(s==='creator'){
     const d=ACC.draft,L=d.look;
     const sw=(k,arr)=>`<div class="swrow" role="radiogroup" aria-label="${k}">${arr.map((c,i)=>`<button class="sw" role="radio" aria-checked="${L[k]===i}" aria-label="${k} ${i+1}" data-k="${k}" data-i="${i}" style="--c:${c}"></button>`).join('')}</div>`;
-    h=`<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
+    let last=null;try{last=JSON.parse(localStorage.getItem('lanternhold.lastHero')||'null');}catch(e){}
+    const other=!ACC.edit&&last&&last.name&&ACC.me&&!(last.wallet&&ACC.me.wallet&&last.wallet===ACC.me.wallet);
+    h=`${other?`<div class="warnbox"><b>Looking for ${esc(last.name)}?</b> ${last.wallet?`${esc(last.name)} is on wallet <b>${short(last.wallet)}</b>, but you’re signed in with ${ACC.me.wallet?'<b>'+short(ACC.me.wallet)+'</b>':'Google'}.`:`${esc(last.name)} was signed in with Google, not this wallet.`} Making a hero here starts a new one. To get back to ${esc(last.name)}, ${last.wallet?'switch to that wallet in your wallet app, then ':''}<button class="link inl" id="signout">sign out</button> and connect again.</div>`:''}<h2>${ACC.edit?'Change your look':'Create your hero'}</h2>
     <div class="creator"><div class="pvWrap"><canvas id="pv" width="24" height="24"></canvas><button class="btn alt sm" id="rnd">Shuffle</button></div>
     <div class="opts">
       ${ACC.edit?`<p class="lead"><b>${esc(d.name)}</b><br><small>Names are permanent.</small></p>`:`<label class="fld"><span>Name</span><input id="nm" maxlength="16" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="3–16 letters, numbers, _" value="${esc(d.name)}"><small id="nmS" aria-live="polite">Names are permanent and unique. Other players will see it.</small></label>`}
