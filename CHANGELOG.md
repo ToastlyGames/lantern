@@ -1,6 +1,13 @@
 # Lanternhold changelog
 
-Current build: **v0.8.14** · Season 0 (Beta)
+Current build: **v0.8.15** · Season 0 (Beta)
+
+## v0.8.15 · See Wick for your spot
+
+_2026-10-25_
+
+- Your Founder’s Lantern spot is now only checked with Wick, by the road up to the Delve Gate. The Bulletin no longer shows it.
+- Updates about the Founder’s Lantern, including when the mint opens, are still posted here.
 
 ## v0.8.14 · Founder’s whitelist: combat level 10
 
