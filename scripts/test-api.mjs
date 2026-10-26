@@ -46,7 +46,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, failN = 0;
 const ok = (cond, name) => { if (cond) { pass++; console.log('  ✓', name); } else { failN++; console.log('  ✗', name); } };
 
-const STATEMENT = 'Sign in to Lanternhold. This free signature only proves you own this wallet. It is not a transaction, costs no gas, and gives no access to your funds.';
+const STATEMENT = 'Sign in to Lanternhold.';
 class Client {
   constructor(key) { this.acct = privateKeyToAccount(key || generatePrivateKey()); this.jar = new Map(); }
   get cookie() { return [...this.jar].map(([k, v]) => k + '=' + v).join('; '); }
