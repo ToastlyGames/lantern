@@ -1,6 +1,31 @@
 # Lanternhold changelog
 
-Current build: **v0.8.15** · Season 0 (Beta)
+Current build: **v0.8.18** · Season 0 (Beta)
+
+## v0.8.18 · Gold on screen
+
+_2026-10-26_
+
+- Your gold now shows next to your level at the top of the screen, in the Hold and in the Depths. Big amounts are shortened (12.4k, 1.25M); hover it on a computer for the exact number.
+- Fixed the health card being cut off on the right on some screens.
+
+## v0.8.17 · Hover to see names
+
+_2026-10-26_
+
+- On a computer, point your mouse at anything you can use and its name shows above it in green: the Kitchen, Oil Press, Forge, Bank, Bulletin Board, Delve Gate, Tallow’s Cart, the Farm, the Lake, the Dock and the oak trees.
+- In the Depths it works for chests, ore, glowcaps and the stairs down.
+
+## v0.8.16 · Sharper heroes, new hair
+
+_2026-10-26_
+
+- Heroes are crisper and more detailed: brows, cheeks and a mouth, shaded boots and trousers, a lit front on your tunic, cuffs, a shining belt buckle and highlights in your hair.
+- Four new hair styles: pigtails, ponytail, bun and bob. The long, pigtail, ponytail, bun and bob styles have softer eyes with lashes.
+- In the Depths your hero now always holds their blade in one hand and their lantern in the other. The blade moves with you as you walk, and swings when you attack.
+- Other players in the Depths show their lantern and blade too.
+- Change your look any time from the Hero screen (in the Hold).
+- Signing in with a wallet is simpler: one connect the first time, then just one free signature.
 
 ## v0.8.15 · See Wick for your spot
 
