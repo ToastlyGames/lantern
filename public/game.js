@@ -647,8 +647,12 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.13',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.14',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.14',date:'2026-10-25',title:'Founder’s whitelist: combat level 10',notes:[
+    'The Founder’s Lantern whitelist is the first 1,000 heroes who reach combat level 10. If your hero number is 1,000 or lower, your spot is held; reach combat level 10 to lock it in.',
+    'Wick shows your progress: your hero number and your combat level, with a bar to level 10.',
+    'The mint is free, only in the game, and one per hero.']},
   {v:'0.8.13',date:'2026-10-25',title:'Sharper swings, better hoods',notes:[
     'Swinging your blade feels better: your hero steps into each swing, the blade leaves a smear in its own colour, and every hit flashes, throws sparks and lands with a short punch.',
     'Monsters squash when you hit them. Ember blades trail embers as they swing.',
@@ -1892,7 +1896,7 @@ async function refreshFounder(rerender){if(!window.ACC||!ACC.online())return;con
   if(rerender&&!$('sheet').hidden){if($('fndSheet'))openFounders(true);else if($('fndCard'))openBulletin();}}
 const nfmt=n=>Number(n).toLocaleString('en-US');
 function founderCard(){if(!FND||!FND.on)return '';const F=FND;
-  const line=isFounder()?'You hold a Founder’s Lantern. Your Founder’s Flame is '+(SET.flame!==false?'lit':'off')+'.':F.listed&&F.no<=F.wl?`You’re Hero #${nfmt(F.no)}: you’re on the whitelist. ${F.open?'The free mint is open.':'The free mint opens soon.'} Wick keeps the ledger, by the road to the Delve Gate.`:`The whitelist is the first ${nfmt(F.wl)} heroes. You’re Hero #${nfmt(F.no)}.`;
+  const minL=F.minLvl||10,listed=F.listed&&F.no<=F.wl,line=isFounder()?'You hold a Founder’s Lantern. Your Founder’s Flame is '+(SET.flame!==false?'lit':'off')+'.':listed&&S.lvl<minL?`You’re Hero #${nfmt(F.no)}: your whitelist spot is held. Reach combat level ${minL} to lock it in. Talk to Wick by the road to the Delve Gate.`:listed?`You’re Hero #${nfmt(F.no)}: you’re whitelisted. ${F.open?'The free mint is open.':'The free mint opens soon.'} Wick keeps the ledger, by the road to the Delve Gate.`:`The whitelist is the first ${nfmt(F.wl)} heroes. You’re Hero #${nfmt(F.no)}.`;
   return `<div class="ca fnd" id="fndCard"><b>Founder’s Lantern <small>free NFT</small></b><small>${line}</small><button class="btn alt sm" id="fndB">${isFounder()?'Founder’s Lantern':F.listed&&F.no<=F.wl?(F.open?'Mint for free':'See my spot'):'Learn more'}</button></div>`;}
 // Wick, keeper of the Founders' Ledger (by the road up to the Delve Gate): checks your whitelist spot, and opens the mint.
 // He'll also be the one to see for the Founder's Lantern's phase 2.
@@ -1910,12 +1914,14 @@ async function openWick(){try{localStorage.setItem(wickKey(),'1');}catch(e){}
   if(!FND||!FND.on){openSheet(`<div id="fndSheet"></div>${wickHd(window.ACC&&ACC.online()?'The ledger isn’t ready for new names just yet. Come back soon.':'I can only read the ledger while you’re signed in and online.')}<div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;return;}
   wickChecked=true;sfx(FND.listed||isFounder()?'rare':'pick');openFounders(true);}
 let fndV=null;
-function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refreshFounder(true);const F=FND,c=F.chain||{},listed=F.no<=F.wl;
+function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refreshFounder(true);const F=FND,c=F.chain||{},listed=F.no<=F.wl,minL=F.minLvl||10,lvlOk=S.lvl>=minL;
+  const checks=listed?`<ul class="fchk"><li class="ok">Hero #${nfmt(F.no)}: one of the first ${nfmt(F.wl)} heroes</li><li class="${lvlOk?'ok':''}">Combat level ${minL}${lvlOk?'':` <small>(you’re ${S.lvl})</small>`}</li></ul>`:'';
   let st='';
   if(isFounder())st=`<div class="soon fnd"><b>You hold a Founder’s Lantern</b><p>Your Founder’s Flame: a violet light at your shoulder and around your lantern, that every other player sees. Only holders have it.</p>
     <button class="btn big" id="flT">${SET.flame!==false?'Turn the flame off':'Light the flame'}</button></div>`;
   else if(!listed)st=`<p class="lead small">The whitelist is the first <b>${nfmt(F.wl)}</b> heroes ever made, and you’re Hero #${nfmt(F.no)}. If you pick up a Founder’s Lantern from another player, the flame is yours while you hold it.</p>`;
-  else if(!F.open)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re on the whitelist</b><p>The mint opens soon. Your spot is saved to your hero, so there’s nothing to do yet. We’ll post it in the Bulletin.</p></div>`;
+  else if(!lvlOk)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: your spot is held</b>${checks}<div class="xpb"><i style="width:${Math.min(100,Math.round(S.lvl/minL*100))}%;background:#b98cff"></i></div><p>Reach combat level ${minL} in the Depths to lock in your whitelist spot. The mint is free, one per hero.</p></div>`;
+  else if(!F.open)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted</b>${checks}<p>The mint opens soon. Your spot is saved to your hero, so there’s nothing to do yet. We’ll post it in the Bulletin.</p></div>`;
   else if(!F.wallet)st=`<p class="lead small">Connect a wallet to your hero first (Hero screen). Your Founder’s Lantern is minted to it.</p><button class="btn big" id="fnHero">Open my hero</button>`;
   else if(c.taken)st=`<p class="lead small">Founder’s Lantern #${nfmt(F.no)} has been minted${c.owner?' to '+chatEsc(c.owner.slice(0,6)+'…'+c.owner.slice(-4)):''}. To light the flame, the hero’s linked wallet (${chatEsc(F.wallet.slice(0,6)+'…'+F.wallet.slice(-4))}) needs to hold a Founder’s Lantern.</p>`;
   else if(c.walletUsed)st=`<p class="lead small">The wallet linked to your hero has already minted a Founder’s Lantern. It’s one per wallet.</p>`;
@@ -1923,11 +1929,11 @@ function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refre
   else if(c.paused)st=`<p class="lead small">Minting is paused for a moment. Try again soon.</p>`;
   else if(fndV)st=`<div class="soon fnd"><b>Mint Founder’s Lantern #${nfmt(fndV.no)}</b><ul><li>Free: you only pay a tiny gas fee in ETH</li><li>Minted to your wallet ${chatEsc(fndV.wallet.slice(0,6)+'…'+fndV.wallet.slice(-4))}</li><li>On Robinhood Chain</li></ul></div>
     <button class="btn big" id="fnGo">Open my wallet</button><button class="btn alt big" id="fnNo">Not now</button>`;
-  else st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re on the whitelist</b><p>Mint Founder’s Lantern #${nfmt(F.no)} for free. You only pay a tiny gas fee.</p></div><button class="btn big" id="fnM">Mint for free</button>`;
-  const q=isFounder()?'That violet flame suits you, Founder. The ledger remembers.':!listed?`Hero #${nfmt(F.no)}… The ledger holds the first ${nfmt(F.wl)} names, and yours came after. But a Founder’s Lantern can still change hands.`:`Hero #${nfmt(F.no)}… ah, here you are. Your name is written in the Founders’ Ledger.`;
+  else st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted</b>${checks}<p>Mint Founder’s Lantern #${nfmt(F.no)} for free. You only pay a tiny gas fee.</p></div><button class="btn big" id="fnM">Mint for free</button>`;
+  const q=isFounder()?'That violet flame suits you, Founder. The ledger remembers.':!listed?`Hero #${nfmt(F.no)}… The ledger holds the first ${nfmt(F.wl)} names, and yours came after. But a Founder’s Lantern can still change hands.`:!lvlOk?`Hero #${nfmt(F.no)}… your name is in the ledger, but the ink is still wet. Reach combat level ${minL} and it’s yours to keep.`:`Hero #${nfmt(F.no)}… ah, here you are. Your name is written in the Founders’ Ledger.`;
   openSheet(`<div id="fndSheet"></div>${wickHd(q)}<h2>Founder’s Lantern</h2>
    <div class="fndart"><img src="/api/founders?img=${F.no}" alt="Founder’s Lantern #${F.no}" width="160" height="160"><span><b>#${nfmt(F.no)}</b><small>Your hero number: Hero #${nfmt(F.no)}</small>${c.supply!=null?`<small>${nfmt(c.supply)} / ${nfmt(F.wl)} minted</small>`:''}</span></div>
-   <p class="lead small">A free NFT on Robinhood Chain for the first ${nfmt(F.wl)} heroes. Its number is your hero number, so there’s only ever one of each. Whoever holds one gets the <b class="flamet">Founder’s Flame</b> in the game: a light colour no one else has.</p>
+   <p class="lead small">A free NFT on Robinhood Chain for the first ${nfmt(F.wl)} heroes who reach combat level ${minL}. Minted only here in the game, one per hero. Its number is your hero number, so there’s only ever one of each. Whoever holds one gets the <b class="flamet">Founder’s Flame</b> in the game: a light colour no one else has.</p>
    ${st}${F.open&&F.contract?`<p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/token/${chatEsc(F.contract)}" target="_blank" rel="noopener">View the collection</a></p>`:''}
    <div class="row"><button class="btn" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;
