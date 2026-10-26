@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Lanternhold owner tools</title>
+<style>
+:root{--ink:#1a1c2c;--bg:#0f1020;--panel:#20243a;--line:#3d4a66;--text:#eef1f5;--muted:#a9bdcc;--gold:#ffcd75;--green:#a7f070;--red:#ef7d57}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}h1{color:var(--gold);font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:26px 0 6px;color:var(--gold)}
+p,li{color:var(--muted)}b{color:var(--text)}label{display:block;margin:12px 0 4px;font-weight:600}
+input{width:100%;font:15px ui-monospace,Menlo,monospace;padding:10px;background:var(--panel);color:var(--text);border:2px solid var(--line)}
+button{font:600 16px system-ui;padding:12px 16px;margin-top:12px;background:#3b5dc9;color:#fff;border:2px solid var(--ink);cursor:pointer;width:100%}button:disabled{opacity:.5}
+.box{background:var(--panel);border:2px solid var(--line);padding:12px 14px;margin:10px 0;word-break:break-all}.ok{color:var(--green)}.bad{color:var(--red)}code{color:var(--gold)}
+</style></head><body><main>
+</head><body><main>
+<h1>Owner tools</h1>
+<p>Locked. Only the Lanternhold admin wallets can get in. Open this page in your wallet app’s browser (MetaMask, Rabby…), connect an admin wallet and sign the sign-in message. Signing is free: it isn’t a transaction.</p>
+<div class="box" id="who">Not connected.</div>
+<button id="go">Connect and sign in</button>
+</main><script src="/tools/login.js"></script></body></html>
