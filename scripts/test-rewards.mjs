@@ -50,4 +50,22 @@ ok(t2.balance === 0 && t2.claimed === 1250 && t2.recycled === 62.5 && t2.burned 
 ok(t2.pool === t.pool + 62.5, 'recycled tokens go back into the pool');
 const s = R.split(1250); ok(s.net === 1125 && s.burn === 62.5 && s.recycle === 62.5, 'the player receives 90% of a claim');
 
+console.log('Only on in Season 1');
+{ const env = { ...process.env }; delete process.env.REWARDS_ON; delete process.env.REWARDS_START;
+  ok(!R.rewardsOn(), 'off unless REWARDS_ON=1');
+  process.env.REWARDS_ON = '1'; process.env.REWARDS_START = new Date(Date.now() + 86400e3).toISOString(); ok(!R.rewardsOn(), 'still off before REWARDS_START');
+  process.env.REWARDS_START = new Date(Date.now() - 1000).toISOString(); ok(R.rewardsOn(), 'on once REWARDS_START has passed');
+  process.env.REWARDS_ON = '0'; ok(!R.rewardsOn(), 'REWARDS_ON=0 turns it off whatever the date');
+  for (const k of ['REWARDS_ON', 'REWARDS_START']) { if (env[k] === undefined) delete process.env[k]; else process.env[k] = env[k]; } }
+console.log('Funded in phases (the vault’s real balance)');
+{ const v = memoryDb(); const x = await v.accountFor('0x' + '9'.repeat(40));
+  let e = await v.earn(x.id, 10, 10_000_000);
+  ok(e.cap === 250 && e.unit === 1 && e.got === 10, 'phase 1 (10M in the vault): 25,000 a day, 250 per player, 1 token a unit');
+  const t = await v.tok(x.id, 10_000_000); ok(t.pool === 10_000_000 - 10, 'what’s left = the vault minus what players are owed');
+  // tomorrow: lots of players asked for 100,000 units today, so tomorrow a unit is worth a quarter as much
+  const days = v._tokDays, [k] = [...days.keys()]; const d0 = days.get(k); d0.asked = 100000; days.delete(k); days.set('2000-01-01', d0);
+  e = await v.earn(x.id, 10, 25_000_000);
+  ok(Math.abs(e.unit - 62499 / 100000) < 1e-9 && e.cap === 624.99, `phase 2 topped up to 25M: bigger budget (62,499), split by yesterday’s demand (a unit = ${e.unit.toFixed(3)})`); }
+{ let left = 50e6; for (let d = 0; d < 365; d++) left -= R.dayBudget(left) * 0.95; ok(left > 20e6 && left < 22e6, `a year of full days with every reward claimed (5% recycled): ~${(left / 1e6).toFixed(1)}M of 50M left`); }
+
 console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
