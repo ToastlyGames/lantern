@@ -30,6 +30,9 @@ let apiRequests = 0;
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/__dev/stats') { res.end(JSON.stringify({ cpu: process.cpuUsage(), rss: process.memoryUsage().rss, requests: apiRequests })); return; }
+  if (url.pathname === '/tools' || url.pathname.startsWith('/tools/')) {   // same as vercel.json's rewrites: the locked owner tools
+    const h = await route('tools'); req.url = '/api/tools?f=' + encodeURIComponent(url.pathname.slice(7)); return h(req, res);
+  }
   if (url.pathname.startsWith('/api/')) {
     apiRequests++;
     const h = await route(url.pathname.slice(5));
