@@ -1,8 +1,14 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.12',season:'Season 0 (Beta)',date:'2026-10-25'};
+const BUILD={version:'0.8.13',season:'Season 0 (Beta)',date:'2026-10-25'};
 const CHANGELOG=[
+  {v:'0.8.13',date:'2026-10-25',title:'Sharper swings, better hoods',notes:[
+    'Swinging your blade feels better: your hero steps into each swing, the blade leaves a smear in its own colour, and every hit flashes, throws sparks and lands with a short punch.',
+    'Monsters squash when you hit them. Ember blades trail embers as they swing.',
+    'Party members’ swings get the same effects.',
+    'The Hood look now looks like a real hood: a pointed tip, a shadowed opening around your face and a drape over your shoulders.',
+    'Wick has a new look: a long flowing robe, a deep pointed hood and a long white beard.']},
   {v:'0.8.12',date:'2026-10-25',title:'Meet Wick',notes:[
     'Wick, keeper of the Founders’ Ledger, now stands by the road up to the Delve Gate.',
     'Talk to him to check whether your hero is on the Founder’s Lantern whitelist. When the mint opens, he’s where you mint it.',

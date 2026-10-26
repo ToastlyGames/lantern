@@ -43,6 +43,26 @@ const LOOKS={
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
 const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember}};
+// The hood style: a real hood with a pointed tip that flops back, a lit rim around a shadowed opening, and a short drape
+// over the shoulders that ends in a point (front) or falls down the back.
+function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=shade(c,.42);
+  const row=(y,x0,x1,col)=>{for(let x=x0;x<=x1;x++)p.set(x,y,col);};
+  const mir=dir==='right',X=x=>mir?15-x:x,set=(x,y,col)=>p.set(X(x),y,col),run=(y,x0,x1,col)=>{for(let x=x0;x<=x1;x++)set(x,y,col);};
+  if(dir==='down'){
+    row(0,8,9,c);row(1,6,10,c);p.set(10,0,c2);row(2,5,11,c);for(let y=3;y<=8;y++)row(y,4,11,c);row(9,5,10,c);p.set(7,10,c).set(8,10,c);   // tip, hood, drape to a point
+    row(2,6,9,hi);for(let y=3;y<=7;y++){p.set(4,y,c2);p.set(11,y,c2);}row(8,4,11,c2);p.set(7,9,c2).set(8,9,c2);
+    row(3,5,10,dk);for(let y=4;y<=7;y++){p.set(5,y,dk);p.set(10,y,dk);}                // the dark opening
+    row(4,6,9,shade(face,.78));row(5,6,9,face);row(6,6,9,face);row(7,6,9,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);
+    for(let y=3;y<=7;y++){p.set(4,y,hi);p.set(11,y,c2);}}
+  else if(dir==='up'){
+    row(0,7,8,c);row(1,6,10,c);p.set(10,1,c2);row(2,5,11,c);for(let y=3;y<=7;y++)row(y,4,11,c);row(8,5,10,c2);p.set(7,9,c2).set(8,9,c2);
+    for(let y=2;y<=7;y++)p.set(8,y,c2);row(1,6,8,hi);for(let y=3;y<=6;y++)p.set(4,y,hi);for(let y=3;y<=7;y++)p.set(11,y,c2);}
+  else{ // side view (drawn facing left, mirrored for right): the opening at the front, the tip trailing back
+    run(0,10,11,c);run(1,7,12,c);set(12,0,c2);set(13,1,c2);run(2,5,12,c);for(let y=3;y<=8;y++)run(y,4,11,c);run(9,5,11,c);run(10,9,11,c);
+    run(2,6,9,hi);for(let y=3;y<=7;y++)set(4,y,hi);for(let y=3;y<=9;y++)set(11,y,c2);run(8,5,10,c2);
+    run(3,4,8,dk);for(let y=4;y<=7;y++)set(8,y,dk);
+    run(4,4,7,shade(face,.78));run(5,4,7,face);run(6,4,7,face);run(7,4,7,face2);set(5,5,PAL.ink);for(let y=4;y<=7;y++)set(4,y,face);set(4,4,shade(face,.78));}
+}
 function heroFrame(dir,step,look){
   look=look||{};const p=new Px(16,16);
   const face=LOOKS.skin[look.skin??1]||LOOKS.skin[1],face2=shade(face,.82);
@@ -71,6 +91,7 @@ function heroFrame(dir,step,look){
   // (capes are drawn as their own layer around the hero: capeLayer)
   // head
   const cap=style==='hood'?tun:hair,cap2=style==='hood'?tun2:hair2;
+  if(style==='hood'){hoodHead(p,dir,tun,face,face2);}else{
   p.ell(8,5,4.2,4,cap);
   if(dir==='down'){p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(5,6,shade(face,.9)).set(10,6,shade(face,.9));p.rect(5,3,6,1,cap2);
     if(style!=='hood'){p.set(5,4,hair).set(10,4,hair);}if(style==='hood')p.rect(4,4,1,4,cap).rect(11,4,1,4,cap);}
@@ -78,7 +99,7 @@ function heroFrame(dir,step,look){
   else if(dir==='left'){p.rect(4,4,4,4,face).rect(4,7,4,1,face2);p.set(5,5,PAL.ink);p.rect(4,3,5,1,cap2);}
   else{p.rect(8,4,4,4,face).rect(8,7,4,1,face2);p.set(10,5,PAL.ink);p.rect(7,3,5,1,cap2);}
   if(style==='spiky'){p.set(5,0,hair).set(8,0,hair).set(11,1,hair).set(4,1,hair).set(7,1,hair).set(10,1,hair);}
-  p.set(6,2,style==='hood'?trim:hairHi).set(7,2,style==='hood'?trim:hairHi);
+  p.set(6,2,hairHi).set(7,2,hairHi);}
   // helmet on top of the head
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
@@ -345,21 +366,34 @@ function merchantSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',HAT=
   // wide-brim hat with a gold band and a red feather
   p.rect(5,6+B,14,2,HAT);p.rect(5,7+B,14,1,HAT2);p.rect(8,2+B,8,4,HAT);p.rect(8,5+B,8,1,'#f7c64a');p.rect(9,2+B,6,1,'#5f4030');p.line(16,1+B,18,4+B,SC);p.set(17,1+B,'#ef7d57');
   p.outline();return p.canvas();}
-// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a violet hooded robe, a violet-flame lantern on his staff
-// and the big ledger of the first heroes under his arm ----
-function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',R='#4a2f6e',R2='#352150',R3='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',B=f?1:0;
-  // staff and its lantern (the flame flickers)
-  p.rect(3,5,1,24,'#8a5a3a');p.rect(2,4,4,1,'#6b3e26');p.set(4,5,'#3a3f55');p.rect(3,6,3,1,GD);p.rect(2,7,5,5,GD);p.rect(3,8,3,3,'#2a1b45');p.rect(4,9-B,1,2+B,FL);p.set(4,10,CORE);if(!f)p.set(3,9,FL);p.rect(2,12,5,1,GD);
-  // boots and robe, with a gold trim down the front
-  p.rect(9,28,3,2,'#2a1b45').rect(14,28,3,2,'#2a1b45');p.rect(8,14+B,11,14-B,R);p.rect(7,22,13,6,R);p.rect(8,14+B,1,14-B,R2);p.rect(18,14+B,1,14-B,R2);p.rect(7,27,13,1,R2);
-  p.rect(13,15+B,1,13-B,GD);p.set(13,18+B,'#f7c64a');p.rect(8,20,11,1,R3);
-  // left arm to the staff, the ledger under the right arm
-  p.rect(5,16+B,4,2,R);p.set(4,16+B,SK).set(4,17+B,SK);
-  p.rect(16,17+B,6,7,'#8f2d3f');p.rect(16,17+B,6,1,GD);p.rect(21,17+B,1,7,'#f4e4c1');p.rect(16,23+B,6,1,GD);p.rect(18,19+B,2,2,GD);p.rect(17,20+B,2,2,R);p.set(17,21+B,SK);
-  // hood and face: spectacles, kind eyes, a white moustache
-  p.ell(13,9+B,5.6,5.4,R);p.ell(13,10+B,4.2,4.2,R2);p.rect(10,8+B,6,5,SK);p.rect(10,12+B,6,1,SK2);
-  p.set(11,9+B,GD).set(12,9+B,GD).set(14,9+B,GD).set(15,9+B,GD);p.set(11,10+B,'#1a1c2c').set(14,10+B,'#1a1c2c');p.set(13,10+B,SK2);
-  p.rect(10,12+B,6,1,'#e9ecf1');p.set(10,13+B,'#c2c7cf').set(15,13+B,'#c2c7cf');p.rect(8,4+B,10,2,R);p.rect(9,3+B,8,1,R);p.set(12,2+B,R3).set(13,2+B,R3);p.rect(8,13+B,10,1,R);
+// ---- Wick, keeper of the Founders' Ledger: an old lamplighter in a long violet robe with a deep pointed hood, a long white
+// beard, a violet-flame lantern on his staff and the big ledger of the first heroes under his arm ----
+function wickSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#c99572',H='#6a4596',H2='#4d2f73',HI='#8a63b8',IN='#1f1430',R='#4a2f6e',R2='#36214f',RH='#5f3f8a',GD='#ffcd75',FL='#b98cff',CORE='#f1e4ff',BD='#eef1f5',BD2='#c2c7cf',B=f?1:0;
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
+  // staff with a hanging lantern (the flame flickers)
+  p.rect(3,6,1,24,'#8a5a3a');p.set(3,29,'#6b3e26');p.rect(2,4,3,1,'#6b3e26');p.set(4,5,'#3a3f55');
+  p.rect(1,6,5,1,GD);p.rect(1,7,1,4,GD);p.rect(5,7,1,4,GD);p.rect(2,7,3,4,'#2a1b45');p.rect(3,8-B,1,3+B,FL);p.set(3,9,CORE);if(!f)p.set(2,9,FL);else p.set(4,9,FL);p.rect(1,11,5,1,GD);
+  // the robe: narrow at the shoulders, flaring to the ground, with deep folds and a hem that pools over the boots
+  for(let y=14;y<=28;y++){const k=Math.floor((y-14)/3),l=8-k,r=18+k;row(y,l,r,R);p.set(l,y,R2);p.set(r,y,R2);}
+  for(let y=17;y<=28;y++){p.set(10-(y>23?1:0),y,R2);p.set(16+(y>23?1:0),y,R2);p.set(12,y,RH);}
+  row(28,4,22,R2);for(let x=5;x<=21;x+=3)p.set(x,28,R);p.rect(10,29,2,1,'#2a1b45');p.rect(15,29,2,1,'#2a1b45');
+  p.rect(13,15,1,13,GD);p.set(13,28,'#f7c64a');
+  // a rope belt with a hanging tassel
+  row(20,8,18,'#b07c4f');p.set(13,20,'#d9a066');p.set(14,21,'#b07c4f');p.set(14,22,'#d9a066');p.set(14,23,'#d9a066');p.set(13,24,'#b07c4f').set(15,24,'#b07c4f');
+  // wide bell sleeves: one reaching for the staff, one cradling the ledger
+  row(15,6,9,R);row(16,5,9,R);row(17,4,8,R);row(18,4,7,R2);p.set(4,16,SK).set(4,17,SK);p.set(5,18,IN);
+  p.rect(16,17,7,8,'#8f2d3f');p.rect(16,17,7,1,GD);p.rect(16,24,7,1,GD);p.rect(22,18,1,6,'#f4e4c1');p.rect(18,19,3,3,GD);p.set(19,20,'#8f2d3f');
+  row(16,17,19,R);row(17,18,20,R);row(18,19,21,R2);p.set(17,21,SK).set(16,21,SK);
+  // the hood's drape over the shoulders, its edge falling in points
+  row(12+B,8,18,H);row(13+B,7,19,H);row(14+B,7,19,H2);for(let x=7;x<=19;x+=2)p.set(x,15+B,H2);
+  // the hood: tall and pointed, the tip flopping back, with a lit rim around a deep dark opening
+  row(1+B,15,16,H);row(2+B,13,16,H);row(3+B,11,16,H);row(4+B,10,17,H);for(let y=5;y<=11;y++)row(y+B,9,18,H);
+  p.set(17,1+B,H2).set(17,2+B,H2);for(let y=4;y<=11;y++){p.set(9,y+B,H2);p.set(18,y+B,H2);}
+  for(let y=5;y<=11;y++)row(y+B,11,16,IN);row(4+B,11,16,HI);for(let y=5;y<=11;y++){p.set(10,y+B,HI);p.set(17,y+B,HI);}
+  // the face in the hood's shadow: bushy white brows, kind eyes, a long white beard
+  p.rect(12,6+B,4,4,SK);p.rect(12,6+B,4,1,SK2);p.set(12,7+B,BD).set(15,7+B,BD);p.set(12,8+B,IN).set(15,8+B,IN);p.set(13,9+B,SK2).set(14,9+B,SK2);
+  row(10+B,11,16,BD);row(11+B,11,16,BD);row(12+B,12,15,BD);row(13+B,12,15,BD);row(14+B,12,15,BD);row(15+B,13,14,BD);p.set(13,16+B,BD);
+  p.set(11,11+B,BD2).set(16,11+B,BD2).set(12,14+B,BD2).set(15,14+B,BD2).set(14,16+B,BD2);p.set(13,12+B,BD2);
   p.outline();return p.canvas();}
 // Tallow's cart: a striped awning over crates of bread, oil and seed
 function stallSprite(){const p=new Px(40,34),A='#b13e53',A2='#f4e4c1',W='#8a5a3a',W2='#6b3e26';
