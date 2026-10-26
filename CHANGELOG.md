@@ -1,6 +1,14 @@
 # Lanternhold changelog
 
-Current build: **v0.8.13** · Season 0 (Beta)
+Current build: **v0.8.14** · Season 0 (Beta)
+
+## v0.8.14 · Founder’s whitelist: combat level 10
+
+_2026-10-25_
+
+- The Founder’s Lantern whitelist is the first 1,000 heroes who reach combat level 10. If your hero number is 1,000 or lower, your spot is held; reach combat level 10 to lock it in.
+- Wick shows your progress: your hero number and your combat level, with a bar to level 10.
+- The mint is free, only in the game, and one per hero.
 
 ## v0.8.13 · Sharper swings, better hoods
 
