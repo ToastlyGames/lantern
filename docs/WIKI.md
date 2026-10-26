@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.9 · updated October 25, 2026
+Season 0 (Beta) · build v0.8.12 · updated October 25, 2026
 
 ## Welcome
 
@@ -74,6 +74,7 @@ The Hold is the safe town where everyone in your world lives and trains. Nothing
 | Forge | Make blades, helmets and armour from ore. |
 | Bank (the stone building) | Store your items safely. Banked items are never lost. |
 | Tallow's cart (at the crossroads) | Tallow, the travelling trader. Buy supplies and sell your goods for gold. |
+| Wick (by the road up to the Delve Gate) | Wick keeps the Founders' Ledger. Talk to him to check whether you're on the Founder's Lantern whitelist, and to mint when it opens. |
 | Bulletin (at the crossroads) | The current build and every update, newest first. |
 | East road | The road east is barricaded until Season 1. Read the sign for a preview of what's coming. |
 | House | Open your Hero screen and change your look. |
@@ -382,6 +383,25 @@ There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each one 
 
 **Goal Relics.** Every goal you complete rolls for a Goal Relic, items that can't be found any other way: Wayfinder's Mantle (1 in 600 per goal) and the Starlit Lantern (1 in 2,000). Secrets roll 10 times better. A relic goes straight to your Bank, and you can only own one of each.
 
+## Founder's Lantern
+
+The **Founder's Lantern** is a free NFT on Robinhood Chain for the **first 1,000 heroes** ever made.
+
+- **Hero numbers:** every hero has a number, in the order heroes were made. The very first hero is Hero #1. You can see yours on the Hero screen.
+- **The whitelist** is Heroes #1 to #1,000. There's nothing to sign up for: if your hero number is 1,000 or lower, your spot is saved.
+- **Your token's number is your hero number** (Founder's Lantern #123 for Hero #123), so there is only ever one of each, from #1 to #1,000. Every token shares the same art: the Founder's Lantern, burning violet.
+- **Free to mint:** you only pay a tiny gas fee in ETH on Robinhood Chain. It's one per wallet, minted to the wallet linked to your hero.
+- **Check your spot with Wick:** Wick, the keeper of the Founders' Ledger, stands by the road up to the Delve Gate. Talk to him and he'll look up your name. New heroes see a violet **!** over him until they've visited.
+- **How to mint:** talk to Wick (or open the Bulletin at the crossroads and tap **Founder's Lantern**). When the mint is open, tap **Mint for free** and confirm in your wallet. The mint opening will be announced on the Bulletin.
+
+**The Founder's Flame**
+
+Whoever holds a Founder's Lantern gets the **Founder's Flame** in the game: a violet light that no one else can have. A small violet flame floats at your shoulder, a violet glow surrounds your hero, and in the Depths your lantern burns violet. Every other player sees it.
+
+- It's purely cosmetic. It never changes your stats or your rewards.
+- It belongs to whoever **holds** the NFT. If you sell or send your Founder's Lantern, the flame goes with it. If you get one from another player, link the wallet that holds it to your hero and the flame is yours.
+- You can turn it off and on any time from the Hero screen.
+
 ## Your account and staying safe
 
 Your hero saves to your account automatically, so you can pick up where you left off on any device by signing in the same way.
@@ -396,7 +416,7 @@ Your hero saves to your account automatically, so you can pick up where you left
 - The only official site is **lanternhold.fun**. Always check the address bar.
 - The only official token contract address is the one on the Bulletin in the Hold (and in the Official token section of this wiki). Never trust an address sent to you in a DM.
 - Wallet sign-in is a standard Sign-In with Ethereum message that names lanternhold.fun, with a one-time code that expires after 5 minutes. Your wallet should show "lanternhold.fun" with no warning.
-- Lanternhold will **never** ask you for a transaction, a token approval, your seed phrase or your private key. If anything does, it isn't us. Close it and don't sign.
+- The only transaction Lanternhold will ever ask for is one you start yourself inside the game, like minting your Founder's Lantern, and it goes to the official contract shown in the game. Lanternhold will **never** ask for a token approval, your seed phrase or your private key. If anything does, it isn't us. Close it and don't sign.
 - Admins will never ask for your wallet details, and never sell items for payment outside the game.
 
 ## Coming next
