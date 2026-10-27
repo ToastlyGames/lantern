@@ -7,6 +7,10 @@
 // TICKET is a 2-minute HS256 token from the game's /api/rt-ticket, signed with RT_SECRET (shared with Vercel).
 // Every message is JSON. The server never trusts names from clients: the hero name comes from the ticket.
 
+// The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
+// from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
+const MIN_CLIENT = '0.9.4';
+const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
 const DIRS = new Set(['up', 'down', 'left', 'right']);
@@ -25,7 +29,7 @@ async function verifyTicket(token, secret) {
     if (JSON.parse(new TextDecoder().decode(b64uDecode(h))).alg !== 'HS256') return null;
     const c = JSON.parse(new TextDecoder().decode(b64uDecode(p)));
     if (c.iss !== 'lanternhold-rt' || !(c.exp > Date.now() / 1000) || !/^[a-z0-9_]{3,16}$/.test(c.sub) || typeof c.n !== 'string' || c.n.toLowerCase() !== c.sub) return null;
-    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu, fd: !!c.adm || !!c.fd };
+    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu, fd: !!c.adm || !!c.fd, v: typeof c.v === 'string' ? c.v : null };
   } catch { return null; }
 }
 export function cleanText(t) {
@@ -67,6 +71,7 @@ export default {
     if (allowed.length && !allowed.includes(origin)) return new Response('Origin not allowed', { status: 403 });
     const who = await verifyTicket(url.searchParams.get('t'), env.RT_SECRET);
     if (!who) return new Response('Bad or expired ticket', { status: 401 });
+    if (older(who.v, MIN_CLIENT)) { const [client, server] = Object.values(new WebSocketPair()); server.accept(); send(server, { t: 'update', min: MIN_CLIENT }); server.close(4012, 'update'); return new Response(null, { status: 101, webSocket: client }); }
     const fwd = new Request(req); fwd.headers.set('x-lh-who', JSON.stringify(who));
     if (url.pathname === '/lobby') return env.LOBBY.get(env.LOBBY.idFromName('lobby')).fetch(fwd);
     const m = url.pathname.match(/^\/room\/([a-z0-9-]+)$/);
@@ -347,6 +352,7 @@ const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25 }, MAIL_DEF = { co
 const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg: 15, hp: 12 }, knight: { def: 3, dmg: 12 } };
 export const pvpMax = l => 60 + 8 * (((l && l.lvl) || 1) - 1) + ((CAPE_PVP[l && l.cape] || {}).hp || 0);
 const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm']);
+const HOLD_SPAWN = { x: 208, y: 800 };   // where a defeated hero wakes up (the Hold's spawn in client-src/world.js)
 const recent = (o, now, ms) => { const r = {}; let k = 0; for (const [id, t] of Object.entries(o || {})) if (now - t < ms && k++ < 12) r[id] = t; return r; };
 export class Room {
   constructor(ctx, env) {
@@ -470,8 +476,10 @@ export class Room {
     let top = by.id, best = -1; for (const [id, d] of Object.entries(q.dmg || {})) if (d > best && this.players.has(id)) { best = d; top = id; }
     const killer = this.players.get(top) || by, skulled = (q.sk || 0) > now, x = q.x, y = q.y, ghost = !!q.ghost;
     let risk = q.risk;
-    // the fight is over for them right now: full health, no skull, a few seconds' protection, free to go home
-    Object.assign(q, { hp: null, hpAt: 0, lc: 0, sk: 0, ag: {}, dmg: {}, risk: null, safe: now + PVP.safeMs }); this.att(q);
+    // the fight is over for them right now: full health, no skull, a few seconds' protection, and back to the Hold
+    Object.assign(q, { hp: null, hpAt: 0, lc: 0, sk: 0, ag: {}, dmg: {}, risk: null, safe: now + PVP.safeMs, x: HOLD_SPAWN.x, y: HOLD_SPAWN.y, home: now + PVP.safeMs, fish: null, sAt: now }); this.att(q);
+    this.all({ t: 'F', id: q.id, f: null }); this.all({ t: 'S', p: [[q.id, q.x, q.y, 'down', 0]] });
+    if (!ghost) send(q.ws, { t: 'pos', x: q.x, y: q.y, home: 1 });
     this.all({ t: 'PK', v: q.id, a: killer.id, vn: q.name, an: killer.name, x: Math.round(x), y: Math.round(y) });
     if (skulled) this.all({ t: 'SK', id: q.id, left: 0 });
     if (!risk) { try { risk = await this.ctx.storage.get('rk:' + q.id); } catch { } } risk = Array.isArray(risk) ? risk : [];
@@ -612,6 +620,8 @@ export class Room {
       const now = Date.now();
       // in a fight nobody teleports away: a jump further than anyone can walk is sent back
       if (!this.inst && p.rd && now - (p.lc || 0) < PVP.combatMs && Math.hypot(x - p.x, y - p.y) > 24 + 200 * Math.max(0, now - (p.sAt || now)) / 1000) { p.sAt = now; return send(p.ws, { t: 'pos', x: p.x, y: p.y }); }
+      // just defeated: the Wilderness is off limits for a few seconds (the hero is back at the Hold)
+      if (!this.inst && (p.home || 0) > now && wildLvl(y)) { p.sAt = now; return send(p.ws, { t: 'pos', x: p.x, y: p.y, home: 1 }); }
       p.sAt = now;
       p.x = Math.round(x * 10) / 10; p.y = Math.round(y * 10) / 10; p.d = DIRS.has(m.d) ? m.d : p.d; p.m = !!m.m;
       if (!p.rd) { p.rd = true; this.att(p); this.all({ t: '+', p: this.pub(p) }, p.id); return; }
