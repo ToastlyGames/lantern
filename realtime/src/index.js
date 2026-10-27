@@ -9,7 +9,7 @@
 
 // The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
 // from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
-const MIN_CLIENT = '0.9.4';
+const MIN_CLIENT = '0.10.0';
 const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
@@ -291,7 +291,7 @@ export class Lobby {
   }
   // Start a dungeon instance: just you, or your whole party (only the leader can lead a party down).
   async delve(u, floor) {
-    floor = Number.isInteger(floor) && floor >= 1 && floor <= 15 ? floor : 1;
+    floor = Number.isInteger(floor) && floor >= 1 && floor <= 20 ? floor : 1;
     const p = this.partyOf(u.id);
     if (p && p.leader !== u.id) {
       if (p.inst) return send(u.ws, Object.assign({ t: 'go' }, p.inst));
@@ -348,7 +348,7 @@ const WILD_Y = 640, WILD_ROW_PX = 32, WILD_MAX = 20;
 export const wildLvl = y => (y < WILD_Y ? Math.min(WILD_MAX, Math.max(1, Math.ceil((WILD_Y - y) / WILD_ROW_PX))) : 0);
 const PVP = { gap: 750, reach: 34, skullMs: 20 * 60e3, retaliateMs: 120e3, combatMs: 10e3, regenAfter: 8e3, regenPerS: 1, eatGap: 1500, safeMs: 5000, ghostMs: 15e3, returnMax: 20, lootPrivate: 60e3, lootLife: 180e3, mult: .7, miss: .12 };
 // what gear does in a fight (the same numbers as the game's data.js; admin hats count as an Ember Helm here)
-const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25 }, MAIL_DEF = { copper: 2, iron: 4, ember: 7 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, partyhat: 4, greenhat: 4 };
+const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25, steel: 34, cinder: 46 }, MAIL_DEF = { copper: 2, iron: 4, ember: 7, steel: 10 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, steel: 5, star: 9, partyhat: 4, greenhat: 4 };
 const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg: 15, hp: 12 }, knight: { def: 3, dmg: 12 } };
 export const pvpMax = l => 60 + 8 * (((l && l.lvl) || 1) - 1) + ((CAPE_PVP[l && l.cape] || {}).hp || 0);
 const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm']);
