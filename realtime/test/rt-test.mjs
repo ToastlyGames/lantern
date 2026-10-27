@@ -6,7 +6,7 @@ const BASE = process.env.RT_TEST_URL || 'ws://127.0.0.1:8787', SECRET = process.
 let pass = 0, failN = 0;
 const ok = (c, name) => { if (c) { pass++; console.log('  ✓', name); } else { failN++; console.log('  ✗', name); } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const ticket = (name, { adm = false, secret = SECRET, exp = '2m' } = {}) => new SignJWT({ n: name, adm }).setProtectedHeader({ alg: 'HS256' }).setSubject(name.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime(exp).sign(new TextEncoder().encode(secret));
+const ticket = (name, { adm = false, secret = SECRET, exp = '2m' } = {}) => new SignJWT({ v: '9.9.9', n: name, adm }).setProtectedHeader({ alg: 'HS256' }).setSubject(name.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime(exp).sign(new TextEncoder().encode(secret));
 const tag = Math.random().toString(36).slice(2, 6);
 
 class Sock {

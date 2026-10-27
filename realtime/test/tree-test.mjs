@@ -2,7 +2,7 @@
 import WebSocket from 'ws';
 import { SignJWT } from 'jose';
 const BASE = process.env.RT_TEST_URL || 'ws://127.0.0.1:8787', SECRET = process.env.RT_SECRET || 'dev-only-realtime-secret-0123456789abcdef';
-const tk = n => new SignJWT({ n }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
+const tk = n => new SignJWT({ v: '9.9.9', n }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const tag = Math.random().toString(36).slice(2, 6), room = 'w' + (500 + Math.floor(Math.random() * 400));
 const open = async n => { const ws = new WebSocket(BASE + '/room/' + room + '?t=' + await tk(n), { headers: { Origin: 'http://localhost:3000' } }); ws.msgs = []; ws.on('message', d => ws.msgs.push(JSON.parse(d))); await new Promise(r => ws.on('open', r)); await sleep(200); return ws; };

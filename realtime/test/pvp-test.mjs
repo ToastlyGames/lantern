@@ -7,7 +7,7 @@ const BASE = process.env.RT_TEST_URL || 'ws://127.0.0.1:8787', SECRET = process.
 let pass = 0, failN = 0;
 const ok = (c, name) => { if (c) { pass++; console.log('  ✓', name); } else { failN++; console.log('  ✗', name); } };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const ticket = name => new SignJWT({ n: name, adm: false }).setProtectedHeader({ alg: 'HS256' }).setSubject(name.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
+const ticket = name => new SignJWT({ v: '9.9.9', n: name, adm: false }).setProtectedHeader({ alg: 'HS256' }).setSubject(name.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
 const tag = Math.random().toString(36).slice(2, 6), W = 'w' + (200 + Math.floor(Math.random() * 700));
 class Sock {
   constructor(path, t) { this.msgs = []; this.ws = new WebSocket(BASE + path + '?t=' + t, { headers: { Origin: 'http://localhost:3000' } });
@@ -72,10 +72,11 @@ try {
   E.send({ t: 'take', did: dA[0].d.did }); ok(!!(await E.wait(m => m.t === 'nope')), 'a bystander can’t grab it early');
   A.send({ t: 'take', did: dA[0].d.did }); ok(!!(await A.wait(m => m.t === 'took' && m.by === A.id)), 'the killer picks it up');
   const rc = await A.wait(m => m.t === 'RC'); ok(rc && rc.tk.split('.').length === 3, 'with a signed receipt for the save');
-  A.send({ t: 'atk', to: B.id }); await sleep(900); A.send({ t: 'atk', to: B.id }); ok((await A.wait(m => m.t === 'PN'))?.why === 'protected', 'a fallen hero is protected for a few seconds');
+  ok(!!(await A.wait(m => m.t === 'S' && m.p.some(r => r[0] === B.id && r[2] === 800))), 'the fallen hero is sent home to the Hold by the server');
+  A.send({ t: 'atk', to: B.id }); await sleep(900); A.send({ t: 'atk', to: B.id }); ok(['protected', 'safe_them'].includes((await A.wait(m => m.t === 'PN'))?.why), 'and can’t be hit again');
 
   console.log('Falling skulled: lose everything');
-  B.send({ t: 's', x: 115, y: 100, d: 'up', m: false }); await sleep(5200);
+  await sleep(5200); B.send({ t: 's', x: 115, y: 100, d: 'up', m: false }); await sleep(300);
   B.send({ t: 'risk', it: [['ember_blade', 1, 'blade', 520], ['gem', 2, 0, 40]] });
   const F = await join(N('Ff'), 120, 100, 6);
   B.send({ t: 'atk', to: F.id }); ok(!!(await F.wait(m => m.t === 'SK' && m.id === B.id)), 'B attacks first and is skulled');

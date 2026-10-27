@@ -4,7 +4,7 @@ import { SignJWT } from 'jose';
 const BASE = process.env.RT_TEST_URL || 'ws://127.0.0.1:8787', SECRET = process.env.RT_SECRET || 'dev-only-realtime-secret-0123456789abcdef';
 let pass = 0, failN = 0; const ok = (c, n) => { c ? pass++ : failN++; console.log(c ? '  ✓' : '  ✗', n); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const ticket = n => new SignJWT({ n }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
+const ticket = n => new SignJWT({ v: '9.9.9', n }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
 const tag = Math.random().toString(36).slice(2, 6), W = 'w' + (200 + Math.floor(Math.random() * 700));
 class Sock { constructor(path, t) { this.msgs = []; this.ws = new WebSocket(BASE + path + '?t=' + t, { headers: { Origin: 'http://localhost:3000' } }); this.ws.on('message', d => this.msgs.push(JSON.parse(d))); this.open = new Promise(r => this.ws.on('open', r)); }
   send(o) { this.ws.send(JSON.stringify(o)); } async wait(f, ms = 2500) { const t0 = Date.now(); while (Date.now() - t0 < ms) { const m = this.msgs.find(f); if (m) { this.msgs.splice(this.msgs.indexOf(m), 1); return m; } await sleep(20); } return null; } close() { this.ws.close(); } }
@@ -21,7 +21,14 @@ try {
   await sleep(10500); B.send({ t: 's', x: 110, y: 300, d: 'up', m: false }); await sleep(300);   // out of combat by now: walk back in
   let died = null; const t0 = Date.now(); while (!died && Date.now() - t0 < 25000) { A.send({ t: 'atk', to: B.id }); died = await B.wait(m => m.t === 'DIED', 800); }
   ok(!!died, 'defeated');
-  B.send({ t: 's', x: 208, y: 800, d: 'down', m: false }); await sleep(300); ok(!B.msgs.some(m => m.t === 'pos'), 'after a defeat you go straight home (no "mid-fight" block)');
+  B.send({ t: 's', x: 208, y: 800, d: 'down', m: false }); await sleep(300); ok(!B.msgs.some(m => m.t === 'pos' && !m.home), 'after a defeat you go straight home (no "mid-fight" block)');
+  const forced = await A.wait(m => m.t === 'S' && m.p.some(r => r[0] === B.id && r[2] === 800), 500);
+  B.send({ t: 's', x: 110, y: 300, d: 'up', m: false }); const back = await B.wait(m => m.t === 'pos' && m.home);
+  ok(!!back, 'a defeated hero’s game can’t put them back in the Wilderness: the server sends them home');
+  // an out-of-date game is turned away
+  const oldT = await new SignJWT({ n: 'Oldie' + tag }).setProtectedHeader({ alg: 'HS256' }).setSubject(('oldie' + tag)).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('2m').sign(new TextEncoder().encode(SECRET));
+  const O = new Sock('/room/' + W, oldT); let code = 0; O.ws.on('close', c => code = c); await sleep(800);
+  ok(code === 4012 && O.msgs.some(m => m.t === 'update'), 'an out-of-date game can’t join a world (told to reload)');
   // party death notices
   const La = new Sock('/lobby', await ticket(('Ra' + tag).slice(0, 12))), Lb = new Sock('/lobby', await ticket(('Rb' + tag).slice(0, 12))); await La.open; await Lb.open; await sleep(300);
   La.send({ t: 'invite', to: B.id }); await Lb.wait(m => m.t === 'invited'); Lb.send({ t: 'accept', from: A.id }); await La.wait(m => m.t === 'party' && m.party && m.party.members.length === 2);

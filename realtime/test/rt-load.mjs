@@ -7,7 +7,7 @@ const args = Object.fromEntries(process.argv.slice(2).join(' ').split('--').filt
 const N = +(args.players || 600), SECS = +(args.seconds || 60), MOVE_SHARE = +(args.moving || 0.5);
 const BASE = process.env.RT_TEST_URL || 'ws://127.0.0.1:8787', SECRET = process.env.RT_SECRET || 'dev-only-realtime-secret-0123456789abcdef';
 const tag = Math.random().toString(36).slice(2, 5), sleep = ms => new Promise(r => setTimeout(r, ms));
-const ticket = n => new SignJWT({ n, adm: false }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('5m').sign(new TextEncoder().encode(SECRET));
+const ticket = n => new SignJWT({ v: '9.9.9', n, adm: false }).setProtectedHeader({ alg: 'HS256' }).setSubject(n.toLowerCase()).setIssuer('lanternhold-rt').setIssuedAt().setExpirationTime('5m').sign(new TextEncoder().encode(SECRET));
 const stats = { connected: 0, failed: 0, sent: 0, recvS: 0, rows: 0, lat: [], chats: 0, chatRecv: 0, worlds: new Map() };
 class Bot {
   constructor(i) { this.name = ('L' + tag + i).slice(0, 16); this.x = 200 + Math.random() * 100; this.y = 200 + Math.random() * 100; }
