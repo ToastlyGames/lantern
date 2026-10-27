@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.9.3 · updated October 26, 2026
+Season 0 (Beta) · build v0.9.6 · updated October 26, 2026
 
 ## Welcome
 
@@ -174,7 +174,9 @@ Forge gear at the Forge. Every piece gives Smithing XP and goes into your bag.
 
 ### Combat level
 
-You earn combat XP by defeating monsters. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each level needs 22 × level^1.5 XP and adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
+Your **combat level** comes from everything you do: **(2 × Fighting + all your skill levels) ÷ 7**. Fighting is trained by defeating monsters in the Depths and counts double; Woodcutting, Fishing, Farming, Cooking and Smithing each add their own level. A new hero is combat level 1. Combat level 10 takes something like Fighting 15 with your other skills around 8 (or Fighting 33 alone, or every skill at 14). Heroes from before this change kept the combat level they had.
+
+You earn Fighting XP by defeating monsters. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each Fighting level needs 22 × level^1.5 XP. Every combat level adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
 
 ## The Depths
 
@@ -435,7 +437,7 @@ There are 56 goals: 46 open goals in five groups and 10 hidden secrets. Each one
 The **Founder's Lantern** is a free NFT on Robinhood Chain for the **first 1,000 heroes** ever made who reach **combat level 10**. It can only be minted inside the game.
 
 - **Hero numbers:** every hero has a number, in the order heroes were made. The very first hero is Hero #1. You can see yours on the Hero screen.
-- **The whitelist:** make a hero and play. If your hero number is 1,000 or lower, your spot is held; reach **combat level 10** to lock it in. There's nothing else to sign up for.
+- **The whitelist:** make a hero and play. If your hero number is 1,000 or lower, your spot is held; reach **combat level 10** to lock it in (combat level comes from Fighting plus all your skills, see Combat level). There's nothing else to sign up for.
 - **Your token's number is your hero number** (Founder's Lantern #123 for Hero #123), so there is only ever one of each, from #1 to #1,000. Every token shares the same art: the Founder's Lantern, burning violet.
 - **Free to mint, in the game only:** you only pay a tiny gas fee in ETH on Robinhood Chain. It's **one per hero** (and one per wallet), minted to the wallet linked to your hero. Every mint needs a pass the game signs for that hero, so it can't be botted or faked, and the team gets no extras: the same one per hero as everyone.
 - **More to come:** as the game grows, the Founder's Lantern will unlock trinkets and easter eggs for its holders.
@@ -456,6 +458,7 @@ Your hero saves to your account automatically, so you can pick up where you left
 
 - **Saving:** your progress, settings, goals and Bank save to the server as you play. The server checks every save, so nobody can give themselves impossible gold, XP or items.
 - **One hero per account,** and one device online at a time.
+- **Always up to date:** if an update comes out while you're playing, the game tells you and reloads by itself, so everyone in a world plays by the same rules.
 - **Google players** can connect a wallet later from the Hero screen. Anyone can link an X account to show their @handle.
 - **Switching wallets** in your wallet app signs you out, so you never play on the wrong account.
 
