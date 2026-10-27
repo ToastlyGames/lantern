@@ -5,6 +5,7 @@
 import { db } from '../lib/db.js';
 import { guard, send, fail, body } from '../lib/http.js';
 import { sanitize, plausible } from '../lib/validate.js';
+import { combatFrom } from '../lib/gamedata.js';
 import { rewardsOn, events, roll } from '../lib/rewards.js';
 import { vaultBalance } from '../lib/claim.js';
 import { lootAllowance } from '../lib/loot.js';
@@ -26,6 +27,8 @@ export default async function handler(req, res) {
     const dt = Math.max(0, cur.age_ms) / 1000;
     if (dt < 2) return fail(res, 429, 'too_fast', { retryAfter: 2 });
     const prev = sanitize(cur.data, { admin, hat }), next = sanitize(b.data, { admin, hat });
+    // the old-level floor can only ever stay or go away, never grow (only admins can set it)
+    if (!admin && next.cbFloor > prev.cbFloor) { next.cbFloor = prev.cbFloor; next.lvl = Math.max(next.cbFloor, combatFrom(next.flv, next.skills)); }
     const loot = await lootAllowance(b.loot, st.hero.name);   // Wilderness loot receipts from the realtime server
     const check = plausible(prev, next, dt, { admin, loot });
     if (!check.ok) {
