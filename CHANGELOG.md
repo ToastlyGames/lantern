@@ -1,6 +1,22 @@
 # Lanternhold changelog
 
-Current build: **v0.9.6** · Season 0 (Beta)
+Current build: **v0.10.0** · Season 0 (Beta)
+
+## v0.10.0 · Ten new floors and Mining
+
+_2026-10-27_
+
+- The Depths go to floor 20. Floors 11–15 are the Emberforge Halls: fire imps, magma golems and cinder bats, with the Forge Tyrant on floor 15. Floors 16–20 are the Starfall Hollow: wraiths, crystal sentinels and shardlings, with the Starwarden on floor 20.
+- A new skill, Mining. Mine the ore in the walls to train it. Each ore needs a Mining level: Copper 1, Iron 10, Coal 20, Emberite 25, Cobalt 30, Starshard 40. Mining counts toward your combat level like every other skill.
+- New ores: Coal, Cobalt and the rare Starshard (it sparkles; traders pay well for it).
+- Steel gear at the Forge: Steel Helm (Smithing 35), Steel Blade (Smithing 38) and Steel Mail (Smithing 42), made from iron, coal and cobalt. The strongest gear you can forge.
+- The two rarest finds in the Depths: Cinderfang, a blade that only the Forge Tyrant drops, and the Starwarden’s Helm, which only the Starwarden drops. Very, very rarely.
+- New boss Relics: the Forge Heart and the Fallen Star.
+- Watch the bosses: a ring of fire means the Tyrant’s hammer is about to land, and a cold ring means the Starwarden is about to burst. Step out of the ring.
+- Beat the Ossuary Knight to open the lift to floor 11, and the Forge Tyrant to open it to floor 16.
+- Fighting now tops out at 99, like every other skill.
+- Combat level = (2 × Fighting + all your skill levels) ÷ 8 now that Mining counts. Nobody loses a level: you keep the combat level you had.
+- 8 new goals for Mining, Smithing and the new floors.
 
 ## v0.9.6 · Combat level from everything you do
 
