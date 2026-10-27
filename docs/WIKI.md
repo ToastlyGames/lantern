@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.8.18 · updated October 25, 2026
+Season 0 (Beta) · build v0.9.2 · updated October 26, 2026
 
 ## Welcome
 
@@ -56,9 +56,9 @@ The goals pill at the top of the screen always suggests a good next step.
 
 The game works with your phone upright or sideways.
 
-**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: Settings and Social. The goals pill shows how many goals you've done. Tap it to open Goals.
+**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: a compass, Settings and Social. In the Wilderness a red badge shows the Wilderness level. The goals pill shows how many goals you've done. Tap it to open Goals.
 
-**Settings** save to your hero, so they follow you to any device: zoom, brightness, player names (off by default), world feed, screen shake, sound effects and vibration.
+**Settings** save to your hero, so they follow you to any device: zoom, brightness, player names (on by default), world feed, screen shake, sound effects and vibration.
 
 ## The Hold
 
@@ -105,12 +105,14 @@ Walk up to a tree and tap **Chop**. Each swing has a chance to give you 1 log an
 - A tree that was only partly cut grows its logs back by itself: 15 seconds after the last swing, it starts adding 1 log every 2 seconds until it's full.
 - Woodcutting XP is slow on purpose. Level 30 takes around 4 hours of chopping.
 - Logs sell for 2 gold each, but a future skill will use them, so it's worth stocking up.
+- **Blackwood trees** grow in the Wilderness (Woodcutting 15). Each holds 60 Blackwood Logs worth 9 gold each and gives **9 XP** per log, but they take 45 seconds to grow back and you can be attacked while you chop.
 
 ### Fishing
 
 Stand at the edge of the lake, or out on the dock, and tap **Fish**. Your line always lands in open water. Wait for the bobber to settle, and when it dips, tap **Hook!** for a guaranteed catch. If you miss the moment, you still have a 32% chance to catch it (plus 0.6% per Fishing level).
 
-- **Pondfin:** Fishing 1, 10 XP each. More fish, each needing a higher level, will come with new waters.
+- **Pondfin:** Fishing 1, 10 XP each, in the Hold's lake.
+- **Gloomfin:** Fishing 15, 30 XP each, only in the **Gloom Pond** in the Wilderness. Cooked, it heals 55.
 - The rare **Angler's Cape** can only be caught while fishing: about 1 in every 300 catches.
 
 ### Farming
@@ -150,6 +152,7 @@ Cook at the Kitchen. **Cook all** works through a whole stack one at a time, wit
 | Bread | 1 | 2 Wheat | 1.5 s | 30 | 6 |
 | Cooked Pondfin | 1 | 1 Raw Pondfin | 2 s | 35 | 10 |
 | Glowcap Stew | 5 | 1 Glowcap + 1 Wheat | 3 s | 70 | 16 |
+| Cooked Gloomfin | 15 | 1 Raw Gloomfin | 2.7 s | 55 | 30 |
 
 Fish can burn: a 45% chance at Cooking 1, falling to 0% at Cooking 30. Better fish take longer to cook, 2 seconds plus 0.05 seconds for each Fishing level the fish needs.
 
@@ -171,7 +174,7 @@ Forge gear at the Forge. Every piece gives Smithing XP and goes into your bag.
 
 ### Combat level
 
-You earn combat XP by defeating monsters. Everyone who hits a monster gets its full XP, so fighting together never costs you anything. Each level needs 22 × level^1.5 XP and adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
+You earn combat XP by defeating monsters. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each level needs 22 × level^1.5 XP and adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
 
 ## The Depths
 
@@ -211,6 +214,40 @@ HP and damage are floor 1 values. Monsters get stronger on deeper floors. Beatin
 ### Rare gear drops
 
 Lanterns and capes can drop from chests (10% for a lantern, 3.5% for a cape), from monsters (0.6% and 0.25%) and from bosses (50% and 25%). Each boss also has a 5% chance to drop its own Legendary cape. Deeper floors and Loot Luck improve the rarity of what you find.
+
+## The Wilderness
+
+The first expansion to Lanternhold. North of the Hold, past the old stone wall, lies the **Wilderness**: dead grass, ash on the wind, and other heroes who can attack you. Walk through either gap in the wall to cross. The first time, a warning explains the rules and asks you to confirm.
+
+**Wilderness levels.** The further north you go, the higher the level, from **1** just past the wall to **20** at the Old Obelisk at the very top. Your level and the combat levels you can fight show in a red badge while you're there.
+
+**Who can fight whom.** You can attack a hero when you're both in the Wilderness and your combat levels are no further apart than the Wilderness level (the lower of the two spots you're standing in). At level 5, a combat level 20 hero can fight levels 15 to 25. Deeper means more dangerous.
+
+**Fighting.** Walk up to a hero and press **Attack** (or click them). One hit every 0.8 seconds. Damage comes from your blade and cape, and their armor, helmet and cape soak some of it up. Some swings miss. In the Wilderness everyone's name, level and health bar show, whatever your settings.
+
+| Gear | In a fight |
+| --- | --- |
+| Blades | Rusty 6, Copper 10, Iron 16, Ember 25 (base damage) |
+| Armor | Copper 2, Iron 4, Ember 7 defense |
+| Helmets | Copper 1, Iron 2, Ember 4 defense (admin hats count as Ember) |
+| Capes | Mother's Mantle +15% damage, Pall of the Ossuary +12% damage and 3 defense, Gravecloth Mantle 2 defense |
+
+**Health.** Your health is 60 + 8 per combat level, plus any cape bonus. Eat from your bag with the quick slots (one bite every 1.5 seconds). After 8 seconds out of a fight your health climbs back 1 a second.
+
+**The skull.** Attack someone who hasn't attacked you in the last 2 minutes and a **skull** appears over your head for **20 minutes**. Fighting back never skulls you. Your skull follows you to other worlds.
+
+**Falling.** If you fall in the Wilderness you go back to the Hold, healed, and drop your items where you fell: everything in your bag and the gear you wear.
+
+- **No skull:** you keep your **3 most valuable items**.
+- **Skulled:** you keep **nothing** you carry or wear. Your Bank is still untouched.
+- Your **Bank** is always safe, and so is your gold. Starter gear (the Rusty Blade, Traveler Garb and Basic Lantern) and bound or goal items are never dropped.
+- The winner sees the loot at once and has **one minute** to pick it up before everyone else can. Loot disappears after 3 minutes.
+
+**No escaping.** Logging out in the middle of a fight (or losing your connection) leaves your hero standing there for 15 seconds, and they can still be defeated. Come back in time and you're right where you were. You can't teleport out of a fight either.
+
+**What's up there.** The **Gloom Pond** (Gloomfin, Fishing 15), **Blackwood trees** (Woodcutting 15), an old graveyard, and the Old Obelisk at level 20.
+
+**The compass.** The small compass left of Settings always points north, toward the Wilderness.
 
 ## Items and gear
 
@@ -305,7 +342,7 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 
 Everyone in your world shares the Hold. You see each other walk, fish, chop and chat in real time, and you can team up for the Depths.
 
-**Chat.** Tap the chat button (or press T) to talk to everyone on the same map. Start a message with **/p** to talk to your party only. Messages appear above the speaker's head. Chat is filtered and rate-limited to stop spam, and it starts fresh each time you sign in: nothing is stored.
+**Chat.** Tap the chat button (or press T). The **World** tab talks to everyone on the same map; the **Party** tab talks to your party only, wherever they are (starting a World message with **/p** also sends it to your party). A red badge shows new messages on the tab you're not looking at. Messages appear above the speaker's head. Chat is filtered and rate-limited to stop spam, and it starts fresh each time you sign in: nothing is stored.
 
 **World feed.** Big moments scroll across the top of the screen for everyone: rare finds, boss kills, new combat levels and deep floors reached.
 
@@ -316,9 +353,9 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 - **Nearby:** everyone on your map, with quick Add friend and Invite buttons.
 - **Worlds:** every world and how many players are in it. Switch to one with room, or open a new one.
 
-**Party dungeons.** The whole party shares one dungeon. If the leader leaves, another member takes over without a break. You see each other's swings, damage numbers, mining and chest opening. Everyone who hits a monster at least once gets its full XP and their own roll at its loot.
+**Party dungeons.** The whole party shares one dungeon. If the leader leaves, another member takes over without a break. You see each other's swings, damage numbers, mining and chest opening. Every party member in the dungeon gets the full combat XP for every kill. Everyone who hits a monster at least once also gets their own roll at its loot.
 
-**Name tags.** Turn on Settings → Player names to see names and combat levels over everyone's heads. The colour of the level compares them to you:
+**Name tags.** Names and combat levels show over everyone's heads (turn them off in Settings → Player names). The colour of the level compares them to you:
 
 | Colour | Their combat level |
 | --- | --- |
@@ -332,7 +369,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 
 ## Goals and secrets
 
-There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
+There are 56 goals: 46 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
 
 | Group | Goal | Gold |
 | --- | --- | --- |
@@ -367,8 +404,14 @@ There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each one 
 | Life at the Hold | Earn 5,000 gold trading with Tallow | 75 |
 | Life at the Hold | Buy more Bank space | 50 |
 | Life at the Hold | Hold 25,000 gold at once | 250 |
+| Wilderness | Enter the Wilderness | 15 |
+| Wilderness | Reach Wilderness level 10 | 60 |
+| Wilderness | Stand before the Old Obelisk (level 20) | 150 |
+| Wilderness | Catch a Gloomfin | 40 |
+| Wilderness | Cut a Blackwood log | 40 |
+| Wilderness | Defeat 1 / 10 players | 100 / 300 |
 
-**Secrets.** Nine goals are hidden. They show as "???" with a riddle until you discover them, and pay 50 to 300 gold each. Here are their riddles:
+**Secrets.** Ten goals are hidden. They show as "???" with a riddle until you discover them, and pay 50 to 300 gold each. Here are their riddles:
 
 | Secret | Riddle |
 | --- | --- |
@@ -381,6 +424,7 @@ There are 48 goals: 39 open goals in four groups and 9 hidden secrets. Each one 
 | Speak, Friend | Say the name of this place aloud |
 | Persistence | Fall ten times. Rise ten times |
 | Generous Soul | Leave something for a stranger |
+| Close Call | Make it out of the Wilderness by the skin of your teeth |
 
 **Goal Relics.** Every goal you complete rolls for a Goal Relic, items that can't be found any other way: Wayfinder's Mantle (1 in 600 per goal) and the Starlit Lantern (1 in 2,000). Secrets roll 10 times better. A relic goes straight to your Bank, and you can only own one of each.
 
@@ -406,7 +450,7 @@ Whoever holds a Founder's Lantern gets the **Founder's Flame** in the game: a vi
 
 ## Your account and staying safe
 
-Your hero saves to your account automatically, so you can pick up where you left off on any device by signing in the same way.
+Your hero saves to your account automatically, so you can pick up where you left off on any device by signing in the same way. You sign back in exactly where you logged out; if you logged out in the Depths, you come back at the entrance you went in by.
 
 - **Saving:** your progress, settings, goals and Bank save to the server as you play. The server checks every save, so nobody can give themselves impossible gold, XP or items.
 - **One hero per account,** and one device online at a time.
@@ -431,6 +475,9 @@ Every update is posted on the Bulletin in the Hold, and in the Updates section o
 
 ## FAQ
 
+**What do I lose if I fall in the Wilderness?**
+Your bag and the gear you wear, dropped where you fell. Without a skull you keep your 3 most valuable items; with a skull, nothing. Your Bank and gold are always safe.
+
 **What do I lose if I fall in the Depths?**
 About half of this delve's loot and half of your bag. Your Bank and the gear you're wearing are always safe.
 
@@ -444,7 +491,7 @@ Level up Farming (new plots open at levels 5, 10, 15, 20, 30, 40, 50 and 60) or 
 You might be in different worlds. Use Social → Friends → Join world, or pick their world from Social → Worlds.
 
 **Why can't I see anyone's name?**
-Player names are off by default. Turn them on in Settings → Player names.
+Player names are on by default. Turn them off in Settings → Player names.
 
 **Can I play on my phone?**
 Yes. Lanternhold is built for phones first, upright or sideways.
