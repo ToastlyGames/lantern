@@ -252,7 +252,7 @@ try {
     ok(r.status === 200 && r.data.muted === false && r.data.strikes === 0 && !r.data.ban, 'an admin can look a player up');
     ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Kush', action: 'ban' } })).data.error === 'is_admin', 'admins can’t be moderated');
     ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Test', action: 'mute' } })).data.error === 'self', 'or moderate themselves');
-    const mu = async () => { const q = await v.req('rt-ticket'); return (await jwtVerify(q.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' })).payload.mu; };
+    const mu = async () => { const q = await v.req('rt-ticket?v=9.9.9'); return (await jwtVerify(q.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' })).payload.mu; };
     r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'mute' } });
     ok(r.status === 200 && r.data.muted === true && await mu() === 1, 'mute is stored and goes into their realtime pass');
     r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'unmute' } });
@@ -262,7 +262,7 @@ try {
     r = await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'ban' } });
     const hrs = r.data.ban && (Date.parse(r.data.ban.until) - Date.now()) / 3600e3;
     ok(r.status === 200 && r.data.strikes === 1 && hrs > 23.9 && hrs <= 24, 'first ban: 24 hours, strike 1');
-    ok((await v.req('rt-ticket')).status === 403 && (await v.req('me')).data.signedIn === false, 'a banned player can’t reconnect and is signed out');
+    ok((await v.req('rt-ticket?v=9.9.9')).status === 403 && (await v.req('me')).data.signedIn === false, 'a banned player can’t reconnect and is signed out');
     const again = await new Client(vk).signIn();
     ok(again.status === 403 && again.data.error === 'banned' && again.data.until === r.data.ban.until, 'and can’t sign back in until it ends');
     ok((await t.req('admin/mod', { method: 'POST', body: { name: 'Villain', action: 'ban' } })).status === 409, 'no stacking a ban on a ban');
@@ -331,7 +331,8 @@ try {
     const t = new Client(); await t.signIn();
     ok((await t.req('rt-ticket')).status === 404, 'no ticket before you have a hero');
     await t.req('hero', { method: 'POST', body: { name: 'Ticketed' } });
-    const r = await t.req('rt-ticket'); const { payload } = await jwtVerify(r.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' });
+    ok((await t.req('rt-ticket')).status === 426 && (await t.req('rt-ticket?v=0.8.19')).status === 426, 'an out-of-date game is told to reload (no ticket)');
+    const r = await t.req('rt-ticket?v=9.9.9'); const { payload } = await jwtVerify(r.data.ticket, new TextEncoder().encode('r'.repeat(40)), { issuer: 'lanternhold-rt' });
     ok(r.data.url === 'wss://rt.example.workers.dev' && payload.sub === 'ticketed' && payload.n === 'Ticketed' && payload.exp - payload.iat <= 120, 'ticket names the hero, expires in 2 minutes, signed with RT_SECRET'); }
 
   console.log('Bans');
