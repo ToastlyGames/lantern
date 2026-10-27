@@ -1,6 +1,16 @@
 # Lanternhold changelog
 
-Current build: **v0.9.2** · Season 0 (Beta)
+Current build: **v0.9.3** · Season 0 (Beta)
+
+## v0.9.3 · Wilderness fixes and the Return Flame
+
+_2026-10-27_
+
+- Fall to another player in the Wilderness and you always wake up back in the Hold, healed.
+- Wilderness loot is easier to grab: walk over it to pick it up (the winner straight away, everyone else after a minute). The Pick up button still works.
+- The Return Flame now works in the Wilderness: hold it for 2 seconds to go home to the Hold, even mid-fight. Taking a hit interrupts it. It works up to Wilderness level 20; deeper areas later will block it.
+- When a party member dies in the Depths or is defeated in the Wilderness, your Party chat says so.
+- Fixed your hero running on the spot while the Wilderness warning was open.
 
 ## v0.9.2 · Player names on
 
