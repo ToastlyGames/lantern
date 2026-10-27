@@ -761,8 +761,14 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.9.2',season:'Season 0 (Beta)',date:'2026-10-27'};
+const BUILD={version:'0.9.3',season:'Season 0 (Beta)',date:'2026-10-27'};
 const CHANGELOG=[
+  {v:'0.9.3',date:'2026-10-27',title:'Wilderness fixes and the Return Flame',notes:[
+    'Fall to another player in the Wilderness and you always wake up back in the Hold, healed.',
+    'Wilderness loot is easier to grab: walk over it to pick it up (the winner straight away, everyone else after a minute). The Pick up button still works.',
+    'The Return Flame now works in the Wilderness: hold it for 2 seconds to go home to the Hold, even mid-fight. Taking a hit interrupts it. It works up to Wilderness level 20; deeper areas later will block it.',
+    'When a party member dies in the Depths or is defeated in the Wilderness, your Party chat says so.',
+    'Fixed your hero running on the spot while the Wilderness warning was open.']},
   {v:'0.9.2',date:'2026-10-27',title:'Player names on',notes:[
     'Player names and combat levels now show over everyone’s heads by default. Turn them off any time in Settings → Player names.']},
   {v:'0.9.1',date:'2026-10-27',title:'Pick up where you left off',notes:[
@@ -951,7 +957,7 @@ function addObj(m,o){m.objs.push(o);if(o.block)for(const [x,y] of o.block)setSol
 // The Hold sits at the bottom of the map. North of it, past the old wall, lies the Wilderness: the first expansion, where
 // players can attack each other. WILD_ROWS rows were added on top, so every Hold coordinate below is shifted down by O rows.
 // Keep WILD_ROWS in step with WILD_Y in realtime/src/index.js (2 rows per Wilderness level, levels 1–20).
-const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20;
+const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20,RETURN_MAX=20;   // the Return Flame works up to this Wilderness level (deeper areas will block it)
 const wildLvl=y=>y<WILD_Y?Math.min(WILD_MAX,Math.max(1,Math.ceil((WILD_Y-y)/(2*T)))):0;
 const isWater=t=>t===WATER||t===GLOOM;
 function buildHold(){
@@ -1519,7 +1525,7 @@ function addDrop(d,bag,own){d.ref='r'+(++dropRef);d.bag=!!bag;d.own=!!own&&MP.sh
   if(!own&&roomUp()&&(bag||MP.shared())){d.net=true;NET.send({t:'drop',ref:d.ref,it:d.id,n:d.n,x:Math.round(d.x),y:Math.round(d.y),vx:Math.round(d.vx),vy:Math.round(d.vy),bag:d.bag});}
   return d;}
 function netDrop(v,settled){if(drops.some(d=>d.did===v.did))return;if(scene==='delve'?(!run||v.f!==run.floor):v.f!=null)return;if(!ITEMS[v.it]&&v.it!=='gold')return;
-  drops.push({x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
+  drops.push({pk:!!v.pk,x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
 const dropShown=d=>!d.showAt||Date.now()>=d.showAt;
 function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;give(into,d.id,d.n);
   if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');
@@ -1531,7 +1537,7 @@ function claimDrop(d){if(d.taken)return;
 function updateDrops(dt){const now=Date.now();
   for(const d of drops){d.t+=dt;if(d.expAt&&now>d.expAt){d.taken=true;continue;}if(!dropShown(d))continue;
     d.vz-=260*dt;d.z=Math.max(0,d.z+d.vz*dt);if(d.z===0)d.vz=0;d.vx*=.9;d.vy*=.9;moveBody(d,d.vx*dt,d.vy*dt,2);
-    if(d.bag||P.hp<=0)continue;                     // bag drops are picked up with the action button, never by walking past
+    if((d.bag&&!d.pk)||P.hp<=0)continue;            // bag drops are picked up with the action button (Wilderness loot: walk over it too)
     const dist=Math.hypot(P.x-d.x,P.y-4-d.y);if(d.t>.35&&dist<30&&!d.pending){d.x+=(P.x-d.x)*Math.min(1,dt*8);d.y+=(P.y-4-d.y)*Math.min(1,dt*8);}
     if(d.t>.35&&dist<7)claimDrop(d);}
   drops=drops.filter(d=>!d.taken);}
@@ -1565,7 +1571,7 @@ function useFood(){if(scene==='hold'){const have=FOODS.filter(f=>S.bank[f]>0).so
 const halfLoss=n=>Math.floor(n/2)+(n%2&&rand()<.5?1:0);
 function returnHome(){setTimeout(()=>save(true),50);sfx('flame');const r=run,out={};for(const [id,n] of Object.entries(r.pack)){if(id==='gold')S.gold+=n;else give(S.bank,id,n);out[id]=n;}enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
   summary('Back at the Hold',`You lit the Return Flame on floor ${r.floor} with ${r.kills} kills. Your haul is in your bag. Bank anything you can't afford to lose.`,out,null,'Brought home');}
-function die(){setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;const kept={},lost={};
+function die(){setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;if(netOn()&&MP.party)NET.lsend({t:'pdie',k:'depths',floor:r.floor});const kept={},lost={};
   for(const [id,n] of Object.entries(r.pack)){const l=id==='gold'?Math.floor(n/2):halfLoss(n),k=n-l;if(k>0){if(id==='gold')S.gold+=k;else give(S.bank,id,k);kept[id]=(kept[id]||0)+k;}if(l>0)lost[id]=(lost[id]||0)+l;}
   for(const [id,n] of Object.entries(S.bank)){const l=halfLoss(n);if(l>0){S.bank[id]-=l;if(S.bank[id]<=0)delete S.bank[id];lost[id]=(lost[id]||0)+l;}}
   enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
@@ -1693,7 +1699,9 @@ function wildStep(dt){const w=P.y<WILD_Y;
       else{toast('You leave the Wilderness.','good');if(closeCall&&P.hp>0&&P.hp<=hpMax()*.1)secret('closecall');}}closeCall=false;}
   if(w){const l=wildLvl(P.y);if(l>(S.cnt.wilddeep||0))S.cnt.wilddeep=l;if(P.hp<hpMax()*.1&&P.hp>0)closeCall=true;}
   // health climbs back 1 a second after 8 s out of a fight (the same rule the server uses)
-  if(P.hp<hpMax()&&time-(MP.lc??-99)>8)P.hp=Math.min(hpMax(),P.hp+dt);if(P.hp>hpMax())P.hp=hpMax();
+  if(P.hp>0&&P.hp<hpMax()&&time-(MP.lc??-99)>8)P.hp=Math.min(hpMax(),P.hp+dt);
+  // defeated but the server's word never came (a dropped message): don't leave the hero standing at 0 health
+  if(P.hp<=0&&MP.deadAt&&time-MP.deadAt>2){MP.deadAt=0;respawnHold();save(true);toast('You were defeated and woke up back in the Hold.','bad');}if(P.hp>hpMax())P.hp=hpMax();
   wildHud();}
 function wildHud(){const w=inWild(),l=w?wildLvl(P.y):0,key=l+'|'+S.lvl+'|'+(skulled()?1:0);if(key===wildHud.k)return;wildHud.k=key;const el=$('wildB');if(!el)return;el.hidden=!w;if(!w)return;
   const [a,b]=lvlRange(l);if(!$('wildIc').getAttribute('src'))$('wildIc').src=ART.skull.toDataURL();
@@ -1703,14 +1711,17 @@ function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'
   for(const [id,n] of Object.entries(S.bank))if(ITEMS[id]&&tradable(id)&&n>0)out.push([id,n,0,ITEMS[id].v||0]);
   for(const sl of ['blade','mail','lantern','cape','helm']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
   return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
+// the Return Flame (hold it for 2 s) works in the Wilderness up to level 20: home to the Hold. A hit interrupts it.
+function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y};
+  if(roomUp()&&MP.pvpOn)NET.send({t:'home',x:Math.round(P.x),y:Math.round(P.y)});MP.sent='';sfx('flame');puff(P.x,P.y-10,'#ffcd75',16);toast('The Return Flame carries you home to the Hold.','good');save();}
 // back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
-function respawnHold(){FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
+function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
 function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null};
   for(const [id,n,slot] of lost){if(!ITEMS[id]||!(n>0))continue;
     if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id)S.gear[slot]=DEFG[slot];
     else{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}}L[id]=(L[id]||0)+n;}
   for(const [id,n] of kept)if(ITEMS[id])K[id]=(K[id]||0)+n;
-  const wasSk=!!m.sk;S.skull=0;bump('pkd');if(scene==='hold')respawnHold();else S.pos=null;save(true);updateQuick(true);sfx('die');buzz(200);
+  const wasSk=!!m.sk;S.skull=0;bump('pkd');if(netOn())NET.lsend({t:'pdie',k:'wild',by:typeof m.by==='string'?m.by:undefined});if(scene==='hold')respawnHold();else S.pos=null;save(true);updateQuick(true);sfx('die');buzz(200);
   openSheet(`<h2>Defeated in the Wilderness</h2><p class="lead">${chatEsc(m.by||'Another hero')} defeated you${m.away?' while you were logged out mid-fight':''}. ${wasSk?'You were <b>skulled</b>, so you dropped everything you carried and wore.':'You kept your 3 most valuable items and dropped the rest.'} Your Bank is always safe.</p>
    ${Object.keys(K).length?'<h3>Kept</h3>'+listItems(K):''}${Object.keys(L).length?'<h3>Dropped where you fell</h3>'+listItems(L):'<p class="lead small">You weren’t carrying anything worth taking.</p>'}
    <p class="lead small">Next time: bank what you can’t afford to lose before heading north, and don’t attack first unless you’re ready to risk it all.</p><div class="row"><button class="btn" id="sx">Back to the Hold</button></div>`);$('sx').onclick=closeSheet;}
@@ -1784,7 +1795,7 @@ function openFarm(){
 
 // ---------- panels ----------
 let paused=false;
-function openSheet(html,after){$('sheetBody').innerHTML=html;$('sheet').hidden=false;paused=true;stick={x:0,y:0,on:false};knob.style.transform='';retHeld=false;}
+function openSheet(html,after){$('sheetBody').innerHTML=html;$('sheet').hidden=false;paused=true;stick={x:0,y:0,on:false};knob.style.transform='';retHeld=false;P.moving=false;P.chan=0;}
 function closeSheet(){$('sheet').hidden=true;paused=false;updateHud();}
 $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 function iconImg(id){return `<img class="ic" alt="" src="${iconOf(id).toDataURL()}">`;}
@@ -2282,11 +2293,11 @@ $('guide').addEventListener('click',()=>{if(!started)return;if($('guide').classL
 // ---------- update ----------
 function update(dt){
   time+=dt;if(S&&(S.gold|0)!==goldHud.g){goldHud.g=S.gold|0;goldHud();}MP.tick(dt);
-  if(paused&&!(scene==='delve'&&MP.shared()))return;
+  if(paused&&!(scene==='delve'&&MP.shared())){P.moving=false;return;}
   // movement
   let mx=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0),my=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
   if(stick.on){mx=stick.x;my=stick.y;}
-  if(paused){mx=0;my=0;aPressed=false;retHeld=false;}
+  if(paused||scene==='hold'&&P.hp<=0){mx=0;my=0;aPressed=false;retHeld=false;}
   const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l;}if(started)secretInput(mx,my,l);
   P.moving=l>.15&&P.chan<=0;
   if(P.moving){const sp=(scene==='hold'?72:62)*dt*(1+A('spd')/100);moveBody(P,mx*sp,0,4);moveBody(P,0,my*sp,4);P.anim+=dt;
@@ -2296,6 +2307,8 @@ function update(dt){
   // context
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();else if(inWild())pvpSwing();}
+  if(inWild()){if(retHeld&&P.hp>0){if(wildLvl(P.y)>RETURN_MAX){P.chan=0;if(time-whyT>2){whyT=time;toast('Too deep for the Return Flame. Head south of Wilderness level '+RETURN_MAX+'.','bad');}}else{P.chan+=dt;if(P.chan>=2){retHeld=false;P.chan=0;wildReturn();}}}else P.chan=0;}
+  else if(scene==='hold')P.chan=0;
   if(scene==='hold'){wildStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
@@ -2369,7 +2382,7 @@ function updateHud(force){
   $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
   $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
-  const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
+  const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!(dv||inWild());$('retRing').style.setProperty('--p',Math.min(1,P.chan/2));$('feed').hidden=dv;updateQuick(force);
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
     
     const pn=Object.values(run.pack).reduce((a,b)=>a+b,0);$('packW').hidden=!pn;ptSet($('packN'),pn,{font:'small',px:9,color:'#c2d3e0'});
@@ -2687,7 +2700,7 @@ if(window.NET){
   NET.onL('note',m=>toast(m.text,m.bad?'bad':''));
   NET.onL('go',m=>MP.enterInst(m.room,m.floor,m.seed));
   NET.onL('partyDelve',m=>{if(scene==='hold'){MP.prompt={kind:'delve',room:m.room,floor:m.floor,seed:m.seed,by:m.by};showPrompt();sfx('rare');}else toast(m.by+' led the party into floor '+m.floor+'. Head home to join them.');});
-  NET.onL('pchat',m=>{const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
+  NET.onL('pchat',m=>{if(m.sys&&m.id!==MP.id)toast(m.text,'bad');const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id,sys:!!m.sys,tab:m.sys?'party':undefined,die:!!m.die};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
   NET.onL('feed',m=>{if(!SET.feed)return;const f=$('feed');f.textContent='★ '+m.text;f.classList.add('real');clearTimeout(MP.feedT);MP.feedT=setTimeout(()=>{f.textContent='';},9000);});
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
   NET.onL('died',m=>applyPkDeath(m));   // you were defeated in the Wilderness after logging out mid-fight
@@ -2720,7 +2733,7 @@ if(window.NET){
     floatText(vx,vy-20,m.d?String(m.d):'0',!m.d?'#94b0c2':m.v===me?'#ff6b6b':m.a===me?'#ffcd75':'#f4f4f4');
     if(m.d)impact(vx,vy-6,Math.atan2(vy-ay,vx-ax),m.v===me?'#ff6b6b':'#ffcd75',false,m.a===me||m.v===me);
     if(m.a===me)MP.lc=time;
-    if(m.v===me){P.hp=m.hp;MP.lc=time;if(m.d){sfx('hurt');buzz(40);if(SET.shake)shake=3;}if(FISHING||CHOP){FISHING=null;CHOP=null;}}
+    if(m.v===me){P.hp=m.hp;MP.lc=time;P.chan=0;if(m.hp<=0)MP.deadAt=time;if(m.d){sfx('hurt');buzz(40);if(SET.shake)shake=3;}if(FISHING||CHOP){FISHING=null;CHOP=null;}}
     else if(v){v.hp=m.hp;v.max=m.max;v.lc=time;if(m.a===me&&m.d)sfx('hit');}});
   NET.onR('H',m=>{if(m.id===MP.id){P.hp=Math.min(hpMax(),m.hp);}else{const o=OTH.get(m.id);if(o){o.hp=m.hp;o.max=m.max;}}});
   NET.onR('SK',m=>{const until=m.left>0?Date.now()+m.left:0;if(m.id===MP.id){const was=skulled();S.skull=until;if(until&&!was){toast('You attacked first: you’re skulled for 20 minutes. Fall now and you lose everything.','bad');sfx('boss');}save();}else{const o=OTH.get(m.id);if(o)o.sk=until;}});
@@ -3058,7 +3071,7 @@ const chatPlace=ch=>ch[0]==='w'?'World '+ch.slice(1):ch[0]==='d'||ch==='solo'?'y
 const chatEsc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function chatRender(){const L=$('chatLog');if(!L)return;const atEnd=L.scrollHeight-L.scrollTop-L.clientHeight<30;
   const list=chatMsgs.filter(m=>chatIn(m,chatTab)).slice(-80);
-  L.innerHTML=list.map(m=>m.sys?`<p class="sys">${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}${m.party?' pty':''}"><b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
+  L.innerHTML=list.map(m=>m.sys?`<p class="sys${m.die?' die':''}">${m.die?'☠ ':''}${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}${m.party?' pty':''}"><b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
   if(atEnd||list.length<3)L.scrollTop=L.scrollHeight;$('chatWhere').textContent=chatTab==='party'?(MP.party?MP.party.members.length+'/4':'no party'):chatPlace(chatCh||chatChannel());}
 function chatSys(text,at,tab){chatMsgs.push({id:'s'+Math.random(),sys:true,text,tab:tab||null,at:at===undefined?Date.now():at});chatRender();}
 function chatAdd(list){let n=0;for(const m of list||[]){if(!m||chatSeen.has(m.id))continue;chatSeen.add(m.id);m.text=chatClean(m.text);if(!m.text)continue;m.me=m.me||(!!S.name&&m.name===S.name);chatMsgs.push(m);n++;
