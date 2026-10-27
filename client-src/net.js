@@ -9,7 +9,8 @@ let base=null,lobby=null,room=null,roomId=null,stopped=true,lq=[],retryL=0,retry
 let busyL=false,busyR=false,lastL=0,lastR=0,timerL=null,timerR=null;
 const PING_MS=20000,DEAD_MS=50000;
 async function ticket(){
-  try{const r=await fetch('/api/rt-ticket',{headers:{'X-LH':'1'},credentials:'same-origin',cache:'no-store'});
+  try{const r=await fetch('/api/rt-ticket?v='+encodeURIComponent(BUILD.version),{headers:{'X-LH':'1'},credentials:'same-origin',cache:'no-store'});
+    if(r.status===426){stopped=true;emit(HL,'update',{});return null;}   // this copy of the game is out of date
     if(!r.ok)return null;const j=await r.json();if(!j||!j.url||!j.ticket){available=false;return null;}available=true;base=j.url;return j;}
   catch(e){return null;}}
 const backoff=n=>Math.min(15000,1000*2**n)*(0.7+Math.random()*0.6);
@@ -24,6 +25,7 @@ async function openLobby(){
   ws.onmessage=e=>{if(lobby!==ws)return;lastL=Date.now();let m;try{m=JSON.parse(e.data);}catch(x){return;}if(m&&m.t&&m.t!=='pong')emit(HL,m.t,m);};
   ws.onclose=e=>{if(lobby!==ws)return;lobby=null;emit(HL,'close',{code:e.code});if(stopped)return;
     if(e.code===4000){stopped=true;emit(HL,'kicked',{reason:'You signed in somewhere else.'});return;}
+    if(e.code===4012){stopped=true;emit(HL,'update',{});return;}
     laterL(backoff(retryL++));};
 }
 async function openRoom(id){
@@ -37,6 +39,7 @@ async function openRoom(id){
     if(e.code===4003){roomId=null;emit(HR,'denied',{});return;}
     if(e.code===4009){roomId=null;emit(HR,'full',{});return;}
     if(e.code===4000)return;
+    if(e.code===4012){stopped=true;emit(HL,'update',{});return;}
     emit(HR,'drop',{});laterR(id,backoff(retryR++));};
 }
 // A socket that has heard nothing (not even a pong) for 50 s is dead even if the browser still calls it open: replace it.

@@ -1,8 +1,23 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.9.3',season:'Season 0 (Beta)',date:'2026-10-27'};
+// minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
+// the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
+// realtime/src/index.js in step.
+const BUILD={version:'0.9.6',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.9.4'};
 const CHANGELOG=[
+  {v:'0.9.6',date:'2026-10-27',title:'Combat level from everything you do',notes:[
+    'Your combat level now comes from all your skills together. Monster XP trains a new skill, Fighting, which counts double, and Woodcutting, Fishing, Farming, Cooking and Smithing each add their level too.',
+    'Combat level = (2 × Fighting + all your skill levels) ÷ 7. Combat level 10 takes something like Fighting 15 with your skills around 8, so it’s a real milestone.',
+    'Already played? You keep the combat level you had, and your old combat progress became your Fighting level. Your combat level climbs again once your skills catch up.',
+    'The Skills tab shows your combat level, how many points to the next one, and your Fighting level.']},
+  {v:'0.9.5',date:'2026-10-27',title:'Party damage numbers',notes:[
+    'In a party dungeon everyone sees everyone’s damage numbers, including the hit that finishes a monster off.',
+    'Fixed a huge red health bar flashing across the screen when a party member hit a monster hard.']},
+  {v:'0.9.4',date:'2026-10-27',title:'Everyone on the latest version',notes:[
+    'If a new update comes out while you’re playing, the game asks you to reload, and reloads by itself. An old version can no longer join a world, so everyone always plays by the same rules.',
+    'Fixed: a player on an old version could survive a Wilderness defeat, keep their items and even fish in the middle of the Wilderness.',
+    'Fall in the Wilderness and the server itself now sends you home to the Hold. Your items drop where you fell, every time.']},
   {v:'0.9.3',date:'2026-10-27',title:'Wilderness fixes and the Return Flame',notes:[
     'Fall to another player in the Wilderness and you always wake up back in the Hold, healed.',
     'Wilderness loot is easier to grab: walk over it to pick it up (the winner straight away, everyone else after a minute). The Pick up button still works.',

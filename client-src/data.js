@@ -62,6 +62,10 @@ for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,ra
 const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'}};
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
+// Combat level: built from everything you do. Fighting (XP from monsters) counts double, and every other skill adds its
+// level: (2 × Fighting + all skill levels) ÷ (2 + number of skills). A new hero is combat level 1; combat level 10 takes
+// a mix like Fighting 15 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
+const combatFrom=(fight,skills)=>{const ks=Object.keys(SKILLS);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
 const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'}};
 const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15}};

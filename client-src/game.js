@@ -38,6 +38,9 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.flags={};for(const [k,v] of Object.entries(obj(o.flags)))if(/^[a-z]{2,16}$/.test(k))s.flags[k]=!!v;s.guide=int(o.guide,0,99,0);
   s.goals={};for(const k of Object.keys(obj(o.goals)).slice(0,300))if(/^[a-z0-9]{2,16}$/.test(k))s.goals[k]=1;
   s.cnt={};for(const [k,v] of Object.entries(obj(o.cnt)).slice(0,60))if(/^[a-z]{2,16}$/.test(k)){const n=int(v,0,1e9,0);if(n)s.cnt[k]=n;}
+  // Combat level = Fighting (monster XP) counted double + every skill level (see combatFrom in data.js). Saves from before
+  // this change keep the combat level they had as a floor, and their old combat progress becomes their Fighting level.
+  {const legacy=o.flv===undefined;s.flv=legacy?s.lvl:int(o.flv,1,200,1);s.cbFloor=legacy?s.lvl:int(o.cbFloor,1,200,1);s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
   s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
   {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x),y:Math.round(+q.y)}:null;}   // where you logged out
   return s;}
@@ -262,7 +265,7 @@ function resolveSwing(){
     const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;e.sq=.16;
     impact(e.x,e.y-(e.d.big?12:6),a,BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
     hits.push([e.id,d]);
-    if(MP.client()){e.hp-=d;NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
+    if(MP.client()){e.hp=Math.max(0,e.hp-d);NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
     applyHit(e,d,a,MP.me());}}
   for(const o of map.objs){if(o.type!=='ore'||o.gone)continue;const ox=o.tile[0]*T,oy=o.tile[1]*T;
     if(ox+T>b.x&&ox<b.x+b.w&&oy+T>b.y&&oy<b.y+b.h){puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);ore=i;
@@ -271,7 +274,8 @@ function resolveSwing(){
 }
 // another party member swung: show their blade, the damage they did and the ore they chipped
 function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&o.y<WILD_Y))return;o.dir=m.d||o.dir;o.swT=.2;
-  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}}
+  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}
+    else{const f=fallen.get(eid);if(f&&time-f.t<2){floatText(f.x,f.y-(f.big?28:16),String(d),'#f4f4f4');impact(f.x,f.y-(f.big?12:6),Math.atan2(f.y-o.y,f.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',f.big,false);}}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
   if(Math.hypot(o.x-P.x,o.y-P.y)<160)sfx((m.h&&m.h.length)?'hit':'swing',.5);}
 // Everyone who hit a monster at least once gets the full XP and their own roll at its drops (only they see and pick up
@@ -280,7 +284,8 @@ const lootOwner=e=>{let best=null,bd=-1;for(const [who,d] of Object.entries(e.dm
 function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit=e.dmgBy?Object.keys(e.dmgBy):[me],xp=Math.round(e.d.xp*e.dmgSc);
   if(MP.shared())NET.send({t:'kill',e:e.id,top,hit,xp,x:Math.round(e.x),y:Math.round(e.y),ty:e.type});
   onKilled(e,top,hit,xp);}
-function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
+const fallen=new Map();   // monster id -> where it was when it died (for 2 s)
+function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;fallen.set(e.id,{x:e.x,y:e.y,big:!!e.d.big,t:time});if(fallen.size>40)fallen.delete(fallen.keys().next().value);MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
   // XP: everyone who hit it, and every party member in the same dungeon (even if they didn't land a hit)
   if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}else if(MP.shared())gainXp(xp);puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
@@ -289,7 +294,11 @@ function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.la
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
     setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
-function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.xp>=xpNeed(S.lvl)){S.xp-=xpNeed(S.lvl);S.lvl++;P.hp=maxHp();toast('Level '+S.lvl+'! Max HP '+maxHp(),'good');if(S.lvl%5===0)MP.feed('level',String(S.lvl));sfx('level');buzz(60);puff(P.x,P.y-8,'#ffcd75',16);}}
+// Monster XP trains Fighting. Combat level comes from Fighting plus every other skill, so it's checked after any XP.
+function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.xp>=xpNeed(S.flv)){S.xp-=xpNeed(S.flv);S.flv++;toast('Fighting level '+S.flv+'!','good');sfx('level');buzz(60);puff(P.x,P.y-8,'#ef7d57',12);}combatCheck();}
+const cbPts=()=>2*S.flv+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
+function combatCheck(){const c=Math.max(S.cbFloor||1,combatFrom(S.flv,S.skills));if(c===S.lvl)return;const up=c>S.lvl;S.lvl=c;if(!up)return;
+  P.hp=Math.min(hpMax(),P.hp+8);setTimeout(()=>{toast('Combat level '+S.lvl+'! Max HP '+hpMax(),'good');sfx('level');puff(P.x,P.y-8,'#ffcd75',16);floatText(P.x,P.y-40,'Combat '+S.lvl+'!','#ffcd75');},900);if(S.lvl%5===0)MP.feed('level',String(S.lvl));}
 function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
   shake=!SET.shake?0:3;if(src){const a=Math.atan2(P.y-src.y,P.x-src.x);for(let i=0;i<6;i++)moveBody(P,Math.cos(a)*1.5,Math.sin(a)*1.5,4);}
   if(P.hp<=0)die();}
@@ -376,7 +385,7 @@ function summary(title,lead,got,lost,head){openSheet(`<h2>${title}</h2><p class=
 // ---------- skills ----------
 const lvlOf=sk=>levelFor(S.skills[sk]||0);
 function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf(sk);S.skills[sk]=Math.min(200e6,(S.skills[sk]||0)+n);const after=lvlOf(sk);xpShow(sk);
-  if(after>before){toast(SKILLS[sk].n+' level '+after+'!','good');if(after%10===0||after===99)MP.feed('skill',SKILLS[sk].n+' '+after);sfx('level');buzz(60);puff(P.x,P.y-10,SKILLS[sk].c,16);floatText(P.x,P.y-34,SKILLS[sk].n+' '+after+'!',SKILLS[sk].c);}return n;}
+  if(after>before){combatCheck();toast(SKILLS[sk].n+' level '+after+'!','good');if(after%10===0||after===99)MP.feed('skill',SKILLS[sk].n+' '+after);sfx('level');buzz(60);puff(P.x,P.y-10,SKILLS[sk].c,16);floatText(P.x,P.y-34,SKILLS[sk].n+' '+after+'!',SKILLS[sk].c);}return n;}
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
@@ -611,7 +620,7 @@ function openGate(){
 // ---- XP: the skill you're training shows as a thin strip under your health, and for a few seconds after each gain
 // the goals pill turns into "Fishing 12 · ▬▬ · 230 xp to 13" (tap it for the Skills tab). Combat counts too.
 let xpTipT=0,xpLast=null;
-function xpInfo(k){if(k==='combat'){const need=xpNeed(S.lvl);return {n:'Combat',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.lvl,p:S.xp/need,left:need-S.xp,max:false};}
+function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);return {n:'Fighting',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.flv,p:S.xp/need,left:need-S.xp,max:false};}
   const l=lvlOf(k),xp=S.skills[k]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)];return {n:SKILLS[k].n,c:SKILLS[k].c,icon:SKILLS[k].icon,l,p:l>=99?1:(xp-a)/(b-a),left:Math.ceil(b-xp),max:l>=99};}
 function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb'),g=$('guide');xpLast=k;
   bar.hidden=false;f.style.width=Math.max(2,Math.round(x.p*100))+'%';f.style.background=x.c;f.style.color=x.c;bar.title=x.n;
@@ -620,7 +629,9 @@ function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb
   g.classList.add('xp');g.hidden=false;xpTipT=time+5;}
 function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)],p=l>=99?1:(xp-a)/(b-a);
   return `<div class="skl${xpLast===sk?' cur':''}">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small>${xpLast===sk?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':`<b>${fmt(Math.ceil(b-xp))}</b> xp to level ${l+1} · ${fmt(Math.floor(xp-a))} / ${fmt(b-a)} (${Math.floor(p*100)}%)`}</small></span></div>`;}
-function combatLine(){const x=xpInfo('combat');return `<div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Combat <em>${x.l}</em>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small><b>${fmt(x.left)}</b> xp to level ${x.l+1} · ${fmt(S.xp)} / ${fmt(xpNeed(S.lvl))} (${Math.floor(x.p*100)}%)</small></span></div>`;}
+function combatLine(){const x=xpInfo('combat'),pts=cbPts(),div=cbDiv(),base=combatFrom(S.flv,S.skills),nextAt=(base+1)*div,held=(S.cbFloor||1)>base,cp=Math.max(0,Math.min(1,(pts-base*div)/div));
+  return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting counts 2 points a level, every other skill 1`}</small></span></div>
+   <div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Fighting <em>${x.l}</em>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small><b>${fmt(x.left)}</b> xp to level ${x.l+1} · from monsters in the Depths</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
 // ---------- timed cooking: each item takes a moment at the Kitchen; Cook All queues them up ----------
@@ -747,7 +758,7 @@ function openBag(tab){bagTab=tab||'items';
    <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
    <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
-   <p class="small">Combat level ${S.lvl} · ${S.xp}/${xpNeed(S.lvl)} xp · deepest floor ${S.deepest||'—'}</p></div>`;}
+   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × Fighting + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking and smithing all raise it.</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
    const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
    body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
@@ -806,7 +817,7 @@ function openAdmin(){if(!ADMIN)return;
     if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','gem','slime_gel','bone','lampseed','glowcap_spore','wheat_seed','raw_pondfin','wheat','glowcap'])give(S.bank,id,50);
     if(k==='food')for(const id of ['oil','bread','pondfin','stew'])give(S.bank,id,20);
     if(k==='skills')for(const sk of Object.keys(SKILLS))S.skills[sk]=XP_TABLE[99];
-    if(k==='combat'){S.lvl=50;S.xp=0;P.hp=maxHp();}
+    if(k==='combat'){S.flv=Math.max(S.flv,60);S.cbFloor=Math.max(S.cbFloor||1,50);S.xp=0;combatCheck();P.hp=hpMax();}
     if(k==='bank')S.bankBuys=BANK_BUYS.length;
     if(k==='lift')S.lift=6;
     if(k==='heal'){P.hp=maxHp();if(run)run.oil=100;}
@@ -924,8 +935,8 @@ const GOALS=[
   {id:'mother',cat:'depths',t:'Defeat Mother Slime',hint:'She waits on floor 5. Bring food.',done:()=>!!S.bosses.mother,gold:60},
   {id:'knight',cat:'depths',t:'Defeat the Ossuary Knight',hint:'Floor 10. Watch for his charge.',done:()=>!!S.bosses.knight,gold:150},
   {id:'f10',cat:'depths',t:'Reach floor 10',hint:'The crypt goes deep.',done:()=>S.deepest>=10,gold:100,prog:()=>[Math.min(10,S.deepest),10]},
-  {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Defeat monsters in the Depths.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
-  {id:'cb25',cat:'depths',t:'Reach combat level 25',hint:'Better blades help.',done:()=>S.lvl>=25,prog:()=>[Math.min(25,S.lvl),25],gold:200},
+  {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Fighting counts double, and every skill adds to it.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
+  {id:'cb25',cat:'depths',t:'Reach combat level 25',hint:'Fight in the Depths and train every skill.',done:()=>S.lvl>=25,prog:()=>[Math.min(25,S.lvl),25],gold:200},
   {id:'kill100',cat:'depths',t:'Defeat 100 monsters',hint:'Every hit counts in a party.',...cn(()=>S.kills||0,100),gold:60},
   {id:'kill1k',cat:'depths',t:'Defeat 1,000 monsters',hint:'The Depths grow quiet when you visit.',...cn(()=>S.kills||0,1000),gold:300},
   {id:'chests',cat:'depths',t:'Open 25 chests',hint:'Chests hide in dead ends.',...cn(()=>C('chests'),25),gold:75},
@@ -1032,7 +1043,7 @@ function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refre
   if(isFounder())st=`<div class="soon fnd"><b>You hold a Founder’s Lantern</b><p>Your Founder’s Flame: a violet light at your shoulder and around your lantern, that every other player sees. Only holders have it.</p>
     <button class="btn big" id="flT">${SET.flame!==false?'Turn the flame off':'Light the flame'}</button></div>`;
   else if(!listed)st=`<p class="lead small">The whitelist is the first <b>${nfmt(F.wl)}</b> heroes ever made, and you’re Hero #${nfmt(F.no)}. If you pick up a Founder’s Lantern from another player, the flame is yours while you hold it.</p>`;
-  else if(!lvlOk)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: your spot is held</b>${checks}<div class="xpb"><i style="width:${Math.min(100,Math.round(S.lvl/minL*100))}%;background:#b98cff"></i></div><p>Reach combat level ${minL} in the Depths to lock in your whitelist spot. The mint is free, one per hero.</p></div>`;
+  else if(!lvlOk)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: your spot is held</b>${checks}<div class="xpb"><i style="width:${Math.min(100,Math.round(S.lvl/minL*100))}%;background:#b98cff"></i></div><p>Reach combat level ${minL} to lock in your whitelist spot. Combat level comes from Fighting (monsters in the Depths) plus all your skills, so train everything. The mint is free, one per hero.</p></div>`;
   else if(!F.open)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted</b>${checks}<p>The mint opens soon. Your spot is saved to your hero, so there’s nothing to do yet. We’ll post it in the Bulletin.</p></div>`;
   else if(!F.wallet)st=`<p class="lead small">Connect a wallet to your hero first (Hero screen). Your Founder’s Lantern is minted to it.</p><button class="btn big" id="fnHero">Open my hero</button>`;
   else if(c.taken)st=`<p class="lead small">Founder’s Lantern #${nfmt(F.no)} has been minted${c.owner?' to '+chatEsc(c.owner.slice(0,6)+'…'+c.owner.slice(-4)):''}. To light the flame, the hero’s linked wallet (${chatEsc(F.wallet.slice(0,6)+'…'+F.wallet.slice(-4))}) needs to hold a Founder’s Lantern.</p>`;
@@ -1394,7 +1405,7 @@ function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=
   const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
   if(e.flash>0&&Math.floor(e.flash*30)%2){g.save();g.filter='brightness(3)';spr(img,e.x-ox,e.y-oy);g.restore();}else spr(img,e.x-ox,e.y-oy);
   if(sq)g.restore();
-  if(!e.d.boss&&e.hp<e.max){g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),Math.round(12*e.hp/e.max),2);}
+  if(!e.d.boss&&e.hp<e.max){const w=Math.max(0,Math.min(12,Math.round(12*e.hp/e.max)));g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);if(w){g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),w,2);}}
 }
 function drawLight(cx,cy){
   lg.globalCompositeOperation='source-over';lg.globalAlpha=1;lg.fillStyle=run.oil>0?'rgba(6,6,14,.88)':'rgba(3,3,8,.97)';lg.fillRect(0,0,VW,VH);
@@ -1497,7 +1508,11 @@ if(window.NET){
   NET.onL('pchat',m=>{if(m.sys&&m.id!==MP.id)toast(m.text,'bad');const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id,sys:!!m.sys,tab:m.sys?'party':undefined,die:!!m.die};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
   NET.onL('feed',m=>{if(!SET.feed)return;const f=$('feed');f.textContent='★ '+m.text;f.classList.add('real');clearTimeout(MP.feedT);MP.feedT=setTimeout(()=>{f.textContent='';},9000);});
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
-  NET.onL('died',m=>applyPkDeath(m));   // you were defeated in the Wilderness after logging out mid-fight
+  NET.onL('died',m=>applyPkDeath(m));
+  // a new version is out: this copy can't join the world any more. Save, say so, and reload.
+  NET.onL('update',()=>{if(MP.updating)return;MP.updating=true;OTH.clear();MP.room=null;try{save(true);ACC.flush&&ACC.flush();}catch(e){}
+    openSheet(`<h2>A new update is out</h2><p class="lead">Lanternhold just got an update. Reloading so you’re on the latest version with everyone else…</p><div class="row"><button class="btn" id="rlU">Reload now</button></div>`);
+    $('rlU').onclick=()=>location.reload();setTimeout(()=>location.reload(),2500);});   // you were defeated in the Wilderness after logging out mid-fight
   NET.onL('kicked',m=>{if(m.mod)return modRemoved(m);OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
   NET.onR('hi',m=>{if(MP.trade)tradeClear();MP.room=m.room;MP.host=m.host;MP.pvpOn=!!m.pvp;MP.riskKey='';MP.aim=null;OTH.clear();
@@ -1538,7 +1553,9 @@ if(window.NET){
   NET.onR('DIED',m=>applyPkDeath(m));
   NET.onR('PN',m=>{const o=OTH.get(m.to);if(m.why==='level'&&o)pvpWhy(o);else if(m.why==='safe_them'&&o&&time-whyT>2){whyT=time;toast(o.name+' is outside the Wilderness.','bad');}else if(m.why==='protected'&&time-whyT>2){whyT=time;toast('They just arrived. Give them a moment.','bad');}});
   NET.onR('RC',m=>{if(typeof m.tk==='string'){const r=window.LH_RCPT=window.LH_RCPT||[];r.push(m.tk);if(r.length>40)r.shift();}});
-  NET.onR('pos',m=>{if(scene==='hold'&&Number.isFinite(m.x)&&Number.isFinite(m.y)){P.x=m.x;P.y=m.y;MP.sent='';}});
+  NET.onR('pos',m=>{if(scene!=='hold'||!Number.isFinite(m.x)||!Number.isFinite(m.y))return;
+    if(m.home&&P.y<WILD_Y){respawnHold();save(true);return;}   // defeated: the server sends you home to the Hold
+    P.x=m.x;P.y=m.y;MP.sent='';});
   NET.onR('muted',onMuted);
   NET.onR('W',peerSwing);
   NET.onR('TQ',m=>{MP.tradeReqs=(MP.tradeReqs||[]).filter(r=>r.from!==m.from);MP.tradeReqs.push({from:m.from,name:m.name,at:Date.now()});showPrompt();sfx('rare');buzz(40);});
@@ -1896,5 +1913,5 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS}};
 })();
