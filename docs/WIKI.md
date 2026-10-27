@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.9.6 · updated October 26, 2026
+Season 0 (Beta) · build v0.10.0 · updated October 27, 2026
 
 ## Welcome
 
@@ -171,10 +171,26 @@ Forge gear at the Forge. Every piece gives Smithing XP and goes into your bag.
 | Ember Blade | 25 | 4 Emberite Ore, 2 Cave Gems | 200 | 400 |
 | Ember Helm | 28 | 3 Emberite Ore, 1 Cave Gem | 150 | 320 |
 | Ember Mail | 32 | 6 Emberite Ore, 2 Cave Gems | 200 | 550 |
+| Steel Helm | 35 | 4 Iron Ore, 6 Coal | 300 | 650 |
+| Steel Blade | 38 | 6 Iron Ore, 8 Coal, 2 Cobalt Ore | 450 | 850 |
+| Steel Mail | 42 | 8 Iron Ore, 10 Coal, 4 Cobalt Ore | 500 | 1,100 |
+
+### Mining
+
+Ore glints in the walls of the Depths. Walk up to it and attack it to chip it; it breaks after a few hits and drops 2 to 3 ore (a Starshard drops 1 to 2). Each ore needs a Mining level. Try one that's too hard and you'll see the level it needs. In a party, whoever breaks the vein gets the ore and the XP.
+
+| Ore | Mining level | XP per vein | Found on |
+| --- | --- | --- | --- |
+| Copper | 1 | 20 | Floors 1 to 5 |
+| Iron | 10 | 35 | Floors 6 to 15 |
+| Coal | 20 | 50 | Floors 11 to 20 |
+| Emberite | 25 | 80 | Floors 8 to 10 and 12 to 15 |
+| Cobalt | 30 | 100 | Floors 16 to 20 |
+| Starshard | 40 | 160 | Floors 17 to 20 (rare) |
 
 ### Combat level
 
-Your **combat level** comes from everything you do: **(2 × Fighting + all your skill levels) ÷ 7**. Fighting is trained by defeating monsters in the Depths and counts double; Woodcutting, Fishing, Farming, Cooking and Smithing each add their own level. A new hero is combat level 1. Combat level 10 takes something like Fighting 15 with your other skills around 8 (or Fighting 33 alone, or every skill at 14). Heroes from before this change kept the combat level they had.
+Your **combat level** comes from everything you do: **(2 × Fighting + all your skill levels) ÷ 8**. Fighting is trained by defeating monsters in the Depths and counts double; Woodcutting, Fishing, Farming, Cooking, Smithing and Mining each add their own level. A new hero is combat level 1. Combat level 10 takes something like Fighting 16 with your other skills around 8. Fighting tops out at 99, like every skill, so the highest combat level is 99. Nobody has ever lost a level when the formula changed: heroes keep the combat level they had.
 
 You earn Fighting XP by defeating monsters. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each Fighting level needs 22 × level^1.5 XP. Every combat level adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
 
@@ -186,7 +202,8 @@ The Depths are dungeon floors below the Delve Gate, built fresh every time you g
 | --- | --- | --- | --- | --- |
 | 1 to 5 | Mossroot Caverns | Slime, Bat, Crawler | Copper | Mother Slime (floor 5) |
 | 6 to 10 | Bone Crypts | Skeleton, Wisp, Spider, Bat | Iron, rare Emberite | The Ossuary Knight (floor 10) |
-| 11 to 15 | Emberforge Halls | Arrives in Season 1 | | |
+| 11 to 15 | Emberforge Halls | Fire Imp, Magma Golem, Cinder Bat | Coal, Iron, rare Emberite | The Forge Tyrant (floor 15) |
+| 16 to 20 | Starfall Hollow | Wraith, Crystal Sentinel, Shardling | Cobalt, Coal, rare Starshard | The Starwarden (floor 20) |
 
 **Your lantern.** It starts full and burns oil as you go, faster on deeper floors. Better lanterns burn slower and light up more of the dark. Drink an Oil Flask (+50%) from a quick slot to top it up. If your oil runs out, a Shade appears every few seconds and hunts you down.
 
@@ -194,7 +211,9 @@ The Depths are dungeon floors below the Delve Gate, built fresh every time you g
 
 **What you'll find.** Ore glints in the walls (hit it to mine it), chests hide in dead ends, glowcaps grow on the floor, and the stairs lead down. Each floor is tougher than the last: monsters hit harder and take more hits to beat.
 
-**The lift.** After you beat Mother Slime, the lift at the Delve Gate can take you straight to floor 6.
+**The lift.** Beat a boss and the lift at the Delve Gate can take you straight to the next area: Mother Slime opens floor 6, the Ossuary Knight floor 11 and the Forge Tyrant floor 16.
+
+**Boss attacks.** The Forge Tyrant charges, calls fire imps and slams its hammer: a **ring of fire** on the floor shows where it will land, so step out before it fills. The Starwarden **blinks** to the far side of you, then bursts with starlight inside a **cold ring**, and calls wraiths to its side. Both get faster below half health.
 
 ### Monsters
 
@@ -210,12 +229,22 @@ The Depths are dungeon floors below the Delve Gate, built fresh every time you g
 | Skeleton | 32 | 9 | 9 | Old Bone, gold |
 | **Mother Slime** (boss) | 280 | 11 | 120 | Slime Crown relic, 2 to 3 Cave Gems, 60 to 90 gold, Lampseed |
 | **The Ossuary Knight** (boss) | 520 | 15 | 300 | Knight's Sigil relic, 3 to 4 Cave Gems, 150 to 220 gold, Emberite Ore |
+| Cinder Bat | 12 | 7 | 7 | Gold |
+| Fire Imp | 20 | 9 | 12 | Gold, Coal |
+| Magma Golem | 48 | 12 | 18 | Coal, gold, Emberite Ore (rare) |
+| Shardling | 26 | 12 | 15 | Gold, Starshard (very rare) |
+| Wraith | 30 | 12 | 16 | Gold, Cave Gem (rare) |
+| Crystal Sentinel | 52 | 14 | 22 | Cobalt Ore, gold, Old Bone |
+| **The Forge Tyrant** (boss) | 700 | 16 | 700 | Forge Heart relic, Coal, Emberite Ore, 300 to 450 gold, Cave Gems, and very rarely **Cinderfang** |
+| **The Starwarden** (boss) | 900 | 18 | 1,100 | Fallen Star relic, Cobalt Ore, 1 to 3 Starshards, 500 to 750 gold, Cave Gems, and very rarely the **Starwarden's Helm** |
 
 HP and damage are floor 1 values. Monsters get stronger on deeper floors. Beating a boss opens the stairs and clears the rest of its floor.
 
 ### Rare gear drops
 
 Lanterns and capes can drop from chests (10% for a lantern, 3.5% for a cape), from monsters (0.6% and 0.25%) and from bosses (50% and 25%). Each boss also has a 5% chance to drop its own Legendary cape. Deeper floors and Loot Luck improve the rarity of what you find.
+
+**The two rarest finds in the Depths** are Mythic: **Cinderfang** (damage 46), only from the Forge Tyrant, and the **Starwarden's Helm** (defence 9, +25 max HP, +15% light, +10% Loot Luck), only from the Starwarden. Each has a 1.5% chance per kill, a little better with Loot Luck.
 
 ## The Wilderness
 
@@ -229,9 +258,9 @@ The first expansion to Lanternhold. North of the Hold, past the old stone wall, 
 
 | Gear | In a fight |
 | --- | --- |
-| Blades | Rusty 6, Copper 10, Iron 16, Ember 25 (base damage) |
-| Armor | Copper 2, Iron 4, Ember 7 defense |
-| Helmets | Copper 1, Iron 2, Ember 4 defense (admin hats count as Ember) |
+| Blades | Rusty 6, Copper 10, Iron 16, Ember 25, Steel 34, Cinderfang 46 (base damage) |
+| Armor | Copper 2, Iron 4, Ember 7, Steel 10 defense |
+| Helmets | Copper 1, Iron 2, Ember 4, Steel 5, Starwarden's Helm 9 defense (admin hats count as Ember) |
 | Capes | Mother's Mantle +15% damage, Pall of the Ossuary +12% damage and 3 defense, Gravecloth Mantle 2 defense |
 
 **Health.** Your health is 60 + 8 per combat level, plus any cape bonus. Eat from your bag with the quick slots (one bite every 1.5 seconds). After 8 seconds out of a fight your health climbs back 1 a second.
@@ -259,11 +288,11 @@ You wear 5 pieces of gear: a blade, armour, a lantern, a cape and a helmet. Open
 
 **Rarities**, from most to least common: Common, Uncommon, Rare, Extremely Rare, Legendary and Mythic. Rare finds play a sound, light up and are announced in the world feed.
 
-| Slot | Starting piece | Copper | Iron | Ember |
-| --- | --- | --- | --- | --- |
-| Blade (damage) | Rusty Blade: 6 | 10 | 16 | 25 |
-| Armour (defence) | Traveler Garb: 0 | 2 | 4 | 7 |
-| Helmet (defence) | None | 1 | 2 | 4 |
+| Slot | Starting piece | Copper | Iron | Ember | Steel | Mythic boss drop |
+| --- | --- | --- | --- | --- | --- | --- |
+| Blade (damage) | Rusty Blade: 6 | 10 | 16 | 25 | 34 | Cinderfang: 46 |
+| Armour (defence) | Traveler Garb: 0 | 2 | 4 | 7 | 10 | |
+| Helmet (defence) | None | 1 | 2 | 4 | 5 | Starwarden's Helm: 9 |
 
 ### Lanterns
 
@@ -297,13 +326,14 @@ Nobody starts with a cape. Each one gives special bonuses.
 
 ### Relics and special items
 
-- **Boss relics:** the Slime Crown (from Mother Slime) and the Knight's Sigil (from the Ossuary Knight). In Season 1, relics can be minted on-chain and traded.
+- **Boss relics:** the Slime Crown (from Mother Slime), the Knight's Sigil (from the Ossuary Knight), the Forge Heart (from the Forge Tyrant) and the Fallen Star (from the Starwarden). In Season 1, relics can be minted on-chain and traded.
 - **Goal Relics:** the Starlit Lantern and Wayfinder's Mantle can't be found anywhere else. Every goal you complete has a tiny chance to award one (see Goals). They can't be sold, traded or dropped.
 - **Admin party hats:** the Blue Party Hat and Green Party Hat belong to the two admins. They are one of a kind and can never drop, be sold or be traded.
 
 ### Materials and supplies
 
-- **For the Forge:** Copper, Iron and Emberite Ore, Cave Gems, Slime Gel and Old Bone.
+- **For the Forge:** Copper, Iron, Emberite and Cobalt Ore, Coal, Cave Gems, Slime Gel and Old Bone.
+- **To sell:** Starshards, the rarest ore in the Depths, fetch a high price from Tallow.
 - **From the Farm:** Wheat, Lampseed and Glowcap.
 - **For your lantern:** Oil Flasks.
 - **Healing food:** Bread, Cooked Pondfin and Glowcap Stew.
@@ -373,7 +403,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 
 ## Goals and secrets
 
-There are 56 goals: 46 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
+There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
 
 | Group | Goal | Gold |
 | --- | --- | --- |
@@ -393,15 +423,20 @@ There are 56 goals: 46 open goals in five groups and 10 hidden secrets. Each one
 | Skills | Reach Farming 10 | 50 |
 | Skills | Harvest 500 crops | 150 |
 | Skills | Reach Cooking 10 | 50 |
-| Skills | Reach Smithing 10 / 25 | 60 / 200 |
+| Skills | Reach Smithing 10 / 25 / 35 | 60 / 200 / 300 |
+| Skills | Reach Mining 10 / 25 / 40 | 50 / 150 / 400 |
 | Skills | Reach a total skill level of 100 | 200 |
 | The Depths | Defeat Mother Slime | 60 |
 | The Depths | Defeat the Ossuary Knight | 150 |
 | The Depths | Reach floor 10 | 100 |
+| The Depths | Defeat the Forge Tyrant | 300 |
+| The Depths | Defeat the Starwarden | 500 |
+| The Depths | Reach floor 20 | 250 |
+| The Depths | Wear a full set of steel | 300 |
 | The Depths | Reach combat level 10 / 25 | 50 / 200 |
 | The Depths | Defeat 100 / 1,000 monsters | 60 / 300 |
 | The Depths | Open 25 chests | 75 |
-| The Depths | Mine 200 ore | 75 |
+| The Depths | Mine 200 ore veins | 75 |
 | The Depths | Find a Rare lantern or cape | 100 |
 | The Depths | Delve with a party | 40 |
 | Life at the Hold | Make a friend | 20 |
@@ -472,9 +507,9 @@ Your hero saves to your account automatically, so you can pick up where you left
 
 ## Coming next
 
-Season 1 brings the token, on-chain relics and the next biome, Emberforge Halls (floors 11 to 15).
+Season 1 brings the token and on-chain relics.
 
-**Also on the way:** a new area beyond the east road with a new fishing pond, a new tree and a new skill that uses logs, plus Cinderite gear at Smithing 50+ and more goals each season.
+**Also on the way:** deeper floors below the Starfall Hollow, a new area beyond the east road with a new fishing pond, a new tree and a new skill that uses logs, and more goals each season.
 
 Every update is posted on the Bulletin in the Hold, and in the Updates section of this wiki.
 
