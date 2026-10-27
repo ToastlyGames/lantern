@@ -507,6 +507,7 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'ember_ore':p.ell(8,9,5,4,'#2b1620');p.ell(7,8,3,2,'#45202c');p.line(4,10,7,8,PAL.red).line(7,8,11,10,PAL.red).line(7,8,8,5,PAL.red);p.line(5,9,7,8,PAL.ember).line(8,8,10,9,PAL.ember);p.set(7,8,PAL.yellow).set(10,9,PAL.yellow);p.outline('#120a10');break;
     case 'gem':p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..','......'],{c:PAL.sky,b:PAL.cyan,a:PAL.blue});p.set(6,4,PAL.white);break;
     case 'slime_gel':p.ell(8,10,5,4,PAL.green);p.ell(7,9,2,1.5,PAL.lime);p.set(6,8,PAL.white);break;
+    case 'blackwood_logs':p.rect(2,8,12,4,'#2a1e22');p.rect(2,8,12,1,'#4a3640');p.rect(4,4,11,4,'#2a1e22');p.rect(4,4,11,1,'#4a3640');p.ell(3,10,2,2,'#7a5ca8');p.set(3,10,'#3d2f52');p.ell(14,6,2,2,'#7a5ca8');p.set(14,6,'#3d2f52');break;
     case 'logs':p.rect(2,8,12,4,PAL.bark);p.rect(2,8,12,1,PAL.wood);p.rect(4,4,11,4,PAL.bark);p.rect(4,4,11,1,PAL.wood);p.ell(3,10,2,2,PAL.tan);p.set(3,10,PAL.wood);p.ell(14,6,2,2,PAL.tan);p.set(14,6,PAL.wood);break;
     case 'bone':p.line(4,12,12,4,PAL.bone);p.line(5,12,12,5,PAL.bone);p.rect(3,11,2,3,PAL.bone).rect(11,3,3,2,PAL.bone);break;
     case 'wheat_seed':p.rect(5,7,6,7,PAL.wood);p.rect(5,6,6,2,PAL.bark);p.rect(7,9,2,3,PAL.yellow);break;
@@ -529,10 +530,75 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'raw_pondfin':fishIcon(p,'#7fb0c8','#41a6f6','#29366f');break;
     case 'pondfin':fishIcon(p,'#d9a066','#a0663b','#6b3e26');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
     case 'burnt_fish':fishIcon(p,'#3a3550','#262b44','#1a1c2c');break;
+    case 'raw_gloomfin':fishIcon(p,'#8a6ad0','#5a4578','#2b2238');p.set(9,8,'#c79bf2');break;
+    case 'gloomfin':fishIcon(p,'#c98a4a','#7a5ca8','#3d2f52');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
     case 'relic_crown':p.rows(2,4,['g.g.g.g.g.g','ggggggggggg','gyggrggyggg','ggggggggggg'],{g:PAL.gold,y:PAL.lime,r:PAL.red});p.ell(8,13,5,2,PAL.green);break;
     case 'relic_sigil':p.ell(8,8,5.5,5.5,PAL.silver);p.ell(8,8,4,4,PAL.navy);p.rect(7,5,2,7,PAL.gold).rect(5,7,6,2,PAL.gold);break;
     default:p.rect(4,4,8,8,PAL.pink);}
   p.outline();return p.canvas();}
+
+
+// ---------- the Wilderness ----------
+// dead, dry grass: olive and brown with a few dark tufts
+function wildGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#5a5634');
+  for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#48462c':'#6e683c');
+  for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#6b6236').set(x+1,y-1,'#7a6e3c').set(x+2,y,'#6b6236');}
+  if(r()<.5){const x=r()*13|0,y=r()*13|0;p.set(x,y,'#2e2c1e').set(x+1,y,'#2e2c1e');}return p.canvas();}
+function wildPathTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#5a4636');
+  for(let i=0;i<12;i++)p.set(r()*16,r()*16,r()<.6?'#463628':'#6e5844');for(let i=0;i<3;i++){const x=r()*15|0,y=r()*15|0;p.rect(x,y,2,1,'#7e6a50');}return p.canvas();}
+// the Gloom Pond: dark, still water with a violet sheen
+function gloomTile(f){const p=new Px(16,16);p.rect(0,0,16,16,'#2e2f5c');
+  for(let y=3;y<16;y+=6)for(let x=(y+f*3)%9;x<16;x+=9)p.rect(x,y,3,1,'#4a4884');p.set((4+f*5)%16,10,'#9a7ad0');p.set((11+f*3)%16,4,'#6a62a8');return p.canvas();}
+// a low, broken stone wall: the edge of the Hold. end:'l'/'r' crumbles down at a gap
+function wildWallSprite(v,end){const p=new Px(16,22),S='#6d7391',S2='#4b5068',S3='#8d93ad',M='#3a3f55';
+  const top=end?9:5;p.rect(0,top,16,16-top+4,S);p.rect(0,top,16,1,S3);
+  for(let y=top+3;y<20;y+=4)p.rect(0,y,16,1,S2);for(let y=top;y<20;y+=4){const o=((y/4)|0)%2?4:0;for(let x=o;x<16;x+=8)p.rect(x,y+1,1,3,S2);}
+  if(end==='l'){p.rect(0,top-3,6,3,S);p.rect(0,top-3,6,1,S3);p.rect(11,top,5,3,null);p.set(12,top+3,S3).set(14,top+4,S2);}
+  if(end==='r'){p.rect(10,top-3,6,3,S);p.rect(10,top-3,6,1,S3);p.rect(0,top,5,3,null);p.set(2,top+3,S3).set(1,top+4,S2);}
+  if(v===1){p.rect(5,top,4,2,null);p.set(5,top+2,S3).set(8,top+2,S3);}if(v===2){p.set(3,top+5,'#4f7a3a').set(4,top+4,'#4f7a3a').set(12,top+8,'#4f7a3a');}
+  p.rect(0,20,16,2,M);p.outline();return p.canvas();}
+// a dead tree: bare grey branches
+function deadTreeSprite(v){const p=new Px(32,32),B='#4b3d36',B2='#6b5a4e',B3='#2e2622';
+  p.rect(14,14,4,16,B);p.rect(15,14,1,16,B2);p.rect(13,28,6,2,B);
+  p.line(15,16,8,8,B).line(16,15,9,7,B2).line(9,8,6,4,B).line(9,8,11,3,B);
+  p.line(17,17,24,9,B).line(16,16,23,8,B2).line(23,8,27,6,B).line(23,8,22,3,B);
+  if(v){p.line(16,12,16,2,B).line(16,6,19,3,B);}else{p.line(16,13,13,4,B).line(14,7,12,5,B3);}
+  p.set(6,4,B3).set(27,6,B3).set(11,3,B3);p.outline();return p.canvas();}
+// Blackwood: a dark, twisted tree with violet-black leaves
+function blackwoodSprite(dx=0){const p=new Px(32,32);p.rect(14,19,4,11,'#2a1e22').rect(15,19,1,11,'#4a3640');p.line(13,22,10,19,'#2a1e22').line(18,21,21,18,'#2a1e22');
+  p.ell(16+dx,12,11,9.5,'#2b2238');p.ell(14+dx,10,8,6.5,'#3d2f52');p.ell(12+dx*1.5,8,4,3,'#5a4578');p.set(20,7,'#7a5ca8').set(9,13,'#7a5ca8').set(22,14,'#5a4578');p.outline();return p.canvas();}
+function rockSprite(v){const p=new Px(16,16),A='#6d7391',B='#4b5068',C='#8d93ad';
+  if(v){p.ell(8,10,6.5,4.5,B);p.ell(7,9,5,3.5,A);p.set(5,8,C).set(6,7,C).set(9,7,C);}else{p.ell(6,10,4.5,4,B);p.ell(5.5,9,3.5,3,A);p.ell(11,11,3,2.5,B);p.set(4,8,C).set(10,10,C);}
+  p.outline();return p.canvas();}
+function graveSprite(v){const p=new Px(16,20),S='#8d93ad',S2='#6d7391',D='#4b5068';
+  if(v===2){p.rect(7,4,2,13,S);p.rect(4,7,8,2,S);p.rect(8,4,1,13,S2);}
+  else{p.rect(4,5,8,12,S);p.ell(8,6,4,3,S);p.rect(10,5,2,12,S2);p.rect(6,9,4,1,D);p.rect(6,11,3,1,D);if(v)p.set(5,5,D).set(11,8,D);}
+  p.rect(2,17,12,2,'#3a2f2a');p.set(3,16,'#4f7a3a').set(12,16,'#4f7a3a');p.outline();return p.canvas();}
+function pillarSprite(v){const p=new Px(16,32),S='#8d93ad',S2='#6d7391',S3='#b2b7ca';
+  const top=v?10:4;p.rect(4,top,8,26-top,S);p.rect(9,top,3,26-top,S2);p.rect(3,26,10,3,S2);p.rect(3,top-1,10,2,S3);
+  for(let y=top+4;y<26;y+=5)p.rect(4,y,8,1,S2);if(v){p.set(4,top-2,S3).set(7,top-3,S3);p.set(1,29,S2).set(14,28,S2);}
+  p.set(5,top+8,'#4f7a3a').set(5,top+9,'#38b764');p.outline();return p.canvas();}
+// the obelisk at the top of the Wilderness: black stone, violet runes
+function obeliskSprite(f){const p=new Px(32,52),K='#1d1a2a',K2='#2e2a42',K3='#45405e',V=f?'#c79bf2':'#9a6ad8';
+  p.rect(10,10,12,36,K);p.rect(10,10,4,36,K2);p.rect(12,4,8,6,K);p.rect(13,1,6,3,K2);p.set(15,0,K3).set(16,0,K3);p.rect(6,46,20,4,K2);p.rect(6,46,20,1,K3);
+  for(const y of [14,21,28,35])p.rect(15,y,2,4,V);p.set(14,16,V).set(17,23,V).set(14,30,V).set(17,37,V);p.rect(15,6,2,2,V);
+  p.outline();return p.canvas();}
+// skull on a post: the warning at the gaps in the wall
+function skullPostSprite(){const p=new Px(16,28),W='#6b3e26',W2='#8a5a3a';p.rect(7,10,2,18,W);p.rect(7,10,1,18,W2);p.rect(3,14,10,2,W);
+  p.ell(8,6,4,4,PAL.bone);p.rect(5,8,6,3,PAL.bone);p.rect(6,5,2,2,PAL.ink);p.rect(9,5,2,2,PAL.ink);p.set(8,8,PAL.ink);p.set(6,10,'#8a7e62').set(8,10,'#8a7e62').set(10,10,'#8a7e62');
+  p.outline();return p.canvas();}
+// the warning sign: the signpost with a red skull on it
+function wildSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#6b3e26');p.rect(8,8,1,16,'#8a5a3a');p.rect(1,1,16,9,'#a0663b');p.rect(1,1,16,1,'#d9a066');p.rect(1,9,16,1,'#6b3e26');
+  p.ell(9,5,3,2.6,'#b13e53');p.rect(7,6,5,2,'#b13e53');p.set(8,4,PAL.ink).set(10,4,PAL.ink);p.set(9,7,PAL.ink);p.outline();return p.canvas();}
+function wildBonesSprite(v){const p=new Px(16,16);if(v===0){p.line(3,12,9,10,PAL.bone).line(4,9,10,12,PAL.bone);}else if(v===1){p.ell(8,10,2.6,2.2,PAL.bone);p.rect(7,11,3,2,PAL.bone);p.set(7,10,PAL.ink).set(9,10,PAL.ink);}
+  else{p.line(2,12,7,12,PAL.bone).set(1,11,PAL.bone).set(1,13,PAL.bone).set(8,11,PAL.bone).set(8,13,PAL.bone);p.line(10,9,13,11,'#b8a880');}return p.canvas();}
+// dry thorny weeds and dead shrubs scattered through the Wilderness grass
+function weedSprite(v){const p=new Px(16,16),A='#7a6e3c',B='#4a3d2a',R='#8f2d3f';
+  if(v===0){p.line(5,13,3,8,A).line(6,13,7,7,A).line(7,13,10,9,A);p.set(3,7,B).set(7,6,B).set(10,8,B);}
+  else if(v===1){p.line(8,13,8,6,B).line(8,10,5,7,B).line(8,9,11,6,B);p.set(5,6,R).set(11,5,R).set(8,5,R);}
+  else{p.ell(8,12,4,2,'#5e5a34');p.set(6,10,A).set(9,10,A).set(8,9,A).set(11,11,B);}return p.canvas();}
+// a small skull, the PvP mark shown over a hero's head
+function skullMark(){const p=new Px(9,9),W='#f4f4f4',G='#c2c7cf';p.ell(4.5,3.5,3.5,3.4,W);p.rect(2,5,5,2,W);p.rect(5,1,2,6,G);p.rect(2,3,2,2,PAL.ink);p.rect(5,3,2,2,PAL.ink);p.set(4,5,PAL.ink);p.set(2,7,W).set(4,7,W).set(6,7,W);p.outline();return p.canvas();}
 
 // ---------- build the atlas ----------
 const ART={};
@@ -560,6 +626,11 @@ function buildArt(){
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
   ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
+  ART.wgrass=[41,42,43,44].map(wildGrassTile);ART.wpath=[45,46,47].map(wildPathTile);ART.gloom=[0,1].map(gloomTile);
+  ART.wwall={};for(const e of ['',  'l','r'])for(const v of [0,1,2])ART.wwall[e+v]=wildWallSprite(v,e||null);
+  ART.deadtree=[0,1].map(deadTreeSprite);ART.bwTree=blackwoodSprite();ART.bwSway=[blackwoodSprite(-.6),blackwoodSprite(.6)];
+  ART.rock=[0,1].map(rockSprite);ART.grave=[0,1,2].map(graveSprite);ART.pillar=[0,1].map(pillarSprite);ART.obelisk=[0,1].map(obeliskSprite);
+  ART.skullpost=skullPostSprite();ART.wsign=wildSignSprite();ART.wbones=[0,1,2].map(wildBonesSprite);ART.weed=[0,1,2].map(weedSprite);ART.skull=skullMark();
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};
 }
@@ -572,13 +643,14 @@ const ITEMS={
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
-  logs:{n:'Logs',v:2},
+  logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},
   bread:{n:'Bread',v:8,heal:30,food:true},stew:{n:'Glowcap Stew',v:20,heal:70,food:true},
   oil:{n:'Oil Flask',v:15,oil:50},
   rusty_blade:{n:'Rusty Blade',v:1,gear:'blade',tier:'rusty'},traveler_garb:{n:'Traveler Garb',v:1,gear:'mail',tier:'none'},
   copper_blade:{n:'Copper Blade',v:60,gear:'blade',tier:'copper'},iron_blade:{n:'Iron Blade',v:160,gear:'blade',tier:'iron'},ember_blade:{n:'Ember Blade',v:520,gear:'blade',tier:'ember'},
   copper_mail:{n:'Copper Mail',v:70,gear:'mail',tier:'copper'},iron_mail:{n:'Iron Mail',v:180,gear:'mail',tier:'iron'},ember_mail:{n:'Ember Mail',v:560,gear:'mail',tier:'ember'},
   raw_pondfin:{n:'Raw Pondfin',v:5},pondfin:{n:'Cooked Pondfin',v:12,heal:35,food:true},burnt_fish:{n:'Burnt Fish',v:0},
+  raw_gloomfin:{n:'Raw Gloomfin',v:18},gloomfin:{n:'Cooked Gloomfin',v:40,heal:55,food:true},
   copper_helm:{n:'Copper Helm',v:40,gear:'helm',tier:'copper'},iron_helm:{n:'Iron Helm',v:120,gear:'helm',tier:'iron'},ember_helm:{n:'Ember Helm',v:420,gear:'helm',tier:'ember'},
   partyhat_helm:{n:'Blue Party Hat',v:0,gear:'helm',tier:'partyhat',rarity:'unique',bound:true},
   greenhat_helm:{n:'Green Party Hat',v:0,gear:'helm',tier:'greenhat',rarity:'unique',bound:true},
@@ -629,13 +701,15 @@ const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
-const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'}};
-const WATERS={hold:{n:'Hold Lake',fish:['pondfin']}};
+const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'}};
+const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15}};
 // ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
 // Expansions add new trees per area: the higher the level, the fewer logs and the longer the regrow. Logs feed a future skill.
 // Keep logs/regrow in step with TREE_TYPES in realtime/src/index.js (the server keeps the shared count).
 // regenDelay/regenEvery (s): a partly cut tree left alone for regenDelay grows back 1 log every regenEvery.
-const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'}};
+const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
+  // the Wilderness: fewer logs, slower to regrow, much more xp
+  blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
@@ -643,7 +717,8 @@ const RECIPES={
     {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550}
   ],
   // time: seconds per item at the Kitchen. Fish take longer the better they are: 2 s + 0.05 s per Fishing level the fish needs.
-  kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3}],
+  kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3},
+    {out:'gloomfin',need:{raw_gloomfin:1},lvl:15,xp:30,fish:'gloomfin',burn:{chance:.5,safeAt:50,out:'burnt_fish'}}],
   press:[{out:'oil',n:2,need:{lampseed:1}}]
 };
 // growth in seconds (demo speed). Live: 30 min to 8 h.
@@ -686,8 +761,29 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.18',season:'Season 0 (Beta)',date:'2026-10-26'};
+const BUILD={version:'0.9.2',season:'Season 0 (Beta)',date:'2026-10-27'};
 const CHANGELOG=[
+  {v:'0.9.2',date:'2026-10-27',title:'Player names on',notes:[
+    'Player names and combat levels now show over everyone’s heads by default. Turn them off any time in Settings → Player names.']},
+  {v:'0.9.1',date:'2026-10-27',title:'Pick up where you left off',notes:[
+    'Signing in puts you exactly where you logged out: the Hold, the Wilderness, wherever you were standing.',
+    'Log out in the Depths and you come back at the entrance you went in by (the Delve Gate, for now).',
+    'Chat has two tabs: World (everyone on your map) and Party (only your party, wherever they are). A badge shows new messages on the other tab. No more /p needed, though it still works.',
+    'Players who close the game now disappear straight away, instead of standing still or jumping back to the spawn.',
+    'Fixed a quick flash across the screen when other players joined, left or reconnected.',
+    'The Wilderness: a skulled hero who falls loses only what they carry and wear. The Bank is never touched.']},
+  {v:'0.9.0',date:'2026-10-27',title:'The Wilderness',notes:[
+    'The first expansion: the Wilderness, north of the Hold. Walk through a gap in the old stone wall to cross. Other players can attack you there, and you can attack them.',
+    'Wilderness levels run from 1 just past the wall to 20 at the Old Obelisk at the very top. You can fight heroes whose combat level is within the Wilderness level of yours. A red badge shows your level and who you can fight.',
+    'Attack someone who hasn’t attacked you and you get a skull over your head for 20 minutes. Fall while skulled and you drop everything you carry and wear. Without a skull you keep your 3 most valuable items. Your Bank and gold are always safe.',
+    'The winner gets a minute to pick up the loot before anyone else. Logging out mid-fight leaves your hero standing there for 15 seconds.',
+    'New up north: the Gloom Pond with Gloomfin (Fishing 15, heals 55 cooked) and Blackwood trees (Woodcutting 15, 9 XP a log). Plus 8 new goals, including one secret.',
+    'A small compass now sits left of the Settings button. North is the Wilderness.',
+    'Party members in the Depths now all get the combat XP for every kill, even if they didn’t land a hit.',
+    'Fixed: a hero could flicker at the spawn without a combat level, as if online when they weren’t.',
+    'Fixed: when someone else got a bite while fishing, the “!” showed over your head instead of theirs.']},
+  {v:'0.8.19',date:'2026-10-26',title:'Wider top bar',notes:[
+    'The health card at the top is a little wider, so your level, gold and the world you’re in (like “The Hold · World 1”) all fit.']},
   {v:'0.8.18',date:'2026-10-26',title:'Gold on screen',notes:[
     'Your gold now shows next to your level at the top of the screen, in the Hold and in the Depths. Big amounts are shortened (12.4k, 1.25M); hover it on a computer for the exact number.',
     'Fixed the health card being cut off on the right on some screens.']},
@@ -843,7 +939,7 @@ const CHANGELOG=[
 ];
 
 // ===== Maps: the Hold (handmade) and the Depths (procedural) =====
-const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6;
+const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6,WILDG=7,WPATH=8,GLOOM=9;
 function newMap(w,h,kind,fill){return {w,h,kind,t:new Uint8Array(w*h).fill(fill),solid:new Uint8Array(w*h),objs:[],lights:[],seed:0};}
 const tAt=(m,x,y)=>x<0||y<0||x>=m.w||y>=m.h?WALL:m.t[y*m.w+x];
 const setT=(m,x,y,v)=>{if(x>=0&&y>=0&&x<m.w&&y<m.h)m.t[y*m.w+x]=v;};
@@ -852,53 +948,93 @@ const setSolid=(m,x,y,v)=>{if(x>=0&&y>=0&&x<m.w&&y<m.h)m.solid[y*m.w+x]=v;};
 function addObj(m,o){m.objs.push(o);if(o.block)for(const [x,y] of o.block)setSolid(m,x,y,1);return o;}
 
 // ---------- the Hold ----------
+// The Hold sits at the bottom of the map. North of it, past the old wall, lies the Wilderness: the first expansion, where
+// players can attack each other. WILD_ROWS rows were added on top, so every Hold coordinate below is shifted down by O rows.
+// Keep WILD_ROWS in step with WILD_Y in realtime/src/index.js (2 rows per Wilderness level, levels 1–20).
+const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20;
+const wildLvl=y=>y<WILD_Y?Math.min(WILD_MAX,Math.max(1,Math.ceil((WILD_Y-y)/(2*T)))):0;
+const isWater=t=>t===WATER||t===GLOOM;
 function buildHold(){
-  const W=26,H=24,m=newMap(W,H,'hold',GRASS);
+  const O=WILD_ROWS,W=26,HH=24,H=HH+O,m=newMap(W,H,'hold',GRASS);
   for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(x<1||y<1||x>=W-1||y>=H-1)setSolid(m,x,y,1);
-  for(let y=5;y<H-1;y++){setT(m,12,y,PATH);setT(m,13,y,PATH);}
-  for(let x=1;x<W;x++){setT(m,x,11,PATH);setT(m,x,12,PATH);}
-  for(let x=14;x<17;x++)setT(m,x,13,PATH);
+  for(let y=5;y<HH-1;y++){setT(m,12,y+O,PATH);setT(m,13,y+O,PATH);}
+  for(let x=1;x<W;x++){setT(m,x,11+O,PATH);setT(m,x,12+O,PATH);}
+  for(let x=14;x<17;x++)setT(m,x,13+O,PATH);
   // the lake, with a wooden dock running out to a platform in the middle (stand on it and fish off any side)
   const lake=[[18,22],[17,23],[16,23],[16,23],[16,23],[17,22]];   // rows 17–22: [from x, to x]
-  lake.forEach(([a,b],j)=>{for(let x=a;x<=b;x++){setT(m,x,17+j,WATER);setSolid(m,x,17+j,1);}});
-  for(let y=17;y<=18;y++){setT(m,19,y,DOCK);setSolid(m,19,y,0);}
-  for(let x=18;x<=20;x++){setT(m,x,19,DOCK);setSolid(m,x,19,0);}   // platform in the middle: open water on every side
-  m.lilies=[[17,18,0],[22,18,1],[16,21,1],[21,22,0],[23,20,0]];
+  lake.forEach(([a,b],j)=>{for(let x=a;x<=b;x++){setT(m,x,17+j+O,WATER);setSolid(m,x,17+j+O,1);}});
+  for(let y=17;y<=18;y++){setT(m,19,y+O,DOCK);setSolid(m,19,y+O,0);}
+  for(let x=18;x<=20;x++){setT(m,x,19+O,DOCK);setSolid(m,x,19+O,0);}   // platform in the middle: open water on every side
+  m.lilies=[[17,18,0],[22,18,1],[16,21,1],[21,22,0],[23,20,0]].map(([x,y,f])=>[x,y+O,f]);
   // border + inner trees
   const tree=(tx,ty)=>addObj(m,{type:'tree',x:tx*T+8,y:ty*T+15,spr:'tree',block:[[tx,ty]]});
   // the east road ends at an opening in the trees (rows 11–12), closed with a barricade until Season 1's new area
-  for(let x=0;x<W;x+=2){tree(x,0);tree(x+1,H-1);}for(let y=1;y<H;y+=2){tree(0,y);if(y!==11&&y!==13)tree(W-1,y);}
+  for(let x=0;x<W;x+=2)tree(x+1,H-1);for(let y=1;y<HH;y+=2){tree(0,y+O);if(y!==11&&y!==13)tree(W-1,y+O);}
   // the inner trees can be cut (Woodcutting); border trees are the edge of the world
-  m.trees=[];[[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind='oak';o.chop=true;o.ti=m.trees.length;o.logs=TREES.oak.logs;o.until=0;m.trees.push(o);});
+  m.trees=[];const cuttable=(x,y,kind)=>{tree(x,y);const o=m.objs[m.objs.length-1];o.kind=kind;o.chop=true;o.ti=m.trees.length;o.logs=TREES[kind].logs;o.until=0;m.trees.push(o);return o;};
+  [[3,9],[22,8],[15,21],[9,21],[23,13],[2,21],[16,2],[8,2],[21,3]].forEach(([x,y])=>cuttable(x,y+O,'oak'));   // the order is the realtime server's tree index: only ever add to the end
   // buildings
-  addObj(m,{type:'gate',x:13*T,y:5*T,sortY:3*T,spr:'gate',block:[[11,3],[12,3],[13,3],[14,3],[11,4],[14,4]],act:{x:13*T,y:5*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
-  addObj(m,{type:'bank',x:5*T,y:8*T,spr:'bank',block:[[3,6],[4,6],[5,6],[6,6],[3,7],[4,7],[6,7]],act:{x:5*T,y:8*T+4,label:'Bank',id:'bank'}});
-  addObj(m,{type:'forge',x:19*T,y:8*T,spr:'forge',anim:true,block:[[17,6],[18,6],[19,6],[20,6],[17,7],[18,7],[19,7],[20,7]],act:{x:18*T+2,y:8*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
+  addObj(m,{type:'gate',x:13*T,y:(5+O)*T,sortY:(3+O)*T,spr:'gate',block:[[11,3+O],[12,3+O],[13,3+O],[14,3+O],[11,4+O],[14,4+O]],act:{x:13*T,y:(5+O)*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
+  addObj(m,{type:'bank',x:5*T,y:(8+O)*T,spr:'bank',block:[[3,6+O],[4,6+O],[5,6+O],[6,6+O],[3,7+O],[4,7+O],[6,7+O]],act:{x:5*T,y:(8+O)*T+4,label:'Bank',id:'bank'}});
+  addObj(m,{type:'forge',x:19*T,y:(8+O)*T,spr:'forge',anim:true,block:[[17,6+O],[18,6+O],[19,6+O],[20,6+O],[17,7+O],[18,7+O],[19,7+O],[20,7+O]],act:{x:18*T+2,y:(8+O)*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
-  addObj(m,{type:'board',x:15*T,y:10*T+14,spr:'board',block:[[14,10],[15,10]],act:{x:15*T,y:11*T+6,label:'Bulletin',id:'bulletin'}});
-  // Tallow's trading cart: the Hold's first merchant (buy supplies, sell anything)
+  addObj(m,{type:'board',x:15*T,y:(10+O)*T+14,spr:'board',block:[[14,10+O],[15,10+O]],act:{x:15*T,y:(11+O)*T+6,label:'Bulletin',id:'bulletin'}});
   // the east road: a sign and a barricaded opening in the trees
-  addObj(m,{type:'sign',x:23*T+8,y:10*T+12,spr:'sign',block:[[23,10]],act:{x:23*T+8,y:11*T+4,label:'Read',id:'eastsign'}});
-  addObj(m,{type:'barricade',x:W*T-8,y:12*T+15,spr:'barricade',block:[[W-1,10],[W-1,11],[W-1,12],[W-1,13]]});
+  addObj(m,{type:'sign',x:23*T+8,y:(10+O)*T+12,spr:'sign',block:[[23,10+O]],act:{x:23*T+8,y:(11+O)*T+4,label:'Read',id:'eastsign'}});
+  addObj(m,{type:'barricade',x:W*T-8,y:(12+O)*T+15,spr:'barricade',block:[[W-1,10+O],[W-1,11+O],[W-1,12+O],[W-1,13+O]]});
   // Kitchen in the corner of the grass between the north–south road and the short path; Oil Press where that path ends
-  addObj(m,{type:'kitchen',x:15*T,y:16*T,spr:'kitchen',anim:true,block:[[14,15],[15,15]],act:{x:15*T,y:16*T+6,label:'Kitchen',id:'kitchen'}});
-  addObj(m,{type:'press',x:18*T,y:13*T+14,spr:'press',block:[[17,13],[18,13]],act:{x:17*T-2,y:13*T+10,label:'Oil Press',id:'press'}});
+  addObj(m,{type:'kitchen',x:15*T,y:(16+O)*T,spr:'kitchen',anim:true,block:[[14,15+O],[15,15+O]],act:{x:15*T,y:(16+O)*T+6,label:'Kitchen',id:'kitchen'}});
+  addObj(m,{type:'press',x:18*T,y:(13+O)*T+14,spr:'press',block:[[17,13+O],[18,13+O]],act:{x:17*T-2,y:(13+O)*T+10,label:'Oil Press',id:'press'}});
   // Tallow's trading cart where the old well stood: the corner of the grass where the two roads cross
-  addObj(m,{type:'stall',x:9*T+8,y:10*T+12,spr:'stall',block:[[8,10],[9,10]]});
-  addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:10*T+13,act:{x:11*T+4,y:11*T+6,label:'Trade',id:'market'}});
+  addObj(m,{type:'stall',x:9*T+8,y:(10+O)*T+12,spr:'stall',block:[[8,10+O],[9,10+O]]});
+  addObj(m,{type:'npc',name:'Tallow',x:11*T+4,y:(10+O)*T+13,act:{x:11*T+4,y:(11+O)*T+6,label:'Trade',id:'market'}});
   // Wick, keeper of the Founders' Ledger, by the road up to the Delve Gate (checks the Founder's Lantern whitelist; phase 2 later)
-  addObj(m,{type:'npc',npc:'wick',name:'Wick',x:10*T+8,y:7*T+13,act:{x:10*T+8,y:8*T+6,label:'Talk',id:'wick'}});
+  addObj(m,{type:'npc',npc:'wick',name:'Wick',x:10*T+8,y:(7+O)*T+13,act:{x:10*T+8,y:(8+O)*T+6,label:'Talk',id:'wick'}});
   // farm with fence
-  for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:14*T+14,spr:'fence',block:[[x,14]]});addObj(m,{type:'fence',x:x*T+8,y:19*T+14,spr:'fence',block:[[x,19]]});}
-  for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:y*T+14,spr:'fence',block:[[2,y]]});addObj(m,{type:'fence',x:9*T+8,y:y*T+14,spr:'fence',block:[[9,y]]});}
-  m.plots=[];for(let c=0;c<6;c++)[15,17].forEach((y,r)=>{const x=3+c;setT(m,x,y,SOIL);m.plots.push({i:c*2+r,tx:x,ty:y,cx:x*T+8,cy:y*T+10});});   // one plot per square; index order = unlock order (left to right, both rows)
+  for(let x=2;x<=9;x++){if(x!==5&&x!==6)addObj(m,{type:'fence',x:x*T+8,y:(14+O)*T+14,spr:'fence',block:[[x,14+O]]});addObj(m,{type:'fence',x:x*T+8,y:(19+O)*T+14,spr:'fence',block:[[x,19+O]]});}
+  for(let y=15;y<=18;y++){addObj(m,{type:'fence',x:2*T+8,y:(y+O)*T+14,spr:'fence',block:[[2,y+O]]});addObj(m,{type:'fence',x:9*T+8,y:(y+O)*T+14,spr:'fence',block:[[9,y+O]]});}
+  m.plots=[];for(let c=0;c<6;c++)[15,17].forEach((y,r)=>{const x=3+c;setT(m,x,y+O,SOIL);m.plots.push({i:c*2+r,tx:x,ty:y+O,cx:x*T+8,cy:(y+O)*T+10});});   // one plot per square; index order = unlock order (left to right, both rows)
   m.plots.sort((a,b)=>a.i-b.i);
-  // flowers
-  const r=rng(7);for(let i=0;i<34;i++){const x=1+(r()*(W-2)|0),y=1+(r()*(H-2)|0);if(tAt(m,x,y)===GRASS&&!solidAt(m,x,y))m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:r()*4|0,flat:true});}
-  m.spawn={x:13*T,y:9*T+8};
+  // flowers (only in the Hold itself)
+  const r=rng(7);for(let i=0;i<34;i++){const x=1+(r()*(W-2)|0),y=1+(r()*(HH-2)|0)+O;if(tAt(m,x,y)===GRASS&&!solidAt(m,x,y))m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:r()*4|0,flat:true});}
+  m.spawn={x:13*T,y:(9+O)*T+8};
+  // dungeon entrances: where you stand when you come back up (or sign back in after logging out in the Depths)
+  m.doors={gate:{x:13*T,y:(6+O)*T+8}};
+  buildWild(m,O,W);
   return m;
 }
-
+// ---------- the Wilderness: rows 1 to O-1, north of the old wall ----------
+// A broken stone wall along row O with two gaps (west and east). Beyond it: dead grass and dark trails, the Gloom Pond
+// (Gloomfin, Fishing 15), Blackwood trees (Woodcutting 15), a graveyard, and an old obelisk at the very top (level 20).
+function buildWild(m,O,W){
+  for(let y=0;y<O;y++)for(let x=0;x<W;x++)setT(m,x,y,WILDG);setT(m,0,O,WILDG);setT(m,W-1,O,WILDG);
+  const trail=(x0,y0,x1,y1)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)setT(m,x,y,WPATH);};
+  trail(5,30,6,O);trail(19,30,20,O);trail(5,30,20,31);trail(12,4,13,31);trail(8,22,12,23);trail(9,9,12,10);
+  // the wall, with gaps at x 5–6 and 19–20 (the trails)
+  const gaps=new Set([5,6,19,20]);
+  for(let x=1;x<W-1;x++){if(gaps.has(x))continue;const L=gaps.has(x+1),R=gaps.has(x-1);addObj(m,{type:'wwall',x:x*T+8,y:O*T+14,v:(x*7)%3,end:L?'r':R?'l':null,block:[[x,O]]});}
+  // the edge of the world up here: dead trees and darkness
+  const dead=(x,y,edge)=>addObj(m,{type:'deadtree',x:x*T+8,y:y*T+15,v:(x+y)%2,edge:!!edge,block:[[x,y]]});
+  for(let x=0;x<W;x+=2)dead(x,0,true);for(let y=1;y<O;y+=2){dead(0,y,true);dead(W-1,y,true);}dead(0,O,true);dead(W-1,O,true);
+  // the Gloom Pond (rows 19–24)
+  const pond=[[5,8],[4,9],[3,9],[3,9],[4,8],[5,7]];pond.forEach(([a,b],j)=>{for(let x=a;x<=b;x++){setT(m,x,19+j,GLOOM);setSolid(m,x,19+j,1);}});
+  // Blackwood trees (shared, like the oaks; indexes after the Hold's)
+  const cut=(x,y)=>{addObj(m,{type:'tree',x:x*T+8,y:y*T+15,spr:'tree',block:[[x,y]]});const o=m.objs[m.objs.length-1];o.kind='blackwood';o.chop=true;o.ti=m.trees.length;o.logs=TREES.blackwood.logs;o.until=0;m.trees.push(o);};
+  [[17,21],[21,17],[16,13],[20,10]].forEach(([x,y])=>cut(x,y));
+  for(const [x,y] of [[3,34],[9,36],[16,35],[23,33],[2,27],[22,27],[8,16],[3,13],[18,6],[22,4],[6,3],[15,26],[10,28]])dead(x,y);
+  for(const [x,y,v] of [[8,37,0],[15,38,1],[23,37,0],[2,31,1],[10,25,0],[21,25,1],[5,15,0],[23,12,1],[9,4,0],[16,3,1],[14,17,0]])addObj(m,{type:'rock',x:x*T+8,y:y*T+14,v,block:[[x,y]]});
+  // the graveyard
+  for(const [x,y] of [[3,6],[5,6],[7,6],[3,8],[5,8],[7,8],[4,10],[6,10]])addObj(m,{type:'grave',x:x*T+8,y:y*T+14,v:(x+y)%3,block:[[x,y]]});
+  // ruins around the obelisk at the very top (Wilderness level 20)
+  for(const [x,y] of [[10,3],[15,3],[10,6],[15,6]])addObj(m,{type:'pillar',x:x*T+8,y:y*T+14,v:(x+y)%2,block:[[x,y]]});
+  addObj(m,{type:'obelisk',x:13*T,y:3*T+14,sortY:3*T+10,block:[[12,2],[13,2],[12,3],[13,3]]});
+  // skull posts either side of each gap, and a warning sign on the Hold side of each
+  for(const x of [4,7,18,21])addObj(m,{type:'skullpost',x:x*T+8,y:(O-1)*T+14,block:[[x,O-1]]});
+  for(const x of [3,22])addObj(m,{type:'sign',wild:true,x:x*T+8,y:(O+1)*T+12,spr:'sign',block:[[x,O+1]],act:{x:x*T+8,y:(O+2)*T+4,label:'Read',id:'wildsign'}});
+  // bones in the dead grass
+  const r=rng(41);for(let i=0;i<46;i++){const x=1+(r()*(W-2)|0),y=1+(r()*(O-2)|0);if(!solidAt(m,x,y)&&tAt(m,x,y)===WILDG)m.objs.push({type:'weed',x:x*T+8,y:y*T+15,v:r()*3|0,flat:true});}
+  for(let i=0;i<22;i++){const x=1+(r()*(W-2)|0),y=1+(r()*(O-2)|0);if(!solidAt(m,x,y)&&tAt(m,x,y)===WILDG)m.objs.push({type:'wbones',x:x*T+8,y:y*T+15,v:r()*3|0,flat:true});}
+}
 // ---------- the Depths ----------
 function buildFloor(floor,runSeed){
   const pack=packOf(floor),r=rng(runSeed*977+floor*7919),W=46,H=46,m=newMap(W,H,'delve',WALL);
@@ -974,7 +1110,7 @@ function bakeGround(m){
   const cv=document.createElement('canvas');cv.width=m.w*T;cv.height=m.h*T;const g=cv.getContext('2d');
   const r=rng(m.floor||3);
   for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const t=tAt(m,x,y),v=(x*7+y*13)%4;let s=null;
-    if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WATER)s=null;}
+    if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WILDG)s=ART.wgrass[v];else if(t===WPATH)s=ART.wpath[v%3];else if(isWater(t))s=null;}
     else{if(t===FLOOR)s=ART.floor[m.biome][v];else if(m.faces.has(y*m.w+x))s=ART.face[m.biome][v%3];else{g.fillStyle='#0d0e17';g.fillRect(x*T,y*T,T,T);
         const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle=m.biome==='moss'?'#3a4a4a':'#45425f';
         if(fl(-1,0))g.fillRect(x*T,y*T,2,T);if(fl(1,0))g.fillRect(x*T+T-2,y*T,2,T);if(fl(0,-1))g.fillRect(x*T,y*T,T,2);if(fl(0,1))g.fillRect(x*T,y*T+T-2,T,2);
@@ -1044,6 +1180,9 @@ function probe(){
 }
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')probe();});
 addEventListener('online',probe);addEventListener('pageshow',probe);
+// closing the tab or the app: leave now, so other players see you go at once (instead of standing frozen until the
+// server notices the silence). If the page comes back from the cache, pageshow reconnects.
+addEventListener('pagehide',()=>{if(stopped)return;try{room&&room.close(1000,'bye');}catch(e){}try{lobby&&lobby.close(1000,'bye');}catch(e){}});
 window.NET={
   onL(t,f){(HL[t]=HL[t]||[]).push(f);},onR(t,f){(HR[t]=HR[t]||[]).push(f);},
   start(name){if(!stopped)return;stopped=false;hero=name;openLobby();},
@@ -1079,7 +1218,7 @@ const fresh=()=>JSON.parse(JSON.stringify(DEF));
 const num=(v,lo,hi,d)=>{v=Number(v);return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d;};
 const int=(v,lo,hi,d)=>Math.floor(num(v,lo,hi,d));
 const obj=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
-const SET_DEF={zoom:2,bright:100,shake:true,pnames:false,feed:true,vib:true,sound:true,flame:true};
+const SET_DEF={zoom:2,bright:100,shake:true,pnames:true,feed:true,vib:true,sound:true,flame:true};
 function cleanSet(v){if(!v||typeof v!=='object')return null;const o={};for(const k of Object.keys(SET_DEF))o[k]=typeof SET_DEF[k]==='boolean'?(v[k]===undefined?SET_DEF[k]:!!v[k]):SET_DEF[k];
   o.zoom=Math.max(0,Math.min(4,Math.round(+v.zoom)||0));if(v.zoom===undefined)o.zoom=SET_DEF.zoom;o.bright=Math.max(60,Math.min(160,Math.round(+v.bright)||100));return o;}
 function normalize(raw){const o=obj(raw),s=fresh();
@@ -1099,6 +1238,8 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.flags={};for(const [k,v] of Object.entries(obj(o.flags)))if(/^[a-z]{2,16}$/.test(k))s.flags[k]=!!v;s.guide=int(o.guide,0,99,0);
   s.goals={};for(const k of Object.keys(obj(o.goals)).slice(0,300))if(/^[a-z0-9]{2,16}$/.test(k))s.goals[k]=1;
   s.cnt={};for(const [k,v] of Object.entries(obj(o.cnt)).slice(0,60))if(/^[a-z]{2,16}$/.test(k)){const n=int(v,0,1e9,0);if(n)s.cnt[k]=n;}
+  s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
+  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x),y:Math.round(+q.y)}:null;}   // where you logged out
   return s;}
 let S=normalize({}),PID=null;
 function save(now){if(!PID)return;S.savedAt=Date.now();try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
@@ -1113,6 +1254,10 @@ const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const
 let ADMIN=false,HAT='partyhat';
 const LAN=()=>LANTERNS[S.gear.lantern]||LANTERNS.basic;
 const maxHp=()=>60+8*(S.lvl-1)+A('hp');
+// In the Hold and the Wilderness your health follows the Wilderness rules (the same for everyone: no admin-hat bonus)
+const pvpMaxHp=()=>60+8*(S.lvl-1)+((((CAPES[S.gear.cape]||{}).attr)||{}).hp||0);
+const hpMax=()=>scene==='hold'?pvpMaxHp():maxHp();
+const inWild=()=>scene==='hold'&&P.y<WILD_Y;
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
 const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100);
 const defOf=()=>GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def');
@@ -1204,18 +1349,20 @@ cv.addEventListener('pointerleave',()=>{HOV.on=false;cv.style.cursor='';});
 // [left, top, width, height] from the object's x/y (its feet), and the name to show
 const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],forge:[-22,-38,44,38,'Forge'],kitchen:[-14,-30,28,30,'Kitchen'],press:[-14,-30,28,30,'Oil Press'],
   board:[-14,-30,28,30,'Bulletin Board'],stall:[-20,-30,40,32,'Tallow’s Cart'],sign:[-8,-22,16,22,'The Road East'],barricade:[-10,-58,20,58,'The Road East (closed)'],
-  tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap']};
+  tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap'],
+  wwall:[-8,-20,16,22,'Wilderness Wall'],deadtree:[-11,-30,22,32,'Dead Tree'],rock:[-7,-12,14,13,'Rock'],grave:[-6,-17,12,18,'Grave'],pillar:[-5,-28,10,30,'Ruined Pillar'],
+  obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning']};
 function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
   for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
     if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
     else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
-      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=H[4];}
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':H[4];}
     if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
   if(best)return best;
   const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
   if(scene==='hold'){
     if(map.plots&&map.plots.some(p=>p.tx===tx&&p.ty===ty))return {x:tx*T+8,y:ty*T-2,name:'Farm'};
-    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};}
+    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};if(t===GLOOM)return {x:tx*T+8,y:ty*T-2,name:'Gloom Pond'};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden&&tx===map.stairs.tx&&ty===map.stairs.ty)return {x:tx*T+8,y:ty*T-2,name:'Stairs down'};
   return null;}
 function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acct').hidden){if(cv.style.cursor)cv.style.cursor='';return;}
@@ -1225,8 +1372,9 @@ function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acc
 let camX=0,camY=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||!started||!$('sheet').hidden||!$('acct').hidden)return;
   e.preventDefault();const a=document.activeElement;if(a&&a.id==='chatIn')a.blur();
-  if(scene==='delve'){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
-    if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
+  if(scene==='delve'||inWild()){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
+    if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
+    if(inWild()){const o=otherAt(e.clientX,e.clientY);MP.aim=o?o.id:null;}}
   aPressed=true;});
 
 // No pinch or double-tap zoom while playing: iOS ignores user-scalable=no, so block its gesture events and multi-finger moves,
@@ -1251,9 +1399,13 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=maxHp();
+function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
   updateHud();MP.toHold();}
-function startDelve(from,seed){run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
+// where you are, kept in your save so you sign back in on the same spot (in the Depths: the entrance you went in by)
+function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y)};}
+function placeAt(q){if(!q||!(q.x>0&&q.y>0&&q.x<map.w*T&&q.y<map.h*T)||blocked(q.x,q.y,4))return false;if(q.y<WILD_Y&&!S.flags.wildok)return false;P.x=q.x;P.y=q.y;return true;}
+function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y};save();}
+  run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0,door};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
   const sc=1+.12*(f-1);
@@ -1275,7 +1427,8 @@ function nearestAct(){
   if(scene==='hold'){for(const p of map.plots){const d=Math.hypot(p.cx-P.x,p.cy+6-P.y);if(d<bd){bd=d;const st=S.plots[p.i],ready=st&&growth(st)>=1;best={plot:p,label:readyPlots().length?'Harvest':'Farm',id:'plot'};}}}
   if(scene==='hold'){if(FISHING)return {label:FISHING.phase==='bite'?'Hook!':'Fishing',id:'hook'};if(!best){const sp=fishSpot();if(sp)best={label:'Fish',id:'fish',sp};}}
   if(scene==='hold'&&COOK)return {label:'Stop',id:'cookstop'};
-  if(scene==='hold'){if(CHOP)return {label:'Chopping',id:'noop'};if(!best){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
+  if(scene==='hold'){if(CHOP&&!(inWild()&&pvpTarget()))return {label:'Chopping',id:'noop'};if(!best){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
+  if(inWild()&&!FISHING&&!COOK){const o=pvpTarget();if(o)best={label:'Attack',id:'pvp',o};}
   {const d=nearBagDrop();if(d)best={label:'Pick up',id:'pickup',d};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden){const sx=map.stairs.tx*T+8,sy=map.stairs.ty*T+10,d=Math.hypot(sx-P.x,sy-P.y);if(d<14)best={label:'Descend',id:'stairs'};}
   return best;
@@ -1283,7 +1436,7 @@ function nearestAct(){
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
   if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
-  if(a.id==='pickup')return claimDrop(a.d);if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
+  if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
   if(a.id==='stairs'&&MP.client())return MP.askDown();
@@ -1317,7 +1470,7 @@ function resolveSwing(){
   if(MP.shared())NET.send({t:'sw',d:P.dir,h:hits.slice(0,8),o:ore});   // the party sees your swing, your damage numbers and your pickaxe chips
 }
 // another party member swung: show their blade, the damage they did and the ore they chipped
-function peerSwing(m){const o=OTH.get(m.id);if(!o||scene!=='delve')return;o.dir=m.d||o.dir;o.swT=.2;
+function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&o.y<WILD_Y))return;o.dir=m.d||o.dir;o.swT=.2;
   for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
   if(Math.hypot(o.x-P.x,o.y-P.y)<160)sfx((m.h&&m.h.length)?'hit':'swing',.5);}
@@ -1328,7 +1481,8 @@ function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit
   if(MP.shared())NET.send({t:'kill',e:e.id,top,hit,xp,x:Math.round(e.x),y:Math.round(e.y),ty:e.type});
   onKilled(e,top,hit,xp);}
 function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
-  if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
+  // XP: everyone who hit it, and every party member in the same dungeon (even if they didn't land a hit)
+  if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}else if(MP.shared())gainXp(xp);puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
   if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);}
   if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
@@ -1394,22 +1548,27 @@ function puff(x,y,col,n){if(reduceMotion)n=Math.min(n,3);for(let i=0;i<n;i++){co
 // ---------- consumables, return, death ----------
 function useFlask(){if(scene!=='delve')return;if(!has('oil')){toast('No Oil Flasks. Press Lampseed at the Hold.','bad');return;}if(run.oil>=99){toast('Lantern is full');return;}
   take('oil',1);run.oil=Math.min(100,run.oil+ITEMS.oil.oil);puff(P.x,P.y-12,'#ffcd75',8);updateHud();}
-const FOODS=['bread','pondfin','stew'];
+const FOODS=['bread','pondfin','gloomfin','stew'];
 const foodCount=()=>FOODS.reduce((a,f)=>a+(S.bank[f]||0),0);
-function eat(id){if(scene!=='delve'){toast('Save your food for the Depths');return;}if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}
+function eat(id){if(scene==='hold')return eatHold(id);if(scene!=='delve'){toast('Save your food for the Depths');return;}if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}
   if(P.hp>=maxHp()){toast('Already at full health');return;}take(id,1);P.hp=Math.min(maxHp(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');sfx('pick');updateHud();}
 function useQuick(i){const id=S.quick[i];if(!id){if(scene==='hold')openQuickPick(i);else toast('Set quick slots from your bag');return;}
-  if(scene==='hold'){openQuickPick(i);return;}if(id==='oil')useFlask();else eat(id);}
-function useFood(){if(scene!=='delve')return;const have=FOODS.filter(f=>has(f)).sort((a,b)=>ITEMS[a].heal-ITEMS[b].heal);if(!have.length){toast('No food. Cook at the Kitchen.','bad');return;}
+  if(scene==='hold'&&(id==='oil'||!(inWild()||P.hp<hpMax()-.5))){openQuickPick(i);return;}if(id==='oil')useFlask();else eat(id);}
+// eating in the Hold and the Wilderness: from your bag only, one bite every 1.5 s (the world's server keeps your health)
+function eatHold(id){if(P.hp>=hpMax()-.5){toast(inWild()?'Already at full health':'Save your food for the Depths');return;}
+  if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}if(time-(MP.eatT||-9)<1.5)return;MP.eatT=time;
+  S.bank[id]--;if(S.bank[id]<=0)delete S.bank[id];P.hp=Math.min(hpMax(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');sfx('pick');
+  if(roomUp()&&MP.pvpOn)NET.send({t:'eat',h:ITEMS[id].heal});updateHud();updateQuick(true);save();}
+function useFood(){if(scene==='hold'){const have=FOODS.filter(f=>S.bank[f]>0).sort((a,b)=>ITEMS[a].heal-ITEMS[b].heal);if(!have.length)return toast('No food in your bag','bad');const miss=hpMax()-P.hp;return eatHold(have.find(f=>ITEMS[f].heal>=miss)||have[have.length-1]);}if(scene!=='delve')return;const have=FOODS.filter(f=>has(f)).sort((a,b)=>ITEMS[a].heal-ITEMS[b].heal);if(!have.length){toast('No food. Cook at the Kitchen.','bad');return;}
   const miss=maxHp()-P.hp,id=have.find(f=>ITEMS[f].heal>=miss)||have[have.length-1];
   if(P.hp>=maxHp()){toast('Already at full health');return;}take(id,1);P.hp=Math.min(maxHp(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');updateHud();}
 const halfLoss=n=>Math.floor(n/2)+(n%2&&rand()<.5?1:0);
-function returnHome(){setTimeout(()=>save(true),50);sfx('flame');const r=run,out={};for(const [id,n] of Object.entries(r.pack)){if(id==='gold')S.gold+=n;else give(S.bank,id,n);out[id]=n;}save();enterHold();
+function returnHome(){setTimeout(()=>save(true),50);sfx('flame');const r=run,out={};for(const [id,n] of Object.entries(r.pack)){if(id==='gold')S.gold+=n;else give(S.bank,id,n);out[id]=n;}enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
   summary('Back at the Hold',`You lit the Return Flame on floor ${r.floor} with ${r.kills} kills. Your haul is in your bag. Bank anything you can't afford to lose.`,out,null,'Brought home');}
 function die(){setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;const kept={},lost={};
   for(const [id,n] of Object.entries(r.pack)){const l=id==='gold'?Math.floor(n/2):halfLoss(n),k=n-l;if(k>0){if(id==='gold')S.gold+=k;else give(S.bank,id,k);kept[id]=(kept[id]||0)+k;}if(l>0)lost[id]=(lost[id]||0)+l;}
   for(const [id,n] of Object.entries(S.bank)){const l=halfLoss(n);if(l>0){S.bank[id]-=l;if(S.bank[id]<=0)delete S.bank[id];lost[id]=(lost[id]||0)+l;}}
-  save();enterHold();
+  enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
   summary('The dark took you',`You fell on floor ${r.floor} and lost about half of everything you carried: this delve's loot and your bag. Your Bank, your equipped gear and your gold are safe.`,kept,lost,'Kept');}
 function listItems(o){const e=Object.entries(o);return e.length?'<ul class="loot">'+e.map(([id,n])=>`<li>${iconImg(id)}<span>${ITEMS[id].n}</span><b>${fmt(n)}</b></li>`).join('')+'</ul>':'<p class="lead">Nothing.</p>';}
 function summary(title,lead,got,lost,head){openSheet(`<h2>${title}</h2><p class="lead">${lead}</p><h3>${head||'Brought home'}</h3>${listItems(got)}${lost&&Object.keys(lost).length?'<h3>Lost</h3>'+listItems(lost):''}<div class="row"><button class="btn" id="sx">Continue</button></div>`);$('sx').onclick=closeSheet;}
@@ -1421,12 +1580,12 @@ function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
-  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d];if(tAt(map,tx+dx,ty+dy)===WATER){let bx=tx+dx,by=ty+dy;if(tAt(map,bx+dx,by+dy)===WATER&&tAt(map,bx+2*dx,by+2*dy)===WATER){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9};}}return null;}
+  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d],w=tAt(map,tx+dx,ty+dy);if(isWater(w)){let bx=tx+dx,by=ty+dy;if(isWater(tAt(map,bx+dx,by+dy))&&isWater(tAt(map,bx+2*dx,by+2*dy))){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9,w:w===GLOOM?'wild':'hold'};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
-function startFishing(sp){CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
+function startFishing(sp){const W=WATERS[sp.w||'hold'];if(W.lvl&&lvlOf('fishing')<W.lvl){toast('You need Fishing '+W.lvl+' to fish the '+W.n+'.','bad');return;}CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
 let missRun=0;
-function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS.hold.fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;
+function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
   if(rand()<(1/300)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
 function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.hypot(P.x-FISHING.px,P.y-FISHING.py)>3){FISHING=null;return;}const f=FISHING;f.t+=dt;
@@ -1455,7 +1614,7 @@ function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
   if(roomUp())NET.send({t:'chop',i:o.ti,k:o.kind,ok:ok?1:0});
   else{if(ok)o.logs--;o.cutAt=Date.now();o.leftAtCut=o.logs;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
-function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
+function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');if(o.kind==='blackwood')bump('bwlogs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
   floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
 function treeFell(o,ms){o.logs=0;o.until=Date.now()+ms;if(CHOP&&CHOP.o===o)CHOP=null;puff(o.x,o.y-14,PAL.green,14);puff(o.x,o.y-4,PAL.wood,8);
   if(Math.hypot(o.x-P.x,o.y-P.y)<120){sfx('boss');toast('Timber! The '+TREES[o.kind].n+' is down. It regrows in '+Math.round(ms/1000)+' s.');}}
@@ -1502,7 +1661,71 @@ function drawFishing(f=FISHING,px=P.x,py=P.y){if(!f)return;const d=f.dir,sx=d===
   g.fillStyle='rgba(244,244,244,.75)';const m=Math.max(Math.abs(bx-tx),Math.abs(by-ty))||1;for(let i=0;i<=m;i+=1)g.fillRect(Math.round(tx+(bx-tx)*i/m),Math.round(ty+(by-ty)*i/m+Math.sin(i/m*Math.PI)*2),1,1);
   if(f.phase==='wait'||f.phase==='bite'){const rr=f.phase==='bite'?3+Math.floor(time*6)%3:2+Math.floor(time*2)%2;g.fillStyle='rgba(199,251,255,.6)';g.fillRect(Math.round(f.bx-rr),Math.round(f.by+2),rr*2+1,1);}
   g.fillStyle='#b13e53';g.fillRect(Math.round(bx)-1,Math.round(by)-1,3,2);g.fillStyle='#f4f4f4';g.fillRect(Math.round(bx)-1,Math.round(by)+1,3,1);
-  if(f.phase==='bite'){const yy=P.y-40-(Math.floor(time*8)%2);ptDraw(g,'!',P.x+1,yy,{font:'big',color:'#ffcd75',bg:'#1a1c2c'});}}
+  if(f.phase==='bite'){const yy=py-40-(Math.floor(time*8)%2);ptDraw(g,'!',px+1,yy,{font:'big',color:'#ffcd75',bg:'#1a1c2c'});}}
+
+
+// ---------- the Wilderness (north of the Hold): players can fight here ----------
+// The world's realtime room is the referee: it checks every attack, rolls the damage, keeps everyone's health and drops a
+// fallen hero's items. Rules: both players in the Wilderness, combat levels no further apart than the Wilderness level
+// (the lower of the two), and close enough to hit. Attack someone who hasn't attacked you and you're skulled for 20 minutes:
+// a skulled hero who falls loses everything they carry and wear; anyone else keeps their 3 most valuable items.
+let wasWild=false,wildLvlShown=-1,closeCall=false;
+const skulled=()=>(S.skull||0)>Date.now();
+const lvlRange=l=>[Math.max(1,S.lvl-l),Math.min(200,S.lvl+l)];
+function canHit(o){if(!o||o.pend||!inWild())return false;const wa=wildLvl(P.y),wb=wildLvl(o.y);if(!wb)return false;const lb=(o.look&&o.look.lvl)||1;return Math.abs(S.lvl-lb)<=Math.min(wa,wb);}
+function pvpTarget(){let best=null,bd=30;const aim=MP.aim&&OTH.get(MP.aim);if(aim&&canHit(aim)&&Math.hypot(aim.x-P.x,aim.y-P.y)<34)return aim;
+  for(const o of OTH.values()){if(!canHit(o))continue;const d=Math.hypot(o.x-P.x,o.y-P.y);if(d<bd){bd=d;best=o;}}return best;}
+let whyT=0;
+function pvpWhy(o){if(time-whyT<2)return;whyT=time;const wl=wildLvl(P.y),[a,b]=lvlRange(Math.min(wl,wildLvl(o.y)||wl));
+  if(!wildLvl(o.y))return toast(o.name+' is outside the Wilderness.','bad');
+  toast(o.name+' (level '+((o.look&&o.look.lvl)||1)+') is out of your range here. You can fight levels '+a+'–'+b+'.','bad');}
+function pvpSwing(t){if(P.swingCD>0)return;CHOP=null;FISHING=null;const o=t||pvpTarget();
+  if(o){const dx=o.x-P.x,dy=o.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');}
+  P.swing=.2;P.swingCD=.8;P.hitDone=true;sfx('swing');if(roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1});
+  if(!o){let n=null,nd=30;for(const q of OTH.values()){if(q.pend)continue;const d=Math.hypot(q.x-P.x,q.y-P.y);if(d<nd){nd=d;n=q;}}if(n)pvpWhy(n);return;}
+  if(!MP.pvpOn||!roomUp()){if(time-whyT>3){whyT=time;toast('Fighting isn’t switched on in this world yet.','bad');}return;}
+  NET.send({t:'atk',to:o.id});}
+// crossing the wall: the first time, a warning you have to accept
+function wildStep(dt){const w=P.y<WILD_Y;
+  if(w&&!S.flags.wildok){P.y=WILD_Y+3;stick={x:0,y:0,on:false};knob.style.transform='';for(const k of ['ArrowUp','KeyW'])keys[k]=false;if(!paused)openWildWarn();return;}
+  if(w!==wasWild){wasWild=w;document.documentElement.classList.toggle('inwild',w);MP.riskKey='';
+    if(started){if(w){toast('You enter the Wilderness. Other players can attack you here.','bad');buzz(30);}
+      else{toast('You leave the Wilderness.','good');if(closeCall&&P.hp>0&&P.hp<=hpMax()*.1)secret('closecall');}}closeCall=false;}
+  if(w){const l=wildLvl(P.y);if(l>(S.cnt.wilddeep||0))S.cnt.wilddeep=l;if(P.hp<hpMax()*.1&&P.hp>0)closeCall=true;}
+  // health climbs back 1 a second after 8 s out of a fight (the same rule the server uses)
+  if(P.hp<hpMax()&&time-(MP.lc??-99)>8)P.hp=Math.min(hpMax(),P.hp+dt);if(P.hp>hpMax())P.hp=hpMax();
+  wildHud();}
+function wildHud(){const w=inWild(),l=w?wildLvl(P.y):0,key=l+'|'+S.lvl+'|'+(skulled()?1:0);if(key===wildHud.k)return;wildHud.k=key;const el=$('wildB');if(!el)return;el.hidden=!w;if(!w)return;
+  const [a,b]=lvlRange(l);if(!$('wildIc').getAttribute('src'))$('wildIc').src=ART.skull.toDataURL();
+  $('wildL').textContent='Wilderness '+l;$('wildR').textContent='Lv '+a+'–'+b+(skulled()?' · skulled':'');el.classList.toggle('sk',skulled());}
+// what you'd drop if you fell: your bag and the gear you wear (not starter gear, not bound or goal items), most valuable first
+function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'};
+  for(const [id,n] of Object.entries(S.bank))if(ITEMS[id]&&tradable(id)&&n>0)out.push([id,n,0,ITEMS[id].v||0]);
+  for(const sl of ['blade','mail','lantern','cape','helm']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
+  return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
+// back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
+function respawnHold(){FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
+function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null};
+  for(const [id,n,slot] of lost){if(!ITEMS[id]||!(n>0))continue;
+    if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id)S.gear[slot]=DEFG[slot];
+    else{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}}L[id]=(L[id]||0)+n;}
+  for(const [id,n] of kept)if(ITEMS[id])K[id]=(K[id]||0)+n;
+  const wasSk=!!m.sk;S.skull=0;bump('pkd');if(scene==='hold')respawnHold();else S.pos=null;save(true);updateQuick(true);sfx('die');buzz(200);
+  openSheet(`<h2>Defeated in the Wilderness</h2><p class="lead">${chatEsc(m.by||'Another hero')} defeated you${m.away?' while you were logged out mid-fight':''}. ${wasSk?'You were <b>skulled</b>, so you dropped everything you carried and wore.':'You kept your 3 most valuable items and dropped the rest.'} Your Bank is always safe.</p>
+   ${Object.keys(K).length?'<h3>Kept</h3>'+listItems(K):''}${Object.keys(L).length?'<h3>Dropped where you fell</h3>'+listItems(L):'<p class="lead small">You weren’t carrying anything worth taking.</p>'}
+   <p class="lead small">Next time: bank what you can’t afford to lose before heading north, and don’t attack first unless you’re ready to risk it all.</p><div class="row"><button class="btn" id="sx">Back to the Hold</button></div>`);$('sx').onclick=closeSheet;}
+function wildRules(){return `<ul class="info"><li><b>Other players can attack you</b> north of the wall, and you can attack them.</li>
+   <li>The further north, the higher the <b>Wilderness level</b> (1 to 20). You can fight heroes whose combat level is within that many levels of yours.</li>
+   <li>Attack someone who hasn’t attacked you and you get a <b>skull</b> over your head for 20 minutes.</li>
+   <li>Fall here and you <b>drop your items</b> where you stand: everything in your bag and the gear you wear. Without a skull you keep your 3 most valuable items. With a skull you keep nothing.</li>
+   <li>Your Bank is always safe. Logging out in the middle of a fight leaves your hero standing there for 15 seconds.</li>
+   <li>Up north: the <b>Gloom Pond</b> (Gloomfin, Fishing 15) and <b>Blackwood</b> trees (Woodcutting 15).</li></ul>`;}
+function openWildWarn(){openSheet(`<div class="wildhd"><img alt="" src="${ART.skullpost.toDataURL()}"><span><b>The Wilderness</b><small>Beyond the wall, heroes fight heroes</small></span></div>${wildRules()}
+   <div class="row"><button class="btn alt" id="wStay">Stay in the Hold</button><button class="btn danger" id="wGo">Enter the Wilderness</button></div>`);
+  $('wStay').onclick=closeSheet;$('wGo').onclick=()=>{S.flags.wildok=true;save();closeSheet();P.y=WILD_Y-4;sfx('boss');};}
+function openWildSign(){openSheet(`<div class="wildhd"><img alt="" src="${ART.wsign.toDataURL()}"><span><b>Danger: the Wilderness</b><small>North of this wall</small></span></div>${wildRules()}<div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+// north is up: tap the compass for a reminder of what lies where
+$('compass').addEventListener('click',()=>{if(started)toast(inWild()?'North takes you deeper into the Wilderness. South is the way home.':'North, past the old wall: the Wilderness, where players can fight.',inWild()?'bad':'');});
 
 // ---------- farm ----------
 const growth=st=>Math.min(1,(Date.now()-st.t0)/1000/CROPS[st.crop].grow);
@@ -1735,7 +1958,7 @@ function openBag(tab){bagTab=tab||'items';
   if($('setO'))$('setO').onclick=openSettings;if($('gLn'))$('gLn').onclick=()=>{$('gLn').disabled=true;ACC.linkGoogle();};
   if($('wLn'))$('wLn').onclick=async()=>{const b=$('wLn');b.disabled=true;b.textContent='Check wallet…';const r=await ACC.linkWallet();toast(r.ok?'Wallet connected: '+r.addr.slice(0,6)+'…'+r.addr.slice(-4):r.msg,r.ok?'good':'bad');openHero();};if($('xLn'))$('xLn').onclick=()=>{$('xLn').disabled=true;$('xLn').textContent='Opening X…';ACC.xLink();};
   if($('xUn'))$('xUn').onclick=async()=>{if(!xArm){xArm=true;return openHero();}xArm=false;const ok=await ACC.xUnlink();toast(ok?'X account unlinked':'Couldn’t unlink. Try again.',ok?'good':'bad');openHero();};if($('gd'))$('gd').onclick=()=>openGuide();if($('gd2'))$('gd2').onclick=()=>openGuide();
-  if($('out'))$('out').onclick=()=>{save();ACC.flush();ACC.logout();};
+  if($('out'))$('out').onclick=()=>{notePos();save();ACC.flush();ACC.logout();};
   if($('reset'))$('reset').onclick=()=>{if($('reset').dataset.c){S=normalize({name:S.name,look:S.look,wallet:S.wallet});save();P.hp=maxHp();enterHold();closeSheet();toast('Progress reset');}else{$('reset').dataset.c=1;$('reset').textContent='Tap again to reset';}};
 }
 function itemInfo(id){const it=ITEMS[id],o=[];
@@ -1866,7 +2089,7 @@ const bump=(k,n=1)=>{if(n>0)S.cnt[k]=(S.cnt[k]||0)+n;};
 const C=k=>S.cnt[k]||0;
 const totalLvl=()=>Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0);
 const ownsRarity=r=>allKeys().concat(Object.keys(S.vault)).some(id=>ITEMS[id]&&ITEMS[id].rarity&&RORDER.indexOf(ITEMS[id].rarity)>=RORDER.indexOf(r)&&ITEMS[id].rarity!=='unique');
-const GOAL_CATS=[['start','First steps'],['skills','Skills'],['depths','The Depths'],['hold','Life at the Hold'],['secret','Secrets']];
+const GOAL_CATS=[['start','First steps'],['skills','Skills'],['depths','The Depths'],['hold','Life at the Hold'],['wild','Wilderness'],['secret','Secrets']];
 const lv=(k,n)=>({done:()=>lvlOf(k)>=n,prog:()=>[lvlOf(k),n]}),cn=(f,n)=>({done:()=>f()>=n,prog:()=>[Math.min(n,f()),n]});
 const GOALS=[
   {id:'plant',cat:'start',t:'Plant crops at the Farm',hint:'Walk to the fenced field and tap Farm. You start with 20 Wheat Seeds.',done:()=>S.flags.planted,gold:10},
@@ -1908,6 +2131,13 @@ const GOALS=[
   {id:'sell',cat:'hold',t:'Earn 5,000 gold trading with Tallow',hint:'Sell what you don’t need to Tallow, the merchant by the crossroads.',...cn(()=>C('sold'),5000),gold:75},
   {id:'expand',cat:'hold',t:'Buy more bank space',hint:'At the Bank.',done:()=>S.bankBuys>=1,gold:50},
   {id:'rich',cat:'hold',t:'Hold 25,000 gold at once',hint:'Saving up for something?',done:()=>S.gold>=25000,prog:()=>[Math.min(25000,S.gold),25000],gold:250},
+  {id:'wild',cat:'wild',t:'Enter the Wilderness',hint:'North of the Hold, through a gap in the old wall. Other players can attack you there.',...cn(()=>C('wilddeep'),1),gold:15},
+  {id:'wild10',cat:'wild',t:'Reach Wilderness level 10',hint:'The further north you go, the higher the level.',...cn(()=>C('wilddeep'),10),gold:60},
+  {id:'wild20',cat:'wild',t:'Stand before the Old Obelisk',hint:'At the very top of the Wilderness: level 20.',...cn(()=>C('wilddeep'),20),gold:150},
+  {id:'gloom',cat:'wild',t:'Catch a Gloomfin',hint:'In the Gloom Pond. Needs Fishing 15.',...cn(()=>C('gloomfin'),1),gold:40},
+  {id:'bwood',cat:'wild',t:'Cut a Blackwood log',hint:'Blackwood grows in the Wilderness. Needs Woodcutting 15.',...cn(()=>C('bwlogs'),1),gold:40},
+  {id:'pk1',cat:'wild',t:'Defeat a player',hint:'Only in the Wilderness, and only heroes in your level range.',...cn(()=>C('pks'),1),gold:100},
+  {id:'pk10',cat:'wild',t:'Defeat 10 players',hint:'Attacking first gets you skulled. Choose your fights.',...cn(()=>C('pks'),10),gold:300},
   // secrets: hidden until found
   {id:'konami',cat:'secret',t:'Old Habits',hint:'Up, up, and away… then down again. Left and right, twice.',gold:300,secret:true},
   {id:'night',cat:'secret',t:'Night Owl',hint:'The lake is quietest after midnight.',gold:150,secret:true},
@@ -1917,7 +2147,8 @@ const GOALS=[
   {id:'choir',cat:'secret',t:'Timber Choir',hint:'Three axes, one tree.',gold:150,secret:true},
   {id:'word',cat:'secret',t:'Speak, Friend',hint:'Say the name of this place aloud.',gold:50,secret:true},
   {id:'fall10',cat:'secret',t:'Persistence',hint:'Fall ten times. Rise ten times.',gold:100,secret:true,done:()=>(S.deaths||0)>=10},
-  {id:'giver',cat:'secret',t:'Generous Soul',hint:'Leave something on the ground for a stranger.',gold:120,secret:true}];
+  {id:'giver',cat:'secret',t:'Generous Soul',hint:'Leave something on the ground for a stranger.',gold:120,secret:true},
+  {id:'closecall',cat:'secret',t:'Close Call',hint:'Make it out of the Wilderness by the skin of your teeth.',gold:150,secret:true}];
 const GOAL_BY=Object.fromEntries(GOALS.map(g=>[g.id,g]));
 const goalsDone=()=>GOALS.filter(g=>S.goals[g.id]).length;
 // Goal Relics: the only way to get them. Rolled on every goal completed; secrets roll ten times better.
@@ -2033,7 +2264,7 @@ function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
     return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
   const cnt=c=>{const a=GOALS.filter(g=>g.cat===c);return `${a.filter(g=>S.goals[g.id]).length}/${a.length}`;};
   openSheet(`<h2>Goals <small>${d}/${GOALS.length}</small></h2><p class="lead small">Finish them in any order for gold. Every goal also has a tiny chance to award a <b style="color:#ff77a8">Goal Relic</b>, something that exists nowhere else. Secrets have far better odds.</p>
-    <div class="tabs">${GOAL_CATS.map(([k,l])=>`<button class="tab" aria-selected="${goalTab===k}" data-gt="${k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
+    <div class="tabs gt">${GOAL_CATS.map(([k,l])=>`<button class="tab" aria-selected="${goalTab===k}" data-gt="${k}">${l} <small>${cnt(k)}</small></button>`).join('')}</div>
     <ol class="goals">${list}</ol><div class="row"><button class="btn" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-gt]').forEach(b=>b.onclick=()=>openGuide(b.dataset.gt));}
 // ---- secret inputs: a remembered direction sequence (keys or stick), and spinning on the spot ----
@@ -2064,8 +2295,8 @@ function update(dt){
   if(P.swing>0){P.swing-=dt;if(!P.hitDone&&P.swing<.14){P.hitDone=true;resolveSwing();}}
   // context
   const ctx=nearestAct();setActLabel(ctx);
-  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();}
-  if(scene==='hold'){updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
+  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();else if(inWild())pvpSwing();}
+  if(scene==='hold'){wildStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -2122,7 +2353,7 @@ function updateEnemies(dt){
 
 // ---------- HUD ----------
 let lastAct=null;
-function setActLabel(a){const lab=a?a.label:(scene==='delve'?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
+function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
 const PT=['hpTxt','oilTxt','packN'];
 let quickKey='';
 function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S.bank[id]||0:'').join(',')+'|'+scene+'|'+(force?Math.random():'');if(key===quickKey)return;quickKey=key;
@@ -2134,9 +2365,9 @@ const fmtGold=n=>n<10000?n.toLocaleString('en-US'):n<1e6?(Math.floor(n/100)/10)+
 function goldHud(){const gv=fmtGold(S.gold|0),gb=$('goldV');if(gb&&gb._v!==gv){gb._v=gv;gb.lastChild.textContent=gv;gb.title=(S.gold|0).toLocaleString('en-US')+' gold';if(!gb.firstChild.getAttribute('src'))gb.firstChild.src=iconOf('gold').toDataURL();}}
 function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
-  const mh=maxHp();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
+  const mh=hpMax();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
-  $('where').textContent=scene==='hold'?'The Hold'+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!dv;$('feed').hidden=dv;updateQuick(force);
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -2150,14 +2381,14 @@ function spr(img,x,y){g.drawImage(img,Math.round(x),Math.round(y));}
 // ---- name tags: real HTML text placed over the game, so it stays sharp on every phone and screen ----
 // The NAME is centred over the hero; the combat level hangs to its right and an admin's crown to its left.
 const TAGS=[];const tagBox=$('tags'),tagPool=[];
-function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i>';e.firstChild.src=ART.crownS.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
+function tagEl(i){let e=tagPool[i];if(!e){e=document.createElement('div');e.className='tag';e.innerHTML='<img class="cr" alt=""><b></b><i></i><img class="sk" alt="Skulled">';e.firstChild.src=ART.crownS.toDataURL();e.children[3].src=ART.skull.toDataURL();tagBox.appendChild(e);tagPool[i]=e;e._k='';}return e;}
 function drawTags(){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,W=VW*k,H=VH*k;let n=0;
   for(const t of TAGS){const x=Math.round((t.x-camX)*k),y=Math.round((t.y-camY)*k);if(x<-150||x>W+150||y<-30||y>H+30)continue;
     const e=tagEl(n++);if(e.hidden)e.hidden=false;   // unhide first: a hidden tag measures 0 wide and the level badge would cover the name
-    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0)+'|'+(t.hov?1:0);
-    if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';}
+    const key=t.say!=null?'S|'+t.say:t.name+'|'+(t.lv||'')+'|'+(t.adm?1:0)+'|'+(t.me?1:0)+'|'+(t.npc?1:0)+'|'+(t.hov?1:0)+'|'+(t.sk?1:0);
+    if(e._k!==key&&t.say!=null){e._k=key;e.className='tag say';e.children[1].textContent=t.say;e.children[2].style.display='none';e.children[0].style.display='none';e.children[3].style.display='none';}
     else if(e._k!==key){e._k=key;e.className='tag';e.children[1].textContent=t.name;const L=e.children[2];L.textContent=t.lv?String(t.lv):'';L.style.display=t.lv?'':'none';
-      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.classList.toggle('hov',!!t.hov);e.children[0].style.display=t.adm?'':'none';
+      L.style.color=t.me?'#cfd8e3':t.lv?lvlColor(t.lv):'';e.children[3].style.display=t.sk?'':'none';e.classList.toggle('adm',!!t.adm);e.classList.toggle('me',!!t.me);e.classList.toggle('npc',!!t.npc);e.classList.toggle('hov',!!t.hov);e.children[0].style.display=t.adm?'':'none';
       const hw=e.children[1].offsetWidth/2;L.style.left=Math.round(hw+3)+'px';e.children[0].style.left=Math.round(-hw-3-12)+'px';}
     const tr=`translate(${x}px,${y}px)`;if(e._t!==tr){e._t=tr;e.style.transform=tr;}if(e.hidden)e.hidden=false;}
   for(let i=n;i<tagPool.length;i++)if(!tagPool[i].hidden)tagPool[i].hidden=true;}
@@ -2169,7 +2400,7 @@ function render(){TAGS.length=0;
   camX=cx;camY=cy;g.save();g.translate(-cx,-cy);
   g.drawImage(map.ground,0,0);
   const x0=Math.floor(cx/T),y0=Math.floor(cy/T),x1=Math.ceil((cx+VW)/T),y1=Math.ceil((cy+VH)/T),wf=Math.floor(time*2)%2;
-  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);
+  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
       if(tt===DOCK)g.drawImage(tAt(map,x,y+1)===WATER&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
     for(const [lx,ly,lf] of map.lilies||[])g.drawImage(ART.lily[lf],lx*T+4+Math.round(Math.sin(time*.8+lx)*.6),ly*T+5);
     {const open=plotsOpen();for(const p of map.plots)if(p.i>=open&&!S.plots[p.i])g.drawImage(ART.soilLocked,p.tx*T,p.ty*T);}
@@ -2177,18 +2408,20 @@ function render(){TAGS.length=0;
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}
   const vis=o=>o.x>cx-60&&o.x<cx+VW+60&&o.y>cy-20&&o.y<cy+VH+70;
-  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);}
+  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);}
+  if(scene==='hold'&&cy<WILD_Y)wildShade(cx,cy);
   for(const o of map.objs){if(!o.onWall||o.gone||!vis(o))continue;const [tx,ty]=o.tile;
     if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else spr(ART.ore[o.kind],tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
   // y-sorted
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const sw=o.swT>0&&scene==='delve',swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=dun&&!sw,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&o.y<WILD_Y,sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
+  if(scene==='hold'&&cy<WILD_Y&&!reduceMotion)wildAsh(cx,cy);
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
   if(slashes.length)drawSlashes();
   g.restore();
@@ -2211,8 +2444,15 @@ function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
   for(const o of map.objs){if(o.type!=='torch'||Math.abs(o.x-P.x)>VW*.7||Math.abs(o.y-P.y)>VH*.7)continue;const [tx,ty]=o.tile;
     for(let k=0;k<3;k++){const ph=(t*.9+k/3+tx*.31)%1,x=tx*T+8+Math.sin(ph*9+k*2+tx)*2,y=ty*T+4-ph*14;g.globalAlpha=(1-ph)*.9;g.fillStyle=ph<.4?'#ffcd75':'#ff9f3d';g.fillRect(Math.round(x),Math.round(y),1,1);}}
   g.globalAlpha=1;g.restore();}
+// the Wilderness: the ground darkens past the wall (deeper = darker), and ash drifts down
+function wildShade(cx,cy){const top=Math.max(0,cy),bot=Math.min(WILD_Y,cy+VH);if(bot<=top)return;
+  const gr=g.createLinearGradient(0,WILD_Y-14*T,0,WILD_Y);gr.addColorStop(0,'rgba(30,12,36,.2)');gr.addColorStop(1,'rgba(30,12,36,.04)');
+  g.fillStyle='rgba(30,12,36,.2)';const a=Math.min(bot,WILD_Y-14*T);if(a>top)g.fillRect(cx,top,VW,a-top);
+  g.fillStyle=gr;const b0=Math.max(top,WILD_Y-14*T);if(bot>b0)g.fillRect(cx,b0,VW,bot-b0);}
+function wildAsh(cx,cy){const t=time;for(let i=0;i<34;i++){const ph=(t*.07+i*.161)%1,x=cx+((i*97.3+Math.sin(t*.4+i)*14)%VW+VW)%VW,y=cy+ph*VH;if(y>WILD_Y)continue;
+    g.globalAlpha=.55*Math.sin(ph*Math.PI);g.fillStyle=i%4?'#8d8597':'#e8a87c';g.fillRect(Math.round(x),Math.round(y),1,1);}g.globalAlpha=1;}
 function drawObj(o){
-  if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;const sw=reduceMotion?0:Math.sin(time*1.1+o.x*.07+o.y*.03);spr(sw>.55?ART.treeSway[1]:sw<-.75?ART.treeSway[0]:ART.tree,o.x-16+k,o.y-30);
+  if(o.type==='tree'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0;const sw=reduceMotion?0:Math.sin(time*1.1+o.x*.07+o.y*.03),bw=o.kind==='blackwood';spr(sw>.55?(bw?ART.bwSway:ART.treeSway)[1]:sw<-.75?(bw?ART.bwSway:ART.treeSway)[0]:bw?ART.bwTree:ART.tree,o.x-16+k,o.y-30);
     if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-34,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-33,w,2);}}}
   else if(o.type==='house')spr(ART.house,o.x-24,o.y-48);
   else if(o.type==='bank')spr(ART.bank,o.x-24,o.y-48);
@@ -2226,7 +2466,15 @@ function drawObj(o){
       if(!wickSeen()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-52+b),7,9);g.fillStyle='#b98cff';g.fillRect(Math.round(o.x-2),Math.round(o.y-51+b),5,7);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x),Math.round(o.y-50+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-46+b),1,1);}}
     if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=W?WICK_SAY[ri(0,WICK_SAY.length-1)]:['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
     if(o.sayT>0){o.sayT-=1/60;TAGS.push({x:o.x,y:o.y-45,say:o.say});}}
-  else if(o.type==='sign')spr(ART.sign,o.x-9,o.y-22);
+  else if(o.type==='sign')spr(o.wild?ART.wsign:ART.sign,o.x-9,o.y-22);
+  else if(o.type==='wwall')spr(ART.wwall[(o.end||'')+o.v],o.x-8,o.y-20);
+  else if(o.type==='deadtree')spr(ART.deadtree[o.v],o.x-16,o.y-30);
+  else if(o.type==='rock')spr(ART.rock[o.v],o.x-8,o.y-14);
+  else if(o.type==='grave')spr(ART.grave[o.v],o.x-8,o.y-18);
+  else if(o.type==='pillar')spr(ART.pillar[o.v],o.x-8,o.y-30);
+  else if(o.type==='skullpost')spr(ART.skullpost,o.x-8,o.y-26);
+  else if(o.type==='obelisk'){spr(ART.obelisk[Math.floor(time*1.4)%2],o.x-16,o.y-50);if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x),Y=Math.round(o.y-30),R=26+2*Math.sin(time*2),gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,`rgba(${FLAMEC},.28)`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.restore();
+    for(let k=0;k<4;k++){const ph=(time*.5+k/4)%1;g.globalAlpha=1-ph;g.fillStyle=k%2?FLAME:'#f1e4ff';g.fillRect(Math.round(o.x+Math.sin(ph*6+k*2)*6),Math.round(o.y-44-ph*18),1,1);}g.globalAlpha=1;}}
   else if(o.type==='barricade')spr(ART.barricade,o.x-10,o.y-60);
   else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
   else if(o.type==='well')spr(ART.well,o.x-16,o.y-32);
@@ -2245,8 +2493,8 @@ function drawAmbient(cx,cy,x0,y0,x1,y1){const t=time;
       g.globalAlpha=(1-ph)*.5;g.fillStyle=ph<.25?'#566c86':'#94b0c2';g.fillRect(Math.round(x-r/2),Math.round(y-r/2),Math.round(r),Math.round(r));}
     else if(o.type==='kitchen'&&inView(o.x,o.y-20))for(let i=0;i<4;i++){const ph=(t*.45+i/4)%1,x=o.x+Math.sin(ph*6+i*2)*2.5,y=o.y-15-ph*14;
       g.globalAlpha=(1-ph)*.45;g.fillStyle='#f4f4f4';g.fillRect(Math.round(x),Math.round(y),1+(ph>.5?1:0),1);}
-    else if(o.type==='tree'&&!(o.chop&&o.until)&&inView(o.x,o.y-20)){const ph=(t*.11+o.x*.0137+o.y*.0071)%1;if(ph<.4){const k=ph/.4,x=o.x-6+(o.x*7%12)+Math.sin(k*14)*3+k*8,y=o.y-20+k*26;
-      g.globalAlpha=k>.85?(1-k)/.15:1;g.fillStyle=(o.x/16|0)%2?'#a7f070':'#38b764';g.fillRect(Math.round(x),Math.round(y),Math.sin(k*14)>0?2:1,1);}}}
+    else if(o.type==='tree'&&!(o.chop&&o.until)&&inView(o.x,o.y-20)&&o.spr){const ph=(t*.11+o.x*.0137+o.y*.0071)%1;if(ph<.4){const k=ph/.4,x=o.x-6+(o.x*7%12)+Math.sin(k*14)*3+k*8,y=o.y-20+k*26;
+      g.globalAlpha=k>.85?(1-k)/.15:1;g.fillStyle=o.kind==='blackwood'?((o.x/16|0)%2?'#5a4578':'#3d2f52'):(o.x/16|0)%2?'#a7f070':'#38b764';g.fillRect(Math.round(x),Math.round(y),Math.sin(k*14)>0?2:1,1);}}}
   g.globalAlpha=1;
   // butterflies drifting around the flowers
   if(!map.flies)map.flies=map.objs.filter(o=>o.type==='flowers').filter((_,i)=>i%5===0).slice(0,7).map((o,i)=>({x:o.x,y:o.y,c:['#f4f4f4','#ffcd75','#73eff7','#e86fd0','#a7f070'][i%5],s:.6+i*.13}));
@@ -2279,10 +2527,13 @@ function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   spr(img,x-8,y-15+yb);
   const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
   if(look&&look.flame==='founder')drawFlame(x,y,dir,(npc?npc.name.length:0));
+  // In the Wilderness: a health bar over anyone who's hurt, and every name, level and skull always shows
+  const wild=scene==='hold'&&y<WILD_Y,hat=look&&ADMIN_HATS[look.helm]?10:0;
+  if(wild){const hp=me?P.hp:npc&&npc.hp,mx=me?hpMax():npc&&npc.max;if(hp!=null&&mx&&hp<mx){const X=Math.round(x)-7,Y=Math.round(y)-21-hat;g.fillStyle='#1a1c2c';g.fillRect(X-1,Y-1,16,4);g.fillStyle='#b13e53';g.fillRect(X,Y,14,2);g.fillStyle='#a7f070';g.fillRect(X,Y,Math.max(0,Math.round(14*hp/mx)),2);}}
   // Name tags are collected here and drawn on a sharp overlay after the world (see drawTags). Off by default
-  // (Settings → Player names), except admins, whose names everyone always sees.
-  {const adm=me?ADMIN:!!(npc&&npc.adm);if(name&&(adm||SET.pnames))TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?30:20),name,lv:me?S.lvl:look&&look.lvl,adm,me});}
-  if(npc&&npc.sayT>0)TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?28:18)-(npc.adm||SET.pnames?5:0),say:npc.say});
+  // (Settings → Player names), except admins, whose names everyone always sees, and everyone in the Wilderness.
+  {const adm=me?ADMIN:!!(npc&&npc.adm),sk=wild&&(me?skulled():!!(npc&&npc.sk>Date.now()));if(name&&(adm||SET.pnames||wild))TAGS.push({x,y:y-(wild?28:20)-hat,name,lv:me?S.lvl:look&&look.lvl,adm,me,sk});}
+  if(npc&&npc.sayT>0)TAGS.push({x,y:y-(look&&ADMIN_HATS[look.helm]?28:18)-(npc.adm||SET.pnames||wild?5:0)-(wild?9:0),say:npc.say});
 }
 // A small violet flame that floats at the Founder's shoulder, with sparks drifting up from it
 function drawFlame(x,y,dir,seed){const t=time+seed*.7,bx=Math.round(x+(dir==='left'?7:-8)),by=Math.round(y-17+Math.sin(t*2.4)*1.5);
@@ -2296,13 +2547,13 @@ function drawPlayer(){
 function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
-  const dun=scene!=='hold',held=dun&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always
+  const dun=scene!=='hold',held=(dun||inWild()&&!CHOP&&!FISHING)&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
   if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);
   if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
-  if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames?5:0),say:P.say});
+  if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames||inWild()?5:0)-(inWild()?9:0),say:P.say});
   if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
   if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
@@ -2405,18 +2656,23 @@ MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
 function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
 // ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
 MP.tick=dt=>{
-  for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>80||Math.abs(dy)>80){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
-    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;}
+  for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>40||Math.abs(dy)>40){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
+    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;
+    if(o.hp!=null&&o.max&&o.hp<o.max&&time-(o.lc??-99)>8)o.hp=Math.min(o.max,o.hp+dt);}
   if(!netOn()||!NET.roomOpen()||!MP.room)return;
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
   {const f=FISHING&&scene==='hold'?{d:FISHING.dir,ph:FISHING.phase,bx:Math.round(FISHING.bx),by:Math.round(FISHING.by)}:null,k=f?f.d+f.ph+f.bx+','+f.by:'';if(k!==MP.fishKey){MP.fishKey=k;NET.send({t:'fish',f});}}
+  // in the Wilderness the room keeps a list of what you'd drop if you fell (sent when it changes)
+  if(MP.pvpOn&&inWild()){MP.riskT=(MP.riskT||0)-dt;if(MP.riskT<=0){MP.riskT=.5;const it=riskList(),k=JSON.stringify(it)+(skulled()?'|s':'');if(k!==MP.riskKey){MP.riskKey=k;NET.send({t:'risk',it,sk:Math.max(0,(S.skull||0)-Date.now())});}}}
   MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade,lvl:S.lvl}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
   if(scene==='delve'&&MP.inInst()&&MP.host===MP.id&&OTH.size){MP.enT-=dt;if(MP.enT<=0){MP.enT=.1;
     NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100)])});}}
 };
 const fishOf=f=>f?{dir:f.d,phase:f.ph,bx:f.bx,by:f.by,t:0}:null;
-function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,adm:!!p.adm,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish)});
-  if(o.x==null||!OTH.has(p.id)){o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
+function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,adm:!!p.adm,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish),hp:p.hp??null,max:p.max||null,sk:p.sk?Date.now()+p.sk:0});
+  // a hero who hasn't said where they are yet stays hidden (older servers announced everyone at 0,0, which drew a
+  // faceless, levelless hero flickering at the spawn whenever a backgrounded phone reconnected)
+  if(o.x==null||!OTH.has(p.id)){o.pend=!(p.x||p.y);o.x=o.tx=p.x||(map.spawn?map.spawn.x:0);o.y=o.ty=p.y||(map.spawn?map.spawn.y:0);}OTH.set(p.id,o);}
 // ---- lobby messages ----
 if(window.NET){
   NET.onL('hello',m=>{MP.id=m.you;MP.online=m.online;MP.party=m.party;if(MP.room)NET.lsend({t:'where',room:MP.room,floor:MP.inInst()&&run?run.floor:undefined});else if(scene==='hold')MP.toHold();MP.loadFriends();refreshSocial();});
@@ -2434,9 +2690,12 @@ if(window.NET){
   NET.onL('pchat',m=>{const msg={id:'p'+Date.now()+Math.random(),name:m.name,text:m.text,at:Date.now(),party:true,me:m.id===MP.id};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);});
   NET.onL('feed',m=>{if(!SET.feed)return;const f=$('feed');f.textContent='★ '+m.text;f.classList.add('real');clearTimeout(MP.feedT);MP.feedT=setTimeout(()=>{f.textContent='';},9000);});
   NET.onL('nudge',m=>{if(m.k==='friend'){MP.loadFriends();toast(m.from+' sent you a friend request','good');}});
+  NET.onL('died',m=>applyPkDeath(m));   // you were defeated in the Wilderness after logging out mid-fight
   NET.onL('kicked',m=>{if(m.mod)return modRemoved(m);OTH.clear();MP.room=null;openSheet(`<h2>Signed in elsewhere</h2><p class="lead">${chatEsc(m.reason)} Only one device can play a hero at a time.</p><div class="row"><button class="btn" id="rl">Play here instead</button></div>`);$('rl').onclick=()=>location.reload();});
   // ---- room messages ----
-  NET.onR('hi',m=>{if(MP.trade)tradeClear();MP.room=m.room;MP.host=m.host;OTH.clear();for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
+  NET.onR('hi',m=>{if(MP.trade)tradeClear();MP.room=m.room;MP.host=m.host;MP.pvpOn=!!m.pvp;MP.riskKey='';MP.aim=null;OTH.clear();
+    // back in the middle of a Wilderness fight (a reconnect, or a reload): right where you were, with the health you had
+    if(m.back&&scene==='hold'){P.x=m.back.x;P.y=m.back.y;P.hp=Math.min(hpMax(),m.back.hp);MP.lc=time;if(m.back.sk)S.skull=Date.now()+m.back.sk;FISHING=null;CHOP=null;toast('You’re back in the fight!','bad');}for(const p of m.players)addOther(p);syncDrops(m.drops||[]);if(m.trees&&HOLD.trees){for(const o of HOLD.trees){o.until=0;o.logs=TREES[o.kind].logs;o.cutAt=0;}for(const [i,left,wait,age] of m.trees){const o=HOLD.trees[i];if(o){o.logs=left;o.leftAtCut=left;o.until=wait>0?Date.now()+wait:0;o.cutAt=age>=0?Date.now()-age:0;}}}MP.sent='';MP.lookKey='';MP.fishKey='';MP.sendT=0;MP.lookT=0;
     // chat lives only for this session: nothing said before you signed in is shown, and your log carries over between rooms
     if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
@@ -2447,13 +2706,32 @@ if(window.NET){
     }});
   NET.onR('+',m=>{addOther(m.p);if(scene==='hold'||OTH.size===1)sfx('pick');});
   NET.onR('-',m=>{const o=OTH.get(m.id);OTH.delete(m.id);if(o&&MP.inInst())toast(o.name+' left the dungeon');});
-  NET.onR('S',m=>{for(const [id,x,y,d,mv] of m.p){const o=OTH.get(id);if(!o)continue;o.tx=x;o.ty=y;o.dir=d;o.moving=!!mv;}});
+  NET.onR('S',m=>{for(const [id,x,y,d,mv] of m.p){const o=OTH.get(id);if(!o)continue;if(o.pend){o.pend=false;o.x=x;o.y=y;}o.tx=x;o.ty=y;o.dir=d;o.moving=!!mv;}});
   NET.onR('L',m=>{const o=OTH.get(m.id);if(o)o.look=m.look||DEFAULT_LOOK;});
   NET.onR('D',m=>{const v=m.d;if(m.ref){const d=drops.find(q=>q.ref===m.ref);if(d){d.did=v.did;if(v.left!=null)d.expAt=Date.now()+v.left;return;}}netDrop(v,false);});
   NET.onR('took',m=>{const d=drops.find(q=>q.did===m.did);if(d&&d.bag&&d.ref&&m.by!==MP.id)secret('giver');if(m.by===MP.id){if(d)grantDrop(d);else if(ITEMS[m.it]||m.it==='gold')grantDrop({id:m.it,n:m.n});}else if(d)d.taken=true;});
   NET.onR('gone',m=>{const d=drops.find(q=>q.did===m.did);if(d)d.taken=true;});
   NET.onR('nope',m=>{const d=drops.find(q=>q.did===m.did);if(d){d.pending=false;d.showAt=Date.now()+5000;}});
   NET.onR('T',onTree);
+  // ---- the Wilderness ----
+  NET.onR('PH',m=>{const me=MP.id,a=m.a===me?null:OTH.get(m.a),v=m.v===me?null:OTH.get(m.v),vx=m.v===me?P.x:v&&v.x,vy=m.v===me?P.y:v&&v.y;if(vx==null)return;
+    const ax=m.a===me?P.x:a?a.x:vx,ay=m.a===me?P.y:a?a.y:vy;
+    if(a){a.swT=.2;const dx=vx-a.x,dy=vy-a.y;a.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');a.lc=time;}
+    floatText(vx,vy-20,m.d?String(m.d):'0',!m.d?'#94b0c2':m.v===me?'#ff6b6b':m.a===me?'#ffcd75':'#f4f4f4');
+    if(m.d)impact(vx,vy-6,Math.atan2(vy-ay,vx-ax),m.v===me?'#ff6b6b':'#ffcd75',false,m.a===me||m.v===me);
+    if(m.a===me)MP.lc=time;
+    if(m.v===me){P.hp=m.hp;MP.lc=time;if(m.d){sfx('hurt');buzz(40);if(SET.shake)shake=3;}if(FISHING||CHOP){FISHING=null;CHOP=null;}}
+    else if(v){v.hp=m.hp;v.max=m.max;v.lc=time;if(m.a===me&&m.d)sfx('hit');}});
+  NET.onR('H',m=>{if(m.id===MP.id){P.hp=Math.min(hpMax(),m.hp);}else{const o=OTH.get(m.id);if(o){o.hp=m.hp;o.max=m.max;}}});
+  NET.onR('SK',m=>{const until=m.left>0?Date.now()+m.left:0;if(m.id===MP.id){const was=skulled();S.skull=until;if(until&&!was){toast('You attacked first: you’re skulled for 20 minutes. Fall now and you lose everything.','bad');sfx('boss');}save();}else{const o=OTH.get(m.id);if(o)o.sk=until;}});
+  NET.onR('PK',m=>{puff(m.x,m.y-8,'#b13e53',18);const who=m.a===MP.id?'You':m.an;
+    if(m.a===MP.id){bump('pks');toast('You defeated '+m.vn+'! Their loot is yours to pick up for a minute.','good');MP.feed('pk',m.vn);sfx('boss');buzz([40,30,40]);}
+    else if(m.v!==MP.id&&Math.hypot(m.x-P.x,m.y-P.y)<220)floatText(m.x,m.y-28,who+' defeated '+m.vn,'#ff6b6b');
+    const o=OTH.get(m.v);if(o){o.hp=null;o.sk=0;}});
+  NET.onR('DIED',m=>applyPkDeath(m));
+  NET.onR('PN',m=>{const o=OTH.get(m.to);if(m.why==='level'&&o)pvpWhy(o);else if(m.why==='safe_them'&&o&&time-whyT>2){whyT=time;toast(o.name+' is outside the Wilderness.','bad');}else if(m.why==='protected'&&time-whyT>2){whyT=time;toast('They just arrived. Give them a moment.','bad');}});
+  NET.onR('RC',m=>{if(typeof m.tk==='string'){const r=window.LH_RCPT=window.LH_RCPT||[];r.push(m.tk);if(r.length>40)r.shift();}});
+  NET.onR('pos',m=>{if(scene==='hold'&&Number.isFinite(m.x)&&Number.isFinite(m.y)){P.x=m.x;P.y=m.y;MP.sent='';}});
   NET.onR('muted',onMuted);
   NET.onR('W',peerSwing);
   NET.onR('TQ',m=>{MP.tradeReqs=(MP.tradeReqs||[]).filter(r=>r.from!==m.from);MP.tradeReqs.push({from:m.from,name:m.name,at:Date.now()});showPrompt();sfx('rare');buzz(40);});
@@ -2663,7 +2941,7 @@ function menuKey(e){if(e.key==='Escape')closeMenu();}
 function closeMenu(){const m=$('pmenu');if(m)m.remove();removeEventListener('pointerdown',menuAway,true);removeEventListener('keydown',menuKey,true);}
 // which player is under the pointer (screen → world)
 function otherAt(cx,cy){const dpr=window.devicePixelRatio||1,k=SCALE/dpr,wx=cx/k+camX,wy=cy/k+camY;let best=null,bd=14;
-  for(const o of OTH.values()){const d=Math.hypot(o.x-wx,o.y-8-wy);if(d<bd){bd=d;best=o;}}return best;}
+  for(const o of OTH.values()){if(o.pend)continue;const d=Math.hypot(o.x-wx,o.y-8-wy);if(d<bd){bd=d;best=o;}}return best;}
 {let lp=null;const cvEl=$('cv');
   cvEl.addEventListener('contextmenu',e=>{if(!started||!$('sheet').hidden)return;const o=otherAt(e.clientX,e.clientY);if(o){e.preventDefault();playerMenu(o,e.clientX,e.clientY);}});
   cvEl.addEventListener('touchstart',e=>{if(!ADMIN||!started||e.touches.length!==1)return;const t=e.touches[0],o=otherAt(t.clientX,t.clientY);if(!o)return;
@@ -2707,7 +2985,7 @@ function openSocial(tab,keep){if(!started)return;socTab=tab||socTab;socOpen=true
         +(scene==='hold'?`<div class="srow"><span><b>World ${next}</b><small>Empty. A quiet place to start fresh.</small></span><span class="sbtns"><button class="btn alt sm" data-sw="w${next}">Open</button></span></div>`:'')
         +`<p class="lead small">${scene==='hold'?'Each world holds '+cap+' players. Your party, friends list and progress come with you; trees, chat and items on the ground belong to each world.':'Return home to the Hold to switch worlds.'}</p>`;}
   }else{
-    const near=[...OTH.values()];
+    const near=[...OTH.values()].filter(o=>!o.pend);
     body=near.length?near.map(o=>{const fr=F.friends.some(f=>f.name.toLowerCase()===o.id),pend=F.outgoing.some(n=>n.toLowerCase()===o.id),b=[];
         if(!fr&&!pend)b.push(`<button class="btn alt sm" data-fadd="${chatEsc(o.name)}">Add friend</button>`);
         if(!inParty(o.id)&&MP.isLeader())b.push(`<button class="btn sm" data-inv="${o.id}">Invite</button>`);
@@ -2746,8 +3024,8 @@ function frame(ts){let dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(hitStop>0){
 let started=false;
 fit();applySet();enterHold();requestAnimationFrame(frame);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
-setInterval(()=>{if(started)save();},10000);
-addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started)save();});addEventListener('pagehide',()=>{if(started)save();});
+let posTick=0;setInterval(()=>{if(started){if(++posTick%3===0)notePos();save();}},10000);
+addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started){notePos();save();}});addEventListener('pagehide',()=>{if(started){notePos();save();}});
 // Admin loadout: the best gear equipped, one of every lantern, cape and top-tier piece in the bank, both relics, max bank space.
 function grantKit(){const old=S.gear,eq={blade:'ember',mail:'ember',lantern:'wisp',cape:'mother',helm:HAT};
   for(const sl of ['blade','mail','lantern','cape','helm']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
@@ -2767,21 +3045,29 @@ function applyAdmin(on,hat){ADMIN=!!on;HAT=ADMIN_HATS[hat]?hat:'partyhat';
   if(!S.flags.kit){grantKit();setTimeout(()=>{toast('Admin loadout ready: top gear equipped, every lantern and cape in your bank.','rare r-legendary');sfx('rare');},4200);}}
 // ---------- chat: talk with players on the same map (the Hold, or the same Depths floor) ----------
 // The network side is window.CHATNET, provided by the account script: join(channel, onMessages) -> leave(), send(channel, text) -> {ok,msg}|{ok:false,msg}.
-let chatOpen=false,chatCh=null,chatLeaveFn=null,chatMsgs=[],chatSeen=new Set(),chatLast=0;
+let chatOpen=false,chatCh=null,chatLeaveFn=null,chatMsgs=[],chatSeen=new Set(),chatLast=0,chatTab='world';const chatUnread={world:0,party:0};
+// two tabs: World (everyone on your map) and Party (your party, wherever they are)
+const chatIn=(m,tab)=>m.sys?(!m.tab||m.tab===tab):tab==='party'?!!m.party:!m.party;
+function chatTabs(){for(const t of ['world','party']){const b=$(t==='world'?'ctW':'ctP');b.setAttribute('aria-selected',String(chatTab===t));const n=b.querySelector('i');n.hidden=!chatUnread[t];n.textContent=chatUnread[t]>9?'9+':chatUnread[t];}
+  $('chatIn').placeholder=chatTab==='party'?(MP.party?'Message your party…':'Join a party to chat here…'):'Say something to everyone here…';}
+function setChatTab(t){chatTab=t;chatUnread[t]=0;chatTabs();const L=$('chatLog');chatRender();if(L)L.scrollTop=L.scrollHeight;}
 const CHAT_BAD=['fuck','shit','bitch','cunt','dick','cock','pussy','nigg','fag','rape','nazi','hitler','porn','slut','whore','penis','vagina','retard','kkk','molest','pedo'];
 const chatClean=t=>{t=String(t).replace(/[\u0000-\u001f\u007f<>]/g,'').replace(/\s+/g,' ').trim().slice(0,140);for(const w of CHAT_BAD)t=t.replace(new RegExp('\\b'+w+'\\w*','gi'),m=>m[0]+'*'.repeat(m.length-1));return t;};
 const chatChannel=()=>MP.room||(scene==='delve'?'solo':'hold');
 const chatPlace=ch=>ch[0]==='w'?'World '+ch.slice(1):ch[0]==='d'||ch==='solo'?'your dungeon':'the Hold';
 const chatEsc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function chatRender(){const L=$('chatLog');if(!L)return;const atEnd=L.scrollHeight-L.scrollTop-L.clientHeight<30;
-  L.innerHTML=chatMsgs.slice(-80).map(m=>m.sys?`<p class="sys">${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}${m.party?' pty':''}">${m.party?'<i>Party</i> ':''}<b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
-  if(atEnd||chatMsgs.length<3)L.scrollTop=L.scrollHeight;$('chatWhere').textContent=chatPlace(chatCh||chatChannel());}
-function chatSys(text,at){chatMsgs.push({id:'s'+Math.random(),sys:true,text,at:at===undefined?Date.now():at});chatRender();}
-function chatAdd(list){let n=0;for(const m of list||[]){if(!m||chatSeen.has(m.id))continue;chatSeen.add(m.id);m.text=chatClean(m.text);if(!m.text)continue;m.me=m.me||(!!S.name&&m.name===S.name);chatMsgs.push(m);n++;}
+  const list=chatMsgs.filter(m=>chatIn(m,chatTab)).slice(-80);
+  L.innerHTML=list.map(m=>m.sys?`<p class="sys">${chatEsc(m.text)}</p>`:`<p class="${m.me?'me':''}${m.party?' pty':''}"><b>${chatEsc(m.name)}</b> ${chatEsc(m.text)}</p>`).join('');
+  if(atEnd||list.length<3)L.scrollTop=L.scrollHeight;$('chatWhere').textContent=chatTab==='party'?(MP.party?MP.party.members.length+'/4':'no party'):chatPlace(chatCh||chatChannel());}
+function chatSys(text,at,tab){chatMsgs.push({id:'s'+Math.random(),sys:true,text,tab:tab||null,at:at===undefined?Date.now():at});chatRender();}
+function chatAdd(list){let n=0;for(const m of list||[]){if(!m||chatSeen.has(m.id))continue;chatSeen.add(m.id);m.text=chatClean(m.text);if(!m.text)continue;m.me=m.me||(!!S.name&&m.name===S.name);chatMsgs.push(m);n++;
+    const t=m.party?'party':'world';if(t!==chatTab&&!m.me&&m.at>Date.now()-15000){chatUnread[t]++;}}
+  if(n)chatTabs();
   if(!n)return;chatMsgs.sort((a,b)=>a.at-b.at);if(chatMsgs.length>150)chatMsgs=chatMsgs.slice(-150);if(chatOpen)chatRender();}
 function chatLeave(){if(chatLeaveFn){try{chatLeaveFn();}catch(e){}}chatLeaveFn=null;}
 function chatJoin(){const ch=chatChannel();chatLeave();chatCh=ch;chatMsgs=[];chatSeen.clear();
-  chatSys('Chatting with players in '+chatPlace(ch)+'. Start with /p to talk to your party only. Be kind.',0);
+  chatSys('Chatting with everyone in '+chatPlace(ch)+'. Be kind.',0,'world');chatSys('Your party’s chat: only party members see it, wherever they are.',0,'party');chatTabs();
   const net=window.CHATNET,why=net&&net.why&&net.why();
   if(!net||why){chatSys(why||'Chat is offline right now.');$('chatIn').disabled=true;return;}
   $('chatIn').disabled=false;chatLeaveFn=net.join(ch,chatAdd);}
@@ -2791,16 +3077,19 @@ function toggleChat(force){if(!started)return;chatOpen=force===undefined?!chatOp
 async function chatSend(){const i=$('chatIn'),t=chatClean(i.value);if(!t)return;const now=Date.now();
   if(now-chatLast<1500){chatSys('Slow down a little.');return;}chatLast=now;i.value='';
   const net=window.CHATNET;if(!net||(net.why&&net.why()))return chatSys('Chat is offline right now.');
-  const r=await net.send(chatCh||chatChannel(),t);
-  if(r&&r.ok){if(r.msg)chatAdd([Object.assign({me:true},r.msg)]);if(!r.party){P.say=t;P.sayUntil=time+4.5;}}else chatSys((r&&r.msg)||'Message not sent. Try again.');}
+  const party=chatTab==='party'&&!/^\/p\s/i.test(t);
+  if(party&&!MP.party){chatSys('You’re not in a party. Invite someone from Social → Friends or Nearby.',undefined,'party');return;}
+  const r=await net.send(chatCh||chatChannel(),party?'/p '+t:t);
+  if(r&&r.ok){if(r.msg)chatAdd([Object.assign({me:true},r.msg)]);if(r.party){if(chatTab!=='party')setChatTab('party');}else{P.say=t;P.sayUntil=time+4.5;}}else chatSys((r&&r.msg)||'Message not sent. Try again.',undefined,chatTab);}
+$('ctW').onclick=()=>setChatTab('world');$('ctP').onclick=()=>setChatTab('party');
 setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
 {const p=new Px(16,16);p.rows(2,3,['.aaaaaaaaaa.','abbbbbbbbbba','abbbbbbbbbba','abccbccbccba','abbbbbbbbbba','abbbbbbbbbba','.aaaaabbaaa.','.....abba...','......aa....'],{a:PAL.ink,b:PAL.white,c:PAL.slate});
   $('chatIc').src=p.canvas().toDataURL();}
 $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('chatGo').onclick=()=>{chatSend();if(!(window.matchMedia&&matchMedia('(hover:hover)').matches))$('chatIn').focus();};
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
-window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
+window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},set FND(v){FND=v},myLook,closeSheet};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS}};
 })();
 
 // ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
@@ -2846,7 +3135,10 @@ function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.s
 function retry(ms){clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>{cloudTimer=null;flushCloud();},ms);}
 async function flushCloud(){if(held||cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
   if(p.j===lastSent){cloudBusy=false;return;}
-  const r=await api('save',{method:'POST',body:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
+  // receipts for Wilderness loot you picked up (signed by the realtime server) go with the save, so a big haul passes the checks
+  const rc=(window.LH_RCPT||[]).slice(0,40);
+  const r=await api('save',{method:'POST',body:rc.length?{data:p.d,rev:ACC.rev,loot:rc}:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
+  if(r.ok&&rc.length&&window.LH_RCPT)window.LH_RCPT=window.LH_RCPT.filter(t=>!rc.includes(t));
   const stop=(t,ms)=>{stopped=true;notice(t);setTimeout(()=>location.reload(),ms);};
   if(r.ok){ACC.rev=r.data.rev;if(r.data.tok&&window.LH_onTok)LH_onTok(r.data.tok);lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);

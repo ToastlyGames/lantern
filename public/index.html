@@ -59,7 +59,7 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 /* HUD */
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(var(--st) + 8px) calc(var(--sr) + 10px) 0 calc(var(--sl) + 10px);display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:2}
 .card{padding:6px 8px;border-radius:2px}
-#vit{flex:1;max-width:260px;display:grid;gap:5px;position:relative;overflow:hidden}
+#vit{flex:1;max-width:290px;display:grid;gap:5px;position:relative;overflow:hidden}
 /* XP: a thin strip along the bottom of the health card for the skill you're training */
 #xpb{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(10,12,20,.75)}
 #xpb i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--green);box-shadow:0 0 6px currentColor;transition:width .35s ease-out}
@@ -82,6 +82,20 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 #goldC img{width:20px;height:20px;image-rendering:pixelated}
 #setB{display:grid;place-items:center;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto}#setB img{width:22px;height:22px;image-rendering:pixelated}.land #setB{width:30px;height:30px}
 #feed.off{display:none!important}
+/* the compass, left of Settings: north is up (the Wilderness) */
+.sidetop{display:flex;gap:4px;align-items:center}
+#compass{position:relative;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto;font:700 9px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#c2d3e0}
+#compass i{position:absolute;font-style:normal;transform:translate(-50%,-50%);text-shadow:1px 1px 0 #1a1c2c}#compass .cn{left:50%;top:7px;color:#ff6b6b}#compass .cs{left:50%;top:calc(100% - 7px)}#compass .ce{left:calc(100% - 6px);top:50%}#compass .cw{left:6px;top:50%}
+#compass b{position:absolute;left:50%;top:50%;width:4px;height:12px;transform:translate(-50%,-50%);background:linear-gradient(#ff6b6b 0 50%,#e3e9ef 50% 100%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.land #compass{width:30px;height:30px;font-size:8px}.land #compass .cn{top:6px}.land #compass .cs{top:calc(100% - 6px)}.land #compass b{height:8px;width:3px}.land #compass .ce{left:calc(100% - 5px)}.land #compass .cw{left:5px}
+/* the Wilderness badge: level, the combat levels you can fight, skull */
+#wildB{position:fixed;left:calc(var(--sl) + 10px);top:calc(var(--st) + 84px);z-index:2;display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:2px;background:rgba(43,18,30,.92);color:#ffb3b3;font-size:17px;pointer-events:none;white-space:nowrap}
+#wildB[hidden]{display:none}#wildB img{width:14px;height:14px;image-rendering:pixelated}#wildB b{font-weight:600;color:#ff8a8a}#wildB small{color:#e3c4c4;font-size:.85em}
+#wildB.sk{box-shadow:inset 0 0 0 2px #b13e53,0 3px 0 var(--ink)}
+.inwild #guide{visibility:hidden}
+.land #wildB{top:auto;left:auto;right:calc(var(--sr) + 10px);top:calc(var(--st) + 128px);font-size:15px;padding:3px 8px}
+.tag .sk{position:absolute;left:0;top:-17px;width:11px;height:11px;transform:translateX(-50%);image-rendering:pixelated;filter:drop-shadow(0 1px 1px rgba(0,0,0,.8))}
+.wildhd{display:flex;gap:12px;align-items:center;margin-bottom:6px}.wildhd img{width:48px;height:auto;image-rendering:pixelated}.wildhd b{display:block;color:#ff8a8a;font-size:24px}.wildhd small{color:#c2d3e0}
 #socB{position:relative;display:grid;place-items:center;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto}#socB img{width:22px;height:22px;image-rendering:pixelated}.land #socB{width:30px;height:30px}
 #socB.off{opacity:.55}#socB.off::after{content:'';position:absolute;bottom:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ef7d57;box-shadow:0 0 0 2px #1a1c2c}
 #socB .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#b13e53;color:#f4f4f4;font-size:12px;line-height:16px;text-align:center;padding:0 3px}
@@ -100,6 +114,10 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
   background:rgba(12,14,24,.38);border:2px solid rgba(26,28,44,.55);border-radius:2px;color:#f4f4f4;text-shadow:1px 1px 0 #1a1c2c;font-size:15px}
 #chat[hidden]{display:none}
 #chat header{display:flex;align-items:center;justify-content:space-between;padding:3px 8px;background:rgba(26,28,44,.45);font-size:14px;color:#c2d3e0}#chat header b{color:#ffcd75}
+.ctabs{display:flex;gap:2px}.ctab{position:relative;background:rgba(10,12,20,.35);border:1px solid rgba(148,176,194,.3);color:#c2d3e0;font:inherit;font-size:14px;padding:2px 10px;border-radius:2px;cursor:pointer;text-shadow:inherit}
+.ctab[aria-selected=true]{background:rgba(255,205,117,.2);border-color:#ffcd75;color:#ffcd75}#ctP[aria-selected=true]{background:rgba(167,240,112,.18);border-color:#a7f070;color:#a7f070}
+.ctab i{position:absolute;top:-6px;right:-6px;min-width:14px;height:14px;border-radius:7px;background:#b13e53;color:#fff;font-style:normal;font-size:10px;line-height:14px;text-align:center;padding:0 3px}.ctab i[hidden]{display:none}
+#chat header #chatWhere{margin-left:auto;margin-right:6px;font-weight:400;font-size:12px;color:#94b0c2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #chatX{background:none;border:0;color:#f4f4f4;font:inherit;font-size:22px;line-height:1;padding:0 4px;cursor:pointer;text-shadow:inherit}
 #chatLog{flex:1;overflow-y:auto;padding:4px 8px;overscroll-behavior:contain}#chatLog p{margin:2px 0;line-height:1.25;word-wrap:break-word}#chatLog b{color:#94e0ff}#chatLog .me b{color:#ffcd75}#chatLog .sys{color:#a7b4c4;font-size:13px}
 .chatRow{display:flex;gap:4px;padding:4px}#chatIn{flex:1;min-width:0;background:rgba(10,12,20,.55);border:1px solid rgba(148,176,194,.4);color:#f4f4f4;font:inherit;font-size:16px;padding:6px 8px;border-radius:2px}
@@ -173,13 +191,13 @@ button.cell{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .qs.empty img{opacity:.35}.qs.on{box-shadow:inset 0 0 0 2px var(--gold),0 3px 0 var(--ink)}.qs:active{transform:translateY(2px)}
 .qslots{display:flex;gap:8px;margin:4px 0 8px}
 /* sideways phones: compact HUD, goal chip shrinks to a tag */
-.land #vit{max-width:200px;padding:4px 6px;gap:3px}
-.land .top{font-size:16px}.land #where{max-width:110px}
+.land #vit{max-width:270px;padding:4px 6px;gap:3px}
+.land .top{font-size:16px}.land #where{max-width:170px}
 .land .bar{height:11px}.land .lbl{font-size:14px}
 .land #goldC{min-height:30px;padding:3px 7px}
 .land #guide{top:auto;bottom:auto;left:auto;right:calc(var(--sr) + 10px);top:calc(var(--st) + 128px);font-size:16px;padding:3px 8px;max-width:150px}
 .land #quick{bottom:calc(var(--sb) + 10px)}
-.land.short #vit{max-width:180px}
+.land.short #vit{max-width:250px}
 @media (hover:hover) and (pointer:fine){#quick{bottom:calc(var(--sb) + 14px)}}
 /* toast */
 .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--st) + 156px);padding:8px 14px;font-size:20px;max-width:calc(100vw - 32px);text-align:center;pointer-events:none;z-index:5;background:var(--panel);border:2px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
@@ -209,7 +227,7 @@ small{font-size:17px;color:var(--muted)}
 .rh{display:flex;gap:8px;align-items:center}
 .need{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:18px}.need span{display:flex;align-items:center;gap:3px}.need .ic{width:18px;height:18px}
 .need .ok{color:var(--green)}.need .no{color:#ff9a9a}
-.tabs{display:flex;gap:6px;margin:4px 0 10px}.tab{flex:1;font-size:20px;color:var(--muted);background:var(--ink);border:2px solid var(--ink);padding:8px;min-height:42px}
+.tabs{display:flex;gap:6px;margin:4px 0 10px}.tabs.gt{flex-wrap:wrap}.tabs.gt .tab{flex:1 1 30%;font-size:17px;padding:5px 6px;min-height:0}.tab{flex:1;font-size:20px;color:var(--muted);background:var(--ink);border:2px solid var(--ink);padding:8px;min-height:42px}
 .tab[aria-selected=true]{color:var(--text);background:var(--panel2);box-shadow:inset 0 -3px 0 var(--gold)}
 .loot{list-style:none;margin:0;padding:0;display:grid;gap:4px}.loot li{display:flex;gap:8px;align-items:center;font-size:21px}.loot li span{flex:1}.loot b{color:var(--gold)}
 .kit{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 12px;font-size:20px}.kit span{display:flex;align-items:center;gap:4px}
@@ -296,9 +314,11 @@ small{font-size:17px;color:var(--muted)}
   :root #side{position:fixed;right:calc(var(--sr) + 8px);top:calc(var(--st) + 6px)}
   :root #goldC{min-height:30px;padding:3px 7px}
   :root #guide{left:50%;right:auto;top:calc(var(--st) + 44px);transform:translateX(-50%);font-size:15px;padding:3px 9px;max-width:min(320px,calc(100vw - 24px))}
+  :root #wildB{left:50%;right:auto;top:calc(var(--st) + 44px);transform:translateX(-50%);font-size:15px;padding:3px 9px}
   :root #feed{top:calc(var(--st) + 74px)}
   :root .toast{top:calc(var(--st) + 100px)}
   .land #guide{left:calc(var(--sl) + 8px);transform:none;top:calc(var(--st) + 6px);max-width:120px}
+  .land #wildB{left:calc(var(--sl) + 8px);right:auto;transform:none;top:calc(var(--st) + 6px);font-size:14px}
   .land #feed{top:calc(var(--st) + 44px)}
   .land .toast{top:calc(var(--st) + 48px)}
   /* action cluster: Attack in the corner, 5 quick slots on an arc, flame and bag outside it */
@@ -336,9 +356,10 @@ small{font-size:17px;color:var(--muted)}
     <div id="xpb" hidden aria-hidden="true"><i id="xpFill"></i></div>
     <div class="lbl" id="oilRow" hidden><span>OIL</span><div class="bar" aria-label="Lantern oil"><i id="oilFill"></i><canvas class="pt" id="oilTxt"></canvas></div></div>
   </div>
-  <div id="side"><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div>
+  <div id="side"><div class="sidetop"><button id="compass" class="px card" aria-label="Compass: north is up. The Wilderness lies north."><i class="cn">N</i><i class="ce">E</i><i class="cs">S</i><i class="cw">W</i><b></b></button><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button></div><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div>
 </div>
 <button id="guide" class="px" hidden></button>
+<div id="wildB" class="px" hidden aria-live="polite"><img id="wildIc" alt=""><b id="wildL">Wilderness</b><small id="wildR"></small></div>
 <div id="feed"></div>
 <div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd>/<kbd>Click</kbd> attack · <kbd>Scroll</kbd> zoom<br><kbd>B</kbd> bag · <kbd>H</kbd> hero · <kbd>K</kbd> skills · <kbd>1</kbd>–<kbd>5</kbd> quick · hold <kbd>R</kbd> return</div>
 <div id="ctl">
@@ -356,10 +377,10 @@ small{font-size:17px;color:var(--muted)}
 </div>
 <button id="chatB" class="px card" aria-label="Chat" aria-pressed="false"><img id="chatIc" alt=""></button>
 <div id="invite" class="px card" role="alertdialog" aria-live="assertive" hidden></div>
-<section id="chat" hidden aria-label="Chat"><header><span>Chat · <b id="chatWhere">the Hold</b></span><button id="chatX" aria-label="Close chat">×</button></header>
+<section id="chat" hidden aria-label="Chat"><header><span class="ctabs" role="tablist"><button class="ctab" id="ctW" role="tab" aria-selected="true">World<i hidden></i></button><button class="ctab" id="ctP" role="tab" aria-selected="false">Party<i hidden></i></button></span><b id="chatWhere">the Hold</b><button id="chatX" aria-label="Close chat">×</button></header>
   <div id="chatLog" aria-live="polite"></div>
   <div class="chatRow"><input id="chatIn" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="Say something…" aria-label="Message"><button id="chatGo" class="btn sm">Send</button></div></section>
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=bdc44e429c"></script></body></html>
+<script src="/game.js?v=64479a49ab"></script></body></html>
