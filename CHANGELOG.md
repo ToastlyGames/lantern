@@ -1,6 +1,30 @@
 # Lanternhold changelog
 
-Current build: **v0.9.3** · Season 0 (Beta)
+Current build: **v0.9.6** · Season 0 (Beta)
+
+## v0.9.6 · Combat level from everything you do
+
+_2026-10-27_
+
+- Your combat level now comes from all your skills together. Monster XP trains a new skill, Fighting, which counts double, and Woodcutting, Fishing, Farming, Cooking and Smithing each add their level too.
+- Combat level = (2 × Fighting + all your skill levels) ÷ 7. Combat level 10 takes something like Fighting 15 with your skills around 8, so it’s a real milestone.
+- Already played? You keep the combat level you had, and your old combat progress became your Fighting level. Your combat level climbs again once your skills catch up.
+- The Skills tab shows your combat level, how many points to the next one, and your Fighting level.
+
+## v0.9.5 · Party damage numbers
+
+_2026-10-27_
+
+- In a party dungeon everyone sees everyone’s damage numbers, including the hit that finishes a monster off.
+- Fixed a huge red health bar flashing across the screen when a party member hit a monster hard.
+
+## v0.9.4 · Everyone on the latest version
+
+_2026-10-27_
+
+- If a new update comes out while you’re playing, the game asks you to reload, and reloads by itself. An old version can no longer join a world, so everyone always plays by the same rules.
+- Fixed: a player on an old version could survive a Wilderness defeat, keep their items and even fish in the middle of the Wilderness.
+- Fall in the Wilderness and the server itself now sends you home to the Hold. Your items drop where you fell, every time.
 
 ## v0.9.3 · Wilderness fixes and the Return Flame
 
