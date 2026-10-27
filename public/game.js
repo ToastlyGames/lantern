@@ -52,7 +52,8 @@ const TIER_COLORS={
   none:{tun:PAL.teal,tun2:PAL.moss,trim:PAL.green},
   copper:{tun:PAL.orange,tun2:PAL.rust,trim:PAL.yellow},
   iron:{tun:PAL.silver,tun2:PAL.slate,trim:PAL.white},
-  ember:{tun:PAL.red,tun2:PAL.plum,trim:PAL.ember}
+  ember:{tun:PAL.red,tun2:PAL.plum,trim:PAL.ember},
+  steel:{tun:'#7d8fa3',tun2:'#3e4a5c',trim:'#c9d6e3'}
 };
 // Appearance options. Expansions can add more swatches/styles here.
 const LOOKS={
@@ -63,7 +64,7 @@ const LOOKS={
 };
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
-const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember}};
+const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember},steel:{m:'#7d8fa3',m2:'#3e4a5c',hi:'#c9d6e3'}};
 // The hood style: a real hood with a pointed tip that flops back, a lit rim around a shadowed opening, and a short drape
 // over the shoulders that ends in a point (front) or falls down the back.
 function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=shade(c,.42);
@@ -135,8 +136,9 @@ function heroFrame(dir,step,look){
     frontHair(p,dir,style,hair,hair2,hairHi,set,rect);
   }
   // helmet on top of the head
-  const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[look.helm];
+  const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3'],star:['#2c3f86','#1a1c4c','#ffe9a8']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
+  if(look.helm==='star'){p.rect(7,0,2,2,'#ffe9a8');p.set(7,0,'#fff3c4');p.set(6,1,'#73eff7').set(9,1,'#73eff7');if(dir==='down')p.set(6,4,'#73eff7').set(9,4,'#73eff7');}
   if(look.helm==='partyhat'){p.rect(5,1,6,2,'#3b5dc9');p.set(6,1,'#73eff7').set(9,2,'#73eff7');p.rect(4,3,8,1,'#29366f');}
   if(look.helm==='greenhat'){p.rect(5,1,6,2,'#38b764');p.set(6,1,'#a7f070').set(9,2,'#a7f070');p.rect(4,3,8,1,'#257179');}
   p.outline();
@@ -187,15 +189,21 @@ function capeLayer(k,dir,step,front){const key=[k,dir,step,front].join('|');if(k
   if(!any){return CAPE_CACHE[key]=null;}p.outline();return CAPE_CACHE[key]=p.canvas();}
 // Auras: legendary and one-of-one gear make the wearer glow.
 function auraColors(look,lantern){const out=[];const C=look.cape&&CAPES[look.cape];if(C&&(C.r==='legendary'||C.r==='mythic'))out.push(C.aura||'#ffcd75');
-  if(look.flame==='founder')out.push('#b98cff');if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
+  if(look.flame==='founder')out.push('#b98cff');if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');if(look.helm==='star')out.push('#b8f7ff');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
 const HERO_CACHE={};
 function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
 // lantern carried by the hero (drawn separately so its glow can pulse)
 function lanternSprite(key,flame){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=flame||L.glow,p=new Px(6,8);   // flame: the Founder's Flame colour
   p.rect(2,0,2,1,m).rect(1,1,4,1,m).rect(1,2,4,4,gl).rect(2,3,2,2,PAL.white).rect(1,6,4,1,m);if(L.r==='legendary'||L.r==='mythic'||L.r==='xrare')p.set(0,3,gl).set(5,3,gl);p.outline();return p.canvas();}
-function swordSprite(tier){const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:PAL.silver;
-  for(let i=0;i<9;i++){p.set(4+i,11-i,blade);p.set(5+i,11-i,i<8?(tier==='ember'?PAL.red:PAL.silver):blade);}
+function swordSprite(tier){if(tier==='cinder')return cinderSprite();const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:tier==='steel'?'#c9d6e3':PAL.silver;
+  for(let i=0;i<9;i++){p.set(4+i,11-i,blade);p.set(5+i,11-i,i<8?(tier==='ember'?PAL.red:tier==='steel'?'#7d8fa3':PAL.silver):blade);}
+  if(tier==='steel'){p.set(13,2,'#f4f4f4');p.rect(2,11,4,2,'#3e4a5c');}
   p.rect(2,11,4,2,PAL.olive).set(3,13,PAL.bark).set(2,14,PAL.bark);p.set(1,12,PAL.gold).set(6,10,PAL.gold);p.outline();return p.canvas();}
+
+// Cinderfang: a long, jagged blade of black glass with a molten edge and a burning hilt
+function cinderSprite(){const p=new Px(16,16),E='#ff5a2a',H='#ffcd75',K='#3a1218';
+  for(let i=0;i<10;i++){p.set(4+i,11-i,K);p.set(5+i,11-i,i<9?E:H);if(i%3===1)p.set(5+i,12-i,E);}p.set(14,1,H).set(13,2,H).set(12,4,H);
+  p.rect(2,11,4,2,'#5d275d').set(3,13,K).set(2,14,K);p.set(1,12,E).set(6,10,E).set(4,10,H);p.outline('#12060a');return p.canvas();}
 
 // ---------- enemies ----------
 function slimeFrame(f,col,col2,big){const s=big?32:16,p=new Px(s,s),k=big?2:1;
@@ -205,10 +213,10 @@ function slimeFrame(f,col,col2,big){const s=big?32:16,p=new Px(s,s),k=big?2:1;
   p.ell(s/2-3.5*k,s-8.5*k+sq*k,1.2*k,.8*k,PAL.white);
   if(big){p.rows(s/2-6,4+sq*2,['g.g.g.g.g','ggggggggg','gyygygyyg','ggggggggg'].map(r=>r),{g:PAL.gold,y:PAL.red});}
   p.outline();return p.canvas();}
-function batFrame(f){const p=new Px(16,16);p.ell(8,8,2.5,2.5,PAL.plum);
-  if(f){p.line(6,7,2,4,PAL.plum).line(6,8,1,6,PAL.plum).line(3,5,2,8,PAL.plum).line(10,7,14,4,PAL.plum).line(10,8,15,6,PAL.plum).line(13,5,14,8,PAL.plum);}
-  else{p.line(6,8,2,11,PAL.plum).line(6,9,1,9,PAL.plum).line(3,10,2,12,PAL.plum).line(10,8,14,11,PAL.plum).line(10,9,15,9,PAL.plum).line(13,10,14,12,PAL.plum);}
-  p.set(7,6,PAL.plum).set(9,6,PAL.plum);p.set(7,8,PAL.red).set(9,8,PAL.red);p.outline();return p.canvas();}
+function batFrame(f,body,eye){const B=body||PAL.plum,p=new Px(16,16);p.ell(8,8,2.5,2.5,B);
+  if(f){p.line(6,7,2,4,B).line(6,8,1,6,B).line(3,5,2,8,B).line(10,7,14,4,B).line(10,8,15,6,B).line(13,5,14,8,B);}
+  else{p.line(6,8,2,11,B).line(6,9,1,9,B).line(3,10,2,12,B).line(10,8,14,11,B).line(10,9,15,9,B).line(13,10,14,12,B);}
+  p.set(7,6,B).set(9,6,B);p.set(7,8,eye||PAL.red).set(9,8,eye||PAL.red);if(body){p.set(4,f?5:10,PAL.ember).set(12,f?5:10,PAL.ember);}p.outline();return p.canvas();}
 function crawlerFrame(f){const p=new Px(16,16);p.ell(8,10,5,3.5,PAL.fern);p.ell(8,9,4,2,PAL.lime);
   [[3,0],[6,1],[10,1],[13,0]].forEach(([x,o],i)=>{const dy=(i+f)%2;p.line(x,11,x+(x<8?-1:1),14-dy,PAL.moss);});
   p.ell(13,9,2.4,2.4,PAL.fern);p.set(14,8,PAL.yellow);p.rect(5,7,1,1,PAL.pink).rect(9,7,1,1,PAL.pink).rect(7,6,1,1,PAL.pink);p.outline();return p.canvas();}
@@ -224,6 +232,37 @@ function spiderFrame(f){const p=new Px(16,16);p.ell(8,9,3.6,3,PAL.ink);p.ell(8,6
   p.set(7,6,PAL.red).set(9,6,PAL.red).set(8,5,PAL.red);p.rect(7,10,2,1,PAL.red);p.outline(PAL.night);return p.canvas();}
 function shadeFrame(f){const p=new Px(16,16);p.ell(8,7,4.5,5,PAL.night);for(let x=4;x<=12;x+=2)p.rect(x,11,1,3+((x/2+f)%2),PAL.night);
   p.set(6,6,PAL.pink).set(10,6,PAL.pink);p.outline(PAL.plum);return p.canvas();}
+// ---- Emberforge Halls ----
+function impFrame(f){const p=new Px(16,16),R='#c4303f',R2='#7a1c2c',Y='#ffcd75';
+  p.ell(8,10,3.6,3.2,R);p.ell(8,6,3,2.6,R);p.set(5,3,R2).set(4,2,R2).set(11,3,R2).set(12,2,R2);p.set(7,6,Y).set(9,6,Y);p.rect(7,8,3,1,R2);
+  p.line(4,9,2,7+f,R).line(12,9,14,7+f,R);p.rect(6,13,1,2-f,R2).rect(10,13,1,1+f,R2);p.line(11,12,14,14,R2).set(14,13,PAL.ember);
+  p.set(6,9,'#e2584a').set(8,4,'#e2584a');p.outline(PAL.ink);return p.canvas();}
+function golemFrame(f){const p=new Px(16,16),K='#2a1a1e',K2='#3e272b',L=PAL.ember,L2=PAL.yellow;
+  p.rect(4,5,8,8,K);p.rect(5,6,6,6,K2);p.ell(8,4,3,2.4,K);p.set(7,4,L2).set(9,4,L2);
+  p.rect(2,6,2,6,K).rect(12,6,2,6,K);p.rect(2,11+f,2,2,K2).rect(12,12-f,2,2,K2);p.rect(5,13,2,2,K).rect(9,13,2,2,K);
+  p.line(6,7,8,9,L).line(8,9,10,7,L).line(8,9,8,12,L);p.set(8,9,L2);p.set(3,8,L).set(12,9,L);p.outline('#12080a');return p.canvas();}
+// ---- the Starfall Hollow ----
+function wraithFrame(f){const p=new Px(16,16),C='#4a6fd0',C2='#2c3f86',W='#b8f7ff';
+  p.ell(8,6,4,4,C);p.rect(4,6,8,5,C);for(let x=4;x<=11;x+=2)p.rect(x,11,1,2+((x/2+f)%2),C2);p.ell(8,6,2.6,2.6,C2);
+  p.set(7,6,W).set(9,6,W);p.line(4,8,1,6+f,C).line(11,8,14,6+f,C);p.set(8,2,W);p.outline('#141838');return p.canvas();}
+function sentinelFrame(f){const p=new Px(16,16),S='#566c86',S2='#333c57',S3='#94b0c2',G='#73eff7';
+  p.rect(5,6,6,7,S);p.rect(6,7,4,5,S2);p.rect(6,2,4,4,S3);p.rect(6,4,4,1,S2);p.set(7,4,G).set(8,4,G);p.set(8,9,G);
+  p.rect(3,6,2,5,S3).rect(11,6,2,5,S3);p.line(13,10,15,1,'#c9d6e3').set(15,0,G);p.rect(6,13,1,2+f,S2).rect(9,13,1,3-f,S2);p.outline(PAL.ink);return p.canvas();}
+function shardlingFrame(f){const p=new Px(16,16),B='#2c3f86',G='#73eff7',W='#f4f4f4';p.ell(8,10,3.6,2.6,B);
+  for(let i=0;i<3;i++){const y=9+i*2,d=(i+f)%2;p.line(5,y,1,y-2+d*2,B);p.line(11,y,15,y-2+d*2,B);}
+  p.rows(5,3,['..g...','.gwg.g','gggggg','.gggg.'],{g:G,w:W});p.set(7,10,W).set(9,10,W);p.outline('#0f1430');return p.canvas();}
+// ---- bosses (32x32) ----
+function tyrantFrame(f){const p=new Px(32,32),K='#2a1a1e',K2='#3e272b',K3='#56383a',L=PAL.ember,L2=PAL.yellow,R='#c4303f';
+  p.rect(8,10,16,14,K);p.rect(9,11,14,12,K2);p.ell(16,8,6,5,K);p.rect(12,6,8,3,K3);p.rect(12,8,3,2,L2).rect(17,8,3,2,L2);p.rows(10,1,['r..r..r..r..','rr.rr.rr.rr.'],{r:R});
+  p.line(11,13,16,18,L).line(16,18,21,13,L).line(16,18,16,23,L);p.rect(15,17,3,2,L2);p.rect(9,24,5,6-f,K).rect(18,24,5,5+f,K);p.rect(9,29-f,5,1,K3);
+  p.rect(3,11,5,10,K).rect(24,11,5,10,K);p.set(5,15,L).set(26,16,L);
+  p.rect(26,2+f,3,18,'#4b3d36');p.rect(23,0+f,9,6,K3);p.rect(24,1+f,7,4,'#6d7391');p.rect(23,5+f,9,1,L);p.outline('#12080a');return p.canvas();}
+function wardenFrame(f){const p=new Px(32,32),N='#1a1c4c',N2='#2c3f86',N3='#4a6fd0',G='#73eff7',S='#ffe9a8',W='#f4f4f4';
+  p.rect(9,11,14,14,N);p.rect(10,12,12,12,N2);p.ell(16,8,6,5.5,N2);p.rect(11,7,10,3,N);p.rect(12,8,3,1,G).rect(17,8,3,1,G);
+  p.rows(13,0,['...s...','.s.s.s.','..sss..'],{s:S});p.rect(13,15,6,6,N3);p.rect(15,16,2,4,S);p.rect(14,17,4,2,S);p.set(15,17,W);
+  for(let x=10;x<=22;x+=2)p.rect(x,25,1,4+((x/2+f)%2),N);
+  p.rect(2,12,7,10,N2);p.rect(3,13,5,8,N3);p.set(5,16,S).set(4,17,S).set(6,17,S).set(5,18,S);
+  p.line(24,26,29,3,'#c9d6e3');p.ell(29,3,2,2,G);p.set(29,3,W);p.rect(23,20,4,2,N3);if(f)p.set(27,1,W).set(31,5,W);p.outline('#0a0c22');return p.canvas();}
 function knightFrame(f){const p=new Px(32,32);
   p.rect(9,12,14,12,PAL.slate);p.rect(10,13,12,10,PAL.silver);p.rect(15,13,2,10,PAL.slate);
   p.ell(16,8,6,6,PAL.bone);p.rect(12,5,8,3,PAL.slate);p.rect(12,8,3,3,PAL.ink).rect(17,8,3,3,PAL.ink);p.set(13,9,PAL.red).set(18,9,PAL.red);
@@ -257,14 +296,20 @@ function soilTile(wet){const p=new Px(16,16);p.rect(0,0,16,16,wet?PAL.soil:PAL.b
   for(let y=2;y<16;y+=4)p.rect(1,y,14,1,wet?PAL.bark:PAL.soil);p.rect(0,0,16,1,PAL.wood).rect(0,0,1,16,PAL.wood);return p.canvas();}
 const BIOMES={
   moss:{floor:[PAL.cave,PAL.cave2,PAL.moss],wall:[PAL.dusk,PAL.slate,PAL.fern],accent:PAL.fern,light:'#7fffb0',name:'Mossroot Caverns'},
-  crypt:{floor:[PAL.dusk,PAL.cave2,PAL.slate],wall:[PAL.ink,PAL.slate,PAL.silver],accent:PAL.bone,light:'#b7d4ff',name:'Bone Crypts'}
+  crypt:{floor:[PAL.dusk,PAL.cave2,PAL.slate],wall:[PAL.ink,PAL.slate,PAL.silver],accent:PAL.bone,light:'#b7d4ff',name:'Bone Crypts'},
+  ember:{floor:['#2a1a1e','#3e272b','#56383a'],wall:['#12080a','#3e272b','#ff9f3d'],accent:PAL.ember,light:'#ffb070',name:'Emberforge Halls'},
+  star:{floor:['#1a1c4c','#2c3f86','#4a6fd0'],wall:['#0a0c22','#2c3f86','#73eff7'],accent:'#73eff7',light:'#b8f7ff',name:'Starfall Hollow'}
 };
 // ---- dungeon tiles: hand-set flagstones and stone walls, shaded so the Depths read like a real dungeon ----
 const DUN={
   moss:{mortar:'#1a1e28',stone:['#2c3441','#29303c','#303846','#272e39'],hi:'#37404e',lo:'#20262f',moss:['#2f4a3c','#3a5c44','#4f7a3a'],
         brick:['#4c5867','#46525f','#52606e'],bhi:'#6a7888',blo:'#2e3641',bmortar:'#1c2129',cap:'#7b8a99'},
   crypt:{mortar:'#17151f',stone:['#3a3850','#353349','#403e58','#33314a'],hi:'#4c4a66',lo:'#25233a',moss:['#3a3550','#423c5c','#4a4466'],
-        brick:['#504c6c','#4a4665','#565273'],bhi:'#6f6a92',blo:'#2c2a42',bmortar:'#1c1a29',cap:'#7a7598'}};
+        brick:['#504c6c','#4a4665','#565273'],bhi:'#6f6a92',blo:'#2c2a42',bmortar:'#1c1a29',cap:'#7a7598'},
+  ember:{mortar:'#1a0f12',stone:['#33242a','#302127','#372730','#2d1f25'],hi:'#3d2b32',lo:'#271a20',moss:['#4a2428','#5e2c2c','#ff9f3d'],
+        brick:['#4a2f33','#43292e','#523439'],bhi:'#6a4448',blo:'#2a1a1e',bmortar:'#160c0e',cap:'#7a5054'},
+  star:{mortar:'#11142c',stone:['#232a50','#212749','#262e55','#1f2546'],hi:'#2b3460',lo:'#1a1f40',moss:['#2a336a','#323d7a','#73eff7'],
+        brick:['#2c3566','#28305e','#323c70'],bhi:'#4a5896',blo:'#1a1f44',bmortar:'#0e1028',cap:'#5a68a8'}};
 function floorTile(b,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*31+7);p.rect(0,0,16,16,D.mortar);
   const stone=(x,y,w,h)=>{if(w<2||h<2)return;const c=D.stone[r()*D.stone.length|0];p.rect(x,y,w,h,c);
     p.rect(x,y,w,1,D.hi);p.rect(x,y,1,h,D.hi);p.rect(x,y+h-1,w,1,D.lo);p.rect(x+w-1,y,1,h,D.lo);
@@ -282,6 +327,8 @@ function wallTile(b,face,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*17+3);
         p.rect(x0,y,w,3,c);p.rect(x0,y,w,1,D.bhi);p.rect(x0,y+2,w,1,D.blo);if(r()<.25)p.set(x0+(r()*w|0),y+1,D.blo);}}
     p.rect(0,0,16,1,D.cap);p.rect(0,15,16,1,'#10121c');p.rect(0,14,16,1,D.blo);
     if(b==='moss'){for(let i=0;i<4;i++){const x=r()*16|0,len=1+(r()*5|0);for(let k=0;k<len;k++)p.set(x,k,k===len-1?DUN.moss.moss[2]:DUN.moss.moss[k%2]);}}
+    if(b==='ember'){for(let i=0;i<2;i++){const x=r()*16|0,y=r()*12|0;p.line(x,y,x+(r()*4|0)-2,y+3,D.moss[1]);p.set(x,y,D.moss[2]);}}
+    if(b==='star'){for(let i=0;i<3;i++)p.set(r()*16|0,1+(r()*13|0),r()<.5?D.moss[2]:'#e8fbff');}
   }
   else{p.rect(0,0,16,16,'#0d0e17');for(let i=0;i<6;i++)p.set(r()*16,r()*16,'#151726');}
   return p.canvas();}
@@ -309,7 +356,9 @@ function chestSprite(open){const p=new Px(16,16);p.rect(2,6,12,8,PAL.wood);p.rec
   if(open){p.rect(2,3,12,3,PAL.bark);p.rect(4,6,8,2,PAL.yellow);}else p.rect(2,4,12,2,PAL.wood);p.outline();return p.canvas();}
 function torchSprite(f){const p=new Px(8,14);p.rect(2,9,4,1,'#3a3f55').rect(1,8,1,2,'#3a3f55').rect(6,8,1,2,'#3a3f55');p.rect(3,6,2,7,PAL.bark).set(3,6,PAL.wood);
   p.ell(4,4,2.2+f*.4,3.2,PAL.red);p.ell(4,4.4,1.6,2.4,PAL.ember);p.ell(4,5,1,1.5,PAL.yellow);p.set(f?3:5,1,PAL.ember);p.outline();return p.canvas();}
-function oreSprite(kind){const c={copper:[PAL.orange,PAL.yellow],iron:[PAL.silver,PAL.white],ember:[PAL.ember,PAL.red]}[kind];const p=new Px(16,16);
+function oreSprite(kind){const c={copper:[PAL.orange,PAL.yellow],iron:[PAL.silver,PAL.white],ember:[PAL.ember,PAL.red],coal:['#14141c','#6d7391'],cobalt:['#3b5dc9','#73eff7']}[kind];const p=new Px(16,16);
+  if(kind==='coal'){[[4,5],[10,4],[7,10],[12,11],[3,12],[9,7]].forEach(([x,y])=>{p.rect(x,y,3,2,c[0]);p.set(x+1,y,c[1]);});return p.canvas();}
+  if(kind==='cobalt'){[[4,6],[10,4],[7,10],[12,11]].forEach(([x,y])=>{p.rect(x,y,2,3,c[0]);p.set(x,y,c[1]).set(x+1,y-1,c[1]);});p.set(3,12,c[1]);return p.canvas();}
   [[4,5],[10,4],[7,10],[12,11],[3,12]].forEach(([x,y])=>{p.rect(x,y,2,2,c[0]);p.set(x,y,c[1]);});return p.canvas();}
 // Emberite: a lump of dark basalt split by molten cracks. Two frames so the lava pulses.
 function emberOreSprite(f){const p=new Px(16,16),crust='#170a10',crust2='#2a121c';
@@ -320,6 +369,14 @@ function emberOreSprite(f){const p=new Px(16,16),crust='#170a10',crust2='#2a121c
   p.set(6,8,PAL.yellow).set(11,10,PAL.yellow).set(f?9:4,f?11:9,PAL.yellow).set(f?7:12,f?5:9,PAL.ember);
   if(f)p.set(8,14,PAL.ember).set(12,14,PAL.red);else p.set(8,14,PAL.red);
   p.outline('#120a10');return p.canvas();}
+// Starshard: a pale crystal star set in dark rock, two frames so it twinkles
+function starOreSprite(f){const p=new Px(16,16),R='#1d1f33',R2='#2c2f4a',S='#ffe9a8',W='#fff3c4',G='#73eff7';
+  p.ell(8,9,6,5,R);p.ell(7,8,3.5,2.6,R2);p.rows(4,4,['...s...','..sws..','sswWwss','..sws..','...s...','.......'],{s:S,w:W,W:'#ffffff'});
+  p.set(11,12,G).set(4,11,G);if(f){p.set(7,3,W).set(3,6,G).set(13,7,G);}else p.set(12,5,W);return p.canvas();}
+function cindersSprite(f){const p=new Px(16,16);[[4,10],[9,12],[12,9],[6,13]].forEach(([x,y],i)=>{p.rect(x,y,2,1,'#3a1a1e');p.set(x+(i+f)%2,y,(i+f)%2?PAL.ember:'#ff5a2a');});if(f)p.set(10,8,PAL.yellow);return p.canvas();}
+function crystalSprite(v){const p=new Px(16,20),A='#4a6fd0',B='#73eff7',W='#e8fbff';
+  const spike=(x,h,w)=>{p.rect(x,19-h,w,h,A);p.rect(x,19-h,1,h,B);p.set(x,18-h,W);};
+  if(v){spike(4,9,3);spike(8,13,3);spike(11,6,2);}else{spike(5,7,2);spike(8,11,3);spike(11,8,2);}p.outline('#141838');return p.canvas();}
 function glowcapSprite(){const p=new Px(16,16);[[5,9,3],[10,11,2.4],[8,13,2]].forEach(([x,y,r])=>{p.rect(x,y,1,4,PAL.bone);p.ell(x+.5,y,r,r*.7,PAL.pink);p.set(x,y-1,PAL.white);});p.outline(PAL.plum);return p.canvas();}
 function bonesSprite(){const p=new Px(16,16);p.line(3,12,10,9,PAL.bone).line(5,8,12,13,PAL.bone);p.ell(12,6,2.4,2,PAL.bone);p.set(11,6,PAL.ink).set(13,6,PAL.ink);p.outline();return p.canvas();}
 
@@ -504,6 +561,14 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'gold':p.ell(8,9,5,5,PAL.gold);p.ell(8,9,3,3,PAL.yellow);p.rect(7,7,2,4,PAL.olive);break;
     case 'copper_ore':ore(PAL.orange,PAL.yellow);break;
     case 'iron_ore':ore(PAL.white,PAL.silver);break;
+    case 'coal_ore':p.ell(8,9,5,4,'#1d1d24');p.ell(7,8,3,2,'#2e2f3a');p.set(6,7,'#8d93ad').set(10,10,'#6d7391').set(9,7,'#6d7391');break;
+    case 'cobalt_ore':ore('#3b5dc9','#73eff7');p.set(9,7,'#b8f7ff');break;
+    case 'starshard_ore':p.rows(3,3,['....s....','...sws...','..swWws..','sswWWWwss','..swWws..','...sws...','....s....'],{s:'#ffe9a8',w:'#fff3c4',W:'#ffffff'});p.set(3,12,'#73eff7').set(12,4,'#73eff7');p.outline('#3d2f52');return p.canvas();
+    case 'pickaxe':p.line(4,13,11,6,PAL.wood).line(5,13,12,6,PAL.bark);p.rows(6,2,['.ssss....','s....ss..','.......s.','........s'],{s:'#94b0c2'});p.set(6,3,'#c9d6e3').set(14,6,'#566c86');break;
+    case 'relic_heart':p.ell(8,9,5,5,'#7a1c2c');p.ell(8,9,3.6,3.6,PAL.red);p.ell(8,9,2,2,PAL.ember);p.set(8,9,PAL.yellow);p.line(3,4,5,6,'#3e272b').line(13,4,11,6,'#3e272b');p.set(6,7,'#ffcd75');break;
+    case 'relic_star':p.rows(2,2,['.....s.....','.....s.....','....sws....','sssswWwssss','..swWWWws..','...swWws...','..sws.sws..','.ss.....ss.'],{s:'#ffe9a8',w:'#fff3c4',W:'#ffffff'});p.ell(8,13,4,1.5,'#4a6fd0');break;
+    case 'star_helm':p.ell(8,8,6,5,'#2c3f86');p.rect(2,8,12,5,'#2c3f86');p.rect(2,12,12,1,'#1a1c4c');p.rect(5,9,6,2,PAL.ink);p.set(6,9,'#73eff7').set(9,9,'#73eff7');p.rect(7,9,2,4,'#2c3f86');
+      p.rows(5,0,['...s..','..sws.','.sswss','..s.s.'],{s:'#ffe9a8',w:'#ffffff'});p.set(3,7,'#4a6fd0').set(12,7,'#4a6fd0');break;
     case 'ember_ore':p.ell(8,9,5,4,'#2b1620');p.ell(7,8,3,2,'#45202c');p.line(4,10,7,8,PAL.red).line(7,8,11,10,PAL.red).line(7,8,8,5,PAL.red);p.line(5,9,7,8,PAL.ember).line(8,8,10,9,PAL.ember);p.set(7,8,PAL.yellow).set(10,9,PAL.yellow);p.outline('#120a10');break;
     case 'gem':p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..','......'],{c:PAL.sky,b:PAL.cyan,a:PAL.blue});p.set(6,4,PAL.white);break;
     case 'slime_gel':p.ell(8,10,5,4,PAL.green);p.ell(7,9,2,1.5,PAL.lime);p.set(6,8,PAL.white);break;
@@ -519,13 +584,13 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'stew':p.ell(8,11,6,3.5,PAL.wood);p.ell(8,9,5,1.6,PAL.lime);p.set(6,9,PAL.pink).set(10,9,PAL.orange);p.set(7,5,PAL.white).set(9,4,PAL.white);break;
     case 'oil':p.rect(6,3,4,2,PAL.bark);p.rect(5,5,6,9,PAL.silver);p.rect(6,7,4,6,PAL.ember);p.rect(6,7,4,1,PAL.yellow);break;
     case 'rusty_blade':return swordSprite('none');
-    case 'copper_helm':case 'iron_helm':case 'ember_helm':{const C={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d']}[id.split('_')[0]];
+    case 'copper_helm':case 'iron_helm':case 'ember_helm':case 'steel_helm':{const C={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3']}[id.split('_')[0]];
       p.ell(8,8,6,5,C[0]);p.rect(2,8,12,5,C[0]);p.rect(2,12,12,1,C[1]);p.rect(5,9,6,2,PAL.ink);p.rect(7,9,2,4,C[0]);p.rect(6,4,4,1,C[2]);p.rect(7,2,2,3,C[1]);break;}
     case 'partyhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#3b5dc9',s:'#73eff7',c:'#29366f'});p.set(7,1,PAL.yellow);break;
     case 'greenhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#38b764',s:'#a7f070',c:'#257179'});p.set(7,1,PAL.yellow);break;
     case 'traveler_garb':p.rect(4,4,8,10,PAL.teal);p.rect(2,4,3,4,PAL.moss).rect(11,4,3,4,PAL.moss);p.rect(6,4,4,2,PAL.ink);p.rect(4,11,8,1,PAL.bark);p.rect(7,6,2,5,PAL.green);break;
-    case 'copper_blade':case 'iron_blade':case 'ember_blade':{const t=id.split('_')[0];return swordSprite(t==='ember'?'ember':t);}
-    case 'copper_mail':case 'iron_mail':case 'ember_mail':{const t=id.split('_')[0],C=TIER_COLORS[t==='ember'?'ember':t];
+    case 'copper_blade':case 'iron_blade':case 'ember_blade':case 'steel_blade':case 'cinder_blade':{const t=id.split('_')[0];return swordSprite(t);}
+    case 'copper_mail':case 'iron_mail':case 'ember_mail':case 'steel_mail':{const t=id.split('_')[0],C=TIER_COLORS[t==='ember'?'ember':t];
       p.rect(4,4,8,10,C.tun);p.rect(2,4,3,4,C.tun2).rect(11,4,3,4,C.tun2);p.rect(6,4,4,2,PAL.ink);p.rect(4,11,8,1,PAL.bark);p.rect(7,6,2,5,C.trim);break;}
     case 'raw_pondfin':fishIcon(p,'#7fb0c8','#41a6f6','#29366f');break;
     case 'pondfin':fishIcon(p,'#d9a066','#a0663b','#6b3e26');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
@@ -607,19 +672,22 @@ function buildArt(){
   
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
   ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
-  ART.sword={};for(const t of ['rusty','copper','iron','ember'])ART.sword[t]=swordSprite(t==='rusty'?'none':t);
+  ART.sword={};for(const t of ['rusty','copper','iron','ember','steel','cinder'])ART.sword[t]=swordSprite(t==='rusty'?'none':t);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
   ART.mother=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime,true));
-  ART.bat=[0,1].map(batFrame);ART.crawler=[0,1].map(crawlerFrame);
+  ART.bat=[0,1].map(f=>batFrame(f));ART.crawler=[0,1].map(crawlerFrame);
   ART.skeleton=[0,1].map(skeletonFrame);ART.wisp=[0,1].map(wispFrame);ART.spider=[0,1].map(spiderFrame);
   ART.shade=[0,1].map(shadeFrame);ART.knight=[0,1].map(knightFrame);
+  ART.imp=[0,1].map(impFrame);ART.golem=[0,1].map(golemFrame);ART.cinderbat=[0,1].map(f=>batFrame(f,'#7a1c2c',PAL.yellow));ART.tyrant=[0,1].map(tyrantFrame);
+  ART.wraith=[0,1].map(wraithFrame);ART.sentinel=[0,1].map(sentinelFrame);ART.shardling=[0,1].map(shardlingFrame);ART.warden=[0,1].map(wardenFrame);
   ART.grass=[1,2,3,4].map(grassTile);ART.path=[5,6,7].map(pathTile);ART.water=[0,1].map(waterTile);
   ART.soil=soilTile(false);ART.soilLocked=lockedSoilTile();ART.dock={walk:dockTile('walk'),deck:dockTile('deck')};ART.lily=[lilySprite(0),lilySprite(1)];ART.soilWet=soilTile(true);
   ART.floor={};ART.wall={};ART.face={};
   for(const b of Object.keys(BIOMES)){ART.floor[b]=[11,12,13,14].map(s=>floorTile(b,s));ART.wall[b]=[21,22].map(s=>wallTile(b,false,s));ART.face[b]=[31,32,33].map(s=>wallTile(b,true,s));}
   ART.stairs=stairsTile();ART.deco=decoSprites();ART.chest=[chestSprite(false),chestSprite(true)];ART.torch=[0,1].map(torchSprite);
-  ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];
+  ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0),coal:oreSprite('coal'),cobalt:oreSprite('cobalt'),starshard:starOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];ART.starOre=[starOreSprite(0),starOreSprite(1)];
+  ART.cinders=[0,1].map(cindersSprite);ART.crystal=[0,1].map(crystalSprite);
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
@@ -640,6 +708,7 @@ function iconOf(id){if(!ART.icon[id])ART.icon[id]=icon(id);return ART.icon[id];}
 const ITEMS={
   gold:{n:'Gold',v:1},
   copper_ore:{n:'Copper Ore',v:4},iron_ore:{n:'Iron Ore',v:9},ember_ore:{n:'Emberite Ore',v:30},
+  coal_ore:{n:'Coal',v:14},cobalt_ore:{n:'Cobalt Ore',v:45},starshard_ore:{n:'Starshard',v:150},
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
@@ -652,17 +721,21 @@ const ITEMS={
   raw_pondfin:{n:'Raw Pondfin',v:5},pondfin:{n:'Cooked Pondfin',v:12,heal:35,food:true},burnt_fish:{n:'Burnt Fish',v:0},
   raw_gloomfin:{n:'Raw Gloomfin',v:18},gloomfin:{n:'Cooked Gloomfin',v:40,heal:55,food:true},
   copper_helm:{n:'Copper Helm',v:40,gear:'helm',tier:'copper'},iron_helm:{n:'Iron Helm',v:120,gear:'helm',tier:'iron'},ember_helm:{n:'Ember Helm',v:420,gear:'helm',tier:'ember'},
+  steel_blade:{n:'Steel Blade',v:900,gear:'blade',tier:'steel'},steel_helm:{n:'Steel Helm',v:650,gear:'helm',tier:'steel'},steel_mail:{n:'Steel Mail',v:1000,gear:'mail',tier:'steel'},
+  // the two rarest finds below floor 10: each boss of floors 11–20 has a tiny chance to drop one
+  cinder_blade:{n:'Cinderfang',v:15000,gear:'blade',tier:'cinder',rarity:'mythic'},star_helm:{n:"Starwarden's Helm",v:12000,gear:'helm',tier:'star',rarity:'mythic'},
   partyhat_helm:{n:'Blue Party Hat',v:0,gear:'helm',tier:'partyhat',rarity:'unique',bound:true},
   greenhat_helm:{n:'Green Party Hat',v:0,gear:'helm',tier:'greenhat',rarity:'unique',bound:true},
-  relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true}
+  relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true},
+  relic_heart:{n:'Forge Heart',v:1800,relic:true},relic_star:{n:'Fallen Star',v:3000,relic:true}
 };
 const GEAR={
-  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25}},
-  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7}},
-  helm:{copper:{def:1},iron:{def:2},ember:{def:4},partyhat:{def:25},greenhat:{def:25}}
+  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25},steel:{dmg:34},cinder:{dmg:46}},
+  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7},steel:{def:10}},
+  helm:{copper:{def:1},iron:{def:2},ember:{def:4},steel:{def:5},star:{def:9},partyhat:{def:25},greenhat:{def:25}}
 };
 // Helmets can carry attributes like capes. The Blue Party Hat is one of one: admin only, never drops, can't be sold or dropped.
-const HELM_ATTR={partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
+const HELM_ATTR={star:{hp:25,light:15,luck:10},partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
 const ADMIN_HATS={partyhat:'Blue Party Hat',greenhat:'Green Party Hat'};
 // ---------- rarity ----------
 const RARITY={unique:{n:'One of One',c:'#73eff7',w:0},common:{n:'Common',c:'#c2d3e0',w:62},uncommon:{n:'Uncommon',c:'#a7f070',w:26},rare:{n:'Rare',c:'#41a6f6',w:9},xrare:{n:'Extremely Rare',c:'#c77dff',w:2.6},legendary:{n:'Legendary',c:'#ffcd75',w:.4},mythic:{n:'Mythic',c:'#ff77a8',w:0}};
@@ -697,13 +770,16 @@ const ATTR_TXT={hp:v=>`+${v} max HP`,def:v=>`+${v} defense`,dmg:v=>`+${v}% damag
 for(const [k,l] of Object.entries(LANTERNS))ITEMS[k+'_lantern']={n:l.n,v:l.v,lantern:k,rarity:l.r,keep:!!l.goal};
 for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,rarity:c.r,keep:!!c.goal};
 // ---------- skills 1–99 (classic curve: early levels fly by, late levels take a very long time) ----------
-const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'}};
+const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'},mining:{n:'Mining',icon:'pickaxe',c:'#c9a26b'}};
+// the skills combat level was built from before Mining (saves from then keep the level they had: see cbFloor)
+const SKILLS_V096=['farming','fishing','cooking','smithing','woodcutting'];
+const FIGHT_MAX=99;   // Fighting tops out at 99 like every other skill
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 // Combat level: built from everything you do. Fighting (XP from monsters) counts double, and every other skill adds its
 // level: (2 × Fighting + all skill levels) ÷ (2 + number of skills). A new hero is combat level 1; combat level 10 takes
-// a mix like Fighting 15 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
-const combatFrom=(fight,skills)=>{const ks=Object.keys(SKILLS);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
+// a mix like Fighting 16 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
+const combatFrom=(fight,skills,keys)=>{const ks=keys||Object.keys(SKILLS);fight=Math.min(FIGHT_MAX,fight);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
 const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'}};
 const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15}};
@@ -714,11 +790,15 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['
 const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
   // the Wilderness: fewer logs, slower to regrow, much more xp
   blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
+// ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break ----------
+const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3},iron:{n:'Iron',lvl:10,xp:35,hp:3},coal:{n:'Coal',lvl:20,xp:50,hp:4},
+  ember:{n:'Emberite',lvl:25,xp:80,hp:4},cobalt:{n:'Cobalt',lvl:30,xp:100,hp:4},starshard:{n:'Starshard',lvl:40,xp:160,hp:5}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
     {out:'iron_blade',need:{iron_ore:6,copper_ore:2},gold:60,lvl:10,xp:150},{out:'iron_helm',need:{iron_ore:4,bone:3},gold:40,lvl:12,xp:120},{out:'iron_mail',need:{iron_ore:8,bone:6},gold:60,lvl:14,xp:220},
-    {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550}
+    {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550},
+    {out:'steel_helm',need:{iron_ore:4,coal_ore:6},gold:300,lvl:35,xp:650},{out:'steel_blade',need:{iron_ore:6,coal_ore:8,cobalt_ore:2},gold:450,lvl:38,xp:850},{out:'steel_mail',need:{iron_ore:8,coal_ore:10,cobalt_ore:4},gold:500,lvl:42,xp:1100}
   ],
   // time: seconds per item at the Kitchen. Fish take longer the better they are: 2 s + 0.05 s per Fishing level the fish needs.
   kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3},
@@ -751,15 +831,31 @@ const ENEMIES={
   spider:{hp:26,dmg:10,spd:52,xp:10,ai:'dash',art:'spider',drops:[['gold',.6,3,9],['bone',.3,1,1]]},
   shade:{hp:20,dmg:11,spd:56,xp:5,ai:'chase',art:'shade',drops:[]},
   mother:{hp:280,dmg:11,spd:30,xp:120,ai:'mother',art:'mother',boss:true,big:true,drops:[['relic_crown',1,1,1],['gem',1,2,3],['gold',1,60,90],['lampseed',1,2,3]]},
-  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,drops:[['relic_sigil',1,1,1],['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4]]}
+  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,drops:[['relic_sigil',1,1,1],['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4]]},
+  // Emberforge Halls (floors 11–15)
+  imp:{hp:20,dmg:9,spd:50,xp:12,ai:'dash',art:'imp',drops:[['gold',.6,4,10],['coal_ore',.25,1,1]]},
+  golem:{hp:48,dmg:12,spd:20,xp:18,ai:'chase',art:'golem',drops:[['coal_ore',.5,1,2],['gold',.6,5,12],['ember_ore',.06,1,1]]},
+  cinderbat:{hp:12,dmg:7,spd:52,xp:7,ai:'flutter',art:'cinderbat',drops:[['gold',.6,2,6]]},
+  // the Starfall Hollow (floors 16–20)
+  wraith:{hp:30,dmg:12,spd:44,xp:16,ai:'float',art:'wraith',light:true,drops:[['gem',.08,1,1],['gold',.6,6,14]]},
+  sentinel:{hp:52,dmg:14,spd:30,xp:22,ai:'lunge',art:'sentinel',drops:[['cobalt_ore',.3,1,2],['gold',.6,8,16],['bone',.3,1,2]]},
+  shardling:{hp:26,dmg:12,spd:58,xp:15,ai:'dash',art:'shardling',drops:[['gold',.5,4,10],['starshard_ore',.02,1,1]]},
+  // rare: [item, chance] rolled once per kill for everyone who hit it (better with loot luck)
+  tyrant:{hp:700,dmg:16,spd:28,xp:700,ai:'tyrant',art:'tyrant',boss:true,big:true,drops:[['relic_heart',1,1,1],['coal_ore',1,4,8],['ember_ore',1,3,5],['gold',1,300,450],['gem',1,3,5]],rare:[['cinder_blade',.015]]},
+  warden:{hp:900,dmg:18,spd:32,xp:1100,ai:'warden',art:'warden',boss:true,big:true,drops:[['relic_star',1,1,1],['cobalt_ore',1,4,8],['starshard_ore',1,1,3],['gold',1,500,750],['gem',1,4,6]],rare:[['star_helm',.015]]}
 };
 // Biome packs: floors, enemy mix, ore, boss. Season 1 adds the next pack.
 const PACKS=[
-  {id:'moss',from:1,to:5,enemies:['slime','bat','crawler'],ore:'copper',boss:'mother',bossName:'Mother Slime'},
-  {id:'crypt',from:6,to:10,enemies:['skeleton','wisp','spider','bat'],ore:'iron',rareOre:'ember',boss:'knight',bossName:'The Ossuary Knight'},
-  {id:'ember',from:11,to:15,locked:true,season:1,name:'Emberforge Halls'}
+// veins: [ore, weight, from floor] (the ore walls of each floor are rolled from these). ore: the pack's main ore (chests).
+  {id:'moss',from:1,to:5,enemies:['slime','bat','crawler'],ore:'copper',veins:[['copper',1]],boss:'mother',bossName:'Mother Slime'},
+  {id:'crypt',from:6,to:10,enemies:['skeleton','wisp','spider','bat'],ore:'iron',veins:[['iron',3],['ember',1,8]],boss:'knight',bossName:'The Ossuary Knight'},
+  {id:'ember',from:11,to:15,enemies:['imp','golem','cinderbat','imp'],ore:'coal',veins:[['coal',5],['iron',3],['ember',1.6,12]],boss:'tyrant',bossName:'The Forge Tyrant'},
+  {id:'star',from:16,to:20,enemies:['wraith','sentinel','shardling'],ore:'cobalt',veins:[['cobalt',6],['coal',3],['starshard',1,17]],boss:'warden',bossName:'The Starwarden'}
 ];
 const packOf=f=>PACKS.find(p=>f>=p.from&&f<=p.to);
+// the lift at the Gate: floor 1, then the first floor of each pack whose previous boss you've beaten
+const LIFTS=PACKS.map(p=>p.from);
+const liftBoss=f=>{const i=PACKS.findIndex(p=>p.from===f);return i>0?PACKS[i-1].boss:null;};
 const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@runa_k','@tallowtom','@vexa','@gravelgus','@sora_lamps','@bram_b'];
 
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
@@ -768,8 +864,20 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.9.6',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.9.4'};
+const BUILD={version:'0.10.0',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.10.0'};
 const CHANGELOG=[
+  {v:'0.10.0',date:'2026-10-27',title:'Ten new floors and Mining',notes:[
+    'The Depths go to floor 20. Floors 11–15 are the Emberforge Halls: fire imps, magma golems and cinder bats, with the Forge Tyrant on floor 15. Floors 16–20 are the Starfall Hollow: wraiths, crystal sentinels and shardlings, with the Starwarden on floor 20.',
+    'A new skill, Mining. Mine the ore in the walls to train it. Each ore needs a Mining level: Copper 1, Iron 10, Coal 20, Emberite 25, Cobalt 30, Starshard 40. Mining counts toward your combat level like every other skill.',
+    'New ores: Coal, Cobalt and the rare Starshard (it sparkles; traders pay well for it).',
+    'Steel gear at the Forge: Steel Helm (Smithing 35), Steel Blade (Smithing 38) and Steel Mail (Smithing 42), made from iron, coal and cobalt. The strongest gear you can forge.',
+    'The two rarest finds in the Depths: Cinderfang, a blade that only the Forge Tyrant drops, and the Starwarden’s Helm, which only the Starwarden drops. Very, very rarely.',
+    'New boss Relics: the Forge Heart and the Fallen Star.',
+    'Watch the bosses: a ring of fire means the Tyrant’s hammer is about to land, and a cold ring means the Starwarden is about to burst. Step out of the ring.',
+    'Beat the Ossuary Knight to open the lift to floor 11, and the Forge Tyrant to open it to floor 16.',
+    'Fighting now tops out at 99, like every other skill.',
+    'Combat level = (2 × Fighting + all your skill levels) ÷ 8 now that Mining counts. Nobody loses a level: you keep the combat level you had.',
+    '8 new goals for Mining, Smithing and the new floors.']},
   {v:'0.9.6',date:'2026-10-27',title:'Combat level from everything you do',notes:[
     'Your combat level now comes from all your skills together. Monster XP trains a new skill, Fighting, which counts double, and Woodcutting, Fishing, Farming, Cooking and Smithing each add their level too.',
     'Combat level = (2 × Fighting + all your skill levels) ÷ 7. Combat level 10 takes something like Fighting 15 with your skills around 8, so it’s a real milestone.',
@@ -1090,13 +1198,19 @@ function buildFloor(floor,runSeed){
   const pick=a=>a.splice(r()*a.length|0,1)[0];
   const fpool=faces.slice();
   for(let i=0;i<(boss?6:9)&&fpool.length;i++){const [x,y]=pick(fpool);addObj(m,{type:'torch',x:x*T+8,y:y*T+12,tile:[x,y],light:{r:46,c:'warm'},onWall:true});}
-  if(!boss)for(let i=0;i<10&&fpool.length;i++){const [x,y]=pick(fpool);const kind=pack.rareOre&&floor>=8&&r()<.25?pack.rareOre:pack.ore;addObj(m,{type:'ore',kind,x:x*T+8,y:y*T+15,tile:[x,y],hp:3,onWall:true,light:kind==='ember'?{r:15,c:'lava'}:null});}
+  // ore veins: rolled from the pack's vein table (some ores only show up from a given floor)
+  const veins=(pack.veins||[[pack.ore,1]]).filter(v=>!v[2]||floor>=v[2]),vw=veins.reduce((a,v)=>a+v[1],0);
+  const ORE_LIGHT={ember:{r:15,c:'lava'},cobalt:{r:12,c:'cool'},starshard:{r:18,c:'star'}};
+  if(!boss)for(let i=0;i<10&&fpool.length;i++){const [x,y]=pick(fpool);let q=r()*vw,kind=veins[0][0];for(const v of veins){q-=v[1];if(q<=0){kind=v[0];break;}}
+    addObj(m,{type:'ore',kind,x:x*T+8,y:y*T+15,tile:[x,y],hp:(ORES[kind]||{hp:3}).hp,onWall:true,light:ORE_LIGHT[kind]||null});}
   const cells=[];rooms.forEach((o,i)=>{if(i===0)return;for(let y=o.y;y<o.y+o.h;y++)for(let x=o.x;x<o.x+o.w;x++)cells.push([x,y]);});
   const free=cells.filter(([x,y])=>!(x===m.stairs.tx&&y===m.stairs.ty));
   if(!boss){
     for(let i=0;i<1+(r()<.6?1:0);i++){const [x,y]=pick(free);addObj(m,{type:'chest',x:x*T+8,y:y*T+14,open:false,act:{x:x*T+8,y:y*T+14,label:'Open',id:'chest'},block:[[x,y]]});}
     const glow=pack.id==='moss'?4:2;for(let i=0;i<glow;i++){const [x,y]=pick(free);addObj(m,{type:'glowcap',x:x*T+8,y:y*T+15,light:{r:20,c:'pink'},act:{x:x*T+8,y:y*T+12,label:'Pick',id:'glowcap'}});}
     if(pack.id==='crypt')for(let i=0;i<6;i++){const [x,y]=pick(free);m.objs.push({type:'bones',x:x*T+8,y:y*T+15,flat:true});}
+    if(pack.id==='ember')for(let i=0;i<5;i++){const [x,y]=pick(free);m.objs.push({type:'cinders',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0});}
+    if(pack.id==='star')for(let i=0;i<4;i++){const [x,y]=pick(free);addObj(m,{type:'crystal',x:x*T+8,y:y*T+15,v:r()*2|0,light:{r:16,c:'cool'}});}
   }
   // enemies
   m.spawns=[];
@@ -1128,7 +1242,7 @@ function dressDungeon(m,g){const D=ART.deco,r=rng((m.floor||1)*131+(m.w*7)),isF=
     else if(!crypt&&k<.15)g.drawImage(D.shrooms,X+(r()*6|0),Y+6+(r()*4|0));}
   // wall faces: banners and chains in the crypt, roots in the caverns
   for(const key of m.faces){const x=key%m.w,y=(key/m.w)|0;if(taken.has(key))continue;const k=r(),X=x*T,Y=y*T;
-    if(m.biome==='crypt'){if(k<.07)g.drawImage(D.banner,X+4,Y+1);else if(k<.14)g.drawImage(D.chain,X+5,Y+2);}
+    if(m.biome==='crypt'||m.biome==='ember'){if(k<.07)g.drawImage(D.banner,X+4,Y+1);else if(k<.14)g.drawImage(D.chain,X+5,Y+2);}
     else if(k<.18)g.drawImage(D.roots,X+4,Y);}}
 // ---------- pre-render the static ground layer ----------
 function bakeGround(m){
@@ -1137,7 +1251,7 @@ function bakeGround(m){
   for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const t=tAt(m,x,y),v=(x*7+y*13)%4;let s=null;
     if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WILDG)s=ART.wgrass[v];else if(t===WPATH)s=ART.wpath[v%3];else if(isWater(t))s=null;}
     else{if(t===FLOOR)s=ART.floor[m.biome][v];else if(m.faces.has(y*m.w+x))s=ART.face[m.biome][v%3];else{g.fillStyle='#0d0e17';g.fillRect(x*T,y*T,T,T);
-        const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle=m.biome==='moss'?'#3a4a4a':'#45425f';
+        const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle={moss:'#3a4a4a',ember:'#4a2f33',star:'#2c3566'}[m.biome]||'#45425f';
         if(fl(-1,0))g.fillRect(x*T,y*T,2,T);if(fl(1,0))g.fillRect(x*T+T-2,y*T,2,T);if(fl(0,-1))g.fillRect(x*T,y*T,T,2);if(fl(0,1))g.fillRect(x*T,y*T+T-2,T,2);
         if((x*31+y*17)%5===0){g.fillStyle='#181a28';g.fillRect(x*T+5,y*T+6,3,2);}}}
     if(s)g.drawImage(s,x*T,y*T);}
@@ -1255,20 +1369,23 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.wallet=typeof o.wallet==='string'&&/^0x[0-9a-f]{40}$/.test(o.wallet)?o.wallet:null;
   const L=obj(o.look);s.look={skin:int(L.skin,0,LOOKS.skin.length-1,DEFAULT_LOOK.skin),hair:int(L.hair,0,LOOKS.hair.length-1,DEFAULT_LOOK.hair),cloth:int(L.cloth,0,LOOKS.cloth.length-1,DEFAULT_LOOK.cloth),style:int(L.style,0,LOOKS.style.length-1,DEFAULT_LOOK.style)};
   s.gold=int(o.gold,0,1e10,DEF.gold);s.lvl=int(o.lvl,1,200,1);s.xp=int(o.xp,0,1e9,0);s.kills=int(o.kills,0,1e9,0);s.deaths=int(o.deaths,0,1e9,0);s.caught=int(o.caught,0,1e9,0);
-  s.deepest=int(o.deepest,0,PACKS[PACKS.length-1].to,0);s.lift=int(o.lift,1,s.deepest+1,1)>=6?6:1;s.savedAt=int(o.savedAt,0,9e15,0);
+  s.deepest=int(o.deepest,0,PACKS[PACKS.length-1].to,0);s.savedAt=int(o.savedAt,0,9e15,0);
   s.vault={};for(const [k,v] of Object.entries(obj(o.vault)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.vault[k]=n;}s.bankBuys=int(o.bankBuys,0,BANK_BUYS.length,0);
   if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}}
   const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null};
   const K=obj(o.skills);s.skills={};for(const k of Object.keys(SKILLS))s.skills[k]=num(K[k],0,200e6,0);
   Object.assign(s,cleanPlots(o,Date.now()));
   s.bosses={};for(const k of Object.keys(obj(o.bosses)))if(ENEMIES[k]&&ENEMIES[k].boss)s.bosses[k]=true;
+  {const want=int(o.lift,1,99,1);s.lift=Math.max(...LIFTS.filter(f=>f<=want&&f<=s.deepest+1&&(!liftBoss(f)||s.bosses[liftBoss(f)])));}   // the deepest lift you've opened
   const Q=Array.isArray(o.quick)?o.quick:DEF.quick;s.quick=[0,1,2,3,4].map(i=>ITEMS[Q[i]]&&(ITEMS[Q[i]].food||ITEMS[Q[i]].oil)?Q[i]:null);
   s.flags={};for(const [k,v] of Object.entries(obj(o.flags)))if(/^[a-z]{2,16}$/.test(k))s.flags[k]=!!v;s.guide=int(o.guide,0,99,0);
   s.goals={};for(const k of Object.keys(obj(o.goals)).slice(0,300))if(/^[a-z0-9]{2,16}$/.test(k))s.goals[k]=1;
   s.cnt={};for(const [k,v] of Object.entries(obj(o.cnt)).slice(0,60))if(/^[a-z]{2,16}$/.test(k)){const n=int(v,0,1e9,0);if(n)s.cnt[k]=n;}
   // Combat level = Fighting (monster XP) counted double + every skill level (see combatFrom in data.js). Saves from before
   // this change keep the combat level they had as a floor, and their old combat progress becomes their Fighting level.
-  {const legacy=o.flv===undefined;s.flv=legacy?s.lvl:int(o.flv,1,200,1);s.cbFloor=legacy?s.lvl:int(o.cbFloor,1,200,1);s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
+  {const legacy=o.flv===undefined;s.flv=Math.min(FIGHT_MAX,legacy?s.lvl:int(o.flv,1,200,1));s.cbFloor=legacy?s.lvl:int(o.cbFloor,1,200,1);
+   if(!legacy&&K.mining===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,SKILLS_V096));   // Mining joined in v0.10.0: nobody drops a level
+   s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
   s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
   {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x),y:Math.round(+q.y)}:null;}   // where you logged out
   return s;}
@@ -1472,14 +1589,14 @@ function doAct(a){
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
   if(a.id==='stairs'&&MP.client())return MP.askDown();
   if(a.id==='stairs'){const next=run.floor+1,pk=packOf(next);
-    if(!pk||pk.locked){openSheet(`<h2>The way is sealed</h2><p class="lead">Below floor ${run.floor} lies ${pk?pk.name:'something older'}. It opens in Season ${pk?pk.season:1}.</p><p class="lead">Light the Return Flame to bring your haul home.</p><div class="row"><button class="btn" id="sx">Keep exploring</button></div>`);$('sx').onclick=closeSheet;return;}
+    if(!pk||pk.locked){openSheet(`<h2>The way is sealed</h2><p class="lead">Below floor ${run.floor} lies ${pk?pk.name:'something older'}. ${pk?'It opens in Season '+pk.season+'.':'Deeper floors are coming.'}</p><p class="lead">Light the Return Flame to bring your haul home.</p><div class="row"><button class="btn" id="sx">Keep exploring</button></div>`);$('sx').onclick=closeSheet;return;}
     sfx('stairs');enterFloor(next);MP.floorOut(next);toast('Floor '+next+(packOf(next).id!==map.pack.id?' · '+BIOMES[packOf(next).id].name:''));}
 }
 
 // ---------- combat ----------
 function swing(){if(P.swingCD>0)return;P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
 // ---- swing feel: the hero steps into the swing, the blade leaves a smear, and a hit flashes, sparks and briefly freezes ----
-const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d'};
+const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d',steel:'#c9d6e3',cinder:'#ff5a2a'};
 const easeOut=t=>1-(1-t)*(1-t);
 function lungeOff(dir,left){const k=Math.round(Math.sin((1-left/.2)*Math.PI)*2);return [dir==='left'?-k:dir==='right'?k:0,dir==='up'?-k:dir==='down'?k:0];}
 function impact(x,y,a,col,big,mine){
@@ -1496,7 +1613,9 @@ function resolveSwing(){
     if(MP.client()){e.hp=Math.max(0,e.hp-d);NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
     applyHit(e,d,a,MP.me());}}
   for(const o of map.objs){if(o.type!=='ore'||o.gone)continue;const ox=o.tile[0]*T,oy=o.tile[1]*T;
-    if(ox+T>b.x&&ox<b.x+b.w&&oy+T>b.y&&oy<b.y+b.h){puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);ore=i;
+    if(ox+T>b.x&&ox<b.x+b.w&&oy+T>b.y&&oy<b.y+b.h){const OR=ORES[o.kind]||ORES.copper;
+      if(lvlOf('mining')<OR.lvl){floatText(ox+8,oy+4,'Mining '+OR.lvl,'#ff8a8a');if(time-(MP.mineWarn||-9)>2){MP.mineWarn=time;toast(OR.n+' needs Mining '+OR.lvl+'. You have '+lvlOf('mining')+'.','bad');}sfx('swing',.4);break;}
+      puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);ore=i;
       if(MP.client()){NET.send({t:'mine',o:i});break;}mineOre(o,i,MP.me());break;}}
   if(MP.shared())NET.send({t:'sw',d:P.dir,h:hits.slice(0,8),o:ore});   // the party sees your swing, your damage numbers and your pickaxe chips
 }
@@ -1518,13 +1637,13 @@ function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;falle
   if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}else if(MP.shared())gainXp(xp);puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
   if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);}
-  if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(run.floor+1>S.lift&&!(packOf(run.floor+1)||{}).locked)S.lift=run.floor+1;save();
+  if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(LIFTS.includes(run.floor+1)&&run.floor+1>S.lift)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
-    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
+    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.${packOf(run.floor+1)?'':' This is as deep as the Depths go for now.'}</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
 // Monster XP trains Fighting. Combat level comes from Fighting plus every other skill, so it's checked after any XP.
-function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.xp>=xpNeed(S.flv)){S.xp-=xpNeed(S.flv);S.flv++;toast('Fighting level '+S.flv+'!','good');sfx('level');buzz(60);puff(P.x,P.y-8,'#ef7d57',12);}combatCheck();}
-const cbPts=()=>2*S.flv+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
+function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.flv<FIGHT_MAX&&S.xp>=xpNeed(S.flv)){S.xp-=xpNeed(S.flv);S.flv++;toast('Fighting level '+S.flv+'!','good');if(S.flv%10===0||S.flv===FIGHT_MAX)MP.feed('skill','Fighting '+S.flv);sfx('level');buzz(60);puff(P.x,P.y-8,'#ef7d57',12);}if(S.flv>=FIGHT_MAX)S.xp=0;combatCheck();}
+const cbPts=()=>2*Math.min(FIGHT_MAX,S.flv)+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
 function combatCheck(){const c=Math.max(S.cbFloor||1,combatFrom(S.flv,S.skills));if(c===S.lvl)return;const up=c>S.lvl;S.lvl=c;if(!up)return;
   P.hp=Math.min(hpMax(),P.hp+8);setTimeout(()=>{toast('Combat level '+S.lvl+'! Max HP '+hpMax(),'good');sfx('level');puff(P.x,P.y-8,'#ffcd75',16);floatText(P.x,P.y-40,'Combat '+S.lvl+'!','#ffcd75');},900);if(S.lvl%5===0)MP.feed('level',String(S.lvl));}
 function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
@@ -1538,7 +1657,8 @@ function rollRarity(floor,boost){const w={};let tot=0;for(const r of RORDER){let
 function gearDrops(src,floor,boss){const luck=1+A('luck')/100,out=[];
   if(rand()<{chest:.10,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
   if(rand()<{chest:.035,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
-  if(boss){const k=Object.keys(CAPES).find(k=>CAPES[k].boss===boss);if(k&&rand()<.05*luck)out.push('cape_'+k);}
+  if(boss){const k=Object.keys(CAPES).find(k=>CAPES[k].boss===boss);if(k&&rand()<.05*luck)out.push('cape_'+k);
+    for(const [id,ch] of (ENEMIES[boss]&&ENEMIES[boss].rare)||[])if(rand()<ch*luck)out.push(id);}   // the rarest finds in the Depths
   return out;}
 function dropGear(x,y,src,boss,own){for(const id of gearDrops(src,run?run.floor:1,boss))addDrop(mkDrop(x,y,id,1),false,own);}
 function spawnLoot(x,y,table,own){for(const [id,ch,a,b] of table){if(rand()>=(id==='gold'?ch:ch*(1+A('luck')/100)))continue;const n=ri(a,b);
@@ -1832,14 +1952,14 @@ $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();})
 function iconImg(id){return `<img class="ic" alt="" src="${iconOf(id).toDataURL()}">`;}
 function openGate(){
   if(MP.party&&MP.party.leader!==MP.id&&netOn())return MP.gateMember();
-  const lifts=[1];if(S.lift>=6)lifts.push(6);
+  const lifts=LIFTS.filter(f=>f<=S.lift&&(!liftBoss(f)||S.bosses[liftBoss(f)])),LIFT_ORE={1:'copper_ore',6:'iron_ore',11:'coal_ore',16:'cobalt_ore'};
   openSheet(`<h2>The Delve Gate</h2><p class="lead">Your lantern starts full. It burns oil as you go, faster on deeper floors. At empty, Shades come for you.</p>
   <div class="kit"><span>${iconImg('oil')} Oil Flasks <b>${S.bank.oil||0}</b></span><span>${iconImg('bread')} Bread <b>${S.bank.bread||0}</b></span><span>${iconImg('pondfin')} Fish <b>${S.bank.pondfin||0}</b></span><span>${iconImg('stew')} Stew <b>${S.bank.stew||0}</b></span></div>
   <div class="gear" style="--rc:${RARITY[LANTERNS[S.gear.lantern].r].c}">${iconImg(S.gear.lantern+'_lantern')}<span><small>Your lantern</small><b>${LANTERNS[S.gear.lantern].n}</b><small>${lanStat(S.gear.lantern)}${A('oil')?' · cape: oil lasts '+A('oil')+'% longer':''}</small></span></div>
   ${(()=>{const n=Object.keys(S.bank).filter(id=>ITEMS[id]&&!['oil','bread','stew','pondfin'].includes(id)).length,sup=['oil','bread','stew','pondfin'].reduce((a,id)=>a+(S.vault[id]||0),0);
     return (n?`<p class="lead small warn">Your bag holds ${n} other stack${n>1?'s':''} that could be lost. <button class="link inl" id="toBank">Visit the Bank</button></p>`:'')+(sup?`<button class="btn alt big" id="pack">Take ${sup} supplies from the Bank</button>`:'');})()}
-  <div class="list">${lifts.map(f=>`<button class="item" data-go="${f}">${iconImg(f===1?'copper_ore':'iron_ore')}<span><b>${f===1?'Enter floor 1':'Take the lift to floor 6'}</b><small>${BIOMES[packOf(f).id].name}${f===6?' · unlocked by beating Mother Slime':''}</small></span></button>`).join('')}
-  <div class="item locked">${iconImg('ember_ore')}<span><b>Floors 11–15 · Emberforge Halls</b><small>Season 1 expansion</small></span></div></div>
+  <div class="list">${lifts.map(f=>`<button class="item" data-go="${f}">${iconImg(LIFT_ORE[f]||'copper_ore')}<span><b>${f===1?'Enter floor 1':'Take the lift to floor '+f}</b><small>${BIOMES[packOf(f).id].name}${liftBoss(f)?' · unlocked by beating '+PACKS.find(p=>p.boss===liftBoss(f)).bossName.replace(/^The /,'the '):''}</small></span></button>`).join('')}
+  ${LIFTS.filter(f=>!lifts.includes(f)).slice(0,1).map(f=>`<div class="item locked">${iconImg(LIFT_ORE[f]||'copper_ore')}<span><b>Lift to floor ${f} · ${BIOMES[packOf(f).id].name}</b><small>Beat ${PACKS.find(p=>p.boss===liftBoss(f)).bossName.replace(/^The /,'the ')} to open it</small></span></div>`).join('')}</div>
   <p class="lead small">Deepest floor: ${S.deepest||'none yet'}. Light the Return Flame (hold the flame button for 2 seconds) to come home with your loot. Dying loses about half of what you carry.</p>
   <div class="row"><button class="btn alt" id="sx">Not yet</button></div>`);
   $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>MP.delve(+b.dataset.go));
@@ -1848,7 +1968,7 @@ function openGate(){
 // ---- XP: the skill you're training shows as a thin strip under your health, and for a few seconds after each gain
 // the goals pill turns into "Fishing 12 · ▬▬ · 230 xp to 13" (tap it for the Skills tab). Combat counts too.
 let xpTipT=0,xpLast=null;
-function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);return {n:'Fighting',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.flv,p:S.xp/need,left:need-S.xp,max:false};}
+function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);const mx=S.flv>=FIGHT_MAX;return {n:'Fighting',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.flv,p:mx?1:S.xp/need,left:need-S.xp,max:mx};}
   const l=lvlOf(k),xp=S.skills[k]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)];return {n:SKILLS[k].n,c:SKILLS[k].c,icon:SKILLS[k].icon,l,p:l>=99?1:(xp-a)/(b-a),left:Math.ceil(b-xp),max:l>=99};}
 function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb'),g=$('guide');xpLast=k;
   bar.hidden=false;f.style.width=Math.max(2,Math.round(x.p*100))+'%';f.style.background=x.c;f.style.color=x.c;bar.title=x.n;
@@ -1859,7 +1979,7 @@ function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_T
   return `<div class="skl${xpLast===sk?' cur':''}">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small>${xpLast===sk?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':`<b>${fmt(Math.ceil(b-xp))}</b> xp to level ${l+1} · ${fmt(Math.floor(xp-a))} / ${fmt(b-a)} (${Math.floor(p*100)}%)`}</small></span></div>`;}
 function combatLine(){const x=xpInfo('combat'),pts=cbPts(),div=cbDiv(),base=combatFrom(S.flv,S.skills),nextAt=(base+1)*div,held=(S.cbFloor||1)>base,cp=Math.max(0,Math.min(1,(pts-base*div)/div));
   return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting counts 2 points a level, every other skill 1`}</small></span></div>
-   <div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Fighting <em>${x.l}</em>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small><b>${fmt(x.left)}</b> xp to level ${x.l+1} · from monsters in the Depths</small></span></div>`;}
+   <div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Fighting <em>${x.l}</em><small>/${FIGHT_MAX}</small>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small>${x.max?'Max level':`<b>${fmt(x.left)}</b> xp to level ${x.l+1} · from monsters in the Depths`}</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
 // ---------- timed cooking: each item takes a moment at the Kitchen; Cook All queues them up ----------
@@ -1898,7 +2018,7 @@ function openCraft(kind){
   const T2={forge:['The Forge','Forge gear to train Smithing. Better gear unlocks as your level rises. New gear goes into your bag; equipping it swaps your old piece back into the bag.'],kitchen:['The Kitchen','Food heals you mid-delve. Use it with the food button.'],press:['The Oil Press','Lampseed becomes Oil Flasks, the fuel for your lantern.']}[kind];
   openSheet(`<h2>${T2[0]}</h2>${kind==='forge'?skillLine('smithing'):''}<p class="lead${kind==='forge'?' small':''}">${T2[1]}</p><div class="list">${RECIPES[kind].map((r,i)=>{const lock=kind==='forge'&&lvlOf('smithing')<r.lvl;const it=ITEMS[r.out],owned=it.gear&&(S.gear[it.gear]===it.tier||(avail(r.out))>0);
     const stat=it.gear?(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:'Defense '+GEAR[it.gear][it.tier].def):it.heal?'Heals '+it.heal:it.oil?'+'+it.oil+'% oil':'';
-    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock?'<span class="lockt">Needs Smithing '+r.lvl+'</span> · ':''}${stat}${kind==='forge'?' · '+r.xp+' xp':''}${owned?' · owned':''}${kind!=='forge'?' · have '+(avail(r.out)):''}</small></span><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button></div><div class="need">${needText(r)}</div></div>`;}).join('')}${kind==='forge'?'<div class="recipe locked"><div class="rh"><span class="ic blank"></span><span><b>Cinderite gear</b><small>Smithing 50+ · arrives with Season 1</small></span></div></div>':''}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock?'<span class="lockt">Needs Smithing '+r.lvl+'</span> · ':''}${stat}${kind==='forge'?' · '+r.xp+' xp':''}${owned?' · owned':''}${kind!=='forge'?' · have '+(avail(r.out)):''}</small></span><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button></div><div class="need">${needText(r)}</div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;
   $('sheet').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>{const r=RECIPES[kind][+b.dataset.make];if(!canMake(r))return;
     for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;const it=ITEMS[r.out];
@@ -1980,13 +2100,13 @@ function openBag(tab){bagTab=tab||'items';
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="row"><button class="btn alt" id="setO">Settings</button><button class="btn alt" id="gd">Goals</button></div>
    <div class="row"><button class="btn alt" id="reset">Reset progress</button><button class="btn alt" id="out">Sign out</button></div>`;}
-  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['woodcutting','fishing','farming','cooking','smithing'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
+  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['woodcutting','fishing','farming','cooking','smithing','mining'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
    <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
    <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
-   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × Fighting + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking and smithing all raise it.</p></div>`;}
+   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × Fighting + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking, smithing and mining all raise it. Fighting tops out at 99.</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
    const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
    body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
@@ -2007,10 +2127,12 @@ function openBag(tab){bagTab=tab||'items';
 }
 function itemInfo(id){const it=ITEMS[id],o=[];
   if(it.lantern)o.push(lanStat(it.lantern));if(it.cape)o.push(capeStat(it.cape));if(it.heal)o.push('Heals '+it.heal+' HP in the Depths');if(it.oil)o.push('Refills '+it.oil+'% lantern oil');
-  if(it.gear)o.push(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:'Defense '+GEAR.mail[it.tier].def);if(it.relic)o.push('Boss relic. Can be minted on-chain in the live game');
+  if(it.gear)o.push(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def);
+  {const ok=Object.keys(ORES).find(k=>k+'_ore'===id);if(ok)o.push('Mined in the Depths · Mining '+ORES[ok].lvl);}
+  if(it.rarity==='mythic'&&it.gear)o.push('One of the two rarest finds in the Depths');if(it.relic)o.push('Boss relic. Can be minted on-chain in the live game');
   const seedOf=Object.values(CROPS).find(c=>c.seed===id);if(seedOf)o.push('Plant at the Farm · Farming '+seedOf.lvl);
   const ck=RECIPES.kitchen.find(r=>r.need[id]);if(ck)o.push('Cook into '+ITEMS[ck.out].n+' at the Kitchen');
-  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id))o.push('Used at the Forge');
+  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id)&&RECIPES.forge.some(r=>r.need[id]))o.push('Used at the Forge');if(id==='starshard_ore')o.push('Prized by traders: sell it to Tallow');
   if(id==='burnt_fish')o.push('Not much use to anyone');return o;}
 let dropQty=1,dropArm=false;
 function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();return;}if(!keep){dropQty=1;dropArm=false;}dropQty=Math.min(dropQty,n);
@@ -2036,22 +2158,22 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();r
   if($('drop'))$('drop').onclick=()=>{if((rare||dropQty>=10||dropQty===n&&n>1)&&!dropArm){dropArm=true;openItem(id,true);return;}
     take(id,dropQty);dropToGround(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n+' at your feet');sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag();};}
 function openAdmin(){if(!ADMIN)return;
-  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock the lift to floor 6'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?[['f5','Jump to Mother Slime (F5)'],['f10','Jump to the Ossuary Knight (F10)']]:[]);
+  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock every lift (floors 6, 11, 16)'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?PACKS.map(p=>['f'+p.to,'Jump to '+p.bossName+' (F'+p.to+')']):[]);
   openSheet(`<h2>Admin powers</h2><p class="lead small">Only party hat owners see this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openHero();
   $('sheet').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const k=b.dataset.ad;
     if(k==='kit'){grantKit();S.gold-=100000;}
     if(k==='gold')S.gold+=10000;
-    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','gem','slime_gel','bone','lampseed','glowcap_spore','wheat_seed','raw_pondfin','wheat','glowcap'])give(S.bank,id,50);
+    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','coal_ore','cobalt_ore','starshard_ore','gem','slime_gel','bone','lampseed','glowcap_spore','wheat_seed','raw_pondfin','wheat','glowcap'])give(S.bank,id,50);
     if(k==='food')for(const id of ['oil','bread','pondfin','stew'])give(S.bank,id,20);
     if(k==='skills')for(const sk of Object.keys(SKILLS))S.skills[sk]=XP_TABLE[99];
     if(k==='combat'){S.flv=Math.max(S.flv,60);S.cbFloor=Math.max(S.cbFloor||1,50);S.xp=0;combatCheck();P.hp=hpMax();}
     if(k==='bank')S.bankBuys=BANK_BUYS.length;
-    if(k==='lift')S.lift=6;
+    if(k==='lift'){for(const p of PACKS)S.bosses[p.boss]=true;S.lift=LIFTS[LIFTS.length-1];S.deepest=Math.max(S.deepest,S.lift);}
     if(k==='heal'){P.hp=maxHp();if(run)run.oil=100;}
     if(k==='god')S.flags.god=!S.flags.god;
-    if(k==='f5'||k==='f10'){enterFloor(k==='f5'?5:10);closeSheet();}
-    save();sfx('level');toast('Admin: done','good');if(k!=='f5'&&k!=='f10')openAdmin();});}
+    const jump=/^f\d+$/.test(k);if(jump){enterFloor(+k.slice(1));closeSheet();}
+    save();sfx('level');toast('Admin: done','good');if(!jump)openAdmin();});}
 function openQuickPick(i){const opts=['oil'].concat(FOODS);
   openSheet(`<h2>Quick slot ${i+1}</h2><p class="lead small">Quick slots sit on your screen in the Depths. Tap one to eat or refill your lantern. Keys 1–5 work too.</p>
    <div class="qslots">${S.quick.map((id,j)=>`<button class="qs ${j===i?'on':''}" data-qs="${j}" aria-label="Slot ${j+1}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
@@ -2159,16 +2281,24 @@ const GOALS=[
   {id:'cook10',cat:'skills',t:'Reach Cooking 10',hint:'Cook at the Kitchen.',...lv('cooking',10),gold:50},
   {id:'smith10',cat:'skills',t:'Reach Smithing 10',hint:'Forge gear at the Forge.',...lv('smithing',10),gold:60},
   {id:'smith25',cat:'skills',t:'Reach Smithing 25',hint:'Ember gear starts at 25.',...lv('smithing',25),gold:200},
+  {id:'smith35',cat:'skills',t:'Reach Smithing 35',hint:'Steel gear starts at 35: iron and coal at the Forge.',...lv('smithing',35),gold:300},
+  {id:'mine10',cat:'skills',t:'Reach Mining 10',hint:'Mine the glinting rocks in the Depths. Iron needs Mining 10.',...lv('mining',10),gold:50},
+  {id:'mine25',cat:'skills',t:'Reach Mining 25',hint:'Coal at 20, Emberite at 25.',...lv('mining',25),gold:150},
+  {id:'mine40',cat:'skills',t:'Reach Mining 40',hint:'Enough to mine a Starshard.',...lv('mining',40),gold:400},
   {id:'total',cat:'skills',t:'Total skill level 100',hint:'Every skill counts.',...cn(totalLvl,100),gold:200},
   {id:'mother',cat:'depths',t:'Defeat Mother Slime',hint:'She waits on floor 5. Bring food.',done:()=>!!S.bosses.mother,gold:60},
   {id:'knight',cat:'depths',t:'Defeat the Ossuary Knight',hint:'Floor 10. Watch for his charge.',done:()=>!!S.bosses.knight,gold:150},
   {id:'f10',cat:'depths',t:'Reach floor 10',hint:'The crypt goes deep.',done:()=>S.deepest>=10,gold:100,prog:()=>[Math.min(10,S.deepest),10]},
+  {id:'tyrant',cat:'depths',t:'Defeat the Forge Tyrant',hint:'Floor 15. Step out of the ring of fire before the hammer lands.',done:()=>!!S.bosses.tyrant,gold:300},
+  {id:'warden',cat:'depths',t:'Defeat the Starwarden',hint:'Floor 20. When it vanishes, look behind you.',done:()=>!!S.bosses.warden,gold:500},
+  {id:'f20',cat:'depths',t:'Reach floor 20',hint:'Below the Emberforge Halls lies the Starfall Hollow.',done:()=>S.deepest>=20,gold:250,prog:()=>[Math.min(20,S.deepest),20]},
+  {id:'steel',cat:'depths',t:'Wear a full set of steel',hint:'Steel Blade, Steel Mail and Steel Helm, all equipped.',done:()=>S.gear.blade==='steel'&&S.gear.mail==='steel'&&S.gear.helm==='steel',gold:300},
   {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Fighting counts double, and every skill adds to it.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
   {id:'cb25',cat:'depths',t:'Reach combat level 25',hint:'Fight in the Depths and train every skill.',done:()=>S.lvl>=25,prog:()=>[Math.min(25,S.lvl),25],gold:200},
   {id:'kill100',cat:'depths',t:'Defeat 100 monsters',hint:'Every hit counts in a party.',...cn(()=>S.kills||0,100),gold:60},
   {id:'kill1k',cat:'depths',t:'Defeat 1,000 monsters',hint:'The Depths grow quiet when you visit.',...cn(()=>S.kills||0,1000),gold:300},
   {id:'chests',cat:'depths',t:'Open 25 chests',hint:'Chests hide in dead ends.',...cn(()=>C('chests'),25),gold:75},
-  {id:'ore',cat:'depths',t:'Mine 200 ore',hint:'Hit the glinting rocks in the walls.',...cn(()=>C('ores'),200),gold:75},
+  {id:'ore',cat:'depths',t:'Mine 200 ore veins',hint:'Hit the glinting rocks in the walls.',...cn(()=>C('ores'),200),gold:75},
   {id:'rare',cat:'depths',t:'Find a Rare lantern or cape',hint:'Chests and bosses drop them most.',done:()=>ownsRarity('rare'),gold:100},
   {id:'party',cat:'depths',t:'Delve with a party',hint:'Invite a friend from the Social button, then enter the Gate.',done:()=>!!S.flags.partied,gold:40},
   {id:'friend',cat:'hold',t:'Make a friend',hint:'Social button → Friends → add a name.',done:()=>!!S.flags.friend,gold:20},
@@ -2360,10 +2490,14 @@ function update(dt){
   for(const t of texts)t.t+=dt;texts=texts.filter(t=>t.t<.9);
   if(shake>0)shake=Math.max(0,shake-dt*12);
   for(const k of slashes)k.t+=dt;if(slashes.length)slashes=slashes.filter(k=>k.t<.16);
-  if(P.swing>0&&S.gear.blade==='ember'&&!reduceMotion&&rand()<.7){const t=easeOut(1-P.swing/.2),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir]||0,a=base-1.2+t*2.4;
+  if(P.swing>0&&(S.gear.blade==='ember'||S.gear.blade==='cinder')&&!reduceMotion&&rand()<.7){const t=easeOut(1-P.swing/.2),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir]||0,a=base-1.2+t*2.4;
     fx.push({x:P.x+Math.cos(a)*14,y:P.y-6+Math.sin(a)*14,vx:(rand()-.5)*20,vy:-20-rand()*25,t:0,life:.3+rand()*.2,col:rand()<.5?'#ff9f3d':'#ffcd75'});}
   updateHud();
 }
+// a boss slam or starburst lands: everyone inside the ring is hit (through the normal contact damage, for 0.22 s)
+function bossBlast(e,R,col){e.st='blast';e.cd=.22;e.tg=2;e.aoeR=R;blastFx(e,R,col);}
+function blastFx(e,R,col){if(SET.shake&&Math.hypot(P.x-e.x,P.y-e.y)<220)shake=Math.max(shake,4);sfx('hurt',.6);
+  if(!reduceMotion)for(let i=0;i<22;i++){const a=i/22*Math.PI*2;fx.push({x:e.x+Math.cos(a)*R*.85,y:e.y-4+Math.sin(a)*R*.5,vx:Math.cos(a)*30,vy:-30-rand()*30,t:0,life:.35+rand()*.2,col:i%3?col:'#fff3c4'});}}
 function updateEnemies(dt){
   if(MP.client())return followEnemies(dt);
   for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;
@@ -2387,12 +2521,29 @@ function updateEnemies(dt){
         else if(e.st==='charge'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=2.6;}}
         else{vx=ux*sp;vy=uy*sp;if(e.cd<=0&&d<160){e.st='wind';e.cd=.6;e.flash=.6;}}
         if(e.sm<=0){e.sm=9;if(ents.filter(o=>o.type==='skeleton'&&!o.dead).length<4)for(let i=0;i<2;i++)ents.push(makeEnemy('skeleton',e.x+(i?18:-18),e.y+6,e.dmgSc));puff(e.x,e.y-12,'#d8c8a0',10);}break;}
+      // The Forge Tyrant: charges like the Knight, and every few seconds raises its hammer and slams the floor (a ring of
+      // fire shows where it lands: step out of it). Calls imps out of the forge. Faster below half health.
+      case 'tyrant':{const fast=e.hp<e.max/2;e.cd-=dt;e.sl=(e.sl??4)-dt;e.sm=(e.sm??6)-dt;
+        if(e.st==='slamw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,46,'#ff9f3d');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.8;}}
+        else if(e.st==='wind'){if(e.cd<=0){e.st='charge';e.cd=.6;e.vx=ux*sp*4;e.vy=uy*sp*4;}}
+        else if(e.st==='charge'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=fast?1.6:2.4;}}
+        else{vx=ux*sp;vy=uy*sp;if(e.sl<=0&&d<110){e.st='slamw';e.wind=e.cd=fast?.75:1;e.tg=1;e.tgR=46;e.tgK=0;e.sl=fast?3.6:5;}else if(e.cd<=0&&d<170){e.st='wind';e.cd=.6;e.flash=.6;}}
+        if(e.sm<=0){e.sm=fast?7:10;if(ents.filter(o=>o.type==='imp'&&!o.dead).length<4)for(let i=0;i<2;i++)ents.push(makeEnemy('imp',e.x+(i?20:-20),e.y+6,e.dmgSc));puff(e.x,e.y-12,'#ff9f3d',12);}break;}
+      // The Starwarden: blinks to the far side of you, then bursts with starlight (a cold ring shows the reach).
+      // Calls wraiths to its side. Blinks more often below half health.
+      case 'warden':{const fast=e.hp<e.max/2;e.cd-=dt;e.bl=(e.bl??4)-dt;e.sm=(e.sm??7)-dt;
+        if(e.st==='blinkw'){if(e.cd<=0){const a=Math.atan2(e.y-TG.y,e.x-TG.x)+Math.PI,nx=TG.x+Math.cos(a)*30,ny=TG.y+Math.sin(a)*30;puff(e.x,e.y-12,'#73eff7',14);if(!blocked(nx,ny,8)){e.x=nx;e.y=ny;}puff(e.x,e.y-12,'#b8f7ff',14);sfx('stairs',.6);e.st='novaw';e.wind=e.cd=fast?.6:.8;e.tg=1;e.tgR=54;e.tgK=0;}}
+        else if(e.st==='novaw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,54,'#73eff7');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.6;}}
+        else{vx=ux*sp;vy=uy*sp+Math.sin(e.t*2)*10;if(e.bl<=0&&d<200){e.st='blinkw';e.cd=.45;e.flash=.45;e.bl=fast?3.4:5.2;}}
+        if(e.sm<=0){e.sm=fast?8:11;if(ents.filter(o=>o.type==='wraith'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('wraith',e.x+(i?22:-22),e.y,e.dmgSc));puff(e.x,e.y-12,'#73eff7',12);}break;}
     }
     if(e.side>0){e.side-=dt;const px=-vy,py=vx;vx=vx*.3+px*e.sd;vy=vy*.3+py*e.sd;}
     const ox=e.x,oy=e.y;moveBody(e,vx*dt,vy*dt,e.r>6?8:4);
     if((vx||vy)&&Math.hypot(e.x-ox,e.y-oy)<Math.hypot(vx,vy)*dt*.2&&!(e.side>0)){e.side=.5;e.sd=rand()<.5?1:-1;}
     // contact
-    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<e.r+6)hurtPlayer(dmg,e);if(OTH.size)MP.contact(e,dmg);
+    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;if(e.aoeR)dmg*=1.5;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<(e.aoeR||e.r)+6)hurtPlayer(dmg,e);if(OTH.size)MP.contact(e,dmg);
   }
   ents=ents.filter(e=>!e.dead);
 }
@@ -2454,10 +2605,10 @@ function render(){TAGS.length=0;
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}
   const vis=o=>o.x>cx-60&&o.x<cx+VW+60&&o.y>cy-20&&o.y<cy+VH+70;
-  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);}
+  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);}
   if(scene==='hold'&&cy<WILD_Y)wildShade(cx,cy);
   for(const o of map.objs){if(!o.onWall||o.gone||!vis(o))continue;const [tx,ty]=o.tile;
-    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else spr(ART.ore[o.kind],tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
+    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else if(o.kind==='starshard'){spr(ART.starOre[Math.floor(time*2+tx)%2],tx*T,ty*T);const ph=(time*.9+tx*.31)%1;g.globalAlpha=1-ph;g.fillStyle=ph<.5?'#fff3c4':'#73eff7';g.fillRect(Math.round(tx*T+8+Math.sin(time*2+tx)*4),Math.round(ty*T+5-ph*8),1,1);g.globalAlpha=1;}else spr(ART.ore[o.kind]||ART.ore.copper,tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
   // y-sorted
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
@@ -2476,7 +2627,7 @@ function render(){TAGS.length=0;
   for(const t of texts){ptDraw(g,t.txt,t.x,Math.round(t.y-t.t*14)-6,{color:t.col});}
   // boss bar
   g.restore();
-  const boss=ents.find(e=>e.d.boss);if(boss){const dpr=window.devicePixelRatio||1,w=Math.min(140,VW-24),x=(VW-w)/2,y=Math.round(($('vit').getBoundingClientRect().bottom+30)*dpr/SCALE);g.fillStyle='#1a1c2c';g.fillRect(x-1,y-1,w+2,6);g.fillStyle='#5d275d';g.fillRect(x,y,w,4);g.fillStyle='#b13e53';g.fillRect(x,y,Math.round(w*boss.hp/boss.max),4);
+  const boss=ents.find(e=>e.d.boss);if(boss){const dpr=window.devicePixelRatio||1,w=Math.min(140,VW-24),x=(VW-w)/2,gd=$('guide'),top=Math.max($('vit').getBoundingClientRect().bottom,gd&&!gd.hidden?gd.getBoundingClientRect().bottom:0),y=Math.round((top+30)*dpr/SCALE);g.fillStyle='#1a1c2c';g.fillRect(x-1,y-1,w+2,6);g.fillStyle='#5d275d';g.fillRect(x,y,w,4);g.fillStyle='#b13e53';g.fillRect(x,y,Math.max(0,Math.round(w*boss.hp/boss.max)),4);
     ptDraw(g,map.pack.bossName,VW/2,y-9,{color:'#f4f4f4'});}
   if(P.chan>0){g.fillStyle='rgba(255,205,117,'+(.15+.25*P.chan/2)+')';g.fillRect(0,0,VW,VH);}
   if(scene==='delve'&&!reduceMotion)drawDelveAmbient(camX,camY);
@@ -2516,6 +2667,7 @@ function drawObj(o){
   else if(o.type==='wwall')spr(ART.wwall[(o.end||'')+o.v],o.x-8,o.y-20);
   else if(o.type==='deadtree')spr(ART.deadtree[o.v],o.x-16,o.y-30);
   else if(o.type==='rock')spr(ART.rock[o.v],o.x-8,o.y-14);
+  else if(o.type==='crystal'){spr(ART.crystal[o.v],o.x-8,o.y-18);if(!reduceMotion){const ph=(time*.6+o.x*.01)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#b8f7ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-14-ph*8),1,1);g.globalAlpha=1;}}
   else if(o.type==='grave')spr(ART.grave[o.v],o.x-8,o.y-18);
   else if(o.type==='pillar')spr(ART.pillar[o.v],o.x-8,o.y-30);
   else if(o.type==='skullpost')spr(ART.skullpost,o.x-8,o.y-26);
@@ -2628,6 +2780,9 @@ function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.
   g.strokeStyle=k.col;g.lineWidth=1;g.beginPath();g.moveTo(cx-dy*L*.5,cy+dx*L*.5);g.lineTo(cx+dy*L*.5,cy-dx*L*.5);g.stroke();
   if(p<.35){g.fillStyle='#ffffff';g.fillRect(cx-1,cy-1,3,3);}g.restore();}}
 function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=e.d.big;
+  if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),warden=e.type==='warden',col=warden?'115,239,247':'255,110,40';g.save();
+    if(e.tg===1){const k=Math.min(1,e.tgK||0);g.fillStyle=`rgba(${col},${.08+.1*k})`;g.beginPath();g.ellipse(X,Y,R*k,R*k*.6,0,0,Math.PI*2);g.fill();g.strokeStyle=`rgba(${col},${.5+.4*Math.sin(time*20)})`;g.lineWidth=1;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.stroke();}
+    else{g.fillStyle=`rgba(${col},.35)`;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.fill();}g.restore();}
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(e.x-(big?10:4)),Math.round(e.y),big?20:8,1);
   const ox=big?16:8,oy=big?31:15;
   const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
@@ -2642,6 +2797,7 @@ function drawLight(cx,cy){
   const hole=(x,y,r)=>{r=Math.max(2,r);const X=x-cx,Y=y-cy,gr=lg.createRadialGradient(X,Y,0,X,Y,r);gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.45,'rgba(0,0,0,.92)');gr.addColorStop(.75,'rgba(0,0,0,.45)');gr.addColorStop(1,'rgba(0,0,0,0)');lg.globalAlpha=1;lg.fillStyle=gr;lg.fillRect(X-r,Y-r,r*2,r*2);};
   const flick=Math.sin(time*9)*1.5+Math.sin(time*23)*.8;
   hole(P.x,P.y-8,(22+70*(run.oil/100))*LAN().light*(1+A('light')/100)+flick);
+  for(const e of ents)if(e.tg&&!e.dead)hole(e.x,e.y-4,(e.tgR||44)*(e.tg===2?1.5:.9+.4*(e.tgK||0)));   // a boss attack lights up its own ring
   for(const o of map.objs){if(!o.light||o.gone)continue;if(Math.abs(o.x-P.x)>VW||Math.abs(o.y-P.y)>VH)continue;
     const yy=o.onWall?o.tile[1]*T+6:o.y-6;hole(o.x,yy,o.light.r+(o.light.c==='warm'?Math.sin(time*7+o.x)*2:o.light.c==='lava'?Math.sin(time*2.5+o.x)*2.5:0));}
   for(const e of ents)if(e.d.light)hole(e.x,e.y-8,22);
@@ -2690,12 +2846,12 @@ MP.gateMember=()=>{const p=MP.party,lead=(p.members.find(m=>m.id===p.leader)||{}
 function objTaken(o,by){const mine=by===MP.me();
   if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');bump('chests');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
   else if(o.type==='glowcap'){o.gone=true;o.light=null;o.act=null;if(mine)spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);}
-  else if(o.type==='ore'){o.gone=true;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,2,3],['gem',.06,1,1]]);}puff(ox+8,oy+12,'#ffcd75',10);}}
+  else if(o.type==='ore'){o.gone=true;o.light=null;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');const OR=ORES[o.kind]||ORES.copper;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,o.kind==='starshard'?1:2,o.kind==='starshard'?2:3],['gem',.06,1,1]]);skillXp('mining',OR.xp);floatText(ox+8,oy-6,'+'+OR.xp+' Mining xp','#c9a26b');}puff(ox+8,oy+12,'#ffcd75',10);}}
 function mineOre(o,i,who){if(o.gone)return;o.hp--;if(o.hp<=0){objTaken(o,who);MP.objOut(i,o,who);}else MP.objOut(i,o,null);}
 MP.objOut=(i,o,by)=>{if(MP.shared())NET.send({t:'obj',o:i,open:o.open?1:0,gone:o.gone?1:0,hp:o.hp,by});};
 function applyHit(e,d,a,who){e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
 function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
-MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OTH.values()){if(Math.hypot(o.x-e.x,(o.y-4)-(e.y-e.r))<e.r+6&&now-(e.hc[o.id]||0)>700){e.hc[o.id]=now;NET.send({t:'hurt',to:o.id,d:Math.round(dmg),x:Math.round(e.x),y:Math.round(e.y)});}}};
+MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OTH.values()){if(Math.hypot(o.x-e.x,(o.y-4)-(e.y-e.r))<(e.aoeR||e.r)+6&&now-(e.hc[o.id]||0)>700){e.hc[o.id]=now;NET.send({t:'hurt',to:o.id,d:Math.round(dmg),x:Math.round(e.x),y:Math.round(e.y)});}}};
 MP.askDown=()=>{const h=OTH.get(MP.host);toast((h?h.name:'Your host')+' leads the way down. Wait at the stairs.');if(!MP.downT||time-MP.downT>4){MP.downT=time;NET.send({t:'down'});}};
 MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
 // followers: monsters come from the host's snapshots and glide to their new spots
@@ -2712,7 +2868,7 @@ MP.tick=dt=>{
   if(MP.pvpOn&&inWild()){MP.riskT=(MP.riskT||0)-dt;if(MP.riskT<=0){MP.riskT=.5;const it=riskList(),k=JSON.stringify(it)+(skulled()?'|s':'');if(k!==MP.riskKey){MP.riskKey=k;NET.send({t:'risk',it,sk:Math.max(0,(S.skull||0)-Date.now())});}}}
   MP.lookT-=dt;if(MP.lookT<=0){MP.lookT=1;const l=Object.assign({},myLook(),{lan:S.gear.lantern,blade:S.gear.blade,lvl:S.lvl}),k=JSON.stringify(l);if(k!==MP.lookKey){MP.lookKey=k;NET.send({t:'look',look:l});}}
   if(scene==='delve'&&MP.inInst()&&MP.host===MP.id&&OTH.size){MP.enT-=dt;if(MP.enT<=0){MP.enT=.1;
-    NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100)])});}}
+    NET.send({t:'en',f:run.floor,e:ents.filter(e=>!e.dead).map(e=>[e.id,e.type,Math.round(e.x),Math.round(e.y),Math.max(0,Math.round(e.hp)),e.max,e.flash>0?1:0,Math.round(e.dmgSc*100),e.tg||0,Math.round((e.tgK||0)*100),e.tgR||0])});}}
 };
 const fishOf=f=>f?{dir:f.d,phase:f.ph,bx:f.bx,by:f.by,t:0}:null;
 function addOther(p){if(p.id===MP.id)return;const o=OTH.get(p.id)||{id:p.id,anim:0,sayT:0,say:''};Object.assign(o,{name:p.name,adm:!!p.adm,look:p.look||DEFAULT_LOOK,dir:p.d||'down',moving:!!p.m,fish:fishOf(p.fish),hp:p.hp??null,max:p.max||null,sk:p.sk?Date.now()+p.sk:0});
@@ -2804,8 +2960,9 @@ if(window.NET){
   NET.onR('host',m=>{MP.host=m.id;if(m.id===MP.id){MP.nextEid=Math.max(1000,...ents.map(e=>(e.id||0)+1000));for(const e of ents){e.tx=null;e.st=e.st||'idle';e.cd=e.cd||1;e.kb=e.kb||{x:0,y:0};}if(scene==='delve')toast('You’re now leading this dungeon');}});
   // host → everyone
   NET.onR('en',m=>{if(!MP.client()||scene!=='delve'||m.f!==run.floor)return;const seen=new Set();
-    for(const [id,type,x,y,hp,max,fl,sc] of m.e){if(!ENEMIES[type])continue;seen.add(id);let e=ents.find(q=>q.id===id);
-      if(!e){e=makeEnemy(type,x,y,(sc||100)/100);e.id=id;ents.push(e);}e.tx=x;e.ty=y;e.hp=hp;e.max=max;if(fl)e.flash=Math.max(e.flash,.1);}
+    for(const [id,type,x,y,hp,max,fl,sc,tg,tk,tr] of m.e){if(!ENEMIES[type])continue;seen.add(id);let e=ents.find(q=>q.id===id);
+      if(!e){e=makeEnemy(type,x,y,(sc||100)/100);e.id=id;ents.push(e);}e.tx=x;e.ty=y;e.hp=hp;e.max=max;if(fl)e.flash=Math.max(e.flash,.1);
+      if(tg===2&&e.tg!==2)blastFx(e,tr||46,type==='warden'?'#73eff7':'#ff9f3d');e.tg=tg||0;e.tgK=(tk||0)/100;e.tgR=tr||0;}
     for(const e of ents)if(!seen.has(e.id))e.dead=true;});
   NET.onR('kill',m=>{if(!MP.client()||scene!=='delve')return;let e=ents.find(q=>q.id===m.e);
     if(!e){if(!ENEMIES[m.ty])return;e=makeEnemy(m.ty,m.x,m.y,1);}e.x=m.x;e.y=m.y;e.dead=true;onKilled(e,m.top,m.hit||[],m.xp|0);});
@@ -3079,13 +3236,13 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 let posTick=0;setInterval(()=>{if(started){if(++posTick%3===0)notePos();save();}},10000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started){notePos();save();}});addEventListener('pagehide',()=>{if(started){notePos();save();}});
 // Admin loadout: the best gear equipped, one of every lantern, cape and top-tier piece in the bank, both relics, max bank space.
-function grantKit(){const old=S.gear,eq={blade:'ember',mail:'ember',lantern:'wisp',cape:'mother',helm:HAT};
+function grantKit(){const old=S.gear,eq={blade:'cinder',mail:'steel',lantern:'wisp',cape:'mother',helm:HAT};
   for(const sl of ['blade','mail','lantern','cape','helm']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
   S.gear=Object.assign({},eq);S.bankBuys=BANK_BUYS.length;S.gold+=100000;
   const has=id=>(S.bank[id]||0)+(S.vault[id]||0)>0;
   for(const k of Object.keys(LANTERNS))if(k!=='wisp'&&k!=='basic'&&!has(k+'_lantern'))give(S.vault,k+'_lantern',1);
   for(const k of Object.keys(CAPES))if(k!=='mother'&&!has('cape_'+k))give(S.vault,'cape_'+k,1);
-  for(const id of ['ember_blade','ember_mail','ember_helm','relic_crown','relic_sigil'])if(!has(id))give(S.vault,id,1);
+  for(const id of ['ember_blade','ember_mail','ember_helm','steel_blade','steel_helm','star_helm','relic_crown','relic_sigil','relic_heart','relic_star'])if(!has(id))give(S.vault,id,1);
   for(const id of ['pondfin','stew','oil'])give(S.bank,id,20);
   S.quick=['stew','pondfin','oil','bread',null];S.flags.kit=true;P.hp=maxHp();save(true);}
 function applyAdmin(on,hat){ADMIN=!!on;HAT=ADMIN_HATS[hat]?hat:'partyhat';
@@ -3141,7 +3298,7 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake}};
 })();
 
 // ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
