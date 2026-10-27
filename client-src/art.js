@@ -486,6 +486,7 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'ember_ore':p.ell(8,9,5,4,'#2b1620');p.ell(7,8,3,2,'#45202c');p.line(4,10,7,8,PAL.red).line(7,8,11,10,PAL.red).line(7,8,8,5,PAL.red);p.line(5,9,7,8,PAL.ember).line(8,8,10,9,PAL.ember);p.set(7,8,PAL.yellow).set(10,9,PAL.yellow);p.outline('#120a10');break;
     case 'gem':p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..','......'],{c:PAL.sky,b:PAL.cyan,a:PAL.blue});p.set(6,4,PAL.white);break;
     case 'slime_gel':p.ell(8,10,5,4,PAL.green);p.ell(7,9,2,1.5,PAL.lime);p.set(6,8,PAL.white);break;
+    case 'blackwood_logs':p.rect(2,8,12,4,'#2a1e22');p.rect(2,8,12,1,'#4a3640');p.rect(4,4,11,4,'#2a1e22');p.rect(4,4,11,1,'#4a3640');p.ell(3,10,2,2,'#7a5ca8');p.set(3,10,'#3d2f52');p.ell(14,6,2,2,'#7a5ca8');p.set(14,6,'#3d2f52');break;
     case 'logs':p.rect(2,8,12,4,PAL.bark);p.rect(2,8,12,1,PAL.wood);p.rect(4,4,11,4,PAL.bark);p.rect(4,4,11,1,PAL.wood);p.ell(3,10,2,2,PAL.tan);p.set(3,10,PAL.wood);p.ell(14,6,2,2,PAL.tan);p.set(14,6,PAL.wood);break;
     case 'bone':p.line(4,12,12,4,PAL.bone);p.line(5,12,12,5,PAL.bone);p.rect(3,11,2,3,PAL.bone).rect(11,3,3,2,PAL.bone);break;
     case 'wheat_seed':p.rect(5,7,6,7,PAL.wood);p.rect(5,6,6,2,PAL.bark);p.rect(7,9,2,3,PAL.yellow);break;
@@ -508,10 +509,75 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'raw_pondfin':fishIcon(p,'#7fb0c8','#41a6f6','#29366f');break;
     case 'pondfin':fishIcon(p,'#d9a066','#a0663b','#6b3e26');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
     case 'burnt_fish':fishIcon(p,'#3a3550','#262b44','#1a1c2c');break;
+    case 'raw_gloomfin':fishIcon(p,'#8a6ad0','#5a4578','#2b2238');p.set(9,8,'#c79bf2');break;
+    case 'gloomfin':fishIcon(p,'#c98a4a','#7a5ca8','#3d2f52');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
     case 'relic_crown':p.rows(2,4,['g.g.g.g.g.g','ggggggggggg','gyggrggyggg','ggggggggggg'],{g:PAL.gold,y:PAL.lime,r:PAL.red});p.ell(8,13,5,2,PAL.green);break;
     case 'relic_sigil':p.ell(8,8,5.5,5.5,PAL.silver);p.ell(8,8,4,4,PAL.navy);p.rect(7,5,2,7,PAL.gold).rect(5,7,6,2,PAL.gold);break;
     default:p.rect(4,4,8,8,PAL.pink);}
   p.outline();return p.canvas();}
+
+
+// ---------- the Wilderness ----------
+// dead, dry grass: olive and brown with a few dark tufts
+function wildGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#5a5634');
+  for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#48462c':'#6e683c');
+  for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#6b6236').set(x+1,y-1,'#7a6e3c').set(x+2,y,'#6b6236');}
+  if(r()<.5){const x=r()*13|0,y=r()*13|0;p.set(x,y,'#2e2c1e').set(x+1,y,'#2e2c1e');}return p.canvas();}
+function wildPathTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#5a4636');
+  for(let i=0;i<12;i++)p.set(r()*16,r()*16,r()<.6?'#463628':'#6e5844');for(let i=0;i<3;i++){const x=r()*15|0,y=r()*15|0;p.rect(x,y,2,1,'#7e6a50');}return p.canvas();}
+// the Gloom Pond: dark, still water with a violet sheen
+function gloomTile(f){const p=new Px(16,16);p.rect(0,0,16,16,'#2e2f5c');
+  for(let y=3;y<16;y+=6)for(let x=(y+f*3)%9;x<16;x+=9)p.rect(x,y,3,1,'#4a4884');p.set((4+f*5)%16,10,'#9a7ad0');p.set((11+f*3)%16,4,'#6a62a8');return p.canvas();}
+// a low, broken stone wall: the edge of the Hold. end:'l'/'r' crumbles down at a gap
+function wildWallSprite(v,end){const p=new Px(16,22),S='#6d7391',S2='#4b5068',S3='#8d93ad',M='#3a3f55';
+  const top=end?9:5;p.rect(0,top,16,16-top+4,S);p.rect(0,top,16,1,S3);
+  for(let y=top+3;y<20;y+=4)p.rect(0,y,16,1,S2);for(let y=top;y<20;y+=4){const o=((y/4)|0)%2?4:0;for(let x=o;x<16;x+=8)p.rect(x,y+1,1,3,S2);}
+  if(end==='l'){p.rect(0,top-3,6,3,S);p.rect(0,top-3,6,1,S3);p.rect(11,top,5,3,null);p.set(12,top+3,S3).set(14,top+4,S2);}
+  if(end==='r'){p.rect(10,top-3,6,3,S);p.rect(10,top-3,6,1,S3);p.rect(0,top,5,3,null);p.set(2,top+3,S3).set(1,top+4,S2);}
+  if(v===1){p.rect(5,top,4,2,null);p.set(5,top+2,S3).set(8,top+2,S3);}if(v===2){p.set(3,top+5,'#4f7a3a').set(4,top+4,'#4f7a3a').set(12,top+8,'#4f7a3a');}
+  p.rect(0,20,16,2,M);p.outline();return p.canvas();}
+// a dead tree: bare grey branches
+function deadTreeSprite(v){const p=new Px(32,32),B='#4b3d36',B2='#6b5a4e',B3='#2e2622';
+  p.rect(14,14,4,16,B);p.rect(15,14,1,16,B2);p.rect(13,28,6,2,B);
+  p.line(15,16,8,8,B).line(16,15,9,7,B2).line(9,8,6,4,B).line(9,8,11,3,B);
+  p.line(17,17,24,9,B).line(16,16,23,8,B2).line(23,8,27,6,B).line(23,8,22,3,B);
+  if(v){p.line(16,12,16,2,B).line(16,6,19,3,B);}else{p.line(16,13,13,4,B).line(14,7,12,5,B3);}
+  p.set(6,4,B3).set(27,6,B3).set(11,3,B3);p.outline();return p.canvas();}
+// Blackwood: a dark, twisted tree with violet-black leaves
+function blackwoodSprite(dx=0){const p=new Px(32,32);p.rect(14,19,4,11,'#2a1e22').rect(15,19,1,11,'#4a3640');p.line(13,22,10,19,'#2a1e22').line(18,21,21,18,'#2a1e22');
+  p.ell(16+dx,12,11,9.5,'#2b2238');p.ell(14+dx,10,8,6.5,'#3d2f52');p.ell(12+dx*1.5,8,4,3,'#5a4578');p.set(20,7,'#7a5ca8').set(9,13,'#7a5ca8').set(22,14,'#5a4578');p.outline();return p.canvas();}
+function rockSprite(v){const p=new Px(16,16),A='#6d7391',B='#4b5068',C='#8d93ad';
+  if(v){p.ell(8,10,6.5,4.5,B);p.ell(7,9,5,3.5,A);p.set(5,8,C).set(6,7,C).set(9,7,C);}else{p.ell(6,10,4.5,4,B);p.ell(5.5,9,3.5,3,A);p.ell(11,11,3,2.5,B);p.set(4,8,C).set(10,10,C);}
+  p.outline();return p.canvas();}
+function graveSprite(v){const p=new Px(16,20),S='#8d93ad',S2='#6d7391',D='#4b5068';
+  if(v===2){p.rect(7,4,2,13,S);p.rect(4,7,8,2,S);p.rect(8,4,1,13,S2);}
+  else{p.rect(4,5,8,12,S);p.ell(8,6,4,3,S);p.rect(10,5,2,12,S2);p.rect(6,9,4,1,D);p.rect(6,11,3,1,D);if(v)p.set(5,5,D).set(11,8,D);}
+  p.rect(2,17,12,2,'#3a2f2a');p.set(3,16,'#4f7a3a').set(12,16,'#4f7a3a');p.outline();return p.canvas();}
+function pillarSprite(v){const p=new Px(16,32),S='#8d93ad',S2='#6d7391',S3='#b2b7ca';
+  const top=v?10:4;p.rect(4,top,8,26-top,S);p.rect(9,top,3,26-top,S2);p.rect(3,26,10,3,S2);p.rect(3,top-1,10,2,S3);
+  for(let y=top+4;y<26;y+=5)p.rect(4,y,8,1,S2);if(v){p.set(4,top-2,S3).set(7,top-3,S3);p.set(1,29,S2).set(14,28,S2);}
+  p.set(5,top+8,'#4f7a3a').set(5,top+9,'#38b764');p.outline();return p.canvas();}
+// the obelisk at the top of the Wilderness: black stone, violet runes
+function obeliskSprite(f){const p=new Px(32,52),K='#1d1a2a',K2='#2e2a42',K3='#45405e',V=f?'#c79bf2':'#9a6ad8';
+  p.rect(10,10,12,36,K);p.rect(10,10,4,36,K2);p.rect(12,4,8,6,K);p.rect(13,1,6,3,K2);p.set(15,0,K3).set(16,0,K3);p.rect(6,46,20,4,K2);p.rect(6,46,20,1,K3);
+  for(const y of [14,21,28,35])p.rect(15,y,2,4,V);p.set(14,16,V).set(17,23,V).set(14,30,V).set(17,37,V);p.rect(15,6,2,2,V);
+  p.outline();return p.canvas();}
+// skull on a post: the warning at the gaps in the wall
+function skullPostSprite(){const p=new Px(16,28),W='#6b3e26',W2='#8a5a3a';p.rect(7,10,2,18,W);p.rect(7,10,1,18,W2);p.rect(3,14,10,2,W);
+  p.ell(8,6,4,4,PAL.bone);p.rect(5,8,6,3,PAL.bone);p.rect(6,5,2,2,PAL.ink);p.rect(9,5,2,2,PAL.ink);p.set(8,8,PAL.ink);p.set(6,10,'#8a7e62').set(8,10,'#8a7e62').set(10,10,'#8a7e62');
+  p.outline();return p.canvas();}
+// the warning sign: the signpost with a red skull on it
+function wildSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#6b3e26');p.rect(8,8,1,16,'#8a5a3a');p.rect(1,1,16,9,'#a0663b');p.rect(1,1,16,1,'#d9a066');p.rect(1,9,16,1,'#6b3e26');
+  p.ell(9,5,3,2.6,'#b13e53');p.rect(7,6,5,2,'#b13e53');p.set(8,4,PAL.ink).set(10,4,PAL.ink);p.set(9,7,PAL.ink);p.outline();return p.canvas();}
+function wildBonesSprite(v){const p=new Px(16,16);if(v===0){p.line(3,12,9,10,PAL.bone).line(4,9,10,12,PAL.bone);}else if(v===1){p.ell(8,10,2.6,2.2,PAL.bone);p.rect(7,11,3,2,PAL.bone);p.set(7,10,PAL.ink).set(9,10,PAL.ink);}
+  else{p.line(2,12,7,12,PAL.bone).set(1,11,PAL.bone).set(1,13,PAL.bone).set(8,11,PAL.bone).set(8,13,PAL.bone);p.line(10,9,13,11,'#b8a880');}return p.canvas();}
+// dry thorny weeds and dead shrubs scattered through the Wilderness grass
+function weedSprite(v){const p=new Px(16,16),A='#7a6e3c',B='#4a3d2a',R='#8f2d3f';
+  if(v===0){p.line(5,13,3,8,A).line(6,13,7,7,A).line(7,13,10,9,A);p.set(3,7,B).set(7,6,B).set(10,8,B);}
+  else if(v===1){p.line(8,13,8,6,B).line(8,10,5,7,B).line(8,9,11,6,B);p.set(5,6,R).set(11,5,R).set(8,5,R);}
+  else{p.ell(8,12,4,2,'#5e5a34');p.set(6,10,A).set(9,10,A).set(8,9,A).set(11,11,B);}return p.canvas();}
+// a small skull, the PvP mark shown over a hero's head
+function skullMark(){const p=new Px(9,9),W='#f4f4f4',G='#c2c7cf';p.ell(4.5,3.5,3.5,3.4,W);p.rect(2,5,5,2,W);p.rect(5,1,2,6,G);p.rect(2,3,2,2,PAL.ink);p.rect(5,3,2,2,PAL.ink);p.set(4,5,PAL.ink);p.set(2,7,W).set(4,7,W).set(6,7,W);p.outline();return p.canvas();}
 
 // ---------- build the atlas ----------
 const ART={};
@@ -539,6 +605,11 @@ function buildArt(){
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
   ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
+  ART.wgrass=[41,42,43,44].map(wildGrassTile);ART.wpath=[45,46,47].map(wildPathTile);ART.gloom=[0,1].map(gloomTile);
+  ART.wwall={};for(const e of ['',  'l','r'])for(const v of [0,1,2])ART.wwall[e+v]=wildWallSprite(v,e||null);
+  ART.deadtree=[0,1].map(deadTreeSprite);ART.bwTree=blackwoodSprite();ART.bwSway=[blackwoodSprite(-.6),blackwoodSprite(.6)];
+  ART.rock=[0,1].map(rockSprite);ART.grave=[0,1,2].map(graveSprite);ART.pillar=[0,1].map(pillarSprite);ART.obelisk=[0,1].map(obeliskSprite);
+  ART.skullpost=skullPostSprite();ART.wsign=wildSignSprite();ART.wbones=[0,1,2].map(wildBonesSprite);ART.weed=[0,1,2].map(weedSprite);ART.skull=skullMark();
   ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
   ART.icon={};
 }

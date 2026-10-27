@@ -1,8 +1,27 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.8.19',season:'Season 0 (Beta)',date:'2026-10-26'};
+const BUILD={version:'0.9.2',season:'Season 0 (Beta)',date:'2026-10-27'};
 const CHANGELOG=[
+  {v:'0.9.2',date:'2026-10-27',title:'Player names on',notes:[
+    'Player names and combat levels now show over everyone’s heads by default. Turn them off any time in Settings → Player names.']},
+  {v:'0.9.1',date:'2026-10-27',title:'Pick up where you left off',notes:[
+    'Signing in puts you exactly where you logged out: the Hold, the Wilderness, wherever you were standing.',
+    'Log out in the Depths and you come back at the entrance you went in by (the Delve Gate, for now).',
+    'Chat has two tabs: World (everyone on your map) and Party (only your party, wherever they are). A badge shows new messages on the other tab. No more /p needed, though it still works.',
+    'Players who close the game now disappear straight away, instead of standing still or jumping back to the spawn.',
+    'Fixed a quick flash across the screen when other players joined, left or reconnected.',
+    'The Wilderness: a skulled hero who falls loses only what they carry and wear. The Bank is never touched.']},
+  {v:'0.9.0',date:'2026-10-27',title:'The Wilderness',notes:[
+    'The first expansion: the Wilderness, north of the Hold. Walk through a gap in the old stone wall to cross. Other players can attack you there, and you can attack them.',
+    'Wilderness levels run from 1 just past the wall to 20 at the Old Obelisk at the very top. You can fight heroes whose combat level is within the Wilderness level of yours. A red badge shows your level and who you can fight.',
+    'Attack someone who hasn’t attacked you and you get a skull over your head for 20 minutes. Fall while skulled and you drop everything you carry and wear. Without a skull you keep your 3 most valuable items. Your Bank and gold are always safe.',
+    'The winner gets a minute to pick up the loot before anyone else. Logging out mid-fight leaves your hero standing there for 15 seconds.',
+    'New up north: the Gloom Pond with Gloomfin (Fishing 15, heals 55 cooked) and Blackwood trees (Woodcutting 15, 9 XP a log). Plus 8 new goals, including one secret.',
+    'A small compass now sits left of the Settings button. North is the Wilderness.',
+    'Party members in the Depths now all get the combat XP for every kill, even if they didn’t land a hit.',
+    'Fixed: a hero could flicker at the spawn without a combat level, as if online when they weren’t.',
+    'Fixed: when someone else got a bite while fishing, the “!” showed over your head instead of theirs.']},
   {v:'0.8.19',date:'2026-10-26',title:'Wider top bar',notes:[
     'The health card at the top is a little wider, so your level, gold and the world you’re in (like “The Hold · World 1”) all fit.']},
   {v:'0.8.18',date:'2026-10-26',title:'Gold on screen',notes:[

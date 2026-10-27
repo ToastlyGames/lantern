@@ -41,7 +41,10 @@ function cloudSave(S,now){if(!online()||stopped)return;const d=strip(S),j=JSON.s
 function retry(ms){clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>{cloudTimer=null;flushCloud();},ms);}
 async function flushCloud(){if(held||cloudBusy||!cloudPending||!online()||stopped)return;cloudBusy=true;const p=cloudPending;cloudPending=null;
   if(p.j===lastSent){cloudBusy=false;return;}
-  const r=await api('save',{method:'POST',body:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
+  // receipts for Wilderness loot you picked up (signed by the realtime server) go with the save, so a big haul passes the checks
+  const rc=(window.LH_RCPT||[]).slice(0,40);
+  const r=await api('save',{method:'POST',body:rc.length?{data:p.d,rev:ACC.rev,loot:rc}:{data:p.d,rev:ACC.rev},keepalive:true});cloudBusy=false;
+  if(r.ok&&rc.length&&window.LH_RCPT)window.LH_RCPT=window.LH_RCPT.filter(t=>!rc.includes(t));
   const stop=(t,ms)=>{stopped=true;notice(t);setTimeout(()=>location.reload(),ms);};
   if(r.ok){ACC.rev=r.data.rev;if(r.data.tok&&window.LH_onTok)LH_onTok(r.data.tok);lastSent=p.j;lastAt=Date.now();fails=0;offlineWarned=false;}
   else if(r.status===409)return stop('Your hero was played on another device. Loading the latest progress…',1800);

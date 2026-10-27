@@ -57,6 +57,9 @@ function probe(){
 }
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')probe();});
 addEventListener('online',probe);addEventListener('pageshow',probe);
+// closing the tab or the app: leave now, so other players see you go at once (instead of standing frozen until the
+// server notices the silence). If the page comes back from the cache, pageshow reconnects.
+addEventListener('pagehide',()=>{if(stopped)return;try{room&&room.close(1000,'bye');}catch(e){}try{lobby&&lobby.close(1000,'bye');}catch(e){}});
 window.NET={
   onL(t,f){(HL[t]=HL[t]||[]).push(f);},onR(t,f){(HR[t]=HR[t]||[]).push(f);},
   start(name){if(!stopped)return;stopped=false;hero=name;openLobby();},
