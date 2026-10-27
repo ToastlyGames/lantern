@@ -230,6 +230,13 @@ export class Lobby {
       case 'joinInst': { const p = this.partyOf(u.id); if (p && p.inst) return send(u.ws, Object.assign({ t: 'go' }, p.inst)); return this.note(u, 'Your party isn’t in the Depths right now.'); }
       case 'pchat': { const p = this.partyOf(u.id), text = cleanText(m.text); if (!p || !text) return; if (u.mu) return send(u.ws, { t: 'muted', on: true, said: 1 }); if (Date.now() - (u.lastP || 0) < 1000) return; u.lastP = Date.now();
         for (const id of p.members) { const x = this.users.get(id); if (x && x.on) send(x.ws, { t: 'pchat', id: u.id, name: u.name, text }); } return; }
+      case 'pdie': {   // a party member fell: tell the party (built from a template; nothing typed by players)
+        const p = this.partyOf(u.id); if (!p || Date.now() - (u.lastDie || 0) < 4000) return; u.lastDie = Date.now();
+        const f = Number.isInteger(m.floor) && m.floor > 0 && m.floor < 100 ? m.floor : null, by = typeof m.by === 'string' && /^[A-Za-z0-9_]{3,16}$/.test(m.by) ? m.by : null;
+        const text = m.k === 'wild' ? u.name + (by ? ' was defeated by ' + by : ' was defeated') + ' in the Wilderness' : u.name + ' died in the Depths' + (f ? ' (floor ' + f + ')' : '');
+        for (const id of p.members) { const x = this.users.get(id); if (x && x.on) send(x.ws, { t: 'pchat', sys: 1, id: u.id, name: u.name, text, die: 1 }); }
+        return;
+      }
       case 'feed': return this.feed(u, m);
       case 'mod': return this.mod(u, m);
     }
@@ -334,7 +341,7 @@ const DROP_MAX = 400, DROP_PRIVATE_MS = 30e3, DROP_LIFE_MS = 180e3, LOOT_LIFE_MS
 // Keep WILD_Y in step with WILD_ROWS in client-src/world.js (40 rows of 16 px; 2 rows per Wilderness level, up to 20).
 const WILD_Y = 640, WILD_ROW_PX = 32, WILD_MAX = 20;
 export const wildLvl = y => (y < WILD_Y ? Math.min(WILD_MAX, Math.max(1, Math.ceil((WILD_Y - y) / WILD_ROW_PX))) : 0);
-const PVP = { gap: 750, reach: 34, skullMs: 20 * 60e3, retaliateMs: 120e3, combatMs: 10e3, regenAfter: 8e3, regenPerS: 1, eatGap: 1500, safeMs: 5000, ghostMs: 15e3, lootPrivate: 60e3, lootLife: 180e3, mult: .7, miss: .12 };
+const PVP = { gap: 750, reach: 34, skullMs: 20 * 60e3, retaliateMs: 120e3, combatMs: 10e3, regenAfter: 8e3, regenPerS: 1, eatGap: 1500, safeMs: 5000, ghostMs: 15e3, returnMax: 20, lootPrivate: 60e3, lootLife: 180e3, mult: .7, miss: .12 };
 // what gear does in a fight (the same numbers as the game's data.js; admin hats count as an Ember Helm here)
 const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25 }, MAIL_DEF = { copper: 2, iron: 4, ember: 7 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, partyhat: 4, greenhat: 4 };
 const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg: 15, hp: 12 }, knight: { def: 3, dmg: 12 } };
@@ -461,29 +468,39 @@ export class Room {
   async pkDeath(q, by, now) {
     q.dead = true;
     let top = by.id, best = -1; for (const [id, d] of Object.entries(q.dmg || {})) if (d > best && this.players.has(id)) { best = d; top = id; }
-    const killer = this.players.get(top) || by, skulled = (q.sk || 0) > now, x = q.x, y = q.y;
-    let risk = q.risk; if (!risk) { try { risk = await this.ctx.storage.get('rk:' + q.id); } catch { } } risk = Array.isArray(risk) ? risk : [];
+    const killer = this.players.get(top) || by, skulled = (q.sk || 0) > now, x = q.x, y = q.y, ghost = !!q.ghost;
+    let risk = q.risk;
+    // the fight is over for them right now: full health, no skull, a few seconds' protection, free to go home
+    Object.assign(q, { hp: null, hpAt: 0, lc: 0, sk: 0, ag: {}, dmg: {}, risk: null, safe: now + PVP.safeMs }); this.att(q);
+    this.all({ t: 'PK', v: q.id, a: killer.id, vn: q.name, an: killer.name, x: Math.round(x), y: Math.round(y) });
+    if (skulled) this.all({ t: 'SK', id: q.id, left: 0 });
+    if (!risk) { try { risk = await this.ctx.storage.get('rk:' + q.id); } catch { } } risk = Array.isArray(risk) ? risk : [];
+    this.ctx.storage.delete('rk:' + q.id).catch(() => { });
     const kept = [], lost = []; let keep = skulled ? 0 : 3;
     for (const [id, n, slot] of risk) { const k = Math.min(keep, n); keep -= k; if (k) kept.push([id, k, slot]); if (n - k) lost.push([id, n - k, slot]); }
     const made = [];
     lost.forEach(([it, n], i) => { const a = i * 2.39996, r = i ? 5 + 2.2 * Math.sqrt(i) : 0;
       made.push({ did: rid(10), it, n, x: Math.round(Math.max(20, Math.min(396, x + Math.cos(a) * r))), y: Math.round(Math.max(20, y - 3 + Math.sin(a) * r * .7)), vx: 0, vy: 0, f: null, by: killer.id, bag: true, pk: 1, at: now, pub: now + PVP.lootPrivate, exp: now + PVP.lootLife }); });
     this.pruneDrops(); for (const d of made) this.drops.set(d.did, d); if (made.length) this.saveDrops();
-    this.all({ t: 'PK', v: q.id, a: killer.id, vn: q.name, an: killer.name, x: Math.round(x), y: Math.round(y) });
     for (const r of this.players.values()) if (!r.ghost) for (const d of made) send(r.ws, { t: 'D', d: this.dropView(d, r.id) });
     const died = { by: killer.name, lost, kept, sk: skulled ? 1 : 0 };
-    if (q.ghost) { try { await this.env.LOBBY.get(this.env.LOBBY.idFromName('lobby')).fetch('https://lobby/pk', { method: 'POST', body: JSON.stringify({ id: q.id, died }) }); } catch { } this.dropGhost(q); }
+    if (ghost) { try { await this.env.LOBBY.get(this.env.LOBBY.idFromName('lobby')).fetch('https://lobby/pk', { method: 'POST', body: JSON.stringify({ id: q.id, died }) }); } catch { } this.dropGhost(q); }
     else send(q.ws, Object.assign({ t: 'DIED' }, died));
-    if (skulled) this.all({ t: 'SK', id: q.id, left: 0 });
-    Object.assign(q, { hp: null, hpAt: 0, lc: 0, sk: 0, ag: {}, dmg: {}, risk: null, dead: false, safe: now + PVP.safeMs });
-    this.ctx.storage.delete('rk:' + q.id).catch(() => { }); this.att(q);
+    q.dead = false;
+  }
+  // the Return Flame from the Wilderness: allowed up to level 20 (deeper areas will block it). Lands in the Hold.
+  onHome(p, m) {
+    const x = +m.x, y = +m.y;
+    if (this.inst || p.dead || !(x >= 0 && x < 20000 && y >= WILD_Y && y < 20000)) return;
+    const l = wildLvl(p.y); if (l > PVP.returnMax) return send(p.ws, { t: 'PN', why: 'too_deep' });
+    p.x = x; p.y = y; p.sAt = Date.now(); p.dirty = true; this.att(p); if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
   }
   // ---- items on the ground: dungeon loot (seen by the whole party at once) and items dropped from a bag (the dropper sees
   // them at once, everyone else after 30 s). The server decides who picks each one up, so nothing is ever picked up twice.
   pruneDrops() { const now = Date.now(); let ch = false; for (const [k, d] of this.drops) if (d.exp && now > d.exp) { this.drops.delete(k); ch = true; }
     while (this.drops.size > DROP_MAX) { this.drops.delete(this.drops.keys().next().value); ch = true; } return ch; }
   saveDrops() { this.ctx.storage.put('drops', [...this.drops.values()]).catch(() => { }); }
-  dropView(d, forId) { return { did: d.did, it: d.it, n: d.n, x: d.x, y: d.y, vx: d.vx, vy: d.vy, f: d.f, by: d.by, bag: d.bag ? 1 : 0, wait: forId === d.by ? 0 : Math.max(0, d.pub - Date.now()), left: d.exp ? Math.max(0, d.exp - Date.now()) : null }; }
+  dropView(d, forId) { return { did: d.did, it: d.it, n: d.n, x: d.x, y: d.y, vx: d.vx, vy: d.vy, f: d.f, by: d.by, bag: d.bag ? 1 : 0, pk: d.pk ? 1 : 0, wait: forId === d.by ? 0 : Math.max(0, d.pub - Date.now()), left: d.exp ? Math.max(0, d.exp - Date.now()) : null }; }
   onDrop(p, m) {
     const it = typeof m.it === 'string' && /^[a-z0-9_]{1,32}$/.test(m.it) ? m.it : null, n = Number.isInteger(m.n) && m.n >= 1 && m.n <= 1e6 ? m.n : 0;
     const x = +m.x, y = +m.y; if (!it || !n || !(x >= 0 && x < 20000 && y >= 0 && y < 20000)) return;
@@ -604,6 +621,7 @@ export class Room {
     }
     if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd); this.att(p); if (p.rd) this.all({ t: 'L', id: p.id, look: p.look }, p.id); return; }
     if (t === 'atk') return this.onAtk(p, m);
+    if (t === 'home') return this.onHome(p, m);
     if (t === 'risk' && !this.inst) {   // what this hero would drop if they fell in the Wilderness, most valuable first
       const list = (Array.isArray(m.it) ? m.it : []).slice(0, 80).filter(e => Array.isArray(e) && typeof e[0] === 'string' && /^[a-z0-9_]{1,32}$/.test(e[0]) && Number.isInteger(e[1]) && e[1] > 0 && e[1] <= 1e7)
         .map(e => [e[0], e[1], SLOTS.has(e[2]) ? e[2] : 0, Math.max(0, Math.min(1e6, Number(e[3]) || 0))]).sort((a, b) => b[3] - a[3]);
