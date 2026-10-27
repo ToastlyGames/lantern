@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.9.2 · updated October 26, 2026
+Season 0 (Beta) · build v0.9.3 · updated October 26, 2026
 
 ## Welcome
 
@@ -236,14 +236,16 @@ The first expansion to Lanternhold. North of the Hold, past the old stone wall, 
 
 **The skull.** Attack someone who hasn't attacked you in the last 2 minutes and a **skull** appears over your head for **20 minutes**. Fighting back never skulls you. Your skull follows you to other worlds.
 
-**Falling.** If you fall in the Wilderness you go back to the Hold, healed, and drop your items where you fell: everything in your bag and the gear you wear.
+**Falling.** If you fall in the Wilderness you wake up back in the Hold, healed, and drop your items where you fell: everything in your bag and the gear you wear. Your party gets a message in Party chat.
 
 - **No skull:** you keep your **3 most valuable items**.
 - **Skulled:** you keep **nothing** you carry or wear. Your Bank is still untouched.
 - Your **Bank** is always safe, and so is your gold. Starter gear (the Rusty Blade, Traveler Garb and Basic Lantern) and bound or goal items are never dropped.
-- The winner sees the loot at once and has **one minute** to pick it up before everyone else can. Loot disappears after 3 minutes.
+- The winner sees the loot at once and has **one minute** to pick it up before everyone else can. Walk over it (or tap Pick up) to grab it. Loot disappears after 3 minutes.
 
-**No escaping.** Logging out in the middle of a fight (or losing your connection) leaves your hero standing there for 15 seconds, and they can still be defeated. Come back in time and you're right where you were. You can't teleport out of a fight either.
+**The Return Flame.** Hold the flame button (or R) for 2 seconds to go home to the Hold, even in the middle of a fight. A hit interrupts it, so pick your moment. It works up to Wilderness level 20; deeper areas added later will block it.
+
+**No escaping.** Logging out in the middle of a fight (or losing your connection) leaves your hero standing there for 15 seconds, and they can still be defeated. Come back in time and you're right where you were. You can't walk off or teleport out of a fight either, except with the Return Flame.
 
 **What's up there.** The **Gloom Pond** (Gloomfin, Fishing 15), **Blackwood trees** (Woodcutting 15), an old graveyard, and the Old Obelisk at level 20.
 
