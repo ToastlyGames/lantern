@@ -35,12 +35,14 @@ try {
   const ha = await a.lobby(); ok(ha && ha.you === a.id && ha.party === null, 'hello: knows who you are');
   await b.lobby(); await c.lobby(); await d.lobby();
   a.L.send({ t: 'world' }); const wa = await a.L.wait(m => m.t === 'world'); ok(/^w\d+$/.test(wa.room), 'lobby assigns a world');
-  const hia = await a.room(wa.room); a.L.send({ t: 'where', room: wa.room });
+  const hia = await a.room(wa.room); a.L.send({ t: 'where', room: wa.room }); a.R.send({ t: 's', x: 200, y: 800, d: 'down', m: false }); await sleep(150);
   ok(hia.t === 'hi' && hia.me === a.id && Array.isArray(hia.players), 'joined the world room');
   b.L.send({ t: 'world' }); const wb = await b.L.wait(m => m.t === 'world'); ok(wb.room === wa.room, 'next player is put in the same (busiest) world');
   const hib = await b.room(wb.room); b.L.send({ t: 'where', room: wb.room });
   ok(hib.players.some(p => p.id === a.id), 'you see players already there');
-  ok(!!(await a.R.wait(m => m.t === '+' && m.p.id === b.id)), 'players already there see you arrive');
+  await sleep(200); ok(!a.R.msgs.some(m => m.t === '+' && m.p.id === b.id), 'a new arrival isn’t shown until they say where they are');
+  b.R.send({ t: 's', x: 210, y: 800, d: 'down', m: false });
+  ok(!!(await a.R.wait(m => m.t === '+' && m.p.id === b.id && m.p.x === 210)), 'players already there see you arrive, where you are');
 
   console.log('Movement, looks, chat');
   b.R.send({ t: 's', x: 120.5, y: 80, d: 'left', m: true });
