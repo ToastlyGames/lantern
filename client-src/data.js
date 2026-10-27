@@ -2,6 +2,7 @@
 const ITEMS={
   gold:{n:'Gold',v:1},
   copper_ore:{n:'Copper Ore',v:4},iron_ore:{n:'Iron Ore',v:9},ember_ore:{n:'Emberite Ore',v:30},
+  coal_ore:{n:'Coal',v:14},cobalt_ore:{n:'Cobalt Ore',v:45},starshard_ore:{n:'Starshard',v:150},
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
@@ -14,17 +15,21 @@ const ITEMS={
   raw_pondfin:{n:'Raw Pondfin',v:5},pondfin:{n:'Cooked Pondfin',v:12,heal:35,food:true},burnt_fish:{n:'Burnt Fish',v:0},
   raw_gloomfin:{n:'Raw Gloomfin',v:18},gloomfin:{n:'Cooked Gloomfin',v:40,heal:55,food:true},
   copper_helm:{n:'Copper Helm',v:40,gear:'helm',tier:'copper'},iron_helm:{n:'Iron Helm',v:120,gear:'helm',tier:'iron'},ember_helm:{n:'Ember Helm',v:420,gear:'helm',tier:'ember'},
+  steel_blade:{n:'Steel Blade',v:900,gear:'blade',tier:'steel'},steel_helm:{n:'Steel Helm',v:650,gear:'helm',tier:'steel'},steel_mail:{n:'Steel Mail',v:1000,gear:'mail',tier:'steel'},
+  // the two rarest finds below floor 10: each boss of floors 11–20 has a tiny chance to drop one
+  cinder_blade:{n:'Cinderfang',v:15000,gear:'blade',tier:'cinder',rarity:'mythic'},star_helm:{n:"Starwarden's Helm",v:12000,gear:'helm',tier:'star',rarity:'mythic'},
   partyhat_helm:{n:'Blue Party Hat',v:0,gear:'helm',tier:'partyhat',rarity:'unique',bound:true},
   greenhat_helm:{n:'Green Party Hat',v:0,gear:'helm',tier:'greenhat',rarity:'unique',bound:true},
-  relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true}
+  relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true},
+  relic_heart:{n:'Forge Heart',v:1800,relic:true},relic_star:{n:'Fallen Star',v:3000,relic:true}
 };
 const GEAR={
-  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25}},
-  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7}},
-  helm:{copper:{def:1},iron:{def:2},ember:{def:4},partyhat:{def:25},greenhat:{def:25}}
+  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25},steel:{dmg:34},cinder:{dmg:46}},
+  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7},steel:{def:10}},
+  helm:{copper:{def:1},iron:{def:2},ember:{def:4},steel:{def:5},star:{def:9},partyhat:{def:25},greenhat:{def:25}}
 };
 // Helmets can carry attributes like capes. The Blue Party Hat is one of one: admin only, never drops, can't be sold or dropped.
-const HELM_ATTR={partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
+const HELM_ATTR={star:{hp:25,light:15,luck:10},partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
 const ADMIN_HATS={partyhat:'Blue Party Hat',greenhat:'Green Party Hat'};
 // ---------- rarity ----------
 const RARITY={unique:{n:'One of One',c:'#73eff7',w:0},common:{n:'Common',c:'#c2d3e0',w:62},uncommon:{n:'Uncommon',c:'#a7f070',w:26},rare:{n:'Rare',c:'#41a6f6',w:9},xrare:{n:'Extremely Rare',c:'#c77dff',w:2.6},legendary:{n:'Legendary',c:'#ffcd75',w:.4},mythic:{n:'Mythic',c:'#ff77a8',w:0}};
@@ -59,13 +64,16 @@ const ATTR_TXT={hp:v=>`+${v} max HP`,def:v=>`+${v} defense`,dmg:v=>`+${v}% damag
 for(const [k,l] of Object.entries(LANTERNS))ITEMS[k+'_lantern']={n:l.n,v:l.v,lantern:k,rarity:l.r,keep:!!l.goal};
 for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,rarity:c.r,keep:!!c.goal};
 // ---------- skills 1–99 (classic curve: early levels fly by, late levels take a very long time) ----------
-const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'}};
+const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'},mining:{n:'Mining',icon:'pickaxe',c:'#c9a26b'}};
+// the skills combat level was built from before Mining (saves from then keep the level they had: see cbFloor)
+const SKILLS_V096=['farming','fishing','cooking','smithing','woodcutting'];
+const FIGHT_MAX=99;   // Fighting tops out at 99 like every other skill
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 // Combat level: built from everything you do. Fighting (XP from monsters) counts double, and every other skill adds its
 // level: (2 × Fighting + all skill levels) ÷ (2 + number of skills). A new hero is combat level 1; combat level 10 takes
-// a mix like Fighting 15 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
-const combatFrom=(fight,skills)=>{const ks=Object.keys(SKILLS);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
+// a mix like Fighting 16 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
+const combatFrom=(fight,skills,keys)=>{const ks=keys||Object.keys(SKILLS);fight=Math.min(FIGHT_MAX,fight);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
 const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'}};
 const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15}};
@@ -76,11 +84,15 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['
 const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
   // the Wilderness: fewer logs, slower to regrow, much more xp
   blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
+// ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break ----------
+const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3},iron:{n:'Iron',lvl:10,xp:35,hp:3},coal:{n:'Coal',lvl:20,xp:50,hp:4},
+  ember:{n:'Emberite',lvl:25,xp:80,hp:4},cobalt:{n:'Cobalt',lvl:30,xp:100,hp:4},starshard:{n:'Starshard',lvl:40,xp:160,hp:5}};
 const RECIPES={
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
     {out:'iron_blade',need:{iron_ore:6,copper_ore:2},gold:60,lvl:10,xp:150},{out:'iron_helm',need:{iron_ore:4,bone:3},gold:40,lvl:12,xp:120},{out:'iron_mail',need:{iron_ore:8,bone:6},gold:60,lvl:14,xp:220},
-    {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550}
+    {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550},
+    {out:'steel_helm',need:{iron_ore:4,coal_ore:6},gold:300,lvl:35,xp:650},{out:'steel_blade',need:{iron_ore:6,coal_ore:8,cobalt_ore:2},gold:450,lvl:38,xp:850},{out:'steel_mail',need:{iron_ore:8,coal_ore:10,cobalt_ore:4},gold:500,lvl:42,xp:1100}
   ],
   // time: seconds per item at the Kitchen. Fish take longer the better they are: 2 s + 0.05 s per Fishing level the fish needs.
   kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3},
@@ -113,13 +125,29 @@ const ENEMIES={
   spider:{hp:26,dmg:10,spd:52,xp:10,ai:'dash',art:'spider',drops:[['gold',.6,3,9],['bone',.3,1,1]]},
   shade:{hp:20,dmg:11,spd:56,xp:5,ai:'chase',art:'shade',drops:[]},
   mother:{hp:280,dmg:11,spd:30,xp:120,ai:'mother',art:'mother',boss:true,big:true,drops:[['relic_crown',1,1,1],['gem',1,2,3],['gold',1,60,90],['lampseed',1,2,3]]},
-  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,drops:[['relic_sigil',1,1,1],['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4]]}
+  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,drops:[['relic_sigil',1,1,1],['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4]]},
+  // Emberforge Halls (floors 11–15)
+  imp:{hp:20,dmg:9,spd:50,xp:12,ai:'dash',art:'imp',drops:[['gold',.6,4,10],['coal_ore',.25,1,1]]},
+  golem:{hp:48,dmg:12,spd:20,xp:18,ai:'chase',art:'golem',drops:[['coal_ore',.5,1,2],['gold',.6,5,12],['ember_ore',.06,1,1]]},
+  cinderbat:{hp:12,dmg:7,spd:52,xp:7,ai:'flutter',art:'cinderbat',drops:[['gold',.6,2,6]]},
+  // the Starfall Hollow (floors 16–20)
+  wraith:{hp:30,dmg:12,spd:44,xp:16,ai:'float',art:'wraith',light:true,drops:[['gem',.08,1,1],['gold',.6,6,14]]},
+  sentinel:{hp:52,dmg:14,spd:30,xp:22,ai:'lunge',art:'sentinel',drops:[['cobalt_ore',.3,1,2],['gold',.6,8,16],['bone',.3,1,2]]},
+  shardling:{hp:26,dmg:12,spd:58,xp:15,ai:'dash',art:'shardling',drops:[['gold',.5,4,10],['starshard_ore',.02,1,1]]},
+  // rare: [item, chance] rolled once per kill for everyone who hit it (better with loot luck)
+  tyrant:{hp:700,dmg:16,spd:28,xp:700,ai:'tyrant',art:'tyrant',boss:true,big:true,drops:[['relic_heart',1,1,1],['coal_ore',1,4,8],['ember_ore',1,3,5],['gold',1,300,450],['gem',1,3,5]],rare:[['cinder_blade',.015]]},
+  warden:{hp:900,dmg:18,spd:32,xp:1100,ai:'warden',art:'warden',boss:true,big:true,drops:[['relic_star',1,1,1],['cobalt_ore',1,4,8],['starshard_ore',1,1,3],['gold',1,500,750],['gem',1,4,6]],rare:[['star_helm',.015]]}
 };
 // Biome packs: floors, enemy mix, ore, boss. Season 1 adds the next pack.
 const PACKS=[
-  {id:'moss',from:1,to:5,enemies:['slime','bat','crawler'],ore:'copper',boss:'mother',bossName:'Mother Slime'},
-  {id:'crypt',from:6,to:10,enemies:['skeleton','wisp','spider','bat'],ore:'iron',rareOre:'ember',boss:'knight',bossName:'The Ossuary Knight'},
-  {id:'ember',from:11,to:15,locked:true,season:1,name:'Emberforge Halls'}
+// veins: [ore, weight, from floor] (the ore walls of each floor are rolled from these). ore: the pack's main ore (chests).
+  {id:'moss',from:1,to:5,enemies:['slime','bat','crawler'],ore:'copper',veins:[['copper',1]],boss:'mother',bossName:'Mother Slime'},
+  {id:'crypt',from:6,to:10,enemies:['skeleton','wisp','spider','bat'],ore:'iron',veins:[['iron',3],['ember',1,8]],boss:'knight',bossName:'The Ossuary Knight'},
+  {id:'ember',from:11,to:15,enemies:['imp','golem','cinderbat','imp'],ore:'coal',veins:[['coal',5],['iron',3],['ember',1.6,12]],boss:'tyrant',bossName:'The Forge Tyrant'},
+  {id:'star',from:16,to:20,enemies:['wraith','sentinel','shardling'],ore:'cobalt',veins:[['cobalt',6],['coal',3],['starshard',1,17]],boss:'warden',bossName:'The Starwarden'}
 ];
 const packOf=f=>PACKS.find(p=>f>=p.from&&f<=p.to);
+// the lift at the Gate: floor 1, then the first floor of each pack whose previous boss you've beaten
+const LIFTS=PACKS.map(p=>p.from);
+const liftBoss=f=>{const i=PACKS.findIndex(p=>p.from===f);return i>0?PACKS[i-1].boss:null;};
 const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@runa_k','@tallowtom','@vexa','@gravelgus','@sora_lamps','@bram_b'];

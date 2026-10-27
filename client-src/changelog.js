@@ -4,8 +4,20 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.9.6',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.9.4'};
+const BUILD={version:'0.10.0',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.10.0'};
 const CHANGELOG=[
+  {v:'0.10.0',date:'2026-10-27',title:'Ten new floors and Mining',notes:[
+    'The Depths go to floor 20. Floors 11–15 are the Emberforge Halls: fire imps, magma golems and cinder bats, with the Forge Tyrant on floor 15. Floors 16–20 are the Starfall Hollow: wraiths, crystal sentinels and shardlings, with the Starwarden on floor 20.',
+    'A new skill, Mining. Mine the ore in the walls to train it. Each ore needs a Mining level: Copper 1, Iron 10, Coal 20, Emberite 25, Cobalt 30, Starshard 40. Mining counts toward your combat level like every other skill.',
+    'New ores: Coal, Cobalt and the rare Starshard (it sparkles; traders pay well for it).',
+    'Steel gear at the Forge: Steel Helm (Smithing 35), Steel Blade (Smithing 38) and Steel Mail (Smithing 42), made from iron, coal and cobalt. The strongest gear you can forge.',
+    'The two rarest finds in the Depths: Cinderfang, a blade that only the Forge Tyrant drops, and the Starwarden’s Helm, which only the Starwarden drops. Very, very rarely.',
+    'New boss Relics: the Forge Heart and the Fallen Star.',
+    'Watch the bosses: a ring of fire means the Tyrant’s hammer is about to land, and a cold ring means the Starwarden is about to burst. Step out of the ring.',
+    'Beat the Ossuary Knight to open the lift to floor 11, and the Forge Tyrant to open it to floor 16.',
+    'Fighting now tops out at 99, like every other skill.',
+    'Combat level = (2 × Fighting + all your skill levels) ÷ 8 now that Mining counts. Nobody loses a level: you keep the combat level you had.',
+    '8 new goals for Mining, Smithing and the new floors.']},
   {v:'0.9.6',date:'2026-10-27',title:'Combat level from everything you do',notes:[
     'Your combat level now comes from all your skills together. Monster XP trains a new skill, Fighting, which counts double, and Woodcutting, Fishing, Farming, Cooking and Smithing each add their level too.',
     'Combat level = (2 × Fighting + all your skill levels) ÷ 7. Combat level 10 takes something like Fighting 15 with your skills around 8, so it’s a real milestone.',
