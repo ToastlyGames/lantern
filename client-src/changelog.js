@@ -1,8 +1,14 @@
 // ===== The Bulletin: build version + update history shown on the board in the Hold. =====
 // EVERY update adds an entry at the TOP (newest first) and bumps BUILD. Never delete old entries: this is the game's history.
 // scripts/build.mjs also writes CHANGELOG.md from this list.
-const BUILD={version:'0.9.2',season:'Season 0 (Beta)',date:'2026-10-27'};
+const BUILD={version:'0.9.3',season:'Season 0 (Beta)',date:'2026-10-27'};
 const CHANGELOG=[
+  {v:'0.9.3',date:'2026-10-27',title:'Wilderness fixes and the Return Flame',notes:[
+    'Fall to another player in the Wilderness and you always wake up back in the Hold, healed.',
+    'Wilderness loot is easier to grab: walk over it to pick it up (the winner straight away, everyone else after a minute). The Pick up button still works.',
+    'The Return Flame now works in the Wilderness: hold it for 2 seconds to go home to the Hold, even mid-fight. Taking a hit interrupts it. It works up to Wilderness level 20; deeper areas later will block it.',
+    'When a party member dies in the Depths or is defeated in the Wilderness, your Party chat says so.',
+    'Fixed your hero running on the spot while the Wilderness warning was open.']},
   {v:'0.9.2',date:'2026-10-27',title:'Player names on',notes:[
     'Player names and combat levels now show over everyone’s heads by default. Turn them off any time in Settings → Player names.']},
   {v:'0.9.1',date:'2026-10-27',title:'Pick up where you left off',notes:[

@@ -11,7 +11,7 @@ function addObj(m,o){m.objs.push(o);if(o.block)for(const [x,y] of o.block)setSol
 // The Hold sits at the bottom of the map. North of it, past the old wall, lies the Wilderness: the first expansion, where
 // players can attack each other. WILD_ROWS rows were added on top, so every Hold coordinate below is shifted down by O rows.
 // Keep WILD_ROWS in step with WILD_Y in realtime/src/index.js (2 rows per Wilderness level, levels 1–20).
-const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20;
+const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20,RETURN_MAX=20;   // the Return Flame works up to this Wilderness level (deeper areas will block it)
 const wildLvl=y=>y<WILD_Y?Math.min(WILD_MAX,Math.max(1,Math.ceil((WILD_Y-y)/(2*T)))):0;
 const isWater=t=>t===WATER||t===GLOOM;
 function buildHold(){
