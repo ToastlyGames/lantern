@@ -112,10 +112,18 @@ export class Lobby {
   persist() { this.ctx.storage.put('parties', [...this.parties.values()]).catch(() => { }); }
   att(u) { if (!u.on) return; try { u.ws.serializeAttachment({ id: u.id, name: u.name, adm: u.adm, hat: u.hat, mu: !!u.mu, room: u.room, floor: u.floor, party: u.party, at: u.at, seen: u.seen, watching: u.watching ? [...u.watching].slice(0, 100) : null }); } catch { } }
   async fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === '/pk' && req.method === 'POST') {   // a Room only: a hero was defeated in the Wilderness while disconnected
+      const c = await req.json(); if (c && /^[a-z0-9_]{3,16}$/.test(c.id) && c.died) await this.ctx.storage.put('pk:' + c.id, c.died);
+      return new Response('ok');
+    }
     const who = JSON.parse(req.headers.get('x-lh-who'));
     const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
     this.connect(who, server);
+    // tell them about a defeat that happened while they were away (they logged out mid-fight)
+    const pk = await this.ctx.storage.get('pk:' + who.id);
+    if (pk) { send(server, Object.assign({}, pk, { t: 'died', away: 1 })); await this.ctx.storage.delete('pk:' + who.id); }
     await armSweep(this.ctx);
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -296,7 +304,7 @@ export class Lobby {
   feed(u, m) {
     const now = Date.now(); if (now - (u.lastFeed || 0) < 20000) return; u.lastFeed = now;
     const a = typeof m.a === 'string' && /^[A-Za-z0-9' ]{1,32}$/.test(m.a) ? m.a : null;
-    const T = { loot: a && `found a ${a}`, boss: a && `defeated ${a}`, level: a && /^\d{1,3}$/.test(a) && `reached combat level ${a}`, skill: a && `reached ${a}`, deep: a && /^\d{1,3}$/.test(a) && `reached floor ${a} of the Depths` }[m.k];
+    const T = { loot: a && `found a ${a}`, boss: a && `defeated ${a}`, level: a && /^\d{1,3}$/.test(a) && `reached combat level ${a}`, skill: a && `reached ${a}`, deep: a && /^\d{1,3}$/.test(a) && `reached floor ${a} of the Depths`, pk: a && /^[A-Za-z0-9_]{3,16}$/.test(a) && `defeated ${a} in the Wilderness` }[m.k];
     if (!T) return;
     this.feedQ.push(u.name + ' ' + T); if (this.feedQ.length > 6) this.feedQ.shift();
     this.pumpFeed();
@@ -317,9 +325,22 @@ const FISH_PH = new Set(['cast', 'wait', 'bite', 'reel']);
 // Tree types (match TREES in the game's data.js): logs per tree and regrow time. Higher-level trees in later areas hold
 // fewer logs and take longer to regrow.
 // regenDelay/regenEvery: a tree nobody has cut for regenDelay grows back 1 log every regenEvery, up to full.
-const TREE_TYPES = { oak: { logs: 300, regrow: 20e3, regenDelay: 15e3, regenEvery: 2e3 } }, TREE_MAX = 64, CHOP_GAP_MS = 1200;
+const TREE_TYPES = { oak: { logs: 300, regrow: 20e3, regenDelay: 15e3, regenEvery: 2e3 }, blackwood: { logs: 60, regrow: 45e3, regenDelay: 20e3, regenEvery: 6e3 } }, TREE_MAX = 64, CHOP_GAP_MS = 1200;
 const treeType = k => TREE_TYPES[k] || TREE_TYPES.oak;
 const DROP_MAX = 400, DROP_PRIVATE_MS = 30e3, DROP_LIFE_MS = 180e3, LOOT_LIFE_MS = 30 * 60e3;
+// ---- the Wilderness: the north of every Hold world, past the old wall, is PvP. The room is the referee: it checks every
+// attack (both in the Wilderness, combat levels within the Wilderness level, close enough), rolls the damage from what each
+// hero wears, keeps everyone's health, hands out skulls, and when a hero falls it drops their items for the killer.
+// Keep WILD_Y in step with WILD_ROWS in client-src/world.js (40 rows of 16 px; 2 rows per Wilderness level, up to 20).
+const WILD_Y = 640, WILD_ROW_PX = 32, WILD_MAX = 20;
+export const wildLvl = y => (y < WILD_Y ? Math.min(WILD_MAX, Math.max(1, Math.ceil((WILD_Y - y) / WILD_ROW_PX))) : 0);
+const PVP = { gap: 750, reach: 34, skullMs: 20 * 60e3, retaliateMs: 120e3, combatMs: 10e3, regenAfter: 8e3, regenPerS: 1, eatGap: 1500, safeMs: 5000, ghostMs: 15e3, lootPrivate: 60e3, lootLife: 180e3, mult: .7, miss: .12 };
+// what gear does in a fight (the same numbers as the game's data.js; admin hats count as an Ember Helm here)
+const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25 }, MAIL_DEF = { copper: 2, iron: 4, ember: 7 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, partyhat: 4, greenhat: 4 };
+const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg: 15, hp: 12 }, knight: { def: 3, dmg: 12 } };
+export const pvpMax = l => 60 + 8 * (((l && l.lvl) || 1) - 1) + ((CAPE_PVP[l && l.cape] || {}).hp || 0);
+const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm']);
+const recent = (o, now, ms) => { const r = {}; let k = 0; for (const [id, t] of Object.entries(o || {})) if (now - t < ms && k++ < 12) r[id] = t; return r; };
 export class Room {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env; this.players = new Map(); this.flushT = null; this.seq = 0; this.drops = new Map(); this.trees = new Map();
@@ -339,7 +360,8 @@ export class Room {
       }
     });
   }
-  att(p) { try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, fd: !!p.fd, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null }); } catch { } }
+  att(p) { if (p.ghost) return; try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, fd: !!p.fd, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null,
+    rd: !!p.rd, hp: p.hp ?? null, hpAt: p.hpAt || 0, lc: p.lc || 0, sk: p.sk || 0, safe: p.safe || 0, ag: p.ag || null, dmg: p.dmg ? Object.fromEntries(Object.entries(p.dmg).slice(0, 8)) : null }); } catch { } }
   async fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === '/setup' && req.method === 'POST') {          // called by the Lobby only (not reachable from outside)
@@ -367,7 +389,7 @@ export class Room {
   async alarm() {
     const now = Date.now();
     if (this.pruneDrops()) this.saveDrops();
-    for (const p of [...this.players.values()]) if (now - lastHeard(this.ctx, p.ws, p.seen) > SILENT_MS) { try { p.ws.close(4001, 'silent'); } catch { } this.gone(p, p.ws); }
+    for (const p of [...this.players.values()]) if (!p.ghost && now - lastHeard(this.ctx, p.ws, p.seen) > SILENT_MS) { try { p.ws.close(4001, 'silent'); } catch { } this.gone(p, p.ws); }
     if (this.ctx.getWebSockets().length) await this.ctx.storage.setAlarm(Date.now() + SWEEP_MS);
   }
   byWs(ws) { const a = ws.deserializeAttachment(); const p = a && this.players.get(a.id); return p && p.ws === ws ? p : null; }
@@ -380,17 +402,82 @@ export class Room {
   webSocketClose(ws) { const p = this.byWs(ws); if (p) this.gone(p, ws); try { ws.close(); } catch { } }
   webSocketError(ws) { const p = this.byWs(ws); if (p) this.gone(p, ws); }
   gone(p, ws) {
-    if (this.players.get(p.id) !== p || p.ws !== ws) return; this.players.delete(p.id); this.all({ t: '-', id: p.id });
+    if (this.players.get(p.id) !== p || p.ws !== ws || p.ghost) return;
     if (p.trade) this.tradeEnd(this.trades.get(p.trade), 'left', p);
+    // Logged out (or lost the connection) in the middle of a fight in the Wilderness: the hero stays where they stood
+    // for 15 s and can still be defeated. Coming back in time picks the fight up where it was.
+    if (!this.inst && p.rd && wildLvl(p.y) && Date.now() - (p.lc || 0) < PVP.combatMs) { p.ghost = true; p.ghostT = setTimeout(() => this.dropGhost(p), PVP.ghostMs); return; }
+    this.players.delete(p.id); if (p.rd) this.all({ t: '-', id: p.id });
     if (this.inst && this.cfg && this.cfg.host === p.id) this.pick();
   }
+  dropGhost(p) { clearTimeout(p.ghostT); if (this.players.get(p.id) !== p) return; this.players.delete(p.id); if (p.rd) this.all({ t: '-', id: p.id }); }
   host() { if (!this.inst) return null; const h = this.cfg.host; if (this.players.has(h)) return h; return null; }
   pick() {  // a new host when the old one leaves: whoever has been here longest
     let best = null; for (const p of this.players.values()) if (!best || p.joined < best.joined) best = p;
     this.cfg.host = best ? best.id : this.cfg.host; this.ctx.storage.put('cfg', this.cfg).catch(() => { });
     if (best) this.all({ t: 'host', id: best.id });
   }
-  pub(p) { return { id: p.id, name: p.name, adm: p.adm ? 1 : 0, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m, fish: p.fish || null }; }
+  pub(p) { const now = Date.now(), o = { id: p.id, name: p.name, adm: p.adm ? 1 : 0, look: p.look, x: p.x, y: p.y, d: p.d, m: p.m, fish: p.fish || null };
+    if (!this.inst) { const max = pvpMax(p.look), hp = this.hpOf(p, now); if (hp < max) { o.hp = Math.ceil(hp); o.max = max; } if ((p.sk || 0) > now) o.sk = p.sk - now; }
+    return o; }
+  // ---- PvP health: full unless hurt; after 8 s out of combat it climbs back 1 HP a second ----
+  hpOf(p, now = Date.now()) {
+    const max = pvpMax(p.look); if (p.hp == null) return max;
+    let hp = Math.min(p.hp, max); const from = Math.max(p.hpAt || 0, (p.lc || 0) + PVP.regenAfter);
+    if (now > from) hp = Math.min(max, hp + (now - from) / 1000 * PVP.regenPerS);
+    return hp;
+  }
+  setHp(p, hp, now) { if (hp >= pvpMax(p.look)) { p.hp = null; p.hpAt = 0; } else { p.hp = hp; p.hpAt = now; } }
+  onAtk(p, m) {
+    const q = this.players.get(String(m.to || '')), now = Date.now();
+    if (this.inst || p.ghost || p.dead || !p.rd || !q || q === p || !q.rd || q.dead) return;
+    const no = why => send(p.ws, { t: 'PN', to: q.id, why });
+    if (now - (p.lastAtk || 0) < PVP.gap) return;
+    const wa = wildLvl(p.y), wb = wildLvl(q.y);
+    if (!wa) return no('safe_you'); if (!wb) return no('safe_them');
+    if ((p.safe || 0) > now || (q.safe || 0) > now) return no('protected');
+    const la = (p.look && p.look.lvl) || 1, lb = (q.look && q.look.lvl) || 1;
+    if (Math.abs(la - lb) > Math.min(wa, wb)) return no('level');
+    if (Math.hypot(p.x - q.x, p.y - q.y) > PVP.reach) return no('far');
+    p.lastAtk = now; p.safe = 0;
+    // the skull: attack someone who hasn't attacked you in the last 2 minutes, and you're marked for 20 minutes
+    if (!((q.ag || {})[p.id] > now - PVP.retaliateMs)) { const was = (p.sk || 0) > now; p.sk = now + PVP.skullMs; if (!was) this.all({ t: 'SK', id: p.id, left: PVP.skullMs }); else send(p.ws, { t: 'SK', id: p.id, left: PVP.skullMs }); }
+    p.ag = recent(p.ag, now, PVP.retaliateMs); p.ag[q.id] = now;
+    const A = p.look || {}, B = q.look || {}, cA = CAPE_PVP[A.cape] || {}, cB = CAPE_PVP[B.cape] || {};
+    let d = 0;
+    if (Math.random() >= PVP.miss) {
+      const base = (BLADE_DMG[A.blade] || 6) * (1 + (cA.dmg || 0) / 100) * PVP.mult, def = (MAIL_DEF[B.armor] || 0) + (HELM_DEF[B.helm] || 0) + (cB.def || 0);
+      d = Math.max(1, Math.round(base * (.75 + Math.random() * .5) - def * .5));
+    }
+    const hp = Math.max(0, this.hpOf(q, now) - d), max = pvpMax(q.look);
+    p.lc = q.lc = now; q.dmg = q.dmg || {}; q.dmg[p.id] = (q.dmg[p.id] || 0) + d;
+    this.setHp(q, hp, now);
+    this.all({ t: 'PH', a: p.id, v: q.id, d, hp: Math.ceil(hp), max });
+    this.att(p); this.att(q);
+    if (hp <= 0) this.pkDeath(q, p, now);
+  }
+  // A hero falls: whoever did the most damage gets the loot first (everyone else can pick it up after a minute).
+  // Unskulled heroes keep their 3 most valuable items; a skulled hero loses everything they carry and wear.
+  async pkDeath(q, by, now) {
+    q.dead = true;
+    let top = by.id, best = -1; for (const [id, d] of Object.entries(q.dmg || {})) if (d > best && this.players.has(id)) { best = d; top = id; }
+    const killer = this.players.get(top) || by, skulled = (q.sk || 0) > now, x = q.x, y = q.y;
+    let risk = q.risk; if (!risk) { try { risk = await this.ctx.storage.get('rk:' + q.id); } catch { } } risk = Array.isArray(risk) ? risk : [];
+    const kept = [], lost = []; let keep = skulled ? 0 : 3;
+    for (const [id, n, slot] of risk) { const k = Math.min(keep, n); keep -= k; if (k) kept.push([id, k, slot]); if (n - k) lost.push([id, n - k, slot]); }
+    const made = [];
+    lost.forEach(([it, n], i) => { const a = i * 2.39996, r = i ? 5 + 2.2 * Math.sqrt(i) : 0;
+      made.push({ did: rid(10), it, n, x: Math.round(Math.max(20, Math.min(396, x + Math.cos(a) * r))), y: Math.round(Math.max(20, y - 3 + Math.sin(a) * r * .7)), vx: 0, vy: 0, f: null, by: killer.id, bag: true, pk: 1, at: now, pub: now + PVP.lootPrivate, exp: now + PVP.lootLife }); });
+    this.pruneDrops(); for (const d of made) this.drops.set(d.did, d); if (made.length) this.saveDrops();
+    this.all({ t: 'PK', v: q.id, a: killer.id, vn: q.name, an: killer.name, x: Math.round(x), y: Math.round(y) });
+    for (const r of this.players.values()) if (!r.ghost) for (const d of made) send(r.ws, { t: 'D', d: this.dropView(d, r.id) });
+    const died = { by: killer.name, lost, kept, sk: skulled ? 1 : 0 };
+    if (q.ghost) { try { await this.env.LOBBY.get(this.env.LOBBY.idFromName('lobby')).fetch('https://lobby/pk', { method: 'POST', body: JSON.stringify({ id: q.id, died }) }); } catch { } this.dropGhost(q); }
+    else send(q.ws, Object.assign({ t: 'DIED' }, died));
+    if (skulled) this.all({ t: 'SK', id: q.id, left: 0 });
+    Object.assign(q, { hp: null, hpAt: 0, lc: 0, sk: 0, ag: {}, dmg: {}, risk: null, dead: false, safe: now + PVP.safeMs });
+    this.ctx.storage.delete('rk:' + q.id).catch(() => { }); this.att(q);
+  }
   // ---- items on the ground: dungeon loot (seen by the whole party at once) and items dropped from a bag (the dropper sees
   // them at once, everyone else after 30 s). The server decides who picks each one up, so nothing is ever picked up twice.
   pruneDrops() { const now = Date.now(); let ch = false; for (const [k, d] of this.drops) if (d.exp && now > d.exp) { this.drops.delete(k); ch = true; }
@@ -480,30 +567,56 @@ export class Room {
     if (d.by !== p.id && now < d.pub) return send(p.ws, { t: 'nope', did: d.did });
     this.drops.delete(d.did); this.saveDrops();
     this.all({ t: 'took', did: d.did, by: p.id, it: d.it, n: d.n });
+    // Wilderness loot: a receipt the website accepts with the next save, so a big haul isn't mistaken for cheating
+    if (d.pk && this.env.RT_SECRET) signToken({ iss: 'lanternhold-loot', sub: p.id, it: d.it, n: d.n, jti: d.did, exp: Math.floor(now / 1000) + 1800 }, this.env.RT_SECRET).then(tk => send(p.ws, { t: 'RC', tk })).catch(() => { });
   }
-  all(o, except) { const s = JSON.stringify(o); for (const p of this.players.values()) if (p.id !== except) send(p.ws, s); }
+  all(o, except) { const s = JSON.stringify(o); for (const p of this.players.values()) if (p.id !== except && !p.ghost) send(p.ws, s); }
   join(who, ws) {
-    const old = this.players.get(who.id);
-    if (old) { try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, fd: !!who.fd, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : Date.now() + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: Date.now(), seen: Date.now() };
+    const old = this.players.get(who.id), now = Date.now();
+    if (old) { clearTimeout(old.ghostT); if (!old.ghost) try { old.ws.close(4000, 'replaced'); } catch { } }
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, fd: !!who.fd, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : now + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: now, seen: now,
+      // a Hold world only shows a hero to others once they've said where they are (no faceless heroes flickering at the spawn)
+      rd: this.inst || !!(old && old.rd) };
+    if (old && !this.inst) for (const k of ['hp', 'hpAt', 'lc', 'sk', 'ag', 'dmg', 'risk', 'safe']) p[k] = old[k];   // back mid-fight: same health, same skull
     this.players.set(who.id, p); this.att(p);
     if (this.inst && !this.host()) this.pick();
-    send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null,
-      players: [...this.players.values()].filter(x => x.id !== who.id).map(x => this.pub(x)),
+    const fight = !this.inst && old && old.rd && wildLvl(old.y) ? { x: old.x, y: old.y, hp: Math.ceil(this.hpOf(p, now)), max: pvpMax(p.look), sk: (p.sk || 0) > now ? p.sk - now : 0 } : null;
+    send(ws, { t: 'hi', me: who.id, room: this.id, host: this.inst ? this.cfg.host : null, seed: this.inst ? this.cfg.seed : null, floor: this.inst ? this.cfg.floor : null, pvp: this.inst ? 0 : 1, back: fight,
+      players: [...this.players.values()].filter(x => x.id !== who.id && x.rd).map(x => this.pub(x)),
       drops: (this.pruneDrops(), [...this.drops.values()].filter(d => !this.inst || d.f === (this.cfg ? this.cfg.floor : null)).map(d => this.dropView(d, who.id))),
       trees: this.inst ? null : [...this.trees.values()].map(t => this.treeView(this.tree(t.i))).filter((v, j) => v[2] > 0 || v[1] < treeType([...this.trees.values()][j].kind).logs) });
-    if (!old) this.all({ t: '+', p: this.pub(p) }, who.id);
+    if (!old && p.rd) this.all({ t: '+', p: this.pub(p) }, who.id);
     p.seen = Date.now();
   }
   onMessage(p, m) {
     const t = m.t;
     if (t === 's') {
       const x = +m.x, y = +m.y; if (!(x >= 0 && x < 20000 && y >= 0 && y < 20000)) return;
-      p.x = Math.round(x * 10) / 10; p.y = Math.round(y * 10) / 10; p.d = DIRS.has(m.d) ? m.d : p.d; p.m = !!m.m; p.dirty = true;
+      const now = Date.now();
+      // in a fight nobody teleports away: a jump further than anyone can walk is sent back
+      if (!this.inst && p.rd && now - (p.lc || 0) < PVP.combatMs && Math.hypot(x - p.x, y - p.y) > 24 + 200 * Math.max(0, now - (p.sAt || now)) / 1000) { p.sAt = now; return send(p.ws, { t: 'pos', x: p.x, y: p.y }); }
+      p.sAt = now;
+      p.x = Math.round(x * 10) / 10; p.y = Math.round(y * 10) / 10; p.d = DIRS.has(m.d) ? m.d : p.d; p.m = !!m.m;
+      if (!p.rd) { p.rd = true; this.att(p); this.all({ t: '+', p: this.pub(p) }, p.id); return; }
+      p.dirty = true;
       if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
       return;
     }
-    if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd); this.att(p); return this.all({ t: 'L', id: p.id, look: p.look }, p.id); }
+    if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd); this.att(p); if (p.rd) this.all({ t: 'L', id: p.id, look: p.look }, p.id); return; }
+    if (t === 'atk') return this.onAtk(p, m);
+    if (t === 'risk' && !this.inst) {   // what this hero would drop if they fell in the Wilderness, most valuable first
+      const list = (Array.isArray(m.it) ? m.it : []).slice(0, 80).filter(e => Array.isArray(e) && typeof e[0] === 'string' && /^[a-z0-9_]{1,32}$/.test(e[0]) && Number.isInteger(e[1]) && e[1] > 0 && e[1] <= 1e7)
+        .map(e => [e[0], e[1], SLOTS.has(e[2]) ? e[2] : 0, Math.max(0, Math.min(1e6, Number(e[3]) || 0))]).sort((a, b) => b[3] - a[3]);
+      p.risk = list; this.ctx.storage.put('rk:' + p.id, list).catch(() => { });
+      const now = Date.now(), sk = Number(m.sk);   // the game remembers its own skull across worlds; it can only ever make itself skulled
+      if (sk > 0 && now + Math.min(PVP.skullMs, sk) > (p.sk || 0) + 2000) { const was = (p.sk || 0) > now; p.sk = now + Math.min(PVP.skullMs, sk); this.att(p); if (!was && p.rd) this.all({ t: 'SK', id: p.id, left: p.sk - now }); }
+      return;
+    }
+    if (t === 'eat' && !this.inst) {
+      const h = Number.isInteger(m.h) && m.h > 0 && m.h <= 80 ? m.h : 0, now = Date.now(); if (!h || p.dead || now - (p.eatAt || 0) < PVP.eatGap) return; p.eatAt = now;
+      const max = pvpMax(p.look), hp = Math.min(max, this.hpOf(p, now) + h); this.setHp(p, hp, now); this.att(p);
+      return this.all({ t: 'H', id: p.id, hp: Math.ceil(hp), max });
+    }
     if (t === 'say') {
       if (p.mu) return send(p.ws, { t: 'muted', on: true, said: 1 });
       const now = Date.now(); if (now - (p.lastSay || 0) < 1200) return send(p.ws, { t: 'slow' }); p.lastSay = now;
@@ -514,13 +627,13 @@ export class Room {
     if (t === 'fish') {
       const f = m.f && typeof m.f === 'object' && DIRS.has(m.f.d) && FISH_PH.has(m.f.ph) && +m.f.bx >= 0 && +m.f.bx < 20000 && +m.f.by >= 0 && +m.f.by < 20000
         ? { d: m.f.d, ph: m.f.ph, bx: Math.round(+m.f.bx), by: Math.round(+m.f.by) } : null;
-      p.fish = f; this.att(p); return this.all({ t: 'F', id: p.id, f }, p.id);
+      p.fish = f; this.att(p); if (p.rd) this.all({ t: 'F', id: p.id, f }, p.id); return;
     }
     if (t === 'drop') return this.onDrop(p, m);
     if (t === 'take') return this.onTake(p, m);
     if (t === 'chop') return this.onChop(p, m);
     if (TRADE_MSG.has(t)) return this.inst ? undefined : this.onTrade(p, t, m);
-    if (!this.inst) return;
+    if (!this.inst && !(t === 'sw' && p.rd && wildLvl(p.y))) return;   // in a Hold world, swings only show in the Wilderness
     if (t === 'sw') {   // a swing in a party dungeon: everyone else sees the blade, the damage numbers and the ore chips
       const now = Date.now(); if (now - (p.lastSw || 0) < 120) return; p.lastSw = now;
       const h = Array.isArray(m.h) ? m.h.slice(0, 8).filter(x => Array.isArray(x) && Number.isInteger(x[0]) && Number.isFinite(+x[1])).map(x => [x[0], Math.max(0, Math.min(9999, Math.round(+x[1])))]) : [];
@@ -537,7 +650,7 @@ export class Room {
   }
   flush() {
     this.flushT = null; const rows = [];
-    for (const p of this.players.values()) if (p.dirty) { p.dirty = false; this.att(p); rows.push([p.id, p.x, p.y, p.d, p.m ? 1 : 0]); }
+    for (const p of this.players.values()) if (p.dirty && p.rd) { p.dirty = false; this.att(p); rows.push([p.id, p.x, p.y, p.d, p.m ? 1 : 0]); }
     if (rows.length) this.all({ t: 'S', p: rows });
   }
 }
