@@ -113,6 +113,13 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .grid.runes .cell.dim{opacity:.45}
 .rhead{display:grid;place-items:center;margin:-4px 0 4px}.rhead img{width:224px;height:auto;image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(199,155,242,.55))}
 .gear .mk{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.quest{margin:10px 0;padding:10px 12px;border:3px solid #ff8a8a;background:rgba(255,77,109,.08);box-shadow:0 4px 0 #05060b}.quest.qdone{border-color:#a7f070;background:rgba(167,240,112,.08)}
+.quest .qh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.quest .qh b{font-size:22px;color:#ff8a8a}.quest.qdone .qh b{color:#a7f070}.quest .qh small{margin-left:auto;color:#ff8a8a}.quest.qdone .qh small{color:#a7f070}
+.qtag{font-size:13px;line-height:1;padding:3px 6px 2px;background:#ef7d57;color:#1a1c2c}.qsteps{margin:6px 0 6px;padding-left:22px;font-size:17px;line-height:1.35}.qsteps li{margin:3px 0}
+.qsteps .qx{text-decoration:line-through;opacity:.55}.qsteps .qcur{color:#ffcd75}.qsteps .qnext{opacity:.7}.qsteps em{font-style:normal;color:#ffcd75}
+.qdot{display:inline-block;width:8px;height:8px;background:#ffcd75;box-shadow:0 0 0 2px #1a1c2c;vertical-align:middle;margin-left:2px}
+.cosprev .ic{image-rendering:pixelated;filter:drop-shadow(0 0 10px rgba(199,155,242,.45))}
+.cosgift{display:flex;justify-content:center;gap:22px;margin:6px 0 4px}.cosgift .ic{image-rendering:pixelated;filter:drop-shadow(0 0 14px rgba(199,155,242,.6))}
 #socB{position:relative;display:grid;place-items:center;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto}#socB img{width:22px;height:22px;image-rendering:pixelated}.land #socB{width:30px;height:30px}
 #socB.off{opacity:.55}#socB.off::after{content:'';position:absolute;bottom:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ef7d57;box-shadow:0 0 0 2px #1a1c2c}
 #socB .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#b13e53;color:#f4f4f4;font-size:12px;line-height:16px;text-align:center;padding:0 3px}
@@ -403,4 +410,4 @@ small{font-size:17px;color:var(--muted)}
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>
-<script src="/game.js?v=316df4e76e"></script></body></html>
+<script src="/game.js?v=e8c93b9e18"></script></body></html>
