@@ -616,6 +616,7 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'gem':p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..','......'],{c:PAL.sky,b:PAL.cyan,a:PAL.blue});p.set(6,4,PAL.white);break;
     case 'slime_gel':p.ell(8,10,5,4,PAL.green);p.ell(7,9,2,1.5,PAL.lime);p.set(6,8,PAL.white);break;
     case 'blackwood_logs':p.rect(2,8,12,4,'#2a1e22');p.rect(2,8,12,1,'#4a3640');p.rect(4,4,11,4,'#2a1e22');p.rect(4,4,11,1,'#4a3640');p.ell(3,10,2,2,'#7a5ca8');p.set(3,10,'#3d2f52');p.ell(14,6,2,2,'#7a5ca8');p.set(14,6,'#3d2f52');break;
+    case 'willow_logs':p.rect(2,8,12,4,'#4a3a2a');p.rect(2,8,12,1,'#6b5a3e');p.rect(4,4,11,4,'#4a3a2a');p.rect(4,4,11,1,'#6b5a3e');p.ell(3,10,2,2,'#d8c99a');p.set(3,10,'#8a7a50');p.ell(14,6,2,2,'#d8c99a');p.set(14,6,'#8a7a50');p.set(8,5,'#73c7a0');p.set(10,9,'#73c7a0');break;
     case 'logs':p.rect(2,8,12,4,PAL.bark);p.rect(2,8,12,1,PAL.wood);p.rect(4,4,11,4,PAL.bark);p.rect(4,4,11,1,PAL.wood);p.ell(3,10,2,2,PAL.tan);p.set(3,10,PAL.wood);p.ell(14,6,2,2,PAL.tan);p.set(14,6,PAL.wood);break;
     case 'bone':p.line(4,12,12,4,PAL.bone);p.line(5,12,12,5,PAL.bone);p.rect(3,11,2,3,PAL.bone).rect(11,3,3,2,PAL.bone);break;
     case 'wheat_seed':p.rect(5,7,6,7,PAL.wood);p.rect(5,6,6,2,PAL.bark);p.rect(7,9,2,3,PAL.yellow);break;
@@ -937,7 +938,7 @@ const ITEMS={
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
-  logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},
+  logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},willow_logs:{n:'Willow Logs',v:18},
   bread:{n:'Bread',v:8,heal:30,food:true},stew:{n:'Glowcap Stew',v:20,heal:70,food:true},
   oil:{n:'Oil Flask',v:15,oil:50},oil2:{n:'Greater Oil Flask',v:90,oil:100},
   moonpetal_seed:{n:'Moonpetal Seed',v:30},moonpetal:{n:'Moonpetal',v:45},
@@ -1096,7 +1097,8 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['
 // regenDelay/regenEvery (s): a partly cut tree left alone for regenDelay grows back 1 log every regenEvery.
 const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
   // the Wilderness: fewer logs, slower to regrow, much more xp
-  blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
+  blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'},
+  willow:{n:'Willow Tree',lvl:30,xp:18,logs:80,regrow:60,regenDelay:20,regenEvery:5,item:'willow_logs'}};   // Hollowmere (v0.12.4)
 // ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break, seconds to grow back ----------
 // respawn: seconds until a mined-out vein grows back (harder ores take longer)
 const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3,respawn:15},iron:{n:'Iron',lvl:10,xp:35,hp:3,respawn:25},coal:{n:'Coal',lvl:20,xp:50,hp:4,respawn:40},
@@ -1214,8 +1216,17 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.12.2',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.0'};
+const BUILD={version:'0.12.4',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.4'};
 const CHANGELOG=[
+  {v:'0.12.4',date:'2026-10-27',title:'Willows and a bigger dock',notes:[
+    'The willows of Hollowmere can be chopped: Woodcutting 30, 18 XP a log. Willow Logs sell well to Tallow. Like the oaks, every willow is shared with your world and grows back after it falls.',
+    'The Moonmere dock is bigger: the walkway is two planks wide and the platform in the middle is 5 by 5, with room for a crowd to fish.',
+    'In Hollowmere, when a monster comes for you, the action button fights instead of chopping or fishing.',
+    'A new goal: cut a willow log.']},
+  {v:'0.12.3',date:'2026-10-27',title:'How raids will work',notes:[
+    'Raids arrive in Season 1, and every raid is a world event for the whole server.',
+    'One raid opens every hour at the Abyssal Maw. Players from every world can join the same raid at the same time.',
+    'A raid begins once at least 10 players are in the raid queue. The Maw in Hollowmere now explains it all.']},
   {v:'0.12.2',date:'2026-10-27',title:'Relic-forging by item level',notes:[
     'The gold a relic-forge step costs now depends on the item’s level: the higher the level, the more gold. A Copper Blade costs about 18,000 gold to take all the way to +5, a Steel Blade about 78,000, and the Voidwoven Robe about 139,000.',
     'An item’s level is what it takes to make it (Smithing for forged gear, Crafting for jewelry and staffs). Boss-only drops are levels 50 to 75. The Relic forge tab shows each piece’s level.']},
@@ -1527,8 +1538,9 @@ function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(91
   // the Moonmere: a great lake (about three times the Hold's), bigger rows in the middle
   const cx=21,cy=31,rx=9.5,ry=8.5;for(let ly=20;ly<=42;ly++)for(let lx=10;lx<=33;lx++){const d=((lx+.5-cx)/rx)**2+((ly+.5-cy)/ry)**2+(Math.sin(lx*1.7+ly)*.06);if(d<1)put(lx,ly,MOON,1);}
   // the dock: from the north shore straight out to a platform in the middle of the water
-  for(let ly=22;ly<=29;ly++)put(21,ly,DOCK,0);for(let ly=30;ly<=32;ly++)for(let lx=20;lx<=22;lx++)put(lx,ly,DOCK,0);
-  for(let ly=21;ly>=19;ly--)if(tAt(m,...L(21,ly))!==DOCK&&!solidAt(m,...L(21,ly)))put(21,ly,MPATH,0);
+  // (v0.12.4: the walkway is two planks wide and the platform 5x5, room for a crowd to fish)
+  for(let ly=22;ly<=28;ly++)for(let lx=20;lx<=21;lx++)put(lx,ly,DOCK,0);for(let ly=29;ly<=33;ly++)for(let lx=19;lx<=23;lx++)put(lx,ly,DOCK,0);
+  for(let ly=21;ly>=19;ly--)for(let lx=20;lx<=21;lx++)if(tAt(m,...L(lx,ly))!==DOCK&&!solidAt(m,...L(lx,ly)))put(lx,ly,MPATH,0);
   m.lilies.push(...[[14,27,1],[28,26,0],[17,37,0],[25,38,1],[30,31,0],[12,33,1],[19,24,0],[24,35,1]].map(([x,y,f])=>[x+X0,y+Y0,f,1]));
   // buildings and landmarks
   const obj=(type,lx,ly,extra)=>{const [x,y]=L(lx,ly);return addObj(m,Object.assign({type,x:x*T+8,y:y*T+14},extra||{}));};
@@ -1543,7 +1555,7 @@ function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(91
   obj('hmsign',41,10,{block:[[...L(41,10)]],act:{x:L(41,10)[0]*T+8,y:L(41,11)[1]*T+4,label:'Read',id:'hmsign'}});
   // willows on the moor, reeds and moon crystals on the shore, fairy rings in the grass
   const free=(lx,ly)=>{const [x,y]=L(lx,ly);return !solidAt(m,x,y)&&tAt(m,x,y)!==MPATH&&tAt(m,x,y)!==PLAZA&&tAt(m,x,y)!==DOCK;};
-  for(const [lx,ly] of [[19,4],[26,4],[35,6],[40,4],[29,17],[36,15],[6,20],[4,26],[13,46],[17,50],[24,47],[33,40],[40,40],[34,50],[41,47],[30,46],[8,45],[3,42],[36,32],[40,30]])if(free(lx,ly))obj('willow',lx,ly,{block:[[...L(lx,ly)]]});
+  for(const [lx,ly] of [[19,4],[26,4],[35,6],[40,4],[29,17],[36,15],[6,20],[4,26],[13,46],[17,50],[24,47],[33,40],[40,40],[34,50],[41,47],[30,46],[8,45],[3,42],[36,32],[40,30]])if(free(lx,ly)){const o=obj('willow',lx,ly,{block:[[...L(lx,ly)]]});o.kind='willow';o.chop=true;o.ti=m.trees.length;o.logs=TREES.willow.logs;o.until=0;m.trees.push(o);}   // choppable (Woodcutting 30); indexes after the oaks and blackwoods
   for(let ly=19;ly<=43;ly++)for(let lx=9;lx<=34;lx++){const [x,y]=L(lx,ly);if(!free(lx,ly))continue;const nearW=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>tAt(m,x+a,y+b)===MOON);
     if(nearW&&r()<.28)m.objs.push({type:'reeds',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0});else if(nearW&&r()<.06)obj('mcrystal',lx,ly,{v:r()*2|0,block:[[x,y]],light:{r:18,c:'violet'}});}
   for(let i=0;i<14;i++){const lx=3+(r()*38|0),ly=3+(r()*50|0);if(free(lx,ly)){const [x,y]=L(lx,ly);m.objs.push({type:'mushring',x:x*T+8,y:y*T+15,flat:true});}}
@@ -2005,7 +2017,7 @@ function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy
   for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
     if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
     else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
-      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':o.type==='chest'&&o.tier==='u'?'Uncommon Chest':H[4];}
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=(o.type==='tree'||o.type==='willow')&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':o.type==='chest'&&o.tier==='u'?'Uncommon Chest':H[4];}
     if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
   if(best)return best;
   const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
@@ -2072,11 +2084,14 @@ function moveBody(o,dx,dy,r){if(dx&&!blocked(o.x+dx,o.y,r))o.x+=dx;if(dy&&!block
 // ---------- context action ----------
 function nearestAct(){
   let best=null,bd=22;
+  // Hollowmere: when a monster is coming for you, the button fights (no chopping or fishing with a wolf at your back)
+  const foe=inWest()&&ents.some(e=>e.west&&!e.dead&&e.aggro&&Math.hypot(e.x-P.x,e.y-P.y)<90);
   for(const o of map.objs){if(!o.act||o.gone)continue;const d=Math.hypot(o.act.x-P.x,o.act.y-P.y);if(d<bd){bd=d;best={o,label:o.act.label,id:o.act.id};}}
   if(scene==='hold'){for(const p of map.plots){const d=Math.hypot(p.cx-P.x,p.cy+6-P.y);if(d<bd){bd=d;const st=S.plots[p.i],ready=st&&growth(st)>=1;best={plot:p,label:readyPlots().length?'Harvest':'Farm',id:'plot'};}}}
-  if(scene==='hold'){if(FISHING)return {label:FISHING.phase==='bite'?'Hook!':'Fishing',id:'hook'};if(!best){const sp=fishSpot();if(sp)best={label:'Fish',id:'fish',sp};}}
+  if(scene==='hold'){if(FISHING&&!foe)return {label:FISHING.phase==='bite'?'Hook!':'Fishing',id:'hook'};if(!best){const sp=fishSpot();if(sp)best={label:'Fish',id:'fish',sp};}}
   if(scene==='hold'&&COOK)return {label:'Stop',id:'cookstop'};
-  if(scene==='hold'){if(CHOP&&!(inWild()&&pvpTarget()))return {label:'Chopping',id:'noop'};if(!best){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
+  if(foe&&best&&(best.id==='fish'||best.id==='plot'))best=null;
+  if(scene==='hold'){if(CHOP&&!(inWild()&&pvpTarget())&&!foe)return {label:'Chopping',id:'noop'};if(!best&&!foe){const o=nearTree();if(o)best={label:treeUp(o)?'Chop':'Stump',id:'chop',o};}}
   if(inWild()&&!FISHING&&!COOK){const o=pvpTarget();if(o)best={label:'Attack',id:'pvp',o};}
   {const d=nearBagDrop();if(d)best={label:'Pick up',id:'pickup',d};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden){const sx=map.stairs.tx*T+8,sy=map.stairs.ty*T+10,d=Math.hypot(sx-P.x,sy-P.y);if(d<14)best={label:'Descend',id:'stairs'};}
@@ -2096,7 +2111,7 @@ function doAct(a){
 
 // ---------- combat ----------
 const oreAhead=()=>{if(scene!=='delve'||!map)return false;const b=hitBox();return map.objs.some(o=>o.type==='ore'&&!o.gone&&o.tile[0]*T+T>b.x&&o.tile[0]*T<b.x+b.w&&o.tile[1]*T+T>b.y&&o.tile[1]*T<b.y+b.h);};
-function swing(){if(P.swingCD>0)return;if(staffOn()&&!oreAhead())return cast();P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
+function swing(){if(P.swingCD>0)return;if(inWest()){CHOP=null;FISHING=null;}if(staffOn()&&!oreAhead())return cast();P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
 // ---- swing feel: the hero steps into the swing, the blade leaves a smear, and a hit flashes, sparks and briefly freezes ----
 const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d',steel:'#c9d6e3',cinder:'#ff5a2a'};
 const easeOut=t=>1-(1-t)*(1-t);
@@ -2370,7 +2385,7 @@ function updateChop(dt){const c=CHOP;if(!c)return;const o=c.o;
   const ok=rand()<chopChance();if(ok)gotLog(o);else floatText(P.x,P.y-24,'…','#94b0c2');
   if(roomUp())NET.send({t:'chop',i:o.ti,k:o.kind,ok:ok?1:0});
   else{if(ok)o.logs--;o.cutAt=Date.now();o.leftAtCut=o.logs;if(o.logs<=0)treeFell(o,TREES[o.kind].regrow*1000);}}
-function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');if(o.kind==='blackwood')bump('bwlogs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
+function gotLog(o){const L=TREES[o.kind];give(S.bank,L.item,1);bump('logs');if(o.kind==='blackwood')bump('bwlogs');if(o.kind==='willow')bump('wlogs');const x=skillXp('woodcutting',L.xp*(1+A('chopXp')/100));
   floatText(P.x,P.y-24,'+1 '+ITEMS[L.item].n+' · '+Math.round(x*10)/10+' xp','#d9a066');sfx('pick');save();}
 function treeFell(o,ms){o.logs=0;o.until=Date.now()+ms;if(CHOP&&CHOP.o===o)CHOP=null;puff(o.x,o.y-14,PAL.green,14);puff(o.x,o.y-4,PAL.wood,8);
   if(Math.hypot(o.x-P.x,o.y-P.y)<120){sfx('boss');toast('Timber! The '+TREES[o.kind].n+' is down. It regrows in '+Math.round(ms/1000)+' s.');}}
@@ -2772,7 +2787,7 @@ function itemInfo(id){const it=ITEMS[id],o=[];
   if(it.gear)o.push(it.gear==='blade'?(isStaff(it.tier)?'+'+GEAR.blade[it.tier].mag+'% spell damage · a club ('+GEAR.blade[it.tier].dmg+' damage) in the Wilderness':'Damage '+GEAR.blade[it.tier].dmg):it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def+(GEAR.mail[it.tier].mag?' · +'+GEAR.mail[it.tier].mag+'% spell damage':''));
   if(it.gear==='blade'&&isStaff(it.tier))o.push('Wield it and your attacks cast spells, which train Magic instead of Fighting');
   if(id==='moon_staff'||id==='tide_robe')o.push('Only the Drowned Archmage drops it (floor 25)');if(id==='hollow_staff'||id==='void_robe')o.push('Only the Hollow King drops it (floor 30)');
-  if(id==='oil2')o.push('Pressed at the Oil Press: 2 Lampseed + 1 Moonpetal, Farming 30. Also found in Uncommon Chests');if(id==='moonpetal')o.push('Press it with Lampseed into a Greater Oil Flask');
+  if(id==='oil2')o.push('Pressed at the Oil Press: 2 Lampseed + 1 Moonpetal, Farming 30. Also found in Uncommon Chests');if(id==='moonpetal')o.push('Press it with Lampseed into a Greater Oil Flask');if(id==='willow_logs')o.push('Cut from the willows of Hollowmere (Woodcutting 30). Tallow pays well for them');
   if(id==='gloam_ore')o.push('The one ore of floors 21–30. Smelt it into Gloamite Bars at the Forge (Smithing 50)');if(id==='gloam_bar')o.push('Forge Gloamite gear (Smithing 52–58) and the Gloamwood Staff');
   {const ok=Object.keys(ORES).find(k=>k+'_ore'===id);if(ok)o.push('Mined in the Depths · Mining '+ORES[ok].lvl);}
   if(it.rarity==='mythic'&&it.gear)o.push('One of the rarest finds in the Depths');if(it.relic){const st=RELIC_FORGE.findIndex(f=>f&&f.relic===id),bk=Object.keys(ENEMIES).find(k=>ENEMIES[k].relic===id),pk=PACKS.find(p=>p.boss===bk);
@@ -2963,6 +2978,7 @@ const GOALS=[
   {id:'mage60',cat:'skills',t:'Reach Magic 60',hint:'Starfall waits at 62.',...lv('magic',60),gold:600},
   {id:'enchant',cat:'skills',t:'Enchant a ring or amulet',hint:'Hero screen → Enchant. Lesser Enchant needs Magic 3, 3 Gale Runes and a Soul Rune.',done:()=>!!S.flags.enchanted,gold:60},
   {id:'oil2',cat:'skills',t:'Press a Greater Oil Flask',hint:'Farming 30 at the Oil Press: 2 Lampseed and a Moonpetal.',...cn(()=>C('oiltwo'),1),gold:120},
+  {id:'willow',cat:'hold',t:'Cut a willow log',hint:'Willows grow in Hollowmere (Woodcutting 30).',...cn(()=>C('wlogs'),1),gold:60},
   {id:'hmvisit',cat:'hold',t:'Walk into Hollowmere',hint:'Take the road west out of the Hold.',...cn(()=>C('hmvisit'),1),gold:20},
   {id:'maw',cat:'hold',t:'Stand before the Abyssal Maw',hint:'In the far north-west of Hollowmere.',...cn(()=>C('maw'),1),gold:50},
   {id:'hm100',cat:'hold',t:'Defeat 100 monsters in Hollowmere',hint:'From the meadow wolves to the deepwood treants.',...cn(()=>C('hmkills'),100),gold:200},
@@ -3171,14 +3187,17 @@ function openRuneInfo(id){const k=ITEMS[id].rune,n=S.runes[id]||0,uses=Object.va
    <ul class="info"><li>Used by: ${uses.join(', ')||'nothing yet'}</li><li>${k==='soul'||k==='star'?'Found only on monsters and in chests, more often deep down.':'Dropped by monsters, found in chests, sold by Tallow.'}</li><li>Runes live in your rune bag: they never take bank space and are never lost when you fall.</li></ul>
    <div class="row"><button class="btn alt" id="back">Back to items</button></div>`);$('back').onclick=()=>openBag();}
 // ---------- the Abyssal Maw (the raid dungeon) and the Hollowmere sign ----------
+// Raids (Season 1), as designed: a world event for the whole server, one every hour. Players from every world join the
+// same raid; it starts only with at least 10 players in the raid queue. Admins can always enter, for testing.
 function openRaid(){bump('maw');sfx('boss');
   openSheet(`<div class="rhead"><img alt="" src="${ART.maw[0].toDataURL()}"></div><h2>The Abyssal Maw</h2><p class="lead">The jaw of the great skull burns with violet fire. Something vast is breathing on the other side, and the stone hums under your feet.</p>
-   <div class="soon fnd"><b>Raids are coming in Season 1</b><p>The first raid of Lanternhold waits beyond the Maw: a dungeon for a full party, with its own bosses and its own treasure. Gather your party and get your gear ready.</p></div>
+   <div class="soon fnd"><b>World raids are coming in Season 1</b><p>Beyond the Maw waits Lanternhold’s raid dungeon, with its own bosses and its own treasure. Every raid is a world event for the whole server.</p>
+    <ul class="info"><li><b>One raid every hour.</b> When it goes live, everyone in the game hears about it.</li><li><b>Every world, together.</b> Players from every world can join the same raid at the same time.</li><li><b>Join the raid queue here.</b> A raid begins once at least 10 players are queued.</li></ul></div>
    <p class="lead small">The plaza around the Maw is safe: no monster dens nearby. The Bank Chest beside it works just like the Bank.</p><div class="row"><button class="btn" id="sx">Step back</button></div>`);$('sx').onclick=closeSheet;}
 function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A moor at dusk around the Moonmere, the great lake. Lamp posts mark the roads.</p>
    <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Meadows by the Hold: levels 3–6. The marsh (south-west): 9–14. The deepwood (south-east): 15–20.</li>
    <li>Falling here costs nothing: you wake up at the Hold.</li><li>Fish for Moonfin off the dock in the middle of the Moonmere (Fishing 30).</li>
-   <li>In the far north-west stands the Abyssal Maw, the raid dungeon (Season 1), with a Bank Chest beside it.</li></ul><div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
+   <li>In the far north-west stands the Abyssal Maw, where hourly world raids begin in Season 1, with a Bank Chest beside it.</li></ul><div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
 function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
   const list=GOALS.filter(g=>g.cat===goalTab).map(g=>{const ok=!!S.goals[g.id],hid=g.secret&&!ok,pr=!ok&&g.prog?g.prog():null;
     return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
@@ -3402,7 +3421,7 @@ function render(){TAGS.length=0;
   g.drawImage(map.ground,0,0);
   const x0=Math.floor(cx/T),y0=Math.floor(cy/T),x1=Math.ceil((cx+VW)/T),y1=Math.ceil((cy+VH)/T),wf=Math.floor(time*2)%2;
   if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===MOON||tt===DOCK&&x<WEST_COLS){g.drawImage(ART.moonw[(wf+x+y)%2],x*T,y*T);if(tt===MOON){g.fillStyle='#b8a7ff';if(!isWater(tAt(map,x,y-1))&&tAt(map,x,y-1)!==DOCK)g.fillRect(x*T,y*T,T,1);g.fillStyle='#10223f';if(!isWater(tAt(map,x,y+1))&&tAt(map,x,y+1)!==DOCK)g.fillRect(x*T,y*T+T-2,T,2);}}else if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
-      if(tt===DOCK)g.drawImage(isWater(tAt(map,x,y+1))&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
+      if(tt===DOCK){let run=1;for(let k=1;k<4&&tAt(map,x-k,y)===DOCK;k++)run++;for(let k=1;k<4&&tAt(map,x+k,y)===DOCK;k++)run++;g.drawImage(run>=3?ART.dock.deck:ART.dock.walk,x*T,y*T);}}   // a walkway (1–2 planks wide) or the platform
     for(const [lx,ly,lf] of map.lilies||[])g.drawImage(ART.lily[lf],lx*T+4+Math.round(Math.sin(time*.8+lx)*.6),ly*T+5);
     {const open=plotsOpen();for(const p of map.plots)if(p.i>=open&&!S.plots[p.i])g.drawImage(ART.soilLocked,p.tx*T,p.ty*T);}
     for(const p of map.plots){const st=S.plots[p.i];if(!st)continue;const gr=growth(st),stg=gr>=1?2:gr>=.5?1:0;spr(ART.crop[st.crop][stg],p.cx-8,p.cy-10);
@@ -3514,7 +3533,8 @@ function drawObj(o){
   else if(o.type==='menhir'){spr(ART.menhir[o.v],o.x-8,o.y-30);if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.25+.15*Math.sin(time*2+o.x);g.fillStyle=o.v?'#c79bf2':'#73eff7';g.fillRect(Math.round(o.x-2),Math.round(o.y-20),4,9);g.restore();}}
   else if(o.type==='lpost'){const fl=Math.floor(time*5+o.x)%2;spr(ART.lanternPost[fl],o.x-7,o.y-28);}
   else if(o.type==='hmsign')spr(ART.hmsign,o.x-9,o.y-22);
-  else if(o.type==='willow'){const sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16,o.y-38);}
+  else if(o.type==='willow'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0,sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16+k,o.y-38);
+    if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-42,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-41,w,2);}}}
   else if(o.type==='mcrystal'){spr(ART.mcrystal[o.v],o.x-8,o.y-20);if(!reduceMotion){const ph=(time*.5+o.x*.013)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#f1e4ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-16-ph*10),1,1);g.globalAlpha=1;}}
   else if(o.type==='glowcap')spr(ART.glowcap,o.x-8,o.y-15);
 }
