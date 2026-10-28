@@ -6,10 +6,10 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 main{max-width:640px;margin:0 auto;padding:20px 16px 60px}h1{color:var(--flame);font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:26px 0 6px;color:var(--gold)}
 p,li{color:var(--muted)}b{color:var(--text)}label{display:block;margin:12px 0 4px;font-weight:600}
-input{width:100%;font:15px ui-monospace,Menlo,monospace;padding:10px;background:var(--panel);color:var(--text);border:2px solid var(--line)}
+input,textarea{width:100%;font:15px ui-monospace,Menlo,monospace;padding:10px;background:var(--panel);color:var(--text);border:2px solid var(--line)}
 button{font:600 16px system-ui;padding:12px 16px;margin-top:12px;background:#3b5dc9;color:#fff;border:2px solid var(--ink);cursor:pointer;width:100%}button:disabled{opacity:.5}button.alt{background:#333c57}
 .box{background:var(--panel);border:2px solid var(--line);padding:12px 14px;margin:10px 0;word-break:break-all}.ok{color:var(--green)}.bad{color:var(--red)}code{color:var(--gold)}
-img.art{width:140px;height:140px;image-rendering:pixelated;border:2px solid var(--flame);float:right;margin:0 0 10px 12px}
+span.w{display:inline-block;margin:2px 8px 2px 0;color:var(--text)}span.w small{color:var(--muted)}img.art{width:140px;height:140px;image-rendering:pixelated;border:2px solid var(--flame);float:right;margin:0 0 10px 12px}
 </style></head><body><main>
 <p style="margin:0 0 10px"><a href="/tools" style="color:#a9bdcc">← Owner tools</a></p>
 <img class="art" src="/api/founders?img=1" alt="">
@@ -19,15 +19,16 @@ img.art{width:140px;height:140px;image-rendering:pixelated;border:2px solid var(
 <button id="conn">Connect wallet</button>
 
 <h2>1. Deploy the collection</h2>
-<p>Creates the Founder's Lantern NFT contract. Hero numbers 1 to the whitelist size can mint, once each, one per wallet, free (gas only).</p>
+<p>Creates the Founder's Lantern NFT contract: 2,222 in all. Any hero can mint their own number, once, one per wallet, free (gas only). 1,222 are open to every hero first-come; 1,000 are held for the X giveaway winners you add below.</p>
 <label for="sig">Signer address (the wallet whose private key is FOUNDERS_SIGNER_KEY in Vercel; you can reuse the rewards signer)</label><input id="sig" placeholder="0x…">
-<label for="max">Whitelist size (the first N heroes)</label><input id="max" value="1000">
+<label for="openCap">Open pool (any hero)</label><input id="openCap" value="1222">
+<label for="resvCap">Giveaway pool (held for winners)</label><input id="resvCap" value="1000">
 <label for="base">Token metadata address (the token number is added to the end)</label><input id="base" value="">
 <button id="dep" disabled>Deploy the collection</button>
 <div class="box" id="depOut" hidden></div>
 
 <h2>2. Open the mint</h2>
-<p>In Vercel → Settings → Environment Variables: <code>FOUNDERS_CONTRACT</code> = the collection's address, and <code>FOUNDERS_SIGNER_KEY</code> = the signer's private key (mark it <b>Sensitive</b>; if you leave it out, <code>CLAIM_SIGNER_KEY</code> is used). Redeploy, then open <code>/api/health</code>: <code>founders.open</code> should be <code>true</code> and <code>founders.heroNumbers</code> <code>ok</code>.</p>
+<p>In Vercel → Settings → Environment Variables: <code>FOUNDERS_CONTRACT</code> = the collection's address, and <code>FOUNDERS_SIGNER_KEY</code> = the signer's private key (mark it <b>Sensitive</b>; if you leave it out, <code>CLAIM_SIGNER_KEY</code> is used). Redeploy, then open <code>/api/health</code>: <code>founders.mint</code> should be <code>true</code>, and <code>founders.heroNumbers</code> and <code>founders.giveaway</code> <code>ok</code> (run <code>supabase/founders-giveaway.sql</code> once).</p>
 
 <h2>3. Owner controls</h2>
 <label for="nft">Collection address</label><input id="nft" placeholder="0x…">
@@ -36,5 +37,14 @@ img.art{width:140px;height:140px;image-rendering:pixelated;border:2px solid var(
 <button id="pause" class="alt" disabled>Pause / unpause minting</button>
 <label for="end">End the mint at (your local time; empty = no end)</label><input id="end" type="datetime-local">
 <button id="setEnd" class="alt" disabled>Set the end time</button>
+<label for="moveN">Move unclaimed giveaway spots to the open pool</label><input id="moveN" placeholder="e.g. 50">
+<button id="move" class="alt" disabled>Move spots</button>
 <div class="box" id="ctlOut" hidden></div>
+
+<h2>4. X giveaway winners</h2>
+<p>Add the winners by hero name (one per line, or separated by commas). A winner's mint comes from the giveaway pool, so they're sure of a Lantern even once the open pool runs out. Nothing in the game says the pools exist; winners just see "giveaway winner" on their own Founder's Lantern screen.</p>
+<div class="box" id="wCount">–</div>
+<label for="wNames">Hero names</label><textarea id="wNames" rows="4" placeholder="Hero names…"></textarea>
+<button id="wAdd">Add winners</button><button id="wDel" class="alt">Remove these names</button>
+<div class="box" id="wList" style="max-height:260px;overflow:auto"></div>
 </main><script src="/tools/founders.js"></script></body></html>
