@@ -4,8 +4,22 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.12.4',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.4'};
+const BUILD={version:'0.13.1',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
 const CHANGELOG=[
+  {v:'0.13.1',date:'2026-10-28',title:'A pumpkin head and a reaper’s scythe',notes:[
+    'All Hallows’ Lantern now rewards two cosmetics: the Jack-o’-Lantern, a carved pumpkin with a violet flame flickering through its grin, and the Reaper’s Scythe, Mordecai’s own soul-lit scythe.',
+    'The Cosmetics tab now has a head slot and a weapon slot. The Scythe shows over your blade or staff and swings with a wide soul-green arc; your weapon’s stats stay the same.',
+    'Already finished the quest? Your Reaper’s Shroud has become the Jack-o’-Lantern and the Scythe. If you were wearing the shroud, you’re now wearing both.',
+    'The Founder’s Lantern: 2,222 in all. Reach combat level 10 for your mint. 1,000 of them are being given away on X.']},
+  {v:'0.13.0',date:'2026-10-27',title:'All Hallows’ Eve in a bigger Hollowmere',notes:[
+    'Hollowmere is more than four times bigger. Walk west out of the Hold and the Hold’s green grass and oaks run on into the Hollow Wood, where dusk falls slowly around you until you reach the moor. The Hold’s west tree line is gone.',
+    'New regions: the fens east of the Moonmere, the deepwood’s dead trees, and the Mossy Barrows in the far south-west, where mossy giants walk (levels 22–28). New monsters: carrion ravens at the wood’s edge, gloomstags in the fens and the mossy giants.',
+    'The Moonmere is bigger, and the Abyssal Maw now stands far off in the north-west. More willows to chop, more lamp posts on more roads.',
+    'A Halloween quest: All Hallows’ Lantern. Find Mordecai the Reaper where the Hollow Wood ends. You will need Tallow, Wick, a few wolves and three lost souls.',
+    'Quests: a new Quests tab on the Hero screen. A quest is red until it’s done, then green, and the steps you’ve finished are crossed out.',
+    'Cosmetics: a new Cosmetics tab with a head slot and a body slot. Cosmetics always show over your armour and helmet, which stay equipped underneath. They are soulbound: never traded, dropped or lost. The first one is the Reaper’s Shroud, the reward for All Hallows’ Lantern.',
+    'The hero looks sharper: softer outlines, more shading, arms that swing as you walk, and helmets that show your face.',
+    'A new goal: complete All Hallows’ Lantern.']},
   {v:'0.12.4',date:'2026-10-27',title:'Willows and a bigger dock',notes:[
     'The willows of Hollowmere can be chopped: Woodcutting 30, 18 XP a log. Willow Logs sell well to Tallow. Like the oaks, every willow is shared with your world and grows back after it falls.',
     'The Moonmere dock is bigger: the walkway is two planks wide and the platform in the middle is 5 by 5, with room for a crowd to fish.',

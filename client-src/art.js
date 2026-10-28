@@ -19,6 +19,10 @@ class Px{
   outline(c){c=c||PAL.ink;const add=[];for(let y=0;y<this.h;y++)for(let x=0;x<this.w;x++){if(this.get(x,y))continue;
     if(this.get(x+1,y)||this.get(x-1,y)||this.get(x,y+1)||this.get(x,y-1))add.push([x,y]);}
     add.forEach(([x,y])=>this.set(x,y,c));return this;}
+  selOutline(){const add=[];for(let y=0;y<this.h;y++)for(let x=0;x<this.w;x++){if(this.get(x,y))continue;
+    const n=[this.get(x,y-1),this.get(x-1,y),this.get(x+1,y),this.get(x,y+1)].filter(Boolean);if(!n.length)continue;
+    const below=!this.get(x,y+1)&&this.get(x,y-1);add.push([x,y,below?PAL.ink:mix(shade(n[0],.42),PAL.ink,.55)]);}
+    add.forEach(([x,y,c])=>this.set(x,y,c));return this;}
   mirror(){const o=new Px(this.w,this.h);for(let y=0;y<this.h;y++)for(let x=0;x<this.w;x++)o.set(this.w-1-x,y,this.get(x,y));return o;}
   canvas(){const cv=document.createElement('canvas');cv.width=this.w;cv.height=this.h;const g=cv.getContext('2d'),id=g.createImageData(this.w,this.h);
     for(let i=0;i<this.p.length;i++){const c=this.p[i];if(!c)continue;const [r,gg,b]=hex(c);id.data[i*4]=r;id.data[i*4+1]=gg;id.data[i*4+2]=b;id.data[i*4+3]=255;}
@@ -80,11 +84,13 @@ function heroFrame(dir,step,look){
   // legs (shaded on the inside) and boots (a toe highlight, a darker sole)
   p.rect(5,12,2,3-lf,pants).rect(9,12,2,3-rf,pants);p.rect(6,12,1,3-lf,pants2).rect(10,12,1,3-rf,pants2);
   p.rect(5,15-lf,2,1,boot).rect(9,15-rf,2,1,boot);p.set(5,15-lf,boot2).set(9,15-rf,boot2);
-  if(dir==='down'){p.set(6,15-lf,sole).set(10,15-rf,sole);}
+  if(dir==='down'){p.set(6,15-lf,sole).set(10,15-rf,sole);p.set(5,14-lf,shade(boot,1.25)).set(9,14-rf,shade(boot,1.25));}
+  else if(dir==='up'){p.set(6,14-lf,shade(boot,.8)).set(10,14-rf,shade(boot,.8));}
   // long hair and tails behind the body
   backHair(p,dir,style,hair,hair2,hairHi,set,rect);
   // tunic: shaded side, a lighter front panel, a hem, a neckline
   p.rect(4,8,8,5,tun).rect(4,12,8,1,tun2).rect(4,8,1,5,tun2);p.rect(11,9,1,3,shade(tun,.84));
+  if(dir!=='up'){p.set(5,8,tunHi);p.set(10,12,shade(tun,.8));}   // light on the near shoulder, a fold at the hem
   if(dir==='down'){p.rect(6,9,4,2,tunHi);p.rect(7,8,2,1,face2);p.set(6,8,trim).set(9,8,trim);p.rect(7,9,2,2,trim);p.set(7,10,tun2).set(8,10,tun2);}
   else if(dir==='up'){p.rect(5,8,6,1,tun2);p.rect(6,9,4,2,tunHi);}
   else{rect(5,9,4,2,tunHi);set(5,8,trim);}
@@ -95,16 +101,16 @@ function heroFrame(dir,step,look){
   // belt with a buckle that catches the light
   p.rect(4,11,8,1,boot);if(dir==='down'){p.set(7,11,PAL.gold).set(8,11,PAL.yellow);}else if(dir!=='up')set(5,11,PAL.yellow);
   // arms: sleeve, cuff, hand
-  const sl=A?A.m2:tun2,cuff=A?A.m:tun;
-  if(side){rect(6,9,2,3,sl);set(6,9,cuff);set(6,12,face);set(7,12,face2);}
-  else{p.rect(3,9,1,3,sl).rect(12,9,1,3,sl);p.set(3,9,cuff).set(12,9,shade(cuff,.85));p.set(3,12,face).set(12,12,face2);}
+  const sl=A?A.m2:tun2,cuff=A?A.m:tun,sw=step===1?1:step===2?-1:0;   // sw: the arms swing opposite the legs
+  if(side){const ax=6-sw;rect(ax,9,2,3,sl);set(ax,9,cuff);set(ax,10,shade(sl,1.15));set(ax,12,face);set(ax+1,12,face2);}
+  else{const lA=sw>0?1:0,rA=sw<0?1:0;p.rect(3,9,1,3+lA,sl).rect(12,9,1,3+rA,sl);p.set(3,9,cuff).set(12,9,shade(cuff,.85));p.set(3,10,shade(sl,1.15));p.set(3,12+lA,face).set(12,12+rA,face2);}
   // head
   if(style==='hood'){hoodHead(p,dir,tun,face,face2);}
   else{
     p.ell(8,5,4.2,4,hair);
     if(dir==='down'){
       p.rect(5,4,6,4,face).rect(5,7,6,1,face2);p.set(5,4,face2).set(10,4,face2);
-      p.set(6,5,PAL.ink).set(9,5,PAL.ink);p.set(6,4,hair2).set(9,4,hair2);                       // eyes and brows
+      p.set(6,5,'#2a2238').set(9,5,'#2a2238');p.set(6,4,hair2).set(9,4,hair2);p.set(10,5,face2);   // eyes and brows, the far cheek in shade
       p.set(5,6,blush).set(10,6,blush);p.set(7,7,shade(face,.7)).set(8,7,shade(face,.7));      // cheeks, mouth
       p.set(7,5,faceHi).set(8,5,faceHi);
       if(girl)p.set(6,4,PAL.ink).set(9,4,PAL.ink);   // taller eyes with lashes
@@ -117,18 +123,65 @@ function heroFrame(dir,step,look){
       if(style==='short'||style==='spiky')set(8,5,face2);}
     // shine on top, shading on the far side
     p.set(6,2,hairHi).set(7,2,hairHi).set(5,3,dir==='up'?hairHi:p.get(5,3));if(dir!=='down'&&dir!=='up')set(10,2,hair2);
+    p.set(8,1,mix(hair,hairHi,.5));p.set(11,4,hair2);if(dir==='up'){p.set(6,3,hairHi);p.set(9,5,hair2).set(6,6,hair2);}   // a lit crown, strands at the back
     frontHair(p,dir,style,hair,hair2,hairHi,set,rect);
   }
   // helmet on top of the head
   const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3'],gloam:['#2e4a52','#1d2a33','#7affd6'],star:['#2c3f86','#1a1c4c','#ffe9a8']}[look.helm];
-  if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
+  if(HM){const [h0,h1,h2]=HM;p.rect(6,1,4,1,h0).rect(5,2,6,1,h0).rect(4,3,8,1,h0).rect(4,4,8,1,h1);p.set(6,1,h2).set(5,2,h2).set(6,2,h2).set(10,3,h1).set(9,2,shade(h0,.85));
+    if(dir==='down'){p.set(4,5,h0).set(4,6,h1).set(11,5,h0).set(11,6,h1);p.set(7,4,h2).set(8,4,h2);}                       // cheek guards, a lit nasal
+    else if(dir==='up'){p.rect(4,5,8,2,h0).rect(4,7,8,1,h1);p.set(5,5,h2);p.rect(7,1,2,4,shade(h0,.9));}               // the back plate and ridge
+    else{set(10,5,h0);set(10,6,h0);set(11,5,h1);set(11,6,h1);set(4,4,h2);rect(9,7,3,1,h1);}}                                // neck guard behind the ear
   if(look.helm==='star'){p.rect(7,0,2,2,'#ffe9a8');p.set(7,0,'#fff3c4');p.set(6,1,'#73eff7').set(9,1,'#73eff7');if(dir==='down')p.set(6,4,'#73eff7').set(9,4,'#73eff7');}
   if(look.helm==='partyhat'){p.rect(5,1,6,2,'#3b5dc9');p.set(6,1,'#73eff7').set(9,2,'#73eff7');p.rect(4,3,8,1,'#29366f');}
   if(look.helm==='greenhat'){p.rect(5,1,6,2,'#38b764');p.set(6,1,'#a7f070').set(9,2,'#a7f070');p.rect(4,3,8,1,'#257179');}
-  p.outline();
+  if(look.ch)cosmeticOver(p,dir,look,set,rect,step);   // a head cosmetic always goes over the hair and helmet
+  p.selOutline();
   return p.canvas();
 }
 const FEM_STYLES=['long','pigtails','ponytail','bun','bob'];
+// Cosmetics (v0.13.1): the head one is drawn over the hair and helmet (the helmet stays on underneath); the weapon one
+// (the Reaper's Scythe, scytheSprite) replaces how your blade or staff looks, never its stats.
+// The Jack-o'-Lantern: a ribbed pumpkin with a curled stem and a leaf, the face carved through to a violet flame inside.
+// The carvings flicker in the world (drawJack in game.js); here they're the steady base colour.
+const JACK={o:'#f28a2e',o2:'#c2561f',o3:'#7a3418',hi:'#ffb347',hi2:'#ffd98a',stem:'#5a8a3a',stem2:'#2f5a2a',leaf:'#a7f070',cut:'#5d275d',glow:'#a46cf5',core:'#f6ecff'};
+const JACK_FACE={down:[[6,3,'g'],[5,4,'g'],[6,4,'c'],[9,3,'g'],[9,4,'c'],[10,4,'g'],     // two triangle eyes
+    [4,5,'g'],[11,5,'g'],[5,6,'g'],[6,6,'c'],[8,6,'c'],[9,6,'c'],[10,6,'g'],[6,7,'g'],[7,7,'c'],[9,7,'c'],[10,7,'g']],   // a toothy grin, corners up
+  side:[[4,3,'g'],[4,4,'c'],[5,4,'g'],[3,5,'g'],[3,6,'c'],[4,6,'c'],[5,6,'g'],[4,7,'g']]};   // side view drawn facing left
+function cosmeticOver(p,dir,look,set,rect,step){
+  if(look.ch==='jack'){const J=JACK,side=dir==='left'||dir==='right';
+    // clear the head (hair, helmet) so nothing pokes out of the pumpkin
+    const W=[[1,5,10],[2,4,11],[3,3,12],[4,3,12],[5,3,12],[6,3,12],[7,4,11],[8,5,10]];
+    for(let y=0;y<=2;y++)for(let x=1;x<=14;x++){const r=W.find(w=>w[0]===y);if(!r||x<r[1]||x>r[2])p.set(x,y,null);}   // hair spikes, buns, hat brims
+    for(const [y,a,b] of W)for(let x=a;x<=b;x++)p.set(x,y,J.o);
+    // ribs: darker grooves, a lit face on each lobe, shadow at the base and the far side
+    for(const x of [5,10])for(let y=2;y<=7;y++)if(dir!=='down'||y<3||y>7)p.set(x,y,J.o2);for(let y=1;y<=2;y++)p.set(7,y,J.o2);
+    if(dir==='down'){p.set(4,3,J.o2).set(11,3,J.o2);}   // facing you, the ribs bow out around the face
+    p.set(4,3,J.hi).set(4,4,J.hi).set(6,2,J.hi2).set(6,3,J.hi).set(8,2,J.hi).set(11,3,J.hi);
+    for(let x=5;x<=10;x++)p.set(x,8,J.o3);p.set(4,7,J.o2).set(11,7,J.o3).set(12,5,J.o3).set(12,6,J.o3);
+    if(dir!=='down'&&!side){p.set(8,3,J.hi2).set(9,4,J.hi);}                        // the back: just ribs and light
+    // the stem, curled, with a little leaf
+    p.set(7,0,J.stem).set(8,0,J.stem2).set(8,1,J.stem2).set(7,1,J.stem);p.set(9,0,J.leaf).set(10,0,J.stem);
+    if(dir==='down')for(const [x,y,k] of JACK_FACE.down)p.set(x,y,k==='c'?J.core:J.glow);
+    else if(side)for(const [x,y,k] of JACK_FACE.side)set(x,y,k==='c'?J.core:J.glow);
+  }
+}
+// The Reaper's Scythe (24x24, the grip at 2,22): a long dark-wood snath with bone wraps, an iron collar set with a violet
+// soul-gem, and a great crescent blade whose inner edge burns soul-green. Same diagonal as the swords, so it swings,
+// rests and casts the same way.
+function scytheSprite(){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8a6446',bone='#e8dcc0',bone2='#b8a988',ir='#2a2438',ir2='#4a4560',gem='#c79bf2',gem2='#f3e3ff',
+  st='#3e4a5c',st2='#7d8fa3',st3='#a9bdcc',edge='#e8f4ff',soul='#9cf0d2';
+  for(let i=0;i<=14;i++){p.set(2+i,22-i,wd);if(i<14)p.set(3+i,22-i,i%4===1?wd3:wd2);}
+  for(const i of [2,3,10]){p.set(2+i,22-i,bone2);p.set(3+i,22-i,bone);}
+  p.set(1,23,bone).set(2,23,bone2).set(1,22,bone2);                                     // a bone cap at the butt
+  p.rect(15,7,3,3,ir);p.set(17,7,ir2).set(15,9,ir2);p.set(16,8,gem).set(17,8,gem2);       // the collar and soul-gem
+  p.set(13,11,ir).set(12,12,ir2);                                                         // a second grip (the nib)
+  const spine=[[16,5],[15,4],[14,3],[13,2],[12,2],[11,2],[10,2],[9,2],[8,3],[7,4],[6,5],[5,6],[4,7]],wid=[4,4,4,4,3,3,3,2,2,2,1,1,0],
+    eg=['#ffffff','#e8f4ff','#e8f4ff','#d6f7ee','#d6f7ee','#c0f5e2','#b4f3dc','#a9f2d8','#9cf0d2','#9cf0d2','#7fe0c0','#9cf0d2','#c8fff0'];
+  spine.forEach(([x,y],i)=>{const w=wid[i];p.set(x,y,ir2);for(let k=1;k<=w;k++)p.set(x,y+k,k===1?st2:k===w&&w>2?st3:st);p.set(x,y+w+1,eg[i]);});
+  p.set(14,4,'#c9d6e3').set(12,3,'#c9d6e3').set(10,3,st3);                                // light across the flat
+  p.set(3,9,soul).set(4,9,null);                                                          // the hooked tip
+  p.outline();const c=p.canvas();c.hy=22;return c;}
 function mix(a,b,t){const A=hex(a),B=hex(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
 // hair that hangs behind the body (drawn before the tunic)
 const tieOf=h=>{const [r,g,b]=hex(h);return r>200&&b>150&&g<160?'#73eff7':'#e86fd0';};   // hair ties: pink, or cyan on pink hair
@@ -175,7 +228,7 @@ function capeLayer(k,dir,step,front){const key=[k,dir,step,front].join('|');if(k
 function auraColors(look,lantern){const out=[];const C=look.cape&&CAPES[look.cape];if(C&&(C.r==='legendary'||C.r==='mythic'))out.push(C.aura||'#ffcd75');
   if(look.flame==='founder')out.push('#b98cff');if(look.helm==='partyhat')out.push('#73eff7');if(look.helm==='greenhat')out.push('#a7f070');if(look.helm==='star')out.push('#b8f7ff');const L=lantern&&LANTERNS[lantern];if(L&&(L.r==='legendary'||L.r==='mythic'))out.push(L.aura||'#b8f7ff');return out;}
 const HERO_CACHE={};
-function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
+function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.style,look.armor||'none',look.cape||'',look.helm||'',look.ch||'',dir,frame].join('|');return HERO_CACHE[k]||(HERO_CACHE[k]=heroFrame(dir,frame,look));}
 // lantern carried by the hero (drawn separately so its glow can pulse)
 function lanternSprite(key,flame){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=flame||L.glow,p=new Px(6,8);   // flame: the Founder's Flame colour
   p.rect(2,0,2,1,m).rect(1,1,4,1,m).rect(1,2,4,4,gl).rect(2,3,2,2,PAL.white).rect(1,6,4,1,m);if(L.r==='legendary'||L.r==='mythic'||L.r==='xrare')p.set(0,3,gl).set(5,3,gl);p.outline();return p.canvas();}
@@ -770,6 +823,69 @@ function mirewispFrame(f){const p=new Px(16,16),A='#a7f070',B='#f4f4f4',C='#38b7
 function treantFrame(f){const p=new Px(16,16),B='#4b3226',B2='#6b3e26',L='#2b4b3a',L2='#38b764';
   p.ell(8,4,6,3.6,L);p.ell(7,3,4,2.2,L2);p.rect(5,6,6,7,B);p.rect(6,7,4,5,B2);p.set(6,8,'#ffcd75').set(9,8,'#ffcd75');p.rect(7,10,2,1,'#1a1c2c');
   p.line(5,7,1,10+f,B).line(10,7,14,10-f,B);p.rect(5,13,2,2+f,B).rect(9,13,2,3-f,B);p.outline();return p.canvas();}
+// ---- Hollowmere v0.13: carrion ravens, gloomstags, mossy giants ----
+function ravenFrame(f){const p=new Px(16,16),B='#1d1a26',B2='#2e2a42',HI='#4a4a6a',BK='#e8b04a',EY='#ff4d6d';
+  p.ell(8,9,3.2,2.4,B);p.ell(5,7,2,1.8,B);p.set(3,7,BK).set(2,7,BK);p.set(5,6,EY);p.rect(10,9,3,1,B2);p.set(13,8,B).set(13,10,B);   // body, head, beak, tail
+  if(f){p.line(7,8,3,3,B2).line(8,8,6,3,B);p.line(9,8,12,3,B).line(10,8,14,4,B2);p.set(6,3,HI).set(12,3,HI);}                          // wings up
+  else{p.line(7,9,2,12,B2).line(8,10,5,13,B);p.line(9,9,13,12,B).line(10,10,14,13,B2);}                                              // wings down
+  p.set(7,8,HI).set(9,8,HI);p.set(7,12,BK).set(9,12,BK);p.outline();return p.canvas();}
+function gloomstagFrame(f){const p=new Px(16,16),B='#3a3550',B2='#2a2638',HI='#5a5278',AN='#73eff7',AN2='#3b5dc9',EY='#c7fff6';
+  p.rect(4,7,8,4,B);p.rect(4,10,8,1,B2);p.rect(4,7,8,1,HI);p.rect(2,4,3,4,B);p.set(1,6,B2);p.set(2,5,EY);   // body, neck and head (facing left)
+  p.line(3,4,1,1,AN).line(4,4,5,1,AN).set(1,2,AN2).set(5,2,AN2).set(2,1,AN).set(6,1,AN2);                         // glowing antlers
+  p.rect(5,11,1,4-f,B2).rect(7,11,1,3+f,B).rect(10,11,1,4-f,B2).rect(11,11,1,3+f,B);p.set(12,7,B2).set(13,8,B2);    // legs, tail
+  p.set(6,8,'#7a6f9c').set(9,9,'#7a6f9c');p.outline();return p.canvas();}
+function mossGiantFrame(f){const p=new Px(32,32),S='#5a6460',S2='#3e4744',S3='#2b3230',M='#4a8a3a',M2='#6fb84a',M3='#2f5a2a',EY='#ffcd75';
+  const B=f?1:0;
+  p.rect(10,26,5,5,S2).rect(18,26,5,5,S2);p.rect(10,30,5,1,S3).rect(18,30,5,1,S3);                                  // stone legs
+  p.ell(16,18,9,9,S);p.ell(14,15,6,5,shade(S,1.12));p.rect(9,24,15,3,S2);                                            // a hulking stone body
+  p.ell(16,8+B,5,4,S);p.rect(13,8+B,2,1,EY).rect(18,8+B,2,1,EY);p.rect(14,11+B,5,1,S3);                             // a small head sunk in the shoulders, glowing eyes
+  p.ell(5,17-B,4,5,S2);p.ell(27,17+B,4,5,S2);p.rect(2,21-B,6,4,S);p.rect(24,21+B,6,4,S);p.rect(2,24-B,6,1,S3);p.rect(24,24+B,6,1,S3);   // great arms and fists
+  // moss: thick on the shoulders and head, hanging in strands
+  p.ell(9,11,5,2.4,M);p.ell(23,11,5,2.4,M);p.ell(16,5+B,4,1.6,M);p.ell(9,10,3,1.2,M2);p.ell(23,10,3,1.2,M2);
+  for(const [x,y,n] of [[6,12,4],[11,13,3],[21,13,4],[26,12,3],[15,22,3],[19,20,2]])for(let k=0;k<n;k++)p.set(x,y+k,k===n-1?M3:M);
+  for(const [x,y] of [[12,18],[20,16],[16,21],[8,20],[24,20]])p.set(x,y,M2);p.set(14,4+B,'#e86fd0').set(19,5+B,'#ffcd75');   // tiny flowers in the moss
+  for(const [x,y] of [[11,16],[19,23],[22,18],[13,22]])p.set(x,y,S3);p.outline();return p.canvas();}
+// the Hollow Wood's grass: the Hold's bright green, blended a step at a time toward the moor's (k: 0 = Hold, 1 = moor)
+function blendGrassTile(k,seed){const p=new Px(16,16),r=rng(seed),M=(a,b)=>mix(a,b,k);p.rect(0,0,16,16,M(PAL.green,'#2f6b55'));
+  for(let i=0;i<15;i++)p.set(r()*16,r()*16,r()<.5?M(PAL.fern,'#285a48'):M(PAL.lime,'#3d8466'));
+  for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0,c=M(PAL.fern,'#4a9a74');p.set(x,y,c).set(x+1,y-1,c).set(x+2,y,c);}
+  if(k>.5&&r()<.25)p.set(r()*16,r()*16,'#b8f7ff');return p.canvas();}
+// where the dirt road meets the moor's flagstones: dirt with stones set in it
+function dirtStoneTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,mix(PAL.tan,'#6a6656',.45));
+  for(let i=0;i<10;i++)p.set(r()*16,r()*16,mix(PAL.wood,'#5a5648',.4));
+  for(let i=0;i<3;i++){const x=r()*12|0,y=r()*12|0,w=3+(r()*3|0);p.rect(x,y,w,3,'#8a8572');p.rect(x,y,w,1,'#a39e88');p.rect(x,y+2,w,1,'#5a5648');}return p.canvas();}
+function mossTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#2b5236');
+  for(let i=0;i<18;i++)p.set(r()*16,r()*16,r()<.5?'#234530':'#3a6a42');
+  for(let i=0;i<4;i++){const x=r()*13|0,y=r()*13|0;p.ell(x+1.5,y+1.5,1.8,1.3,'#4f8a44');p.set(x+1,y,'#7bc25a');}
+  if(r()<.45){const x=r()*12|0,y=r()*12|0;p.rect(x,y,3,2,'#56605a');p.rect(x,y,3,1,'#6e7a72');p.set(x+1,y,'#7bc25a');}return p.canvas();}
+// a carved pumpkin with a candle inside (two faces)
+function pumpkinSprite(v){const p=new Px(16,16),O='#ef7d57',O2='#b0502a',O3='#ffb070',G='#ffcd75',G2='#fff3c4',ST='#38b764';
+  p.ell(8,11,6,4.2,O);p.ell(5,11,2,3.6,O2);p.ell(11,11,2,3.6,O2);p.ell(8,11,1.6,4,O);p.set(6,8,O3).set(9,8,O3);p.rect(7,6,2,2,'#5a3a1e');p.set(9,5,ST).set(10,5,ST);
+  if(v){p.set(5,10,G).set(6,10,G2).set(10,10,G).set(11,10,G2);p.rect(5,13,7,1,G);p.set(6,14,G).set(10,14,G);p.set(8,13,G2);}
+  else{p.set(5,10,G).set(6,9,G).set(10,9,G).set(11,10,G);p.set(6,10,G2).set(10,10,G2);p.rect(6,13,5,1,G);p.set(7,12,G).set(9,12,G);p.set(8,13,G2);}
+  p.outline();return p.canvas();}
+// a grassy burial mound with a stone door
+function barrowSprite(v){const p=new Px(32,20),G='#3a6a42',G2='#2b5236',G3='#4f8a44',S='#56605a',S2='#3e4744',D='#141a18';
+  p.ell(16,14,15,8,G);p.ell(14,11,10,5,G3);p.rect(1,17,30,3,G2);for(let x=3;x<29;x+=3)p.set(x,9+((x*7)%3),'#7bc25a');
+  p.rect(12,10,8,8,S);p.rect(12,10,8,1,'#6e7a72');p.rect(14,12,4,6,D);p.set(13,11,S2).set(18,11,S2);if(v){p.set(15,13,'#c79bf2');p.set(16,13,'#c79bf2');}
+  p.outline();return p.canvas();}
+// Mordecai the Reaper: a tall black-robed figure with a lantern-lit skull face and a scythe, the hem fraying into mist
+function reaperSprite(f){const p=new Px(26,32),R='#1f1b29',R2='#14111c',RH='#3a3350',BN='#e8dcc0',BN2='#b8a988',EY=f?'#c79bf2':'#e8d0ff',W='#6b4a32',BL='#c9d6e3',BL2='#7d8fa3',B=f?1:0;
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
+  // the scythe: a long crooked haft and a moonlit blade
+  p.line(21,4,20,31,W);p.set(21,31,'#4a3222');row(4,9,21,BL);row(5,8,12,BL2);row(3,13,21,BL2);p.set(8,6,BL2).set(9,6,BL);p.set(20,3,'#f4f4f4');
+  // the robe, flaring to the ground, its hem tattering into mist
+  for(let y=13;y<=29;y++){const k=Math.floor((y-13)/3),l=8-k,r=17+k;row(y,l,r,R);p.set(l,y,R2);p.set(r,y,R2);}
+  for(let y=16;y<=29;y++){p.set(12,y,RH);p.set(15+(y>24?1:0),y,R2);}
+  for(let x=3;x<=22;x++)if((x+B)%2)p.set(x,30,R2);for(let x=4;x<=21;x+=3)p.set(x,31,'#2e2a42');
+  // a bony hand on the haft, the other in the sleeve
+  row(15,17,20,R);row(16,18,20,R2);p.set(20,15,BN).set(20,16,BN2);row(16,5,8,R);row(17,5,7,R2);
+  // the hood: deep, the lit rim, a skull face in the dark with soul-lit eyes
+  row(1+B,11,14,R);row(2+B,10,15,R);for(let y=3;y<=11;y++)row(y+B,9,16,R);row(12+B,8,17,R);
+  for(let y=3;y<=11;y++){p.set(9,y+B,RH);p.set(16,y+B,R2);}row(2+B,11,14,RH);
+  for(let y=4;y<=10;y++)row(y+B,10,15,R2);
+  p.rect(11,5+B,4,4,BN);p.rect(11,8+B,4,1,BN2);p.set(11,6+B,EY).set(14,6+B,EY);p.set(12,6+B,'#14111c').set(13,6+B,'#14111c');p.set(12,9+B,BN).set(13,9+B,BN2);p.set(12,10+B,BN2);
+  p.outline();return p.canvas();}
 // ---- Hollowmere ground ----
 function moorGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#2f6b55');
   for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#285a48':'#3d8466');
@@ -865,6 +981,7 @@ function buildArt(){
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
   ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
   ART.sword={};for(const t of Object.keys(GEAR.blade))ART.sword[t]=swordSprite(t==='rusty'?'none':t);
+  ART.scythe=scytheSprite();
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
   ART.mother=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime,true));
@@ -895,6 +1012,7 @@ function buildArt(){
   // v0.12
   ART.drowned=[0,1].map(drownedFrame);ART.eel=[0,1].map(eelFrame);ART.tome=[0,1].map(tomeFrame);ART.husk=[0,1].map(huskFrame);ART.voidling=[0,1].map(voidlingFrame);ART.watcher=[0,1].map(watcherFrame);
   ART.orb=[0,1].map(orbFrame);ART.vorb=[0,1].map(voidOrbFrame);ART.rift=[0,1].map(riftFrame);ART.archmage=[0,1].map(archmageFrame);ART.hollowking=[0,1].map(hollowKingFrame);
+  ART.raven=[0,1].map(ravenFrame);ART.gloomstag=[0,1].map(gloomstagFrame);ART.mossgiant=[0,1].map(mossGiantFrame);ART.moss=[71,72,73,74].map(mossTile);ART.wgblend=[.3,.55,.78].map((k,j)=>[1,2,3,4].map(i=>blendGrassTile(k,80+j*10+i)));ART.wpath2=[91,92,93].map(dirtStoneTile);ART.pumpkin=[0,1].map(pumpkinSprite);ART.barrow=[0,1].map(barrowSprite);ART.reaper=[reaperSprite(0),reaperSprite(1)];
   ART.wolf=[0,1].map(wolfFrame);ART.boar=[0,1].map(boarFrame);ART.bogling=[0,1].map(boglingFrame);ART.mirewisp=[0,1].map(mirewispFrame);ART.treant=[0,1].map(treantFrame);
   ART.mgrass=[51,52,53,54].map(moorGrassTile);ART.dgrass=[55,56,57,58].map(deepGrassTile);ART.mpath=[61,62,63].map(moorPathTile);ART.plaza=[64,65,66,67,68].map(plazaTile);
   ART.moonw=[0,1].map(moonWaterTile);ART.canopy=[71,72,73,74].map(canopyTile);ART.cliff=[75,76].map(cliffTile);

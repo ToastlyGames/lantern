@@ -71,11 +71,11 @@ const ask=(pv,method,params)=>{if(!SAFE_METHODS.has(method))return Promise.rejec
 // Claiming rewards is the one transaction Lanternhold ever asks a wallet for: claim() on the rewards vault, with a
 // voucher from our server. It's checked here before the wallet sees it (that contract, that function, nothing else:
 // never a token approval), and it goes from the wallet linked to the hero.
-const CLAIM_SEL='0xfa6b3b53',MINT_SEL='0x7fb9a063';   // claim(...) on the rewards vault, mint(...) on the Founder's Lantern: both (uint256,uint256,uint8,bytes32,bytes32)
+const CLAIM_SEL='0xfa6b3b53',MINT_SEL='0x585c3af8';   // claim(uint256,uint256,uint8,bytes32,bytes32) on the rewards vault; mint(uint256,bool,uint256,uint8,bytes32,bytes32) on the Founder's Lantern
 // Send a transaction the server prepared, after checking it goes to the contract we expect and calls the function we expect.
-async function contractTx(v,to,sel,what){
+async function contractTx(v,to,sel,what,words=5){
   if(!to||!/^0x[0-9a-fA-F]{40}$/.test(v.to||'')||v.to.toLowerCase()!==String(to).toLowerCase())throw {message:'That isn’t the '+what+' contract.'};
-  if(typeof v.data!=='string'||!v.data.startsWith(sel)||v.data.length!==10+64*5)throw {message:'That isn’t a '+what+' transaction.'};
+  if(typeof v.data!=='string'||!v.data.startsWith(sel)||v.data.length!==10+64*words)throw {message:'That isn’t a '+what+' transaction.'};
   const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;
   if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to do this.'};
   const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(v.wallet).toLowerCase());
@@ -85,7 +85,7 @@ async function contractTx(v,to,sel,what){
     catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
   return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
 const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
-const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern');
+const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern',6);
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 // Which account: the one the wallet has selected (eth_requestAccounts lists it first). If this site is already

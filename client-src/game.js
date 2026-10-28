@@ -11,7 +11,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{},quests:{},cos:{own:[],head:null,weapon:null}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -45,11 +45,18 @@ function normalize(raw){const o=obj(raw),s=fresh();
    if(!legacy)for(const [k,before] of SKILL_ERAS)if(K[k]===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,before));   // a new skill joined the formula: nobody drops a level
    s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
   s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
-  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x)+(q.v===2?0:WEST_X),y:Math.round(+q.y),v:2}:null;}   // where you logged out (v2: the map grew west in v0.12)
+  {const q=obj(o.pos);let x=Math.round(+q.x),y=Math.round(+q.y);if(Number.isFinite(x)&&Number.isFinite(y)&&x>0&&y>0&&x<20000&&y<20000){
+    if(q.v!==3){const x2=q.v===2?x:x+WEST_X_V2;if(x2<WEST_X_V2&&y>=WILD_Y){x=HM_ENTRY.x;y=HM_ENTRY.y;}else x=x2+(WEST_X-WEST_X_V2);}s.pos={x,y,v:3};}else s.pos=null;}   // where you logged out (v3: Hollowmere grew in v0.13)   // where you logged out (v2: the map grew west in v0.12)
   // the rune bag, enchantments on worn jewelry, the attack spell you've chosen
   s.runes={};for(const [k,v] of Object.entries(obj(o.runes)))if(ITEMS[k]&&ITEMS[k].rune){const n=int(v,0,1e7,0);if(n>0)s.runes[k]=n;}
   s.ench={};for(const sl of ['ring','amulet']){const e=obj(obj(o.ench)[sl]);if(e.id&&e.id===s.gear[sl]&&ENCHANTS[e.s]){const a={};for(const [k,v] of Object.entries(obj(e.a)).slice(0,3))if(ENCH_ATTR[k]){const n=num(v,0,enchMax(k),0);if(n>0)a[k]=Math.round(n*100)/100;}if(Object.keys(a).length)s.ench[sl]={id:e.id,s:e.s,a};}}
   {const own=k=>(s.bank[k]||0)+(s.vault[k]||0)>0||['blade','mail','helm','ring','amulet'].some(sl=>wornId(s.gear,sl)===k);s.forged={};for(const [k,v] of Object.entries(obj(o.forged)))if(forgeable(k)&&own(k)){const n=int(v,0,FORGE_MAX,0);if(n>0)s.forged[k]=n;}}   // relic-forging: kept while you own the piece
+  s.quests={};for(const [k,Q] of Object.entries(QUESTS)){const q=obj(obj(o.quests)[k]);const st=int(q.s,0,Q.steps.length,0);if(st)s.quests[k]={s:st,n:int(q.n,0,999,0),done:!!q.done&&st>=Q.steps.length};}
+  {const c=obj(o.cos),raw=(Array.isArray(c.own)?c.own:[]).flatMap(k=>COS_OLD[k]||[k]);   // v0.13.0's Reaper's Shroud became the Jack-o'-Lantern and the Scythe
+    for(const [k,Q] of Object.entries(QUESTS))if((s.quests[k]||{}).done)raw.push(...Q.rewards);   // a finished quest always gives all its rewards
+    const own=[...new Set(raw.filter(k=>COSMETICS[k]&&(!COSMETICS[k].quest||(s.quests[COSMETICS[k].quest]||{}).done)))];s.cos={own,head:null,weapon:null};
+    if(c.body&&COS_OLD[c.body]){c.head=c.head||COS_OLD[c.body][0];c.weapon=c.weapon||COS_OLD[c.body][1];}   // wearing the shroud: wear both
+    for(const sl of COS_SLOTS)if(own.includes(c[sl])&&COSMETICS[c[sl]].slot===sl)s.cos[sl]=c[sl];}   // quests and the cosmetics they reward
   s.spell=SPELLS[o.spell]?o.spell:'spark';
   return s;}
 let S=normalize({}),PID=null;
@@ -86,7 +93,7 @@ const giveAny=(bag,id,n)=>{if(ITEMS[id]&&ITEMS[id].rune){S.runes[id]=(S.runes[id
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
 const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100)*(staffOn()?1:1+FORGE_FX.blade*fLv('blade')/100);
 const defOf=()=>Math.round((GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def')+FORGE_FX.def*(fLv('mail')+fLv('helm')))*10)/10;
-const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm,flame:flameOn()?'founder':null});
+const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm,flame:flameOn()?'founder':null,cw:S.cos&&S.cos.weapon?COSMETICS[S.cos.weapon].look:null,ch:S.cos&&S.cos.head?COSMETICS[S.cos.head].look:null});
 // The Founder's Flame: a violet light only Founder's Lantern holders have (the realtime server hides it for anyone else)
 const FLAME='#b98cff',FLAMEC='185,140,255';
 let FND=null;const isFounder=()=>!!(FND&&FND.holder),flameOn=()=>isFounder()&&SET.flame!==false;
@@ -177,7 +184,7 @@ const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],f
   tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap'],
   wwall:[-8,-20,16,22,'Wilderness Wall'],deadtree:[-11,-30,22,32,'Dead Tree'],rock:[-7,-12,14,13,'Rock'],grave:[-6,-17,12,18,'Grave'],pillar:[-5,-28,10,30,'Ruined Pillar'],
   obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning'],
-  maw:[-66,-124,132,124,'The Abyssal Maw'],bankchest:[-12,-18,24,19,'Bank Chest'],campfire:[-7,-13,14,14,'Campfire'],menhir:[-6,-30,12,30,'Standing Stone'],lpost:[-5,-28,10,28,'Lamp Post'],
+  maw:[-66,-124,132,124,'The Abyssal Maw'],bankchest:[-12,-18,24,19,'Bank Chest'],campfire:[-7,-13,14,14,'Campfire'],menhir:[-6,-30,12,30,'Standing Stone'],lpost:[-5,-28,10,28,'Lamp Post'],pumpkin:[-7,-14,14,14,'Jack-o’-Lantern'],barrow:[0,-18,32,18,'Barrow'],
   hmsign:[-8,-22,16,22,'Hollowmere'],willow:[-13,-38,26,38,'Willow'],mcrystal:[-6,-20,12,20,'Moon Crystal']};
 function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
   for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
@@ -229,9 +236,9 @@ function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];for(const d of HOLD.dens||[])d.e=null;P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
   updateHud();MP.toHold();}
 // where you are, kept in your save so you sign back in on the same spot (in the Depths: the entrance you went in by)
-function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y),v:2};}
+function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y),v:3};}
 function placeAt(q){if(!q||!(q.x>0&&q.y>0&&q.x<map.w*T&&q.y<map.h*T)||blocked(q.x,q.y,4))return false;if(q.y<WILD_Y&&!S.flags.wildok)return false;P.x=q.x;P.y=q.y;return true;}
-function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y,v:2};save();}
+function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y,v:3};save();}
   run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0,door};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
@@ -265,7 +272,7 @@ function nearestAct(){
 }
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');if(a.id==='bench')return openCraft('jewel');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return qStep('hallow')==='gourd'?openQuestTalk('tallow'):openMarket('shop',true);if(a.id==='wick')return qStep('hallow')==='light'?openQuestTalk('wick'):openWick();if(a.id==='reaper')return openReaper();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -321,7 +328,7 @@ const fallen=new Map();   // monster id -> where it was when it died (for 2 s)
 function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;fallen.set(e.id,{x:e.x,y:e.y,big:!!e.d.big,t:time});if(fallen.size>40)fallen.delete(fallen.keys().next().value);MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
   // XP: everyone who hit it, and every party member in the same dungeon (even if they didn't land a hit)
   if(e.d.proj)return;
-  if(hit.includes(me)){if(run)run.kills++;S.kills++;killXp(xp);if(e.west)bump('hmkills');if(e.d.boss)bump('bossxp');}else if(MP.shared()){killXp(xp);if(e.d.boss)bump('bossxp');}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
+  if(hit.includes(me)){if(run)run.kills++;S.kills++;killXp(xp);if(e.west){bump('hmkills');questKill(e);}if(e.d.boss)bump('bossxp');}else if(MP.shared()){killXp(xp);if(e.d.boss)bump('bossxp');}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
   if(roll&&e.d.relic&&scene==='delve'&&rand()<RELIC_CHANCE*(1+A('luck')/200)){e.relicDrop=true;spawnLoot(e.x,e.y-4,[[e.d.relic,1,1,1]],true);setTimeout(()=>{sfx('rare');buzz([60,40,60,40,120]);toast('A relic! The '+ITEMS[e.d.relic].n+' fell from the boss','rare r-legendary');},700);}
   if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);
@@ -384,7 +391,7 @@ function spellImpact(b,x,y,e){const D=SPELLS[b.sp],R=D.aoe||0,mx=spellMax(b.sp);
   if(R)for(const q of ents){if(q.dead||q.d.proj||q===e)continue;if(Math.hypot(q.x-x,(q.y-6)-y)<R+q.r)spellHit(q,Math.round(roll()*.7),Math.atan2(q.y-y,q.x-x),D.col2);}
 }
 // the look of casting: the staff raised, a turning circle of runes at your feet, light gathering at the tip
-function drawCastPose(x,y,dir,left,sp,blade){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=ART.sword[blade]||ART.sword.apprentice;
+function drawCastPose(x,y,dir,left,sp,blade,cw){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=cw==='scythe'?ART.scythe:ART.sword[blade]||ART.sword.apprentice;
   g.save();g.globalCompositeOperation='lighter';
   const ring=(R,al,rot,n)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rot;g.globalAlpha=al*(.6+.4*Math.sin(a*3+time*8));g.fillStyle=i%3?D.col:D.col2;g.fillRect(Math.round(X+Math.cos(a)*R),Math.round(Y+1+Math.sin(a)*R*.38),1,1);}};
   const fade=Math.min(1,k*3)*Math.min(1,(1-k)*4+.2);ring(11,fade,time*3,22);ring(7,fade*.8,-time*4,14);
@@ -394,7 +401,7 @@ function drawCastPose(x,y,dir,left,sp,blade){const D=SPELLS[sp]||SPELLS.spark,k=
   if(!reduceMotion)for(let i=0;i<6;i++){const ph=((time*2.2+i/6)%1),a=i*1.047+time*2,r=(1-ph)*14;g.globalAlpha=ph*fade;g.fillStyle=i%2?D.col2:D.col;g.fillRect(Math.round(tip.x+Math.cos(a)*r),Math.round(tip.y+Math.sin(a)*r),1,1);}
   g.restore();
   // the staff, held upright beside you, tipped a little toward where you face
-  const lean=dir==='left'?-.35:dir==='right'?.35:dir==='up'?.15:-.15;g.save();g.translate(Math.round(tip.x-Math.sin(lean)*2),Math.round(tip.y+16));g.rotate(lean-Math.PI/4);g.drawImage(sw,-2,-14);g.restore();}
+  const lean=dir==='left'?-.35:dir==='right'?.35:dir==='up'?.15:-.15;g.save();g.translate(Math.round(tip.x-Math.sin(lean)*2),Math.round(tip.y+16));g.rotate(lean-Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
 function drawBolts(){if(!BOLTS.length&&!SPFX.length)return;g.save();g.globalCompositeOperation='lighter';
   const glow=(x,y,r,c,a)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=a;g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);};
   const px=(x,y,c,a)=>{g.globalAlpha=a==null?1:a;g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),1,1);};
@@ -643,10 +650,10 @@ function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'
   for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
   return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
 // the Return Flame (hold it for 2 s) works in the Wilderness up to level 20: home to the Hold. A hit interrupts it.
-function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y,v:2};
+function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y,v:3};
   if(roomUp()&&MP.pvpOn)NET.send({t:'home',x:Math.round(P.x),y:Math.round(P.y)});MP.sent='';sfx('flame');puff(P.x,P.y-10,'#ffcd75',16);toast('The Return Flame carries you home to the Hold.','good');save();}
 // back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
-function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y,v:2};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
+function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y,v:3};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
 function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null};
   for(const [id,n,slot] of lost){if(!ITEMS[id]||!(n>0))continue;
     if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id){S.gear[slot]=DEFG[slot];enchFade(slot);}
@@ -899,7 +906,9 @@ function openBag(tab){bagTab=tab||'items';
   const bl=S.gear.blade,ml=S.gear.mail,ln=S.gear.lantern,cp=S.gear.cape;
   const owned=t=>allKeys().filter(id=>ITEMS[id][t]).length;
   let body='';
-  if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${FND&&FND.no?'Hero #'+nfmt(FND.no)+' · ':''}${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
+  const htabs=`<div class="tabs" role="tablist">${[['hero','Hero'],['cos','Cosmetics'],['quests','Quests']].map(([k,n])=>`<button class="tab" role="tab" data-bt="${k}" aria-selected="${bagTab===k}">${n}${k==='quests'&&questOpen()?' <i class="qdot"></i>':''}</button>`).join('')}</div>`;
+  if(bagTab==='cos')body=htabs+cosTab();else if(bagTab==='quests')body=htabs+questTab();
+  else if(bagTab==='hero'){body=htabs+`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${FND&&FND.no?'Hero #'+nfmt(FND.no)+' · ':''}${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
    <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span>${staffOn()?`<span>Spell <b>${spellMax(curSpell())}</b></span>`:`<span>Damage <b>${Math.round(dmgOf())}</b></span>`}<span>Defense <b>${defOf()}</b></span></div>
    <div class="gears">
     ${row(iconImg(gearId('blade',bl)),isStaff(bl)?'Staff':'Blade',ITEMS[gearId('blade',bl)].n+fTag('blade'),(isStaff(bl)?'+'+GEAR.blade[bl].mag+'% spell damage · attacks cast spells':'Damage '+GEAR.blade[bl].dmg)+(fLv('blade')?' · forged '+forgeFx(gearId('blade',bl),fLv('blade')):''),`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
@@ -933,9 +942,9 @@ function openBag(tab){bagTab=tab||'items';
    body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
    <h3>Rune bag <small>never lost, even if you fall</small></h3><div class="grid runes">${Object.keys(RUNES).map(k=>{const id=k+'_rune',n=S.runes[id]||0;return `<button class="cell${n?'':' dim'}" data-rune="${id}" aria-label="${ITEMS[id].n}, ${n}">${iconImg(id)}<b>${fmt(n)}</b><small>${ITEMS[id].n}</small></button>`;}).join('')}</div>
    ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
-  openSheet(`<h2>${{hero:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
+  openSheet(`<h2>${{hero:'Hero',cos:'Hero',quests:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
-  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));if($('rewB'))$('rewB').onclick=()=>openRewards();
+  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));q.querySelectorAll('[data-cos]').forEach(b=>b.onclick=()=>{const [sl,k]=b.dataset.cos.split(':');S.cos[sl]=k||null;sfx(k?'rare':'pick');if(k)puff(P.x,P.y-12,'#c79bf2',16);save();openBag('cos');});if($('rewB'))$('rewB').onclick=()=>openRewards();
   q.querySelectorAll('[data-ench]').forEach(b=>b.onclick=()=>openEnchant(b.dataset.ench));if($('spB'))$('spB').onclick=openSpells;q.querySelectorAll('[data-rune]').forEach(b=>b.onclick=()=>openRuneInfo(b.dataset.rune));
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
@@ -1144,6 +1153,7 @@ const GOALS=[
   {id:'mage60',cat:'skills',t:'Reach Magic 60',hint:'Starfall waits at 62.',...lv('magic',60),gold:600},
   {id:'enchant',cat:'skills',t:'Enchant a ring or amulet',hint:'Hero screen → Enchant. Lesser Enchant needs Magic 3, 3 Gale Runes and a Soul Rune.',done:()=>!!S.flags.enchanted,gold:60},
   {id:'oil2',cat:'skills',t:'Press a Greater Oil Flask',hint:'Farming 30 at the Oil Press: 2 Lampseed and a Moonpetal.',...cn(()=>C('oiltwo'),1),gold:120},
+  {id:'hallow',cat:'hold',t:'Complete All Hallows’ Lantern',hint:'Talk to Mordecai the Reaper, where the Hollow Wood ends.',...cn(()=>C('quests'),1),gold:100},
   {id:'willow',cat:'hold',t:'Cut a willow log',hint:'Willows grow in Hollowmere (Woodcutting 30).',...cn(()=>C('wlogs'),1),gold:60},
   {id:'hmvisit',cat:'hold',t:'Walk into Hollowmere',hint:'Take the road west out of the Hold.',...cn(()=>C('hmvisit'),1),gold:20},
   {id:'maw',cat:'hold',t:'Stand before the Abyssal Maw',hint:'In the far north-west of Hollowmere.',...cn(()=>C('maw'),1),gold:50},
@@ -1231,7 +1241,8 @@ async function copyCA(){const t=tokenInfo();if(!t)return;let ok=false;
   if(!ok){try{const ta=document.createElement('textarea');ta.value=t.ca;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99);ok=document.execCommand('copy');ta.remove();}catch(e){}}
   const m=$('caMsg');if(m){m.textContent=ok?'Copied! Paste it into your wallet or Pons to check it.':'Couldn\'t copy automatically. Press and hold the address to copy it.';m.classList.toggle('ok',ok);}
   if(ok){sfx('pick');toast('Contract address copied','good');}}
-// ---- the Founder's Lantern: a free NFT on Robinhood Chain for the first 1,000 heroes (token ID = hero number) ----
+// ---- the Founder's Lantern: 2,222 free NFTs on Robinhood Chain (token ID = hero number); 1,000 of them held for X giveaway winners ----
+// The game asks for combat level 10 before it offers the mint.
 // The server knows each hero's number and whether their wallet holds one (lib/founders.js). Holders get the Founder's Flame.
 async function refreshFounder(rerender){if(!window.ACC||!ACC.online())return;const r=await ACC.api.call(null,'founders');if(!r.ok||!r.data.on)return;
   const was=isFounder();FND=r.data;if(isFounder()!==was&&isFounder())toast('Founder’s Flame lit. Your light burns violet.','rare');
@@ -1239,7 +1250,7 @@ async function refreshFounder(rerender){if(!window.ACC||!ACC.online())return;con
 const nfmt=n=>Number(n).toLocaleString('en-US');
 // Wick, keeper of the Founders' Ledger (by the road up to the Delve Gate): checks your whitelist spot, and opens the mint.
 // He'll also be the one to see for the Founder's Lantern's phase 2.
-const WICK_SAY=['The Founders’ Ledger is open.','The first thousand heroes… are you one?','A violet flame burns for the Founders.','Come, let me find your name.'];
+const WICK_SAY=['The Founders’ Ledger is open.','Two thousand, two hundred and twenty-two lanterns… is one yours?','A violet flame burns for the Founders.','Come, let me find your name.'];
 const wickKey=()=>'lanternhold.wick.'+(S&&S.name||'');
 function wickSeen(){try{return localStorage.getItem(wickKey())==='1';}catch(e){return true;}}
 const wickHd=q=>`<div class="npchd wick"><img alt="" src="${ART.wick[0].toDataURL()}"><span><b>Wick</b><small>Keeper of the Founders’ Ledger</small><em>“${chatEsc(q)}”</em></span></div>`;
@@ -1253,26 +1264,27 @@ async function openWick(){try{localStorage.setItem(wickKey(),'1');}catch(e){}
   if(!FND||!FND.on){openSheet(`<div id="fndSheet"></div>${wickHd(window.ACC&&ACC.online()?'The ledger isn’t ready for new names just yet. Come back soon.':'I can only read the ledger while you’re signed in and online.')}<div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;return;}
   wickChecked=true;sfx(FND.listed||isFounder()?'rare':'pick');openFounders(true);}
 let fndV=null;
-function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refreshFounder(true);const F=FND,c=F.chain||{},listed=F.no<=F.wl,minL=F.minLvl||10,lvlOk=S.lvl>=minL;
-  const checks=listed?`<ul class="fchk"><li class="ok">Hero #${nfmt(F.no)}: one of the first ${nfmt(F.wl)} heroes</li><li class="${lvlOk?'ok':''}">Combat level ${minL}${lvlOk?'':` <small>(you’re ${S.lvl})</small>`}</li></ul>`:'';
+function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refreshFounder(true);const F=FND,c=F.chain||{},listed=F.listed!==false,minL=F.minLvl||10,lvlOk=S.lvl>=minL,sup=F.supply||2222,soldOut=!F.reserved&&c.openLeft!=null&&c.openLeft<=0;
+  const checks=listed?`<ul class="fchk"><li class="ok">Hero #${nfmt(F.no)}: ${F.reserved?'giveaway winner: a Lantern is held for you':'a spot in the Founders’ Ledger'}</li><li class="${lvlOk?'ok':''}">Combat level ${minL}${lvlOk?'':` <small>(you’re ${S.lvl})</small>`}</li></ul>`:'';
   let st='';
   if(isFounder())st=`<div class="soon fnd"><b>You hold a Founder’s Lantern</b><p>Your Founder’s Flame: a violet light at your shoulder and around your lantern, that every other player sees. Only holders have it.</p>
     <button class="btn big" id="flT">${SET.flame!==false?'Turn the flame off':'Light the flame'}</button></div>`;
-  else if(!listed)st=`<p class="lead small">The whitelist is the first <b>${nfmt(F.wl)}</b> heroes ever made, and you’re Hero #${nfmt(F.no)}. If you pick up a Founder’s Lantern from another player, the flame is yours while you hold it.</p>`;
-  else if(!lvlOk)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: your spot is held</b>${checks}<div class="xpb"><i style="width:${Math.min(100,Math.round(S.lvl/minL*100))}%;background:#b98cff"></i></div><p>Reach combat level ${minL} to lock in your whitelist spot. Combat level comes from Fighting (monsters in the Depths) plus all your skills, so train everything. The mint is free, one per hero.</p></div>`;
+  else if(!listed)st=`<p class="lead small">Your hero doesn’t have a number in the ledger yet. Check back soon.</p>`;
+  else if(!lvlOk)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: your spot is held</b>${checks}<div class="xpb"><i style="width:${Math.min(100,Math.round(S.lvl/minL*100))}%;background:#b98cff"></i></div><p>Reach combat level ${minL} to unlock your mint. Combat level comes from Fighting (monsters in the Depths) plus all your skills, so train everything. The mint is free, one per hero.</p></div>`;
   else if(!F.open)st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted</b>${checks}<p>The mint opens soon. Your spot is saved to your hero, so there’s nothing to do yet. We’ll post it in the Bulletin.</p></div>`;
   else if(!F.wallet)st=`<p class="lead small">Connect a wallet to your hero first (Hero screen). Your Founder’s Lantern is minted to it.</p><button class="btn big" id="fnHero">Open my hero</button>`;
   else if(c.taken)st=`<p class="lead small">Founder’s Lantern #${nfmt(F.no)} has been minted${c.owner?' to '+chatEsc(c.owner.slice(0,6)+'…'+c.owner.slice(-4)):''}. To light the flame, the hero’s linked wallet (${chatEsc(F.wallet.slice(0,6)+'…'+F.wallet.slice(-4))}) needs to hold a Founder’s Lantern.</p>`;
   else if(c.walletUsed)st=`<p class="lead small">The wallet linked to your hero has already minted a Founder’s Lantern. It’s one per wallet.</p>`;
+  else if(soldOut)st=`<p class="lead small">All the open Founder’s Lanterns have been minted. The rest are held for giveaway winners. If you pick one up from another player, the flame is yours while you hold it.</p>`;
   else if(c.ended)st=`<p class="lead small">The Founder’s Lantern mint has ended.</p>`;
   else if(c.paused)st=`<p class="lead small">Minting is paused for a moment. Try again soon.</p>`;
   else if(fndV)st=`<div class="soon fnd"><b>Mint Founder’s Lantern #${nfmt(fndV.no)}</b><ul><li>Free: you only pay a tiny gas fee in ETH</li><li>Minted to your wallet ${chatEsc(fndV.wallet.slice(0,6)+'…'+fndV.wallet.slice(-4))}</li><li>On Robinhood Chain</li></ul></div>
     <button class="btn big" id="fnGo">Open my wallet</button><button class="btn alt big" id="fnNo">Not now</button>`;
-  else st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted</b>${checks}<p>Mint Founder’s Lantern #${nfmt(F.no)} for free. You only pay a tiny gas fee.</p></div><button class="btn big" id="fnM">Mint for free</button>`;
-  const q=isFounder()?'That violet flame suits you, Founder. The ledger remembers.':!listed?`Hero #${nfmt(F.no)}… The ledger holds the first ${nfmt(F.wl)} names, and yours came after. But a Founder’s Lantern can still change hands.`:!lvlOk?`Hero #${nfmt(F.no)}… your name is in the ledger, but the ink is still wet. Reach combat level ${minL} and it’s yours to keep.`:`Hero #${nfmt(F.no)}… ah, here you are. Your name is written in the Founders’ Ledger.`;
+  else st=`<div class="soon fnd"><b>Hero #${nfmt(F.no)}: you’re whitelisted${F.reserved?' (giveaway winner)':''}</b>${checks}<p>Mint Founder’s Lantern #${nfmt(F.no)} for free. You only pay a tiny gas fee.</p></div><button class="btn big" id="fnM">Mint for free</button>`;
+  const q=isFounder()?'That violet flame suits you, Founder. The ledger remembers.':F.reserved&&!lvlOk?`Hero #${nfmt(F.no)}… a winner! A Lantern is set aside for you. Reach combat level ${minL} and it’s yours to mint.`:!listed?'Hmm… I can’t find your name yet. Come back in a little while.':!lvlOk?`Hero #${nfmt(F.no)}… your name is in the ledger, but the ink is still wet. Reach combat level ${minL} and it’s yours to keep.`:`Hero #${nfmt(F.no)}… ah, here you are. Your name is written in the Founders’ Ledger.`;
   openSheet(`<div id="fndSheet"></div>${wickHd(q)}<h2>Founder’s Lantern</h2>
-   <div class="fndart"><img src="/api/founders?img=${F.no}" alt="Founder’s Lantern #${F.no}" width="160" height="160"><span><b>#${nfmt(F.no)}</b><small>Your hero number: Hero #${nfmt(F.no)}</small>${c.supply!=null?`<small>${nfmt(c.supply)} / ${nfmt(F.wl)} minted</small>`:''}</span></div>
-   <p class="lead small">A free NFT on Robinhood Chain for the first ${nfmt(F.wl)} heroes who reach combat level ${minL}. Minted only here in the game, one per hero. Its number is your hero number, so there’s only ever one of each. Whoever holds one gets the <b class="flamet">Founder’s Flame</b> in the game: a light colour no one else has.</p>
+   <div class="fndart"><img src="/api/founders?img=${F.no}" alt="Founder’s Lantern #${F.no}" width="160" height="160"><span><b>#${nfmt(F.no)}</b><small>Your hero number: Hero #${nfmt(F.no)}</small>${c.supply!=null?`<small>${nfmt(c.supply)} / ${nfmt(c.max||sup)} minted</small>`:`<small>${nfmt(sup)} in all</small>`}</span></div>
+   <p class="lead small">${nfmt(sup)} free NFTs on Robinhood Chain for heroes who reach combat level ${minL}. Minted only here in the game, one per hero. Its number is your hero number, so there’s only ever one of each. Whoever holds one gets the <b class="flamet">Founder’s Flame</b> in the game: a light colour no one else has.</p>
    ${st}${F.open&&F.contract?`<p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/token/${chatEsc(F.contract)}" target="_blank" rel="noopener">View the collection</a></p>`:''}
    <div class="row"><button class="btn" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;
@@ -1293,7 +1305,7 @@ function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The pat
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
 // ---------- the world map (the globe under the compass): see-through, so the game keeps going underneath ----------
 const WM_COL={[GRASS]:'#38b764',[PATH]:'#d9a066',[WATER]:'#3b5dc9',[SOIL]:'#6b3e26',[DOCK]:'#a0663b',[WILDG]:'#5a5634',[WPATH]:'#6e5844',[GLOOM]:'#2e2f5c',
-  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
+  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MOSS]:'#3a6a42',[WG1]:'#36a160',[WG2]:'#33895b',[WG3]:'#317a57',[WPATH2]:'#a08a68',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
 function miniBase(m){if(m.mini)return m.mini;const c=document.createElement('canvas');c.width=m.w;c.height=m.h;const x=c.getContext('2d'),id=x.createImageData(m.w,m.h);
   for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){let t=tAt(m,i,y),col=WM_COL[t]||'#0d0e17';if(m.kind==='delve'){col=t===FLOOR?(BIOMES[m.biome]||BIOMES.moss).floor[2]:'#0b0c14';}
     else if(solidAt(m,i,y)&&(t===GRASS||t===PATH||t===MGRASS||t===WILDG||t===PLAZA||t===DGRASS))col='#1d2a24';const [r,g2,b]=hex(col);const k=(y*m.w+i)*4;id.data[k]=r;id.data[k+1]=g2;id.data[k+2]=b;id.data[k+3]=255;}
@@ -1306,10 +1318,10 @@ function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),d
   const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*k,m.h*k);
   const P2=(px,py)=>[px/T*k,py/T*k],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
   const label=(px,py,t,c,sz)=>{let [X,Y]=P2(px,py);x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;const hw=x.measureText(t).width/2+3;X=Math.max(hw,Math.min(cvm.width-hw,X));x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;x.textAlign='center';x.lineWidth=Math.max(2,k*.9);x.strokeStyle='rgba(10,12,24,.9)';x.strokeText(t,X,Y);x.fillStyle=c||'#f4f4f4';x.fillText(t,X,Y);};
-  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type))dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'?'#c79bf2':'#ffcd75');}
+  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type)||o.npc==='reaper')dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'||o.npc==='reaper'?'#c79bf2':'#ffcd75');}
     const W0=WEST_X,mid=W0+13*T;label(mid,WILD_Y+12*T,'The Hold','#ffcd75',1.1);label(mid,WILD_Y-20*T,'The Wilderness','#ff8a8a',1.1);label(mid,WILD_Y-4*T,'PvP north of the wall','#ff8a8a',.75);
-    const HY=WILD_Y;label(32*T,HY+19*T,'Hollowmere','#a7f0c8',1.2);label(21*T+8,HY+27*T,'Moonmere','#d8d0ff',.9);label(7*T+8,HY+16*T,'Abyssal Maw','#c79bf2',.85);
-    label(33*T,HY+3*T,'Lv 3–8','#a7f070',.75);label(8*T,HY+47*T,'Marsh · Lv 9–14','#ffcd75',.75);label(35*T,HY+53*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(22*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);
+    const HY=WILD_Y;label(40*T,HY+30*T,'Hollowmere','#a7f0c8',1.3);label(40*T,HY+66*T,'Moonmere','#d8d0ff',.9);label(9*T+8,HY+19*T,'Abyssal Maw','#c79bf2',.85);label(80*T,HY+20*T,'Hollow Wood','#a7f070',.8);
+    label(42*T,HY+4*T,'Meadows · Lv 3–8','#a7f070',.75);label(14*T,HY+60*T,'Marsh · Lv 9–14','#ffcd75',.75);label(67*T,HY+65*T,'Fens · Lv 12–16','#ffcd75',.75);label(75*T,HY+108*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(25*T,HY+118*T,'Mossy Barrows · Lv 22–28','#ff8a8a',.75);label(48*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);
     const g0=m.objs.find(o=>o.type==='gate');if(g0)label(g0.x,g0.y-26,'Delve Gate','#ffcd75',.8);}
   else{if(m.stairs&&!m.stairs.hidden)dot(m.stairs.tx*T+8,m.stairs.ty*T+8,Math.max(3,k*1.2),'#ffffff','#1a1c2c');for(const o of m.objs)if(o.type==='chest'&&!o.open)dot(o.x,o.y-6,Math.max(2,k*.9),o.tier==='u'?'#a7f070':'#ffcd75');}
   for(const o of OTH.values())if(!o.pend)dot(o.x,o.y-4,Math.max(2.5,k*.9),'#f4f4f4','#1a1c2c');
@@ -1352,6 +1364,63 @@ function openRuneInfo(id){const k=ITEMS[id].rune,n=S.runes[id]||0,uses=Object.va
   openSheet(`<div class="itemhd"><img class="big" alt="" src="${iconOf(id).toDataURL()}"><span><b>${ITEMS[id].n}</b><small>${fmt(n)} in your rune bag</small></span></div>
    <ul class="info"><li>Used by: ${uses.join(', ')||'nothing yet'}</li><li>${k==='soul'||k==='star'?'Found only on monsters and in chests, more often deep down.':'Dropped by monsters, found in chests, sold by Tallow.'}</li><li>Runes live in your rune bag: they never take bank space and are never lost when you fall.</li></ul>
    <div class="row"><button class="btn alt" id="back">Back to items</button></div>`);$('back').onclick=()=>openBag();}
+// ---------- Quests (v0.13): All Hallows' Lantern, given by Mordecai the Reaper where the Hollow Wood ends ----------
+const qState=id=>S.quests[id]||(S.quests[id]={s:0,n:0,done:false});
+const qStep=id=>{const q=S.quests[id],Q=QUESTS[id];return q&&q.done?null:Q.steps[q?q.s:0].id;};
+const questOpen=()=>Object.keys(QUESTS).some(k=>{const q=S.quests[k];return q&&q.s>0&&!q.done;});
+function qAdvance(id){const q=qState(id),Q=QUESTS[id];q.s++;q.n=0;const nx=Q.steps[q.s];bump('qsteps');sfx('pick');
+  if(nx)setTimeout(()=>toast('Quest: '+nx.t+(nx.n?' (0/'+nx.n+')':''),'good'),250);save();}
+// Hollowmere kills that count toward the quest: wolves, then lost souls from anything out there
+function questKill(e){const st=qStep('hallow'),q=S.quests.hallow;if(!q)return;
+  if(st==='wolves'&&e.type==='wolf'){q.n++;floatText(e.x,e.y-26,'Wolves '+q.n+'/6','#ffcd75');if(q.n>=6)qAdvance('hallow');else save();}
+  else if(st==='souls'&&rand()<.45){q.n++;floatText(e.x,e.y-26,'+1 Lost Soul','#c79bf2');puff(e.x,e.y-10,'#c79bf2',16);sfx('rare',.5);if(q.n>=3)qAdvance('hallow');else save();}}
+// a bobbing "!" (something to do here) or "?" (come back to me) over a quest NPC
+function questMark(o){const st=qStep('hallow');let m=null;
+  if(o.npc==='reaper')m=st==='talk'?'!':st==='return'?'?':null;else if(o.npc==='wick')m=st==='light'?'!':null;else if(o.name==='Tallow')m=st==='gourd'?'!':null;
+  if(!m)return;const b=Math.round(Math.sin(time*4)*1.5),y=o.y-(o.npc==='reaper'?54:o.npc==='wick'?62:50)+b;ptDraw(g,m,o.x+1,y,{font:'big',color:'#ffcd75',bg:'#1a1c2c'});}
+const reaperHead=()=>`<div class="rhead"><img alt="" src="${ART.reaper[0].toDataURL()}" style="width:104px;image-rendering:pixelated"></div>`;
+function openReaper(){const q=qState('hallow'),Q=QUESTS.hallow,st=qStep('hallow');sfx('pick');
+  const steps=`<p class="lead small">Track it any time under Hero → Quests.</p>`;
+  if(st==='talk'){openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">“Ah. A living one, out on the edge of the wood. Don’t be afraid. On All Hallows’ Eve the veil grows thin, and the lost souls of Hollowmere wander out of the mist. It is my task to lead them home.”</p>
+      <p class="lead">“But my lantern has gone out, and souls follow only a light. Bring me a hollow gourd from the Hold. Have the old keeper of flames light it. Drive off the wolves that howl the souls away, and gather three of the lost ones for me. Do this, and the lantern is yours to wear, and my scythe besides.”</p>
+      <div class="soon fnd"><b>${Q.n}</b><p>A Halloween quest. Rewards: the <b>Jack-o’-Lantern</b> (worn over your helmet) and the <b>Reaper’s Scythe</b> (shown over your blade or staff), two soulbound cosmetics.</p></div>
+      <div class="row"><button class="btn alt" id="sx">Not now</button><button class="btn" id="qok">I’ll help</button></div>`);
+    $('sx').onclick=closeSheet;$('qok').onclick=()=>{qAdvance('hallow');closeSheet();toast('Quest started: '+Q.n,'rare r-xrare');};return;}
+  if(st==='return'){openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">“The lantern burns, and the souls are drawn to it like moths. Listen: they are quiet now. They will find their way home tonight.”</p>
+      <p class="lead">“You have my thanks. Keep the lantern: wear it, and its flame will never go out. And take my scythe. I have carried it for a thousand Hallows’ Eves… I think I can spare it for one night.”</p>
+      <div class="row"><button class="btn" id="qok">Take the lantern and the scythe</button></div>`);
+    $('qok').onclick=()=>{q.s=Q.steps.length;q.done=true;q.n=0;for(const k of Q.rewards)if(!S.cos.own.includes(k))S.cos.own.push(k);bump('quests');sfx('rare');buzz([60,40,60,40,120]);puff(P.x,P.y-12,'#c79bf2',36);
+      floatText(P.x,P.y-40,'Quest complete!','#a7f070');save(true);
+      openSheet(`<h2>Quest complete</h2><div class="cosgift">${Q.rewards.map(k=>cosIcon(k,72)).join('')}</div><p class="lead">${Q.n}: done. The <b>Jack-o’-Lantern</b> and the <b>Reaper’s Scythe</b> are yours, bound to your hero. They can never be traded, dropped or lost.</p><p class="lead small">Cosmetics show over your helmet and weapon, and those still work underneath.</p>
+        <div class="row"><button class="btn alt" id="sx">Later</button><button class="btn" id="qw">Wear it now</button></div>`);$('sx').onclick=closeSheet;$('qw').onclick=()=>{S.cos.head='jack_lantern';S.cos.weapon='reaper_scythe';save();sfx('rare');puff(P.x,P.y-12,'#c79bf2',22);openBag('cos');};};return;}
+  if(q.done){openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">“The souls rest easier, thanks to you. ${S.cos.head==='jack_lantern'?'The lantern suits you. It grins like it knows a secret.':'Your lantern and scythe wait for you under Hero → Cosmetics.'} Mind the mist out there, little light.”</p><div class="row"><button class="btn" id="sx">Farewell</button></div>`);$('sx').onclick=closeSheet;return;}
+  const say={gourd:'“A hollow gourd. Tallow, the trader in the Hold, keeps all sorts in that cart of his.”',light:'“Take the gourd to the old keeper of flames: Wick, by the road to the Delve Gate. His lantern never goes out.”',
+    wolves:`“The wolves in the meadows howl the souls back into the mist. Drive them off. (${q.n}/6)”`,souls:`“Now the souls. They cling to the beasts of Hollowmere. Defeat them and the lantern will draw the souls out. (${q.n}/3)”`}[st];
+  openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">${say}</p>${steps}<div class="row"><button class="btn" id="sx">I’m on it</button></div>`);$('sx').onclick=closeSheet;}
+function openQuestTalk(who){const Q=QUESTS.hallow;
+  if(who==='tallow'){openSheet(`<h2>Tallow</h2><p class="lead">“A hollow gourd? For the Reaper? Well, I don’t ask questions, I just sell lanterns. Here, take this one. It’s on the house, given who it’s for. Gives me the shivers, that one.”</p><p class="lead small">You get a hollow gourd.</p><div class="row"><button class="btn" id="qok">Thanks, Tallow</button></div>`);
+    $('qok').onclick=()=>{qAdvance('hallow');closeSheet();};return;}
+  if(who==='wick'){openSheet(`<div class="rhead"><img alt="" src="${ART.wick[0].toDataURL()}" style="width:90px;image-rendering:pixelated"></div><h2>Wick</h2><p class="lead">“Mordecai’s lantern went out? Then the souls are wandering, and that won’t do on All Hallows’ Eve. Hold the gourd still…”</p><p class="lead">He touches his lantern to the gourd. A cold violet flame catches inside it and grins out through the carved face.</p><p class="lead small">The gourd is now a lit jack-o’-lantern.</p><div class="row"><button class="btn" id="qok">Thank you, Wick</button></div>`);
+    $('qok').onclick=()=>{qAdvance('hallow');closeSheet();puff(P.x,P.y-12,'#c79bf2',18);};return;}}
+// the Quests tab: each quest is red until it's done, then green; finished steps are crossed out
+function questTab(){return `<p class="lead small">Quests are stories told by the people of Lanternhold. Talk to them to start one; finished steps are crossed out.</p>`+Object.entries(QUESTS).map(([k,Q])=>{const q=S.quests[k]||{s:0,n:0},done=!!q.done,C=Q.rewards.map(r=>COSMETICS[r].n).join(' and ');
+  return `<div class="quest ${done?'qdone':'qtodo'}"><div class="qh"><b>${Q.n}</b><span class="qtag">${Q.tag}</span><small>${done?'Completed':q.s?'In progress':'Not started'}</small></div><p class="small">From ${Q.giver}${q.s?'':' · find him where the Hollow Wood ends, west of the Hold'}</p>
+    <ol class="qsteps">${Q.steps.map((st,i)=>`<li class="${done||i<q.s?'qx':i===q.s?'qcur':'qnext'}">${st.t}${st.n&&i===q.s&&!done?` <em>${q.n}/${st.n}</em>`:''}</li>`).join('')}</ol>
+    <p class="small">Rewards: <b>${C}</b>, soulbound cosmetics${done?' · <span style="color:#a7f070">received</span>':''}</p></div>`;}).join('');}
+// the Cosmetics tab: two slots shown over your gear (your armour and helmet stay on underneath)
+// a cosmetic's picture: the hero wearing it (head), or the scythe itself (weapon)
+const cosIcon=(k,w)=>{const C=COSMETICS[k],c=document.createElement('canvas');
+  if(C.slot==='weapon'){c.width=24;c.height=24;c.getContext('2d').drawImage(ART.scythe,0,0);}
+  else{c.width=16;c.height=16;c.getContext('2d').drawImage(heroImg(Object.assign({},S.look,{ch:C.look}),'down',0),0,0);}
+  return `<img class="ic" alt="" src="${c.toDataURL()}"${w?` style="width:${w}px;height:${w}px"`:''}>`;};
+// the preview: you, with your weapon (or its cosmetic) at your side
+function cosPreview(){const c=document.createElement('canvas');c.width=32;c.height=28;const x=c.getContext('2d'),sw=S.cos.weapon?ART.scythe:ART.sword[S.gear.blade]||ART.sword.rusty;
+  x.drawImage(heroImg(myLook(),'down',0),6,10);x.save();x.translate(21,22);x.rotate(-Math.PI/2+.45+Math.PI/4);x.drawImage(sw,-2,-(sw.hy||14));x.restore();return c.toDataURL();}
+function cosTab(){
+  const slot=sl=>{const cur=S.cos[sl],own=S.cos.own.filter(k=>COSMETICS[k].slot===sl);return `<div class="gear">${cur?cosIcon(cur):'<i class="ic blank"></i>'}<span><small>${sl==='head'?'Head (over your helmet)':'Weapon (over your blade or staff)'}</small><b>${cur?COSMETICS[cur].n:'Nothing'}</b><small>${cur?COSMETICS[cur].d:own.length?'You have '+own.length+' to wear':'No '+sl+' cosmetics yet'}</small></span>${cur?`<button class="btn alt sm" data-cos="${sl}:">Take off</button>`:''}</div>
+    ${own.filter(k=>k!==cur).map(k=>`<div class="gear">${cosIcon(k)}<span><small>Soulbound</small><b>${COSMETICS[k].n}</b><small>${COSMETICS[k].d}</small></span><button class="btn sm" data-cos="${sl}:${k}">Wear</button></div>`).join('')}`;};
+  return `<div class="hero cosprev"><img class="ic" alt="" src="${cosPreview()}" style="width:112px;height:98px"><span><b>How you look</b><small>Cosmetics always show over your helmet and weapon. What you wear for stats stays equipped underneath.</small></span></div>
+    <div class="gears">${COS_SLOTS.map(slot).join('')}</div><p class="lead small">Cosmetics are soulbound to your hero: they can’t be traded, dropped, sold or lost, even in the Wilderness. Complete quests to earn them.</p>`;}
 // ---------- the Abyssal Maw (the raid dungeon) and the Hollowmere sign ----------
 // Raids (Season 1), as designed: a world event for the whole server, one every hour. Players from every world join the
 // same raid; it starts only with at least 10 players in the raid queue. Admins can always enter, for testing.
@@ -1360,8 +1429,9 @@ function openRaid(){bump('maw');sfx('boss');
    <div class="soon fnd"><b>World raids are coming in Season 1</b><p>Beyond the Maw waits Lanternhold’s raid dungeon, with its own bosses and its own treasure. Every raid is a world event for the whole server.</p>
     <ul class="info"><li><b>One raid every hour.</b> When it goes live, everyone in the game hears about it.</li><li><b>Every world, together.</b> Players from every world can join the same raid at the same time.</li><li><b>Join the raid queue here.</b> A raid begins once at least 10 players are queued.</li></ul></div>
    <p class="lead small">The plaza around the Maw is safe: no monster dens nearby. The Bank Chest beside it works just like the Bank.</p><div class="row"><button class="btn" id="sx">Step back</button></div>`);$('sx').onclick=closeSheet;}
-function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A moor at dusk around the Moonmere, the great lake. Lamp posts mark the roads.</p>
-   <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Meadows by the Hold: levels 3–6. The marsh (south-west): 9–14. The deepwood (south-east): 15–20.</li>
+function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A great moor at dusk, past the Hollow Wood, around the Moonmere lake. Lamp posts mark the roads.</p>
+   <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Ravens at the wood's edge: levels 2–4. The meadows: 3–8. The marsh (west): 9–14. The fens (east of the lake): 12–16. The deepwood (south-east): 15–20. The Mossy Barrows (south-west), where the mossy giants walk: 22–28.</li>
+   <li>Willows grow all over the moor (Woodcutting 30).</li>
    <li>Falling here costs nothing: you wake up at the Hold.</li><li>Fish for Moonfin off the dock in the middle of the Moonmere (Fishing 30).</li>
    <li>In the far north-west stands the Abyssal Maw, where hourly world raids begin in Season 1, with a Bank Chest beside it.</li></ul><div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
 function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
@@ -1515,13 +1585,15 @@ function projStep(e,dt){e.t+=dt;e.life-=dt;
   const sp=e.d.spd;const nx=e.x+Math.cos(e.a)*sp*dt,ny=e.y+Math.sin(e.a)*sp*dt;if(solidAt(map,Math.floor(nx/T),Math.floor(ny/T))||e.life<=0){e.dead=true;puff(e.x,e.y-6,e.type==='vorb'?'#c79bf2':'#73eff7',5);return;}e.x=nx;e.y=ny;
   if(Math.hypot(P.x-e.x,(P.y-6)-(e.y-4))<9){hurtPlayer(e.d.dmg*(1+.08*(e.dmgSc-1)/.12),e);e.dead=true;puff(e.x,e.y-6,'#ffffff',6);}else if(OTH.size&&scene==='delve')MP.contact(e,e.d.dmg*(1+.08*(e.dmgSc-1)/.12));}
 // ---------- Hollowmere: dens, aggro, respawns ----------
-const WEST_NAMES={wolf:'Moor Wolf',boar:'Bristleboar',bogling:'Bogling',mirewisp:'Mirewisp',treant:'Deepwood Treant'};
+const WEST_NAMES={wolf:'Moor Wolf',boar:'Bristleboar',bogling:'Bogling',mirewisp:'Mirewisp',treant:'Deepwood Treant',raven:'Carrion Raven',gloomstag:'Gloomstag',mossgiant:'Mossy Giant'};
 let wasWest=false;
 function westStep(dt){const now=Date.now(),w=inWest();
   if(w!==wasWest){wasWest=w;P.hp=Math.min(P.hp,hpMax());if(w){bump('hmvisit');if(!S.flags.hmseen){S.flags.hmseen=true;setTimeout(()=>toast('Hollowmere. Monsters here attack if you get close. The road and the Maw are safe.','good'),400);}}else for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}}
   if(P.x>WEST_X+260&&!ents.length)return;
-  for(const d of HOLD.dens){if(d.e&&!d.e.dead)continue;if(d.e){d.e=null;d.next=now+(18+d.lvl*1.2)*1000;}
-    if(now>=(d.next||0)&&Math.hypot(d.x-P.x,d.y-P.y)>120){const sc=1+.1*(d.lvl-3),e=makeEnemy(d.type,d.x,d.y,sc);Object.assign(e,{west:true,den:d,home:{x:d.x,y:d.y},lvl:d.lvl,wt:rand()*2});ents.push(e);d.e=e;}}
+  for(const d of HOLD.dens){const far=Math.hypot(d.x-P.x,d.y-P.y);
+    if(d.e&&!d.e.dead&&far>720&&!d.e.aggro){const i=ents.indexOf(d.e);if(i>=0)ents.splice(i,1);d.e=null;continue;}   // out of sight: back to its den
+    if(d.e&&!d.e.dead)continue;if(d.e){d.e=null;d.next=now+(18+d.lvl*1.2)*1000;}
+    if(now>=(d.next||0)&&far>120&&far<640){const sc=1+.1*(d.lvl-3),e=makeEnemy(d.type,d.x,d.y,sc);Object.assign(e,{west:true,den:d,home:{x:d.x,y:d.y},lvl:d.lvl,wt:rand()*2});ents.push(e);d.e=e;}}
   if(inWest()&&P.hp>0&&time-(P.hitT??-99)>6&&P.hp<hpMax())P.hp=Math.min(hpMax(),P.hp+3*dt);
   updateEnemies(dt);}
 // out of a fight a Hollowmere monster wanders near its den; get too close (or hit it) and it comes for you
@@ -1536,7 +1608,7 @@ function westIdle(e,d,dt){const fh=Math.hypot(e.x-e.home.x,e.y-e.home.y),sp=e.d.
   moveBody(e,vx*dt,vy*dt,4);return true;}
 function westDie(){setTimeout(()=>save(true),50);sfx('die');buzz(200);S.deaths++;bump('hmdeaths');FISHING=null;CHOP=null;BOLTS=[];
   for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}respawnHold();P.inv=2;save();
-  openSheet(`<h2>Knocked out in Hollowmere</h2><p class="lead">You woke up back at the Hold. Nothing was lost: out in Hollowmere a fall only costs you the walk back.</p><p class="lead small">The monsters there are levels 3 to 20. The meadows by the Hold are the gentlest; the marsh and the deepwood are not.</p><div class="row"><button class="btn" id="sx">Back on my feet</button></div>`);$('sx').onclick=closeSheet;}
+  openSheet(`<h2>Knocked out in Hollowmere</h2><p class="lead">You woke up back at the Hold. Nothing was lost: out in Hollowmere a fall only costs you the walk back.</p><p class="lead small">The monsters there are levels 2 to 28. The ravens at the edge of the Hollow Wood and the meadows are the gentlest; the deepwood and the Mossy Barrows are not.</p><div class="row"><button class="btn" id="sx">Back on my feet</button></div>`);$('sx').onclick=closeSheet;}
 // ---------- HUD ----------
 let lastAct=null;
 function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWest()?(staffOn()?'Cast':'Attack'):inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
@@ -1603,7 +1675,7 @@ function render(){TAGS.length=0;
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&(o.y<WILD_Y||inHollowmere(o.x,o.y)),sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish&&!(o.castT>0),ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.castT>0)drawCastPose(ox,oy,o.dir,o.castT,o.castSp,bl);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&(o.y<WILD_Y||inHollowmere(o.x,o.y)),sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty',ocw=o.look&&o.look.cw;const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish&&!(o.castT>0),ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim,ocw);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl,ocw);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.castT>0)drawCastPose(ox,oy,o.dir,o.castT,o.castSp,bl,ocw);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim,ocw);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl,ocw);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
@@ -1635,8 +1707,9 @@ function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
   g.globalAlpha=1;g.restore();}
 // ---- Hollowmere at dusk: a cool twilight over the moor, fireflies, moonlight on the lake, the Maw breathing violet fire ----
 function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WEST_X),top=Math.max(cy,WILD_Y);if(right<=cx)return;
-  g.save();const gr=g.createLinearGradient(WEST_X-120,0,WEST_X,0);g.fillStyle='rgba(18,26,58,.22)';if(WEST_X-120>cx)g.fillRect(cx,top,Math.min(right,WEST_X-120)-cx,cy+VH-top);
-  gr.addColorStop(0,'rgba(18,26,58,.22)');gr.addColorStop(1,'rgba(18,26,58,0)');g.fillStyle=gr;const a0=Math.max(cx,WEST_X-120);if(right>a0)g.fillRect(a0,top,right-a0,cy+VH-top);
+  // dusk falls slowly as you walk west through the Hollow Wood: none at the Hold's edge, full twilight where the moor begins
+  g.save();const D0=WOOD_X+2*T,gr=g.createLinearGradient(D0,0,WEST_X,0);g.fillStyle='rgba(18,26,58,.24)';if(D0>cx)g.fillRect(cx,top,Math.min(right,D0)-cx,cy+VH-top);
+  gr.addColorStop(0,'rgba(18,26,58,.24)');gr.addColorStop(.55,'rgba(18,26,58,.1)');gr.addColorStop(1,'rgba(18,26,58,0)');g.fillStyle=gr;const a0=Math.max(cx,D0);if(right>a0)g.fillRect(a0,top,right-a0,cy+VH-top);
   g.globalCompositeOperation='lighter';
   const pool=(X,Y,R,c,a)=>{const q=g.createRadialGradient(X,Y,0,X,Y,R);q.addColorStop(0,`rgba(${c},${a})`);q.addColorStop(1,`rgba(${c},0)`);g.fillStyle=q;g.fillRect(X-R,Y-R,R*2,R*2);};
   for(const o of map.objs){if(o.x>right+80||o.x<cx-80||o.y<cy-40||o.y>cy+VH+120)continue;
@@ -1646,10 +1719,12 @@ function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WES
       for(let k=0;k<10;k++){const a=t*1.6+k/10*Math.PI*2,r=6+(k%3)*4;g.globalAlpha=.6;g.fillStyle=k%2?'#f1e4ff':'#7a3b8f';g.fillRect(Math.round(o.x+Math.cos(a)*r*1.4),Math.round(o.y-24+Math.sin(a)*r*.7),1,1);}g.globalAlpha=1;}
     else if(o.type==='campfire'){const f=.8+.2*Math.sin(t*11+Math.sin(t*5));pool(o.x,o.y-6,30*f,'255,150,70',.35);}
     else if(o.type==='lpost'){const f=.85+.15*Math.sin(t*9+o.x);pool(o.x-1,o.y-24,18*f,'255,190,100',.3);}
+    else if(o.type==='pumpkin'){const f=.75+.25*Math.sin(t*13+o.x+Math.sin(t*4));pool(o.x,o.y-6,16*f,'255,160,60',.42);}
+    else if(o.npc==='reaper'){pool(o.x,o.y-22,24+3*Math.sin(t*2),'199,155,242',.22);pool(o.x-4,o.y-24,5,'232,208,255',.5+.3*Math.sin(t*3));}
     else if(o.type==='mcrystal')pool(o.x,o.y-10,16+2*Math.sin(t*2+o.x),'184,167,255',.28);
     else if(o.type==='menhir')pool(o.x,o.y-16,12,o.v?'199,155,242':'115,239,247',.22+.1*Math.sin(t*2+o.x));}
   // fireflies drifting over the moor
-  for(let i=0;i<26;i++){const bx=(i*173.7)%(WEST_X-60)+30,by=WILD_Y+((i*97.3)%(HM_ROWS*T-60))+30,x=bx+Math.sin(t*.4+i)*22,y=by+Math.cos(t*.53+i*1.7)*14;if(x<cx-4||x>right||y<cy-4||y>cy+VH)continue;
+  for(let i=0;i<90;i++){const bx=(i*173.7)%(WOOD_X-60)+30,by=WILD_Y+((i*97.3)%(HM_ROWS*T-60))+30,x=bx+Math.sin(t*.4+i)*22,y=by+Math.cos(t*.53+i*1.7)*14;if(x<cx-4||x>right||y<cy-4||y>cy+VH)continue;
     const on=.5+.5*Math.sin(t*3+i*2.3);if(on<.25)continue;pool(x,y,4,'200,255,140',.35*on);g.globalAlpha=on;g.fillStyle='#e8ffb0';g.fillRect(Math.round(x),Math.round(y),1,1);g.globalAlpha=1;}
   // moonlight glinting on the Moonmere
   const tick=Math.floor(t*2);for(let y=Math.max(y0,HM_Y0);y<=y1;y++)for(let x=x0;x<=Math.min(x1,WEST_COLS);x++)if(tAt(map,x,y)===MOON&&((x*31+y*57+tick*5)%19)===0){g.globalAlpha=.8;g.fillStyle=(x+y)%2?'#f1e4ff':'#b8f7ff';g.fillRect(x*T+((x*5+tick)%12)+2,y*T+((y*3+tick*3)%12)+2,2,1);g.globalAlpha=1;}
@@ -1672,7 +1747,8 @@ function drawObj(o){
   else if(o.type==='bench')spr(ART.bench[Math.floor(time*2)%2],o.x-16,o.y-26);
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
-  else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
+  else if(o.type==='npc'&&o.npc==='reaper'){const fr=Math.floor(time*1.2)%2;spr(ART.reaper[fr],o.x-13,o.y-31);TAGS.push({x:o.x,y:o.y-39,name:o.name,npc:true});questMark(o);}
+  else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);questMark(o);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
     if(W){if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x-9),Y=Math.round(o.y-20),gr=g.createRadialGradient(X,Y,0,X,Y,10);gr.addColorStop(0,`rgba(${FLAMEC},${.35+.08*Math.sin(time*7)})`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(X-10,Y-10,20,20);g.restore();}
       if(!wickSeen()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-52+b),7,9);g.fillStyle='#b98cff';g.fillRect(Math.round(o.x-2),Math.round(o.y-51+b),5,7);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x),Math.round(o.y-50+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-46+b),1,1);}}
     if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=W?WICK_SAY[ri(0,WICK_SAY.length-1)]:['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
@@ -1698,6 +1774,8 @@ function drawObj(o){
   else if(o.type==='campfire')spr(ART.campfire[Math.floor(time*6)%2],o.x-8,o.y-15);
   else if(o.type==='menhir'){spr(ART.menhir[o.v],o.x-8,o.y-30);if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.25+.15*Math.sin(time*2+o.x);g.fillStyle=o.v?'#c79bf2':'#73eff7';g.fillRect(Math.round(o.x-2),Math.round(o.y-20),4,9);g.restore();}}
   else if(o.type==='lpost'){const fl=Math.floor(time*5+o.x)%2;spr(ART.lanternPost[fl],o.x-7,o.y-28);}
+  else if(o.type==='pumpkin')spr(ART.pumpkin[o.v],o.x-8,o.y-15);
+  else if(o.type==='barrow')spr(ART.barrow[o.v],o.x,o.y-19);
   else if(o.type==='hmsign')spr(ART.hmsign,o.x-9,o.y-22);
   else if(o.type==='willow'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0,sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16+k,o.y-38);
     if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-42,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-41,w,2);}}}
@@ -1740,13 +1818,27 @@ function drawAura(x,y,cols,seed){const t=time+seed,X=Math.round(x),Y=Math.round(
   g.globalAlpha=1;}
 // another player's combat level against yours: same or lower is green, a little higher yellow, much higher red
 const lvlColor=l=>{const d=l-S.lvl;return d<=0?'#a7f070':d<=5?'#ffcd75':'#ff6b6b';};
+// The Jack-o'-Lantern's flame: the carved face flickers violet-white, a soft violet light spills around the head, and
+// now and then a violet ember drifts up out of the stem.
+function drawJack(x,y,dir,seed){if(dir==='up'&&reduceMotion)return;const X=Math.round(x)-8,Y=Math.round(y)-15,t=time*9+seed*7;
+  const fl=reduceMotion?.8:.62+.22*Math.sin(t)+.16*Math.sin(t*2.7+1.3)+(Math.sin(t*.37)>.93?-.35:0);
+  g.save();g.globalCompositeOperation='lighter';
+  const cx=X+8+(dir==='left'?-3:dir==='right'?3:0),cy=Y+5,gr=g.createRadialGradient(cx,cy,0,cx,cy,13);
+  gr.addColorStop(0,'rgba(199,155,242,'+(.34*fl)+')');gr.addColorStop(.5,'rgba(150,90,220,'+(.12*fl)+')');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(cx-13,cy-13,26,26);
+  if(dir!=='up'){const F=dir==='down'?JACK_FACE.down:JACK_FACE.side;for(const [fx,fy,k] of F){const px=dir==='right'?15-fx:fx;g.globalAlpha=(k==='c'?.9:.55)*fl;g.fillStyle=k==='c'?'#ffffff':'#e0c4ff';g.fillRect(X+px,Y+fy,1,1);}}
+  if(!reduceMotion){for(let i=0;i<2;i++){const ph=((time*.55+i*.5+seed)%1);if(ph>.7)continue;const ex=X+8+Math.sin((time+i)*3+seed)*1.5,ey=Y-1-ph*12;g.globalAlpha=(1-ph/.7)*.8;g.fillStyle=i?'#f3e3ff':'#b98cff';g.fillRect(Math.round(ex),Math.round(ey),1,1);}}
+  g.restore();}
+// The Reaper's Scythe at rest: cold soul-light around the blade, with a wisp curling off it.
+function drawScytheGlow(hx,hy,a){const bx=hx+Math.cos(a)*15,by=hy+Math.sin(a)*15,p=.7+.3*Math.sin(time*3+hx*.1);
+  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(bx,by,0,bx,by,9);gr.addColorStop(0,'rgba(156,240,210,'+(.28*p)+')');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(bx-9,by-9,18,18);
+  const ph=(time*.7+hx*.013)%1;g.globalAlpha=(1-ph)*.7;g.fillStyle=ph<.5?'#9cf0d2':'#c79bf2';g.fillRect(Math.round(bx-3+Math.sin(time*4)*2),Math.round(by-2-ph*9),1,1);g.restore();}
 function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const fr=moving?1+Math.floor(anim*8)%2:0,img=heroImg(look,dir,fr);
   const au=look?auraColors(look,me?S.gear.lantern:look.lan||null):[];if(au.length)drawAura(x,y,au,(npc?npc.name.length:0));
   g.fillStyle='rgba(0,0,0,.3)';g.fillRect(Math.round(x-4),Math.round(y),8,1);
   const yb=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0;   // a 1-px bob on each step
   const cb=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,false):null;if(cb)spr(cb,x-10,y-17+yb);
-  spr(img,x-8,y-15+yb);
+  spr(img,x-8,y-15+yb);if(look&&look.ch==='jack')drawJack(x,y+yb,dir,(npc?npc.name.length:0)+x*.01);
   const cf=look&&look.cape?capeLayer(look.cape,dir,moving?fr:0,true):null;if(cf)spr(cf,x-10,y-17+yb);if(look&&ADMIN_HATS[look.helm])spr(ART[look.helm],x-5,y-25+yb);
   if(look&&look.flame==='founder')drawFlame(x,y,dir,(npc?npc.name.length:0));
   // In the Wilderness: a health bar over anyone who's hurt, and every name, level and skull always shows
@@ -1770,35 +1862,38 @@ function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
   const dun=scene!=='hold',casting=P.cast>0&&staffOn(),held=(dun||(inWild()||inWest())&&!CHOP&&!FISHING)&&!(P.swing>0)&&!casting;   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
-  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);if(casting&&d==='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
-  if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
+  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);if(casting&&d==='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade,myCw());
+  if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim,myCw());
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames||inWild()?5:0)-(inWild()?9:0),say:P.say});
   if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
-  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);if(casting&&d!=='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
+  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim,myCw());if(casting&&d!=='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade,myCw());
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
-function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
+function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade,myCw());}
+const myCw=()=>S.cos&&S.cos.weapon?COSMETICS[S.cos.weapon].look:null;
 // The blade at rest in the free hand (the lantern is in the other): tilted up, bobbing with each step, swaying a little.
 // Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
 const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
-function drawHeldBlade(x,y,dir,blade,moving,anim){const h=HELD[dir]||HELD.down,sw=ART.sword[blade]||ART.sword.rusty;
-  if(isStaff(blade)&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
+function drawHeldBlade(x,y,dir,blade,moving,anim,cw){const h=HELD[dir]||HELD.down,sc=cw==='scythe',sw=sc?ART.scythe:ART.sword[blade]||ART.sword.rusty;
+  if(sc&&!reduceMotion)drawScytheGlow(x+h[0],y+h[1],h[2]);
+  if(isStaff(blade)&&!sc&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
   const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
-  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-14);g.restore();}
-function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
-  const sw=ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=BLADE_FX[blade]||'#f4f4f4',fade=1-t;
+  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
+function drawSwingAt(x,y,dir,left,blade,cw){const sc=cw==='scythe';const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
+  const sw=sc?ART.scythe:ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=sc?'#9cf0d2':BLADE_FX[blade]||'#f4f4f4',fade=1-t,rr=sc?1.35:1;
   // the smear: a crescent from where the swing started to the blade, brightest at the edge
   if(!reduceMotion&&a-a0>.15){g.save();g.globalCompositeOperation='lighter';
-    for(const [r,w,al] of [[15,3,.22],[12,2,.32],[16,1,.6]]){g.strokeStyle=col;g.globalAlpha=al*fade+.05;g.lineWidth=w;g.beginPath();g.arc(X,Y,r,Math.max(a0,a-1.5),a);g.stroke();}
+    for(const [r,w,al] of [[15,3,.22],[12,2,.32],[16,1,.6]]){g.strokeStyle=col;g.globalAlpha=al*fade+.05;g.lineWidth=w;g.beginPath();g.arc(X,Y,r*rr,Math.max(a0,a-1.5),a);g.stroke();}
+    if(sc){g.strokeStyle='#c79bf2';g.globalAlpha=.45*fade;g.lineWidth=2;g.beginPath();g.arc(X,Y,18,Math.max(a0,a-1.1),a);g.stroke();}   // the scythe: a wide soul-green crescent with a violet edge
     g.restore();
     // afterimages of the blade
-    for(const [k,al] of [[.5,.35],[1,.15]]){const b=a-k;if(b<a0)continue;g.save();g.globalAlpha=al*fade;g.translate(X,Y);g.rotate(b+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();}}
-  g.save();g.translate(X,Y);g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-14);g.restore();
-  if(t<.85){g.fillStyle='#fff3c4';g.globalAlpha=fade;g.fillRect(Math.round(X+Math.cos(a)*15),Math.round(Y+Math.sin(a)*15),1,1);g.globalAlpha=1;}}   // a glint at the tip
+    for(const [k,al] of [[.5,.35],[1,.15]]){const b=a-k;if(b<a0)continue;g.save();g.globalAlpha=al*fade;g.translate(X,Y);g.rotate(b+Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}}
+  g.save();g.translate(X,Y);g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();
+  if(t<.85){g.fillStyle=sc?'#9cf0d2':'#fff3c4';g.globalAlpha=fade;g.fillRect(Math.round(X+Math.cos(a)*15*rr),Math.round(Y+Math.sin(a)*15*rr),1,1);g.globalAlpha=1;}}   // a glint at the tip
 // a hit: a bright slash across the target that flashes and fades
 function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.6+p*.6),cx=Math.round(k.x),cy=Math.round(k.y),dx=Math.cos(k.a),dy=Math.sin(k.a);
   g.save();g.globalCompositeOperation='lighter';g.globalAlpha=1-p;g.strokeStyle='#fff3c4';g.lineWidth=p<.4?2:1;g.beginPath();g.moveTo(cx-dx*L,cy-dy*L);g.lineTo(cx+dx*L,cy+dy*L);g.stroke();
@@ -2341,5 +2436,5 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},updateHud,hurtPlayer,killXp};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},openReaper,questKill,qStep,questTab,cosTab,normalize,updateHud,hurtPlayer,killXp};
 })();

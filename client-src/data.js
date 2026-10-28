@@ -127,6 +127,21 @@ const ENCHANTS={
 const enchMax=k=>{const [a,b]=ENCH_ATTR[k]||[0,0];return Math.ceil(b*5*100)/100;};
 // the most an enchantment can roll for one bonus (the Hollow Crown raises every bonus on an enchantment to this)
 const enchTop=(sp,k)=>{const [a,b]=ENCH_ATTR[k]||[0,0],t=(ENCHANTS[sp]||{tier:0}).tier;return k==='regen'?Math.round(b*t*100)/100:Math.round(b*t);};
+// ---------- Quests (v0.13) ----------
+// A quest is a list of steps done in order: q.s is how many are done, q.n counts toward a step with a target (n).
+const QUESTS={hallow:{n:'All Hallows’ Lantern',giver:'Mordecai the Reaper',tag:'Halloween',rewards:['jack_lantern','reaper_scythe'],
+  steps:[{id:'talk',t:'Speak with Mordecai the Reaper, where the Hollow Wood ends'},
+    {id:'gourd',t:'Ask Tallow, the trader at the Hold, for a hollow gourd'},
+    {id:'light',t:'Ask Wick to light the gourd with his lantern'},
+    {id:'wolves',t:'Drive off the Moor Wolves howling in the meadows',n:6},
+    {id:'souls',t:'Gather lost souls from the monsters of Hollowmere',n:3},
+    {id:'return',t:'Bring the lantern and the souls back to Mordecai'}]}};
+// Cosmetics: soulbound to the hero (never items: they can't be traded, dropped, sold or lost). Two slots: the head one is
+// drawn over the helmet, the weapon one over the blade or staff; both stay equipped underneath with their stats.
+const COSMETICS={jack_lantern:{n:'Jack-o’-Lantern',slot:'head',look:'jack',quest:'hallow',d:'A carved pumpkin lit from inside by a cold violet flame that flickers through its grin. From Mordecai the Reaper, for All Hallows’ Eve.'},
+  reaper_scythe:{n:'Reaper’s Scythe',slot:'weapon',look:'scythe',quest:'hallow',d:'Mordecai’s own scythe: a crescent blade with a soul-lit edge and a violet soul-gem. Shown over your blade or staff.'}};
+const COS_SLOTS=['head','weapon'];
+const COS_OLD={reaper_shroud:['jack_lantern','reaper_scythe']};   // v0.13.0's quest reward became these two
 // ---------- Relic-forging (v0.12.1). Each boss has a rare chance (RELIC_CHANCE) to drop its relic. Relics are spent at the
 // Forge to empower a piece you wear, +1 to +5, each step taking the next boss's relic, gold and Smithing. The Hollow Crown
 // instead perfects an enchantment. A forge stays with you while you own that piece; lose every copy and it's gone. ----------
@@ -257,6 +272,9 @@ const ENEMIES={
   // Hollowmere, west of the Hold: they wander near their dens and attack if you get too close (levels 3–20)
   wolf:{hp:26,dmg:7,spd:56,xp:7,ai:'dash',art:'wolf',drops:[['gold',.6,2,6],['bone',.3,1,1]]},
   boar:{hp:40,dmg:9,spd:40,xp:10,ai:'lunge',art:'boar',drops:[['gold',.6,3,8],['bread',.06,1,1]]},
+  raven:{hp:14,dmg:4,spd:64,xp:4,ai:'float',art:'raven',drops:[['gold',.6,1,4],['bone',.15,1,1]]},   // v0.13: the Hollow Wood's edge
+  gloomstag:{hp:44,dmg:11,spd:58,xp:15,ai:'dash',art:'gloomstag',drops:[['gold',.6,6,12],['gem',.06,1,1],['bone',.3,1,2]]},   // the fens
+  mossgiant:{hp:120,dmg:15,spd:22,xp:34,ai:'chase',art:'mossgiant',big:true,drops:[['gold',.7,12,26],['emerald',.04,1,1],['glowcap_spore',.3,1,2],['moonpetal_seed',.06,1,1],['logs',.4,2,5]]},   // the Mossy Barrows
   bogling:{hp:48,dmg:12,spd:30,xp:14,ai:'hop',art:'bogling',drops:[['gold',.6,5,10],['moonpetal_seed',.04,1,1],['glowcap_spore',.15,1,1]]},
   mirewisp:{hp:42,dmg:13,spd:46,xp:16,ai:'float',art:'mirewisp',light:true,drops:[['gold',.6,6,12],['gem',.06,1,1]]},
   treant:{hp:90,dmg:16,spd:24,xp:24,ai:'chase',art:'treant',drops:[['gold',.6,8,16],['blackwood_logs',.4,1,3],['logs',.5,2,4]]}
