@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.10.0 · updated October 27, 2026
+Season 0 (Beta) · build v0.12.2 · updated October 27, 2026
 
 ## Welcome
 
@@ -15,7 +15,7 @@ The game is in **Season 0 (Beta)**. Every player you meet is a real person, and 
 3. **Bring the loot home.** Light the Return Flame to get home with everything you found. If you fall, you lose about half of what you were carrying.
 4. **Grow stronger.** Better gear takes you deeper, deeper floors drop better loot, and goals reward you along the way.
 
-**At a glance:** 5 skills (Woodcutting, Fishing, Farming, Cooking and Smithing) plus a combat level, 2 dungeon biomes with a boss each, 48 goals (9 of them secret) and items from Common all the way up to Mythic.
+**At a glance:** 8 skills (Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic) plus a combat level, 30 dungeon floors across 6 biomes with a boss each, Hollowmere (a wild land west of the Hold), 85 goals (10 of them secret) and items from Common all the way up to Mythic.
 
 ## Getting started
 
@@ -53,10 +53,13 @@ The goals pill at the top of the screen always suggests a good next step.
 | Skills | Scroll button above the Hero | K |
 | Chat | Speech button | T |
 | Zoom | Settings | Mouse wheel |
+| World map | Globe button under the compass | G |
 
 The game works with your phone upright or sideways.
 
-**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: a compass, Settings and Social. In the Wilderness a red badge shows the Wilderness level. The goals pill shows how many goals you've done. Tap it to open Goals.
+**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: a compass, Settings and Social, with a globe button under the compass that opens your world map. In the Wilderness a red badge shows the Wilderness level. The goals pill shows how many goals you've done. Tap it to open Goals.
+
+**World map.** Tap the globe (or press G) to see the whole world, the Hold, Hollowmere and the Wilderness, with a marker showing where you are. The map is see-through, so the game keeps going underneath. Tap anywhere on it (or press G or Escape) to close it. Other players near you show as white dots.
 
 **Settings** save to your hero, so they follow you to any device: zoom, brightness, player names (on by default), world feed, screen shake, sound effects and vibration.
 
@@ -71,13 +74,14 @@ The Hold is the safe town where everyone in your world lives and trains. Nothing
 | Lake | Fish for Pondfin from the shore, or walk out along the dock to the platform in the middle and fish off any side. |
 | Trees | 9 oak trees inside the Hold can be chopped for logs. The trees around the edge mark the border of the world. |
 | Kitchen | Cook fish, bake bread and make stew. |
-| Oil Press | Press 1 Lampseed into 2 Oil Flasks, the fuel for your lantern. |
+| Oil Press | Press 1 Lampseed into 2 Oil Flasks, the fuel for your lantern. From Farming 30, press 2 Lampseed and 1 Moonpetal into a **Greater Oil Flask** (+100% oil). |
 | Forge | Make blades, helmets and armour from ore. |
 | Bank (the stone building) | Store your items safely. Banked items are never lost. |
 | Tallow's cart (at the crossroads) | Tallow, the travelling trader. Buy supplies and sell your goods for gold. |
 | Wick (by the road up to the Delve Gate) | Wick keeps the Founders' Ledger. Talk to him to check whether you're on the Founder's Lantern whitelist, and to mint when it opens. |
 | Bulletin (at the crossroads) | The current build and every update, newest first. |
 | East road | The road east is barricaded until Season 1. Read the sign for a preview of what's coming. |
+| West road | Leads out through the west wall into **Hollowmere** (see below). |
 | House | Open your Hero screen and change your look. |
 
 **Worlds.** Each world holds up to 50 players. When you sign in, you join the busiest world that has room, or the one your party is in. You can switch any time from Social → Worlds. Trees, chat and items on the ground belong to each world. Your progress, friends and party come with you.
@@ -113,6 +117,7 @@ Stand at the edge of the lake, or out on the dock, and tap **Fish**. Your line a
 
 - **Pondfin:** Fishing 1, 10 XP each, in the Hold's lake.
 - **Gloomfin:** Fishing 15, 30 XP each, only in the **Gloom Pond** in the Wilderness. Cooked, it heals 55.
+- **Moonfin:** Fishing 30, 60 XP each, only in the **Moonmere** in Hollowmere. Walk out along its dock to the platform in the middle. Cooked, it heals 85.
 - The rare **Angler's Cape** can only be caught while fishing: about 1 in every 300 catches.
 
 ### Farming
@@ -127,6 +132,9 @@ Tap **Farm** at the field. Choose a crop and plant it. Planting fills every empt
 | Wheat | 1 | Wheat Seed | 45 s | 3 to 4 | 2 / 4 |
 | Lampseed | 3 | Lampseed | 70 s | 2 to 3 | 5 / 7 |
 | Glowcap | 6 | Glowcap Spore | 100 s | 2 to 3 | 8 / 11 |
+| Moonpetal | 25 | Moonpetal Seed | 150 s | 1 to 2 | 14 / 24 |
+
+Moonpetal Seeds come from Tallow (90 gold), Uncommon Chests, the Drowned Archmage and a few monsters. Moonpetal goes into the Greater Oil Flask.
 
 **Farm plots.** The field has 12 plots, 2 rows of 6, one for each square of soil. You start with 4 (the first 2 in each row). Locked plots look like rough, weedy ground with a little stake. You can open more plots two ways:
 
@@ -153,8 +161,9 @@ Cook at the Kitchen. **Cook all** works through a whole stack one at a time, wit
 | Cooked Pondfin | 1 | 1 Raw Pondfin | 2 s | 35 | 10 |
 | Glowcap Stew | 5 | 1 Glowcap + 1 Wheat | 3 s | 70 | 16 |
 | Cooked Gloomfin | 15 | 1 Raw Gloomfin | 2.7 s | 55 | 30 |
+| Cooked Moonfin | 30 | 1 Raw Moonfin | 3.5 s | 85 | 60 |
 
-Fish can burn: a 45% chance at Cooking 1, falling to 0% at Cooking 30. Better fish take longer to cook, 2 seconds plus 0.05 seconds for each Fishing level the fish needs.
+Fish can burn: a 45% chance at Cooking 1, falling to 0% at Cooking 30 (Moonfin: 50%, falling to 0% at Cooking 65). Better fish take longer to cook, 2 seconds plus 0.05 seconds for each Fishing level the fish needs.
 
 ### Smithing
 
@@ -174,25 +183,121 @@ Forge gear at the Forge. Every piece gives Smithing XP and goes into your bag.
 | Steel Helm | 35 | 4 Iron Ore, 6 Coal | 300 | 650 |
 | Steel Blade | 38 | 6 Iron Ore, 8 Coal, 2 Cobalt Ore | 450 | 850 |
 | Steel Mail | 42 | 8 Iron Ore, 10 Coal, 4 Cobalt Ore | 500 | 1,100 |
+| Gloamite Helm | 52 | 3 Gloamite Bars, 2 Cobalt Ore | 700 | 1,500 |
+| Gloamite Blade | 55 | 4 Gloamite Bars, 2 Cobalt Bars | 900 | 1,900 |
+| Gloamite Mail | 58 | 6 Gloamite Bars, 2 Cobalt Bars, 6 Coal | 1,000 | 2,400 |
 
 ### Mining
 
-Ore glints in the walls of the Depths. Walk up to it and attack it to chip it; it breaks after a few hits and drops 2 to 3 ore (a Starshard drops 1 to 2). Each ore needs a Mining level. Try one that's too hard and you'll see the level it needs. In a party, whoever breaks the vein gets the ore and the XP.
+Ore glints in the walls of the Depths. Walk up to it and attack it to chip it; it breaks after a few hits and drops 2 to 3 ore (a Starshard drops 1 to 2). A mined-out vein grows back after a while, and the harder the ore, the longer it takes. Each ore needs a Mining level. Try one that's too hard and you'll see the level it needs. In a party, whoever breaks the vein gets the ore and the XP.
 
-| Ore | Mining level | XP per vein | Found on |
+| Ore | Mining level | XP per vein | Grows back in | Found on |
+| --- | --- | --- | --- | --- |
+| Copper | 1 | 20 | 15 s | Floors 1 to 5 |
+| Iron | 10 | 35 | 25 s | Floors 6 to 15 |
+| Coal | 20 | 50 | 40 s | Floors 11 to 20 |
+| Emberite | 25 | 80 | 60 s | Floors 8 to 10 and 12 to 15 |
+| Cobalt | 30 | 100 | 80 s | Floors 16 to 20 |
+| Starshard | 40 | 160 | 150 s | Floors 17 to 20 and 26 to 30 (rare) |
+| Gloamite | 50 | 240 | 200 s | Floors 21 to 30 |
+
+### Crafting
+
+Make rings and amulets at the **Jeweler's Bench**, the little workbench between the road up to the Delve Gate and the Forge. Every piece is a bar plus a gem, and gives Crafting XP. You can wear **one ring and one amulet** at a time. Like capes, they carry bonuses, and their bonuses work everywhere except fights in the Wilderness.
+
+| Piece | Crafting | Materials | Bonus | XP |
+| --- | --- | --- | --- | --- |
+| Copper Ring | 1 | 1 Copper Bar, 1 Cave Gem | +6 max HP | 30 |
+| Copper Amulet | 5 | 2 Copper Bars, 1 Cave Gem | Oil lasts 8% longer | 45 |
+| Ruby Ring | 10 | 1 Iron Bar, 1 Ruby | +5% damage | 80 |
+| Sapphire Ring | 15 | 1 Iron Bar, 1 Sapphire | +1 defence, +5 max HP | 100 |
+| Ruby Amulet | 20 | 2 Iron Bars, 1 Ruby | +8% damage | 140 |
+| Emerald Ring | 25 | 1 Steel Bar, 1 Emerald | +8% loot luck | 190 |
+| Sapphire Amulet | 30 | 2 Steel Bars, 1 Sapphire | +2 defence, regenerate 0.15 HP/s | 240 |
+| Emberheart Amulet | 35 | 2 Emberite Bars, 2 Rubies | +12% damage, +10% light | 320 |
+| Diamond Ring | 40 | 1 Cobalt Bar, 1 Diamond | +3 defence, +12 max HP | 400 |
+| Starshard Amulet | 45 | 2 Cobalt Bars, 1 Starshard, 1 Diamond | +15% light, +12% loot luck, +15 max HP | 550 |
+
+**Gems.** Cave Gems drop from wisps, chests and bosses. **Rubies** and **Sapphires** are found in chests on any floor, **Emeralds** in chests from floor 6 and **Diamonds** in chests from floor 11. The bosses drop them too.
+
+**Staffs.** The Jeweler's Bench also carves staffs (pick the **Staffs** tab). A staff is worn in your blade slot and turns your attacks into spells (see Magic).
+
+| Staff | Crafting | Materials | Spell damage | XP |
+| --- | --- | --- | --- | --- |
+| Apprentice Staff | 1 | 10 Logs | +0% | 20 |
+| Blackwood Staff | 15 | 8 Blackwood Logs, 1 Sapphire | +6% | 140 |
+| Emberwood Staff | 30 | 10 Blackwood Logs, 2 Emberite Bars, 2 Rubies | +12% | 330 |
+| Gloamwood Staff | 50 | 12 Blackwood Logs, 3 Gloamite Bars, 1 Diamond | +20% | 900 |
+
+**Bars.** Smelt ore into bars at the Forge (open the Forge and pick **Smelt bars**). Smelting trains Smithing, and you can smelt everything you carry in one go.
+
+| Bar | Smithing | Ore | XP |
 | --- | --- | --- | --- |
-| Copper | 1 | 20 | Floors 1 to 5 |
-| Iron | 10 | 35 | Floors 6 to 15 |
-| Coal | 20 | 50 | Floors 11 to 20 |
-| Emberite | 25 | 80 | Floors 8 to 10 and 12 to 15 |
-| Cobalt | 30 | 100 | Floors 16 to 20 |
-| Starshard | 40 | 160 | Floors 17 to 20 (rare) |
+| Copper Bar | 1 | 2 Copper Ore | 8 |
+| Iron Bar | 10 | 2 Iron Ore | 15 |
+| Emberite Bar | 25 | 2 Emberite Ore | 40 |
+| Steel Bar | 30 | 1 Iron Ore, 2 Coal | 30 |
+| Cobalt Bar | 35 | 2 Cobalt Ore | 55 |
+| Gloamite Bar | 50 | 2 Gloamite Ore, 1 Coal | 90 |
+
+### Magic
+
+Magic is a combat skill of its own. **Wield a staff** and your attacks become spells: the action button says **Cast**, and every monster you defeat with a staff in hand trains **Magic instead of Fighting** (twice the monster's XP). Put a blade back on and you're training Fighting again. Magic never trains Fighting, and Fighting never trains Magic. Facing an ore vein, your staff works as a pick, so you don't need to swap to mine.
+
+**Spells.** Open Hero (H) while holding a staff and tap **Spellbook** to pick the spell your attack casts. Combat spells need no runes: your staff powers them. Low spells hit low; each new spell hits harder.
+
+| Spell | Magic | Hits up to | Special |
+| --- | --- | --- | --- |
+| Spark | 1 | 5 | Never misses its mark |
+| Ember Bolt | 8 | 9 | A trail of sparks |
+| Frost Shard | 16 | 13 | Slows what it hits |
+| Storm Lash | 26 | 17 | Jumps to a second monster |
+| Flame Burst | 36 | 22 | Explodes, burning everything close by |
+| Void Lance | 48 | 28 | Passes through up to 3 monsters |
+| Starfall | 62 | 34 | A falling star that bursts on impact |
+| Cataclysm | 80 | 42 | A huge blast at the impact point |
+
+"Hits up to" is with a plain staff. Better staffs and robes add a percentage on top (shown on the Hero screen), and so do some enchantments.
+
+**Staffs and robes.** Four staffs are carved at the Jeweler's Bench (see Crafting). Two more, and two robes, drop only from the bosses on floors 25 and 30:
+
+| Item | Rarity | Spell damage | Defence | Where |
+| --- | --- | --- | --- | --- |
+| Hollow Scepter (staff) | Legendary | +30% | | The Hollow King (3%) |
+| Moonwell Staff | Mythic | +40% | | The Drowned Archmage (1.2%) |
+| Archmage's Tiderobe | Legendary | +15% | 8 | The Drowned Archmage (3%) |
+| Voidwoven Robe | Mythic | +25% | 11 | The Hollow King (1.2%) |
+
+Robes are worn in the armour slot. They guard less than Gloamite or steel, but they make your spells hit harder.
+
+**Runes and the rune bag.** Runes live in their own **rune bag** inside your Bag. They never take Bank space and are never lost when you fall. Monsters and chests drop them (more often deeper down), and Tallow sells the common ones.
+
+| Rune | Where | Tallow |
+| --- | --- | --- |
+| Gale | Floors 1 to 5, Hollowmere | 5 gold |
+| Stone | Floors 6 to 10, Hollowmere | 8 gold |
+| Tide | Floors 16 to 25 | 14 gold |
+| Ember | Floors 11 to 15 and 26 to 30 | 18 gold |
+| Soul | Floor 6 and deeper, Hollowmere (rare), every boss | Not sold |
+| Star | Floor 16 and deeper (very rare), bosses (often) | Not sold |
+
+**Enchanting.** Open Hero and tap **Enchant** next to the ring or amulet you're wearing. Each enchanting spell uses runes, gives Magic XP and rolls its own kind of bonus. Casting again replaces the old roll. The enchantment stays on that piece while you wear it and fades if you take it off or swap it. Like jewelry, the bonuses work everywhere except fights in the Wilderness.
+
+| Enchantment | Magic | Runes | Bonuses | Can roll | XP |
+| --- | --- | --- | --- | --- | --- |
+| Lesser Enchant | 3 | 3 Gale, 1 Soul | 1 | Max HP, oil, light, loot luck | 40 |
+| Enchant | 18 | 3 Tide, 2 Stone, 1 Soul | 1 | Also damage, defence, Fishing XP, Woodcutting XP | 110 |
+| Greater Enchant | 35 | 4 Ember, 3 Stone, 2 Soul | 2 | Max HP, defence, damage, spell damage, loot luck, regeneration, oil | 240 |
+| Arcane Enchant | 52 | 3 Tide, 3 Soul, 1 Star | 2 | As Greater, plus speed and light (no oil) | 420 |
+| Mythic Enchant | 70 | 3 Ember, 5 Soul, 3 Star | 3 | Everything above except Fishing and Woodcutting XP | 750 |
+
+Higher enchantments roll bigger numbers as well as more bonuses.
 
 ### Combat level
 
-Your **combat level** comes from everything you do: **(2 × Fighting + all your skill levels) ÷ 8**. Fighting is trained by defeating monsters in the Depths and counts double; Woodcutting, Fishing, Farming, Cooking, Smithing and Mining each add their own level. A new hero is combat level 1. Combat level 10 takes something like Fighting 16 with your other skills around 8. Fighting tops out at 99, like every skill, so the highest combat level is 99. Nobody has ever lost a level when the formula changed: heroes keep the combat level they had.
+Your **combat level** comes from everything you do: **(2 × the higher of Fighting and Magic + all your skill levels) ÷ 10**. Fighting is trained by defeating monsters with a blade, and Magic by defeating them with a staff; whichever is higher counts double. Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic each add their own level too. A new hero is combat level 1. Combat level 10 takes something like Fighting (or Magic) 18 with your other skills around 8. Fighting tops out at 99, like every skill, so the highest combat level is 99. Nobody has ever lost a level when the formula changed: heroes keep the combat level they had.
 
-You earn Fighting XP by defeating monsters. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each Fighting level needs 22 × level^1.5 XP. Every combat level adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
+You earn Fighting XP by defeating monsters in the Depths and Hollowmere. Everyone who hits a monster gets its full XP, and in a party **every member in the dungeon** gets the full XP for every kill, even without landing a hit, so fighting together never costs you anything. Each Fighting level needs 22 × level^1.5 XP. Every combat level adds 8 max HP (you start with 60 HP). Your combat level shows next to your name.
 
 ## The Depths
 
@@ -204,16 +309,22 @@ The Depths are dungeon floors below the Delve Gate, built fresh every time you g
 | 6 to 10 | Bone Crypts | Skeleton, Wisp, Spider, Bat | Iron, rare Emberite | The Ossuary Knight (floor 10) |
 | 11 to 15 | Emberforge Halls | Fire Imp, Magma Golem, Cinder Bat | Coal, Iron, rare Emberite | The Forge Tyrant (floor 15) |
 | 16 to 20 | Starfall Hollow | Wraith, Crystal Sentinel, Shardling | Cobalt, Coal, rare Starshard | The Starwarden (floor 20) |
+| 21 to 25 | The Drowned Archive | Drowned Scribe, Tide Eel, Cursed Grimoire | Gloamite, Cobalt, Coal | The Drowned Archmage (floor 25) |
+| 26 to 30 | The Hollow Throne | Hollow Husk, Voidling, Watcher | Gloamite, Cobalt, rare Starshard | The Hollow King (floor 30) |
 
-**Your lantern.** It starts full and burns oil as you go, faster on deeper floors. Better lanterns burn slower and light up more of the dark. Drink an Oil Flask (+50%) from a quick slot to top it up. If your oil runs out, a Shade appears every few seconds and hunts you down.
+**Your lantern.** It starts full and burns oil as you go, faster on deeper floors. Better lanterns burn slower and light up more of the dark. Drink an Oil Flask (+50%) or a Greater Oil Flask (+100%) from a quick slot to top it up. If your oil runs out, a Shade appears every few seconds and hunts you down.
 
 **Getting home.** Hold the Return Flame button (or R) for 2 seconds to go home with everything you found. If you fall in battle, you lose about half of this delve's loot and half of what's in your bag. Your Bank and the gear you're wearing are always safe.
 
-**What you'll find.** Ore glints in the walls (hit it to mine it), chests hide in dead ends, glowcaps grow on the floor, and the stairs lead down. Each floor is tougher than the last: monsters hit harder and take more hits to beat.
+**What you'll find.** Ore glints in the walls (hit it to mine it), chests hide in dead ends (on floors 21 to 30, often a green-glowing **Uncommon Chest**), glowcaps grow on the floor, and the stairs lead down. Each floor is tougher than the last: monsters hit harder and take more hits to beat.
 
-**The lift.** Beat a boss and the lift at the Delve Gate can take you straight to the next area: Mother Slime opens floor 6, the Ossuary Knight floor 11 and the Forge Tyrant floor 16.
+**The lift.** Beat a boss and the lift at the Delve Gate can take you straight to the next area: Mother Slime opens floor 6, the Ossuary Knight floor 11, the Forge Tyrant floor 16, the Starwarden floor 21 and the Drowned Archmage floor 26.
 
 **Boss attacks.** The Forge Tyrant charges, calls fire imps and slams its hammer: a **ring of fire** on the floor shows where it will land, so step out before it fills. The Starwarden **blinks** to the far side of you, then bursts with starlight inside a **cold ring**, and calls wraiths to its side. Both get faster below half health.
+
+The two deepest bosses mix their attacks. **The Drowned Archmage** keeps its distance and throws fans of tide bolts (dodge them, they fly in straight lines), blinks away when you close in, bursts with a **frost nova** inside a cold ring, and calls Cursed Grimoires to defend it. **The Hollow King** walks you down, slams the floor inside a **violet ring**, charges, and tears **rifts** open under your feet (step off the glowing mark). Below half health it also throws a ring of void bolts all around it.
+
+**Uncommon Chests.** On floors 21 to 30 most chests glow green. They hold more gold, ore, gems, runes and seeds than a normal chest, have twice the chance of a lantern or cape, and a small chance (7%) of a **Greater Oil Flask**.
 
 ### Monsters
 
@@ -227,24 +338,34 @@ The Depths are dungeon floors below the Delve Gate, built fresh every time you g
 | Crawler | 22 | 7 | 6 | Gold, Lampseed, Glowcap Spore |
 | Spider | 26 | 10 | 10 | Gold, Old Bone |
 | Skeleton | 32 | 9 | 9 | Old Bone, gold |
-| **Mother Slime** (boss) | 280 | 11 | 120 | Slime Crown relic, 2 to 3 Cave Gems, 60 to 90 gold, Lampseed |
-| **The Ossuary Knight** (boss) | 520 | 15 | 300 | Knight's Sigil relic, 3 to 4 Cave Gems, 150 to 220 gold, Emberite Ore |
+| **Mother Slime** (boss) | 280 | 11 | 120 | Slime Crown relic (rare), 2 to 3 Cave Gems, 60 to 90 gold, Lampseed |
+| **The Ossuary Knight** (boss) | 520 | 15 | 300 | Knight's Sigil relic (rare), 3 to 4 Cave Gems, 150 to 220 gold, Emberite Ore |
 | Cinder Bat | 12 | 7 | 7 | Gold |
 | Fire Imp | 20 | 9 | 12 | Gold, Coal |
 | Magma Golem | 48 | 12 | 18 | Coal, gold, Emberite Ore (rare) |
 | Shardling | 26 | 12 | 15 | Gold, Starshard (very rare) |
 | Wraith | 30 | 12 | 16 | Gold, Cave Gem (rare) |
 | Crystal Sentinel | 52 | 14 | 22 | Cobalt Ore, gold, Old Bone |
-| **The Forge Tyrant** (boss) | 700 | 16 | 700 | Forge Heart relic, Coal, Emberite Ore, 300 to 450 gold, Cave Gems, and very rarely **Cinderfang** |
-| **The Starwarden** (boss) | 900 | 18 | 1,100 | Fallen Star relic, Cobalt Ore, 1 to 3 Starshards, 500 to 750 gold, Cave Gems, and very rarely the **Starwarden's Helm** |
+| **The Forge Tyrant** (boss) | 700 | 16 | 700 | Forge Heart relic (rare), Coal, Emberite Ore, 300 to 450 gold, Cave Gems, and very rarely **Cinderfang** |
+| **The Starwarden** (boss) | 900 | 18 | 1,100 | Fallen Star relic (rare), Cobalt Ore, 1 to 3 Starshards, 500 to 750 gold, Cave Gems, and very rarely the **Starwarden's Helm** |
+| Tide Eel | 38 | 14 | 22 | Gold, Raw Moonfin |
+| Cursed Grimoire | 34 | 13 | 24 | Gold, Moonpetal Seed |
+| Drowned Scribe | 62 | 16 | 28 | Gold, Old Bone, Gloamite Ore |
+| Voidling | 44 | 17 | 30 | Gold, Cave Gem |
+| Watcher | 70 | 20 | 34 | Gold, Diamond (rare) |
+| Hollow Husk | 84 | 19 | 36 | Gold, Gloamite Ore |
+| **The Drowned Archmage** (boss) | 1,150 | 20 | 1,600 | Drowned Grimoire relic (rare), Gloamite Ore, 700 to 1,000 gold, gems, Moonpetal Seeds, and rarely the **Archmage's Tiderobe** or the **Moonwell Staff** |
+| **The Hollow King** (boss) | 1,450 | 22 | 2,300 | Hollow Crown relic (rare), Gloamite Ore, 900 to 1,300 gold, gems, and rarely the **Hollow Scepter** or the **Voidwoven Robe** |
 
-HP and damage are floor 1 values. Monsters get stronger on deeper floors. Beating a boss opens the stairs and clears the rest of its floor.
+HP and damage are base values. Monsters get stronger on deeper floors. Every monster can also drop runes, and every boss drops Soul Runes and often Star Runes. Beating a boss opens the stairs and clears the rest of its floor.
 
 ### Rare gear drops
 
 Lanterns and capes can drop from chests (10% for a lantern, 3.5% for a cape), from monsters (0.6% and 0.25%) and from bosses (50% and 25%). Each boss also has a 5% chance to drop its own Legendary cape. Deeper floors and Loot Luck improve the rarity of what you find.
 
 **The two rarest finds in the Depths** are Mythic: **Cinderfang** (damage 46), only from the Forge Tyrant, and the **Starwarden's Helm** (defence 9, +25 max HP, +15% light, +10% Loot Luck), only from the Starwarden. Each has a 1.5% chance per kill, a little better with Loot Luck.
+
+The floor 25 and floor 30 bosses each drop **one staff and one robe**, one Legendary and one Mythic (see Magic): the Drowned Archmage has the Mythic Moonwell Staff and the Legendary Archmage's Tiderobe, and the Hollow King has the Legendary Hollow Scepter and the Mythic Voidwoven Robe.
 
 ## The Wilderness
 
@@ -258,9 +379,9 @@ The first expansion to Lanternhold. North of the Hold, past the old stone wall, 
 
 | Gear | In a fight |
 | --- | --- |
-| Blades | Rusty 6, Copper 10, Iron 16, Ember 25, Steel 34, Cinderfang 46 (base damage) |
-| Armor | Copper 2, Iron 4, Ember 7, Steel 10 defense |
-| Helmets | Copper 1, Iron 2, Ember 4, Steel 5, Starwarden's Helm 9 defense (admin hats count as Ember) |
+| Blades | Rusty 6, Copper 10, Iron 16, Ember 25, Steel 34, Gloamite 40, Cinderfang 46 (base damage). Spells don't work in PvP: a staff fights as a club. |
+| Armor | Copper 2, Iron 4, Ember 7, Steel 10, Gloamite 13 defense (robes: Tiderobe 8, Voidwoven 11) |
+| Helmets | Copper 1, Iron 2, Ember 4, Steel 5, Gloamite 7, Starwarden's Helm 9 defense (admin hats count as Ember) |
 | Capes | Mother's Mantle +15% damage, Pall of the Ossuary +12% damage and 3 defense, Gravecloth Mantle 2 defense |
 
 **Health.** Your health is 60 + 8 per combat level, plus any cape bonus. Eat from your bag with the quick slots (one bite every 1.5 seconds). After 8 seconds out of a fight your health climbs back 1 a second.
@@ -282,17 +403,39 @@ The first expansion to Lanternhold. North of the Hold, past the old stone wall, 
 
 **The compass.** The small compass left of Settings always points north, toward the Wilderness.
 
+## Hollowmere
+
+Take the road out through the **west wall** of the Hold and you're in **Hollowmere**, a wide twilight moor about four times the size of the Hold. Fireflies drift over the grass, willows hang over the water, and in the far north-west a great horned skull breathes violet fire.
+
+**Monsters.** Hollowmere's monsters live in dens and attack if you get too close. Back off far enough and they give up and wander home. Each shows its level, from **3 to 20**:
+
+| Area | Monsters | Levels |
+| --- | --- | --- |
+| The meadows (by the Hold gate) | Moor Wolf, Bristleboar | 3 to 8 |
+| The marsh (west) | Bogling, Mirewisp | 9 to 14 |
+| The deepwood (south-east) | Deepwood Treant | 15 to 20 |
+
+Defeating them trains Fighting (or Magic with a staff), drops gold and runes, and treants drop logs and Blackwood Logs. There's no PvP in Hollowmere.
+
+**Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here, not the reduced health of the Wilderness.
+
+**The Moonmere.** A great moonlit lake, bigger than the Hold's, with a long dock out to a fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
+
+**The Abyssal Maw.** The entrance to Lanternhold's future raids: a vast horned skull set into the cliffs, with a portal burning in its jaw. Raids arrive in **Season 1**; for now, step up to it and it tells you so. The plaza in front of the Maw is **safe**: no monster comes near it. A **Bank chest** stands by the campfire on the plaza, so you can bank your loot without walking home.
+
 ## Items and gear
 
-You wear 5 pieces of gear: a blade, armour, a lantern, a cape and a helmet. Open Hero (H) to see and change them.
+You wear 7 pieces of gear: a blade, armour, a lantern, a cape, a helmet, a ring and an amulet (see Crafting). Open Hero (H) to see and change them.
 
 **Rarities**, from most to least common: Common, Uncommon, Rare, Extremely Rare, Legendary and Mythic. Rare finds play a sound, light up and are announced in the world feed.
 
-| Slot | Starting piece | Copper | Iron | Ember | Steel | Mythic boss drop |
-| --- | --- | --- | --- | --- | --- | --- |
-| Blade (damage) | Rusty Blade: 6 | 10 | 16 | 25 | 34 | Cinderfang: 46 |
-| Armour (defence) | Traveler Garb: 0 | 2 | 4 | 7 | 10 | |
-| Helmet (defence) | None | 1 | 2 | 4 | 5 | Starwarden's Helm: 9 |
+| Slot | Starting piece | Copper | Iron | Ember | Steel | Gloamite | Mythic boss drop |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Blade (damage) | Rusty Blade: 6 | 10 | 16 | 25 | 34 | 40 | Cinderfang: 46 |
+| Armour (defence) | Traveler Garb: 0 | 2 | 4 | 7 | 10 | 13 | Voidwoven Robe: 11 (+25% spell damage) |
+| Helmet (defence) | None | 1 | 2 | 4 | 5 | 7 | Starwarden's Helm: 9 |
+
+Staffs go in the blade slot and robes in the armour slot (see Magic).
 
 ### Lanterns
 
@@ -326,18 +469,55 @@ Nobody starts with a cape. Each one gives special bonuses.
 
 ### Relics and special items
 
-- **Boss relics:** the Slime Crown (from Mother Slime), the Knight's Sigil (from the Ossuary Knight), the Forge Heart (from the Forge Tyrant) and the Fallen Star (from the Starwarden). In Season 1, relics can be minted on-chain and traded.
+- **Boss relics:** each boss has its own relic and drops it rarely, about once in every 25 kills (Loot Luck helps a little): the Slime Crown (Mother Slime), the Knight's Sigil (the Ossuary Knight), the Forge Heart (the Forge Tyrant), the Fallen Star (the Starwarden), the Drowned Grimoire (the Drowned Archmage) and the Hollow Crown (the Hollow King). Spend them on Relic-forging (below).
 - **Goal Relics:** the Starlit Lantern and Wayfinder's Mantle can't be found anywhere else. Every goal you complete has a tiny chance to award one (see Goals). They can't be sold, traded or dropped.
 - **Admin party hats:** the Blue Party Hat and Green Party Hat belong to the two admins. They are one of a kind and can never drop, be sold or be traded.
 
+### Relic-forging
+
+Open the Forge and pick the **Relic forge** tab to spend boss relics on the gear you wear. Each piece can be forged up to **+5**, one step at a time, and each step takes the next boss's relic plus gold:
+
+| Step | Relic | Base gold | Smithing | XP |
+| --- | --- | --- | --- | --- |
+| +1 | Slime Crown | 200 | 10 | 150 |
+| +2 | Knight's Sigil | 600 | 20 | 300 |
+| +3 | Forge Heart | 1,500 | 35 | 500 |
+| +4 | Fallen Star | 4,000 | 50 | 650 |
+| +5 | Drowned Grimoire | 10,000 | 65 | 750 |
+
+**Gold depends on the item's level.** Each step costs its base gold × (1 + item level ÷ 10), so higher-level gear costs more to empower. An item's level is what it takes to make it: the Smithing level for forged gear, the Crafting level for jewelry and staffs. Boss-only drops have their own levels: Cinderfang 50, Starwarden's Helm 55, Archmage's Tiderobe 62, Hollow Scepter 68, Moonwell Staff 72 and Voidwoven Robe 75. The Relic forge tab shows each piece's level and the gold for its next step.
+
+| Item (level) | +1 | +2 | +3 | +4 | +5 | All five |
+| --- | --- | --- | --- | --- | --- | --- |
+| Copper Blade (1) | 200 | 650 | 1,650 | 4,400 | 11,000 | 17,900 |
+| Iron Blade (10) | 400 | 1,200 | 3,000 | 8,000 | 20,000 | 32,600 |
+| Steel Blade (38) | 950 | 2,900 | 7,200 | 19,200 | 48,000 | 78,250 |
+| Diamond Ring (40) | 1,000 | 3,000 | 7,500 | 20,000 | 50,000 | 81,500 |
+| Gloamite Mail (58) | 1,350 | 4,100 | 10,200 | 27,200 | 68,000 | 110,850 |
+| Voidwoven Robe (75) | 1,700 | 5,100 | 12,750 | 34,000 | 85,000 | 138,550 |
+
+| Piece | Each forge level adds | At +5 |
+| --- | --- | --- |
+| Blade | +6% damage | +30% |
+| Staff | +5% spell damage | +25% |
+| Armor or helmet | +1 defense | +5 |
+| Robe | +1 defense and +3% spell damage | +5, +15% |
+| Ring or amulet | +12% to its bonuses | +60% |
+
+Starter gear and the admin hats can't be forged. A forged piece keeps its power while you own it (worn, in your bag or in the Bank). Sell, trade or lose every copy, for example by falling in the Wilderness, and the forging is gone. Like jewelry, forging counts everywhere except Wilderness fights. Relics you spend are gone for good.
+
+**The Hollow Crown** crowns an enchantment instead. Open Enchant for an enchanted ring or amulet (on the Hero screen) and tap **Crown**: every bonus on that enchantment rises to the most its spell can roll (for a Greater Enchant, +24 max HP instead of anything from +4). Casting a new enchantment on that piece replaces the crowned one.
+
 ### Materials and supplies
 
-- **For the Forge:** Copper, Iron, Emberite and Cobalt Ore, Coal, Cave Gems, Slime Gel and Old Bone.
+- **For the Forge:** Copper, Iron, Emberite, Cobalt and Gloamite Ore, Coal, Cave Gems, Slime Gel and Old Bone. Ore also smelts into bars.
+- **For jewelry:** bars, plus Cave Gems, Rubies, Sapphires, Emeralds, Diamonds and Starshards.
 - **To sell:** Starshards, the rarest ore in the Depths, fetch a high price from Tallow.
-- **From the Farm:** Wheat, Lampseed and Glowcap.
-- **For your lantern:** Oil Flasks.
-- **Healing food:** Bread, Cooked Pondfin and Glowcap Stew.
-- **Logs:** being stockpiled for a skill that's on the way.
+- **From the Farm:** Wheat, Lampseed, Glowcap and Moonpetal.
+- **For Magic:** runes, kept in the rune bag (see Magic).
+- **For your lantern:** Oil Flasks and Greater Oil Flasks.
+- **Healing food:** Bread, Cooked Pondfin, Glowcap Stew, Cooked Gloomfin and Cooked Moonfin.
+- **Logs:** carved into staffs at the Jeweler's Bench.
 
 ## Bag, Bank and trading
 
@@ -362,7 +542,7 @@ Your **bag** goes everywhere with you and is at risk in the Depths. Your **Bank*
 
 **Trading with players.** In the Hold, right-click a player and choose **Trade** (on a computer), or open Social → Nearby and tap **Trade** next to them (on a phone). Once they accept, you both see a trade window: add items from your bag and some gold, and watch their offer update live. Both of you must tap **Accept trade**, and any change to either offer resets both accepts, so check what you're getting first. When both accept, the items move for both of you at the same moment. One side can be empty, which makes it a gift (the window says so clearly), but a trade needs at least one item or some gold. Goal Relics and the admin party hats can't be traded. Trades only happen in the Hold, never in the Depths.
 
-**Tallow the trader.** Sell anything in your bag or Bank for gold (gear you're wearing isn't listed). He sells Wheat Seeds (5 gold), Lampseed (30), Oil Flasks (45) and Bread (20).
+**Tallow the trader.** Sell anything in your bag or Bank for gold (gear you're wearing isn't listed). He sells Wheat Seeds (5 gold), Lampseed (30), Oil Flasks (45), Bread (20), Moonpetal Seeds (90) and Gale, Stone, Tide and Ember Runes (5, 8, 14 and 18).
 
 **Items on the ground**
 
@@ -403,7 +583,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 
 ## Goals and secrets
 
-There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
+There are 85 goals: 75 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
 
 | Group | Goal | Gold |
 | --- | --- | --- |
@@ -416,6 +596,8 @@ There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one
 | First steps | Enter the Delve Gate | 15 |
 | First steps | Reach floor 3 | 25 |
 | First steps | Forge a Copper Blade | 25 |
+| First steps | Craft a ring | 25 |
+| First steps | Carve a staff | 20 |
 | Skills | Reach Fishing 10 / 25 | 50 / 150 |
 | Skills | Catch 100 / 1,000 fish | 75 / 400 |
 | Skills | Reach Woodcutting 5 / 15 / 30 | 30 / 100 / 250 |
@@ -425,6 +607,12 @@ There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one
 | Skills | Reach Cooking 10 | 50 |
 | Skills | Reach Smithing 10 / 25 / 35 | 60 / 200 / 300 |
 | Skills | Reach Mining 10 / 25 / 40 | 50 / 150 / 400 |
+| Skills | Reach Crafting 15 / 35 | 100 / 300 |
+| Skills | Smelt 100 bars | 100 |
+| Skills | Wear a ring and an amulet | 75 |
+| Skills | Reach Magic 10 / 30 / 60 | 60 / 250 / 600 |
+| Skills | Enchant a ring or amulet | 60 |
+| Skills | Press a Greater Oil Flask | 120 |
 | Skills | Reach a total skill level of 100 | 200 |
 | The Depths | Defeat Mother Slime | 60 |
 | The Depths | Defeat the Ossuary Knight | 150 |
@@ -433,6 +621,12 @@ There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one
 | The Depths | Defeat the Starwarden | 500 |
 | The Depths | Reach floor 20 | 250 |
 | The Depths | Wear a full set of steel | 300 |
+| The Depths | Defeat the Drowned Archmage | 700 |
+| The Depths | Defeat the Hollow King | 1,000 |
+| The Depths | Reach floor 30 | 500 |
+| The Depths | Open 10 Uncommon Chests | 200 |
+| The Depths | Relic-forge a piece of gear | 150 |
+| The Depths | Wear a full set of Gloamite | 600 |
 | The Depths | Reach combat level 10 / 25 | 50 / 200 |
 | The Depths | Defeat 100 / 1,000 monsters | 60 / 300 |
 | The Depths | Open 25 chests | 75 |
@@ -443,6 +637,10 @@ There are 64 goals: 54 open goals in five groups and 10 hidden secrets. Each one
 | Life at the Hold | Earn 5,000 gold trading with Tallow | 75 |
 | Life at the Hold | Buy more Bank space | 50 |
 | Life at the Hold | Hold 25,000 gold at once | 250 |
+| Life at the Hold | Walk into Hollowmere | 20 |
+| Life at the Hold | Stand before the Abyssal Maw | 50 |
+| Life at the Hold | Defeat 100 monsters in Hollowmere | 200 |
+| Life at the Hold | Catch a Moonfin | 100 |
 | Wilderness | Enter the Wilderness | 15 |
 | Wilderness | Reach Wilderness level 10 | 60 |
 | Wilderness | Stand before the Old Obelisk (level 20) | 150 |
@@ -507,9 +705,9 @@ Your hero saves to your account automatically, so you can pick up where you left
 
 ## Coming next
 
-Season 1 brings the token and on-chain relics.
+Season 1 brings the token, $LANTERN rewards, on-chain relics and the first **raids** through the Abyssal Maw in Hollowmere.
 
-**Also on the way:** deeper floors below the Starfall Hollow, a new area beyond the east road with a new fishing pond, a new tree and a new skill that uses logs, and more goals each season.
+**Also on the way:** a new area beyond the east road with a new fishing pond, a new tree and a new skill that uses logs, and more goals each season.
 
 Every update is posted on the Bulletin in the Hold, and in the Updates section of this wiki.
 
@@ -522,7 +720,10 @@ Your bag and the gear you wear, dropped where you fell. Without a skull you keep
 About half of this delve's loot and half of your bag. Your Bank and the gear you're wearing are always safe.
 
 **How do I get more oil?**
-Grow Lampseed at the Farm (Farming 3) and press it at the Oil Press, or buy Oil Flasks from Tallow.
+Grow Lampseed at the Farm (Farming 3) and press it at the Oil Press, or buy Oil Flasks from Tallow. From Farming 30, add Moonpetal to press a Greater Oil Flask, which fills twice as much.
+
+**How do I train Magic?**
+Carve an Apprentice Staff at the Jeweler's Bench (10 logs), wield it, and fight. Every kill with a staff trains Magic. Pick stronger spells from the Spellbook on the Hero screen as you level.
 
 **How do I get more farm plots?**
 Level up Farming (new plots open at levels 5, 10, 15, 20, 30, 40, 50 and 60) or buy them with gold from the Farm screen.
