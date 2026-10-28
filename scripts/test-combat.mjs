@@ -84,4 +84,16 @@ d1.gold += 1600; d1.bank = { gloam_ore: 14, gem: 9, emerald: 2, diamond: 2, oil2
 ok(plausible(d0, sanitize(d1), 12).ok && !plausible(hp0, sanitize(d1), 12).ok, 'a big floor-30 haul carried in the save gets home without a jump in wealth (and would be one without it)');
 const lc = sanitize({ gear: { ring: 'copper_ring' }, ench: { ring: { id: 'copper_ring', s: 'lesser', a: { dmg: 4, mag: 5, hp: 8, luck: 3 } } } });
 ok(JSON.stringify(lc.ench.ring.a) === '{"hp":8}', 'an enchantment keeps only bonuses its spell can roll, and only as many as it rolls (' + JSON.stringify(lc.ench.ring.a) + ')');
+// v0.13: quests, soulbound cosmetics, positions on the bigger map
+const q0 = sanitize({ cos: { own: ['jack_lantern', 'reaper_scythe'], head: 'jack_lantern', weapon: 'reaper_scythe' }, quests: { hallow: { s: 3, n: 2 } } });
+ok(!q0.cos.own.length && q0.cos.head === null && q0.cos.weapon === null && q0.quests.hallow.s === 3, 'no Halloween cosmetics before All Hallows’ Lantern is done (' + JSON.stringify(q0.cos) + ')');
+const q1 = sanitize({ cos: { own: ['jack_lantern', 'nope'], head: 'reaper_scythe', weapon: 'reaper_scythe' }, quests: { hallow: { s: 6, n: 0, done: true } } });
+ok(q1.cos.own.sort().join() === 'jack_lantern,reaper_scythe' && q1.cos.weapon === 'reaper_scythe' && q1.cos.head === null && q1.quests.hallow.done, 'done: both rewards owned, each only in its own slot (' + JSON.stringify(q1.cos) + ')');
+const qm = sanitize({ cos: { own: ['reaper_shroud'], body: 'reaper_shroud' }, quests: { hallow: { s: 6, n: 0, done: true } } });
+ok(qm.cos.own.sort().join() === 'jack_lantern,reaper_scythe' && qm.cos.head === 'jack_lantern' && qm.cos.weapon === 'reaper_scythe' && !('body' in qm.cos), 'a v0.13.0 Reaper’s Shroud becomes the Jack-o’-Lantern and the Scythe, both worn (' + JSON.stringify(qm.cos) + ')');
+const q2 = sanitize({ quests: { hallow: { s: 99, done: true } } }), q3 = sanitize({ quests: { hallow: { s: 2, done: true } } });
+ok(q2.quests.hallow.s === 6 && q2.quests.hallow.done && !q3.quests.hallow.done, 'quest steps are clamped, and a quest is only done at its last step');
+ok(!q1.bank.jack_lantern && !q1.vault.reaper_scythe, 'cosmetics are never bank items (soulbound)');
+const pv3 = sanitize({ pos: { x: 1600, y: 900, v: 3 } }), pv2 = sanitize({ pos: { x: 900, y: 900, v: 2 } });
+ok(pv3.pos.v === 3 && pv3.pos.x === 1600 && pv2.pos.v === 2, 'saved positions keep their map version (v3 for v0.13; the game moves older ones)');
 console.log(`\n${pass} passed, ${failN} failed`); process.exit(failN ? 1 : 0);

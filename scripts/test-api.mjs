@@ -215,13 +215,16 @@ try {
     ok((await p.req('founders')).status === 404, 'no hero yet: nothing to show');
     await p.req('hero', { method: 'POST', body: { name: 'Founder' } });
     const f = (await p.req('founders')).data;
-    ok(f.on && Number.isInteger(f.no) && f.no > 1 && f.wl === 1000 && f.listed && f.open === false && f.minLvl === 10 && f.ready === false, `every hero gets a number (#${f.no}), the first 1,000 are on the whitelist, mint not open yet`);
+    ok(f.on && Number.isInteger(f.no) && f.no > 1 && f.supply === 2222 && f.listed && f.reserved === false && f.open === false && f.minLvl === 10 && f.ready === false, `every hero gets a number (#${f.no}) and can mint (2,222 in all), mint not open yet`);
     const v = await p.req('founders', { method: 'POST', body: { action: 'voucher' } });
     ok(v.status === 409 && v.data.error === 'not_open', 'no mint vouchers until the contract is set');
     const anon = new Client();
     const m = await anon.req('founders?id=' + f.no); ok(m.status === 200 && m.data.name === 'Founder’s Lantern #' + f.no && m.data.attributes.some(a => a.value === 'Founder'), 'token metadata is public and names the hero');
     const im = await fetch(BASE + '/api/founders?img=5'); ok(im.headers.get('content-type') === 'image/svg+xml' && (await im.text()).startsWith('<svg'), 'the token image is public');
-    ok((await anon.req('founders?id=0')).status === 404 && (await anon.req('founders')).status === 401, 'bad ids are refused; your own status needs sign-in'); }
+    ok((await anon.req('founders?id=0')).status === 404 && (await anon.req('founders')).status === 401, 'bad ids are refused; your own status needs sign-in');
+    const tw = await anon.req('tools', { method: 'POST', body: { action: 'winners_add', names: 'Founder' } }), tl = await anon.req('tools', { method: 'POST', body: { action: 'winners' } });
+    const tp = await p.req('tools', { method: 'POST', body: { action: 'winners_add', names: 'Founder' } });
+    ok(tw.status === 401 && tl.status === 401 && tp.status === 401 && (await p.req('founders')).data.reserved === false, 'giveaway winners can only be listed or added with an owner-tools pass (signed in players get nothing)'); }
 
   console.log('Trading');
   { const { SignJWT } = await import('jose');
