@@ -9,7 +9,7 @@
 
 // The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
 // from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
-const MIN_CLIENT = '0.12.0';
+const MIN_CLIENT = '0.12.4';
 const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
@@ -337,7 +337,7 @@ const FISH_PH = new Set(['cast', 'wait', 'bite', 'reel']);
 // Tree types (match TREES in the game's data.js): logs per tree and regrow time. Higher-level trees in later areas hold
 // fewer logs and take longer to regrow.
 // regenDelay/regenEvery: a tree nobody has cut for regenDelay grows back 1 log every regenEvery, up to full.
-const TREE_TYPES = { oak: { logs: 300, regrow: 20e3, regenDelay: 15e3, regenEvery: 2e3 }, blackwood: { logs: 60, regrow: 45e3, regenDelay: 20e3, regenEvery: 6e3 } }, TREE_MAX = 64, CHOP_GAP_MS = 1200;
+const TREE_TYPES = { oak: { logs: 300, regrow: 20e3, regenDelay: 15e3, regenEvery: 2e3 }, blackwood: { logs: 60, regrow: 45e3, regenDelay: 20e3, regenEvery: 6e3 }, willow: { logs: 80, regrow: 60e3, regenDelay: 20e3, regenEvery: 5e3 } }, TREE_MAX = 64, CHOP_GAP_MS = 1200;
 const treeType = k => TREE_TYPES[k] || TREE_TYPES.oak;
 const DROP_MAX = 400, DROP_PRIVATE_MS = 30e3, DROP_LIFE_MS = 180e3, LOOT_LIFE_MS = 30 * 60e3;
 // ---- the Wilderness: the north of every Hold world, past the old wall, is PvP. The room is the referee: it checks every
