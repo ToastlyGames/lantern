@@ -60,7 +60,8 @@ export default async function handler(req, res) {
   let rewards = { on: rewardsOn(), start: rewardsStart() ? new Date(rewardsStart()).toISOString() : null, claims: claimsOn(), contract: claimContract(), signer: signerAddress() };
   if (rewards.on) { try { const vault = await vaultBalance(); rewards.vault = vault; const t = await db().tok('00000000-0000-0000-0000-000000000000', vault); rewards.pool = t ? +t.pool : null; rewards.ledger = 'ok'; } catch (e) { rewards.ledger = 'run supabase/rewards.sql: ' + (e.message || e); } }
   // Founder's Lantern: is the mint set up, the whitelist size, and is supabase/founders.sql run (hero numbers)
-  const founders = { open: FDR.mintOpen(), contract: FDR.foundersContract(), signer: FDR.signerAddress(), whitelist: FDR.foundersWl() };
+  const founders = { mint: FDR.mintOpen(), contract: FDR.foundersContract(), signer: FDR.signerAddress(), supply: FDR.FOUNDERS_SUPPLY, openPool: FDR.FOUNDERS_OPEN, reserved: FDR.FOUNDERS_RESERVED, serverLevelCheck: FDR.serverLevelCheck() };
   try { await db().heroByNo(1); founders.heroNumbers = 'ok'; } catch (e) { founders.heroNumbers = 'run supabase/founders.sql: ' + (e.message || e); }
+  try { await db().foundersWinners(); founders.giveaway = 'ok'; } catch (e) { founders.giveaway = 'run supabase/founders-giveaway.sql: ' + (e.message || e); }
   send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, founders, node: process.version });
 }

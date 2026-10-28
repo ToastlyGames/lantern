@@ -12,6 +12,7 @@ import { guard, send, fail, body, cookie, appDomain, hostAllowed, reqHost } from
 import { CHAIN_ID, STATEMENT, TTL_MS, buildSiwe, checksum, parseSiwe, checkFields, signatureValid } from '../lib/siwe.js';
 import { isToolAdmin } from '../lib/admins.js';
 import { TOOL_FILES } from '../lib/toolfiles.js';
+import { FOUNDERS_RESERVED } from '../lib/founders.js';
 
 const HOURS = 8, ISS = 'lanternhold-tools';
 const secure = () => process.env.LH_INSECURE_COOKIE === '1' ? '' : '; Secure';
@@ -75,6 +76,26 @@ export default async function handler(req, res) {
       return send(res, 200, { ok: true, address: msg.address });
     }
     if (b.action === 'whoami') return send(res, 200, { address: await admin(req) });
+    // Founder's Lantern X giveaway winners (admin pass only): list, add or remove by hero name
+    if (b.action === 'winners' || b.action === 'winners_add' || b.action === 'winners_remove') {
+      if (!(await admin(req))) return fail(res, 401, 'locked');
+      if (b.action !== 'winners') {
+        const names = (Array.isArray(b.names) ? b.names : String(b.names || '').split(/[\s,;]+/)).map(n => String(n).trim().replace(/^@/, '')).filter(n => /^[A-Za-z0-9_]{2,16}$/.test(n)).slice(0, 1000);
+        const cur = await db().foundersWinners(), done = [], missing = [], skipped = [];
+        let count = cur.length;
+        for (const n of names) {
+          if (b.action === 'winners_add' && count >= FOUNDERS_RESERVED && !cur.some(w => w.name.toLowerCase() === n.toLowerCase())) { skipped.push(n); continue; }
+          const r = await db().foundersReserve(n, b.action === 'winners_add');
+          if (!r) { missing.push(n); continue; }
+          if (b.action === 'winners_add' && !r.was) count++;
+          if (b.action === 'winners_remove' && r.was) count--;
+          done.push(r.name);
+        }
+        const list = await db().foundersWinners();
+        return send(res, 200, { winners: list, cap: FOUNDERS_RESERVED, done, missing, skipped });
+      }
+      return send(res, 200, { winners: await db().foundersWinners(), cap: FOUNDERS_RESERVED });
+    }
     fail(res, 400, 'bad_action');
   } catch (e) { console.error(e); fail(res, 500, 'server_error'); }
 }
