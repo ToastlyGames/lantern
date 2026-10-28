@@ -10,7 +10,7 @@ const ITEMS={
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
-  logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},
+  logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},willow_logs:{n:'Willow Logs',v:18},
   bread:{n:'Bread',v:8,heal:30,food:true},stew:{n:'Glowcap Stew',v:20,heal:70,food:true},
   oil:{n:'Oil Flask',v:15,oil:50},oil2:{n:'Greater Oil Flask',v:90,oil:100},
   moonpetal_seed:{n:'Moonpetal Seed',v:30},moonpetal:{n:'Moonpetal',v:45},
@@ -169,7 +169,8 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['
 // regenDelay/regenEvery (s): a partly cut tree left alone for regenDelay grows back 1 log every regenEvery.
 const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
   // the Wilderness: fewer logs, slower to regrow, much more xp
-  blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
+  blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'},
+  willow:{n:'Willow Tree',lvl:30,xp:18,logs:80,regrow:60,regenDelay:20,regenEvery:5,item:'willow_logs'}};   // Hollowmere (v0.12.4)
 // ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break, seconds to grow back ----------
 // respawn: seconds until a mined-out vein grows back (harder ores take longer)
 const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3,respawn:15},iron:{n:'Iron',lvl:10,xp:35,hp:3,respawn:25},coal:{n:'Coal',lvl:20,xp:50,hp:4,respawn:40},

@@ -595,6 +595,7 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'gem':p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..','......'],{c:PAL.sky,b:PAL.cyan,a:PAL.blue});p.set(6,4,PAL.white);break;
     case 'slime_gel':p.ell(8,10,5,4,PAL.green);p.ell(7,9,2,1.5,PAL.lime);p.set(6,8,PAL.white);break;
     case 'blackwood_logs':p.rect(2,8,12,4,'#2a1e22');p.rect(2,8,12,1,'#4a3640');p.rect(4,4,11,4,'#2a1e22');p.rect(4,4,11,1,'#4a3640');p.ell(3,10,2,2,'#7a5ca8');p.set(3,10,'#3d2f52');p.ell(14,6,2,2,'#7a5ca8');p.set(14,6,'#3d2f52');break;
+    case 'willow_logs':p.rect(2,8,12,4,'#4a3a2a');p.rect(2,8,12,1,'#6b5a3e');p.rect(4,4,11,4,'#4a3a2a');p.rect(4,4,11,1,'#6b5a3e');p.ell(3,10,2,2,'#d8c99a');p.set(3,10,'#8a7a50');p.ell(14,6,2,2,'#d8c99a');p.set(14,6,'#8a7a50');p.set(8,5,'#73c7a0');p.set(10,9,'#73c7a0');break;
     case 'logs':p.rect(2,8,12,4,PAL.bark);p.rect(2,8,12,1,PAL.wood);p.rect(4,4,11,4,PAL.bark);p.rect(4,4,11,1,PAL.wood);p.ell(3,10,2,2,PAL.tan);p.set(3,10,PAL.wood);p.ell(14,6,2,2,PAL.tan);p.set(14,6,PAL.wood);break;
     case 'bone':p.line(4,12,12,4,PAL.bone);p.line(5,12,12,5,PAL.bone);p.rect(3,11,2,3,PAL.bone).rect(11,3,3,2,PAL.bone);break;
     case 'wheat_seed':p.rect(5,7,6,7,PAL.wood);p.rect(5,6,6,2,PAL.bark);p.rect(7,9,2,3,PAL.yellow);break;

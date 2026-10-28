@@ -4,8 +4,17 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.12.2',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.0'};
+const BUILD={version:'0.12.4',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.4'};
 const CHANGELOG=[
+  {v:'0.12.4',date:'2026-10-27',title:'Willows and a bigger dock',notes:[
+    'The willows of Hollowmere can be chopped: Woodcutting 30, 18 XP a log. Willow Logs sell well to Tallow. Like the oaks, every willow is shared with your world and grows back after it falls.',
+    'The Moonmere dock is bigger: the walkway is two planks wide and the platform in the middle is 5 by 5, with room for a crowd to fish.',
+    'In Hollowmere, when a monster comes for you, the action button fights instead of chopping or fishing.',
+    'A new goal: cut a willow log.']},
+  {v:'0.12.3',date:'2026-10-27',title:'How raids will work',notes:[
+    'Raids arrive in Season 1, and every raid is a world event for the whole server.',
+    'One raid opens every hour at the Abyssal Maw. Players from every world can join the same raid at the same time.',
+    'A raid begins once at least 10 players are in the raid queue. The Maw in Hollowmere now explains it all.']},
   {v:'0.12.2',date:'2026-10-27',title:'Relic-forging by item level',notes:[
     'The gold a relic-forge step costs now depends on the item’s level: the higher the level, the more gold. A Copper Blade costs about 18,000 gold to take all the way to +5, a Steel Blade about 78,000, and the Voidwoven Robe about 139,000.',
     'An item’s level is what it takes to make it (Smithing for forged gear, Crafting for jewelry and staffs). Boss-only drops are levels 50 to 75. The Relic forge tab shows each piece’s level.']},

@@ -56,8 +56,9 @@ function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(91
   // the Moonmere: a great lake (about three times the Hold's), bigger rows in the middle
   const cx=21,cy=31,rx=9.5,ry=8.5;for(let ly=20;ly<=42;ly++)for(let lx=10;lx<=33;lx++){const d=((lx+.5-cx)/rx)**2+((ly+.5-cy)/ry)**2+(Math.sin(lx*1.7+ly)*.06);if(d<1)put(lx,ly,MOON,1);}
   // the dock: from the north shore straight out to a platform in the middle of the water
-  for(let ly=22;ly<=29;ly++)put(21,ly,DOCK,0);for(let ly=30;ly<=32;ly++)for(let lx=20;lx<=22;lx++)put(lx,ly,DOCK,0);
-  for(let ly=21;ly>=19;ly--)if(tAt(m,...L(21,ly))!==DOCK&&!solidAt(m,...L(21,ly)))put(21,ly,MPATH,0);
+  // (v0.12.4: the walkway is two planks wide and the platform 5x5, room for a crowd to fish)
+  for(let ly=22;ly<=28;ly++)for(let lx=20;lx<=21;lx++)put(lx,ly,DOCK,0);for(let ly=29;ly<=33;ly++)for(let lx=19;lx<=23;lx++)put(lx,ly,DOCK,0);
+  for(let ly=21;ly>=19;ly--)for(let lx=20;lx<=21;lx++)if(tAt(m,...L(lx,ly))!==DOCK&&!solidAt(m,...L(lx,ly)))put(lx,ly,MPATH,0);
   m.lilies.push(...[[14,27,1],[28,26,0],[17,37,0],[25,38,1],[30,31,0],[12,33,1],[19,24,0],[24,35,1]].map(([x,y,f])=>[x+X0,y+Y0,f,1]));
   // buildings and landmarks
   const obj=(type,lx,ly,extra)=>{const [x,y]=L(lx,ly);return addObj(m,Object.assign({type,x:x*T+8,y:y*T+14},extra||{}));};
@@ -72,7 +73,7 @@ function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(91
   obj('hmsign',41,10,{block:[[...L(41,10)]],act:{x:L(41,10)[0]*T+8,y:L(41,11)[1]*T+4,label:'Read',id:'hmsign'}});
   // willows on the moor, reeds and moon crystals on the shore, fairy rings in the grass
   const free=(lx,ly)=>{const [x,y]=L(lx,ly);return !solidAt(m,x,y)&&tAt(m,x,y)!==MPATH&&tAt(m,x,y)!==PLAZA&&tAt(m,x,y)!==DOCK;};
-  for(const [lx,ly] of [[19,4],[26,4],[35,6],[40,4],[29,17],[36,15],[6,20],[4,26],[13,46],[17,50],[24,47],[33,40],[40,40],[34,50],[41,47],[30,46],[8,45],[3,42],[36,32],[40,30]])if(free(lx,ly))obj('willow',lx,ly,{block:[[...L(lx,ly)]]});
+  for(const [lx,ly] of [[19,4],[26,4],[35,6],[40,4],[29,17],[36,15],[6,20],[4,26],[13,46],[17,50],[24,47],[33,40],[40,40],[34,50],[41,47],[30,46],[8,45],[3,42],[36,32],[40,30]])if(free(lx,ly)){const o=obj('willow',lx,ly,{block:[[...L(lx,ly)]]});o.kind='willow';o.chop=true;o.ti=m.trees.length;o.logs=TREES.willow.logs;o.until=0;m.trees.push(o);}   // choppable (Woodcutting 30); indexes after the oaks and blackwoods
   for(let ly=19;ly<=43;ly++)for(let lx=9;lx<=34;lx++){const [x,y]=L(lx,ly);if(!free(lx,ly))continue;const nearW=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>tAt(m,x+a,y+b)===MOON);
     if(nearW&&r()<.28)m.objs.push({type:'reeds',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0});else if(nearW&&r()<.06)obj('mcrystal',lx,ly,{v:r()*2|0,block:[[x,y]],light:{r:18,c:'violet'}});}
   for(let i=0;i<14;i++){const lx=3+(r()*38|0),ly=3+(r()*50|0);if(free(lx,ly)){const [x,y]=L(lx,ly);m.objs.push({type:'mushring',x:x*T+8,y:y*T+15,flat:true});}}
