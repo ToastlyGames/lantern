@@ -9,7 +9,7 @@
 
 // The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
 // from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
-const MIN_CLIENT = '0.10.0';
+const MIN_CLIENT = '0.12.0';
 const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
@@ -291,7 +291,7 @@ export class Lobby {
   }
   // Start a dungeon instance: just you, or your whole party (only the leader can lead a party down).
   async delve(u, floor) {
-    floor = Number.isInteger(floor) && floor >= 1 && floor <= 20 ? floor : 1;
+    floor = Number.isInteger(floor) && floor >= 1 && floor <= 30 ? floor : 1;
     const p = this.partyOf(u.id);
     if (p && p.leader !== u.id) {
       if (p.inst) return send(u.ws, Object.assign({ t: 'go' }, p.inst));
@@ -348,11 +348,15 @@ const WILD_Y = 640, WILD_ROW_PX = 32, WILD_MAX = 20;
 export const wildLvl = y => (y < WILD_Y ? Math.min(WILD_MAX, Math.max(1, Math.ceil((WILD_Y - y) / WILD_ROW_PX))) : 0);
 const PVP = { gap: 750, reach: 34, skullMs: 20 * 60e3, retaliateMs: 120e3, combatMs: 10e3, regenAfter: 8e3, regenPerS: 1, eatGap: 1500, safeMs: 5000, ghostMs: 15e3, returnMax: 20, lootPrivate: 60e3, lootLife: 180e3, mult: .7, miss: .12 };
 // what gear does in a fight (the same numbers as the game's data.js; admin hats count as an Ember Helm here)
-const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25, steel: 34, cinder: 46 }, MAIL_DEF = { copper: 2, iron: 4, ember: 7, steel: 10 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, steel: 5, star: 9, partyhat: 4, greenhat: 4 };
+// staffs are clubs in the Wilderness (spells don't hit players); robes are lighter than plate
+const BLADE_DMG = { rusty: 6, copper: 10, iron: 16, ember: 25, steel: 34, gloam: 40, cinder: 46, apprentice: 4, blackwood: 6, emberwood: 9, gloamwood: 12, hollow: 14, moon: 16 },
+  MAIL_DEF = { copper: 2, iron: 4, ember: 7, steel: 10, gloam: 13, tide: 8, voidrobe: 11 }, HELM_DEF = { copper: 1, iron: 2, ember: 4, steel: 5, gloam: 7, star: 9, partyhat: 4, greenhat: 4 };
 const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg: 15, hp: 12 }, knight: { def: 3, dmg: 12 } };
 export const pvpMax = l => 60 + 8 * (((l && l.lvl) || 1) - 1) + ((CAPE_PVP[l && l.cape] || {}).hp || 0);
-const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm']);
-const HOLD_SPAWN = { x: 208, y: 800 };   // where a defeated hero wakes up (the Hold's spawn in client-src/world.js)
+const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm', 'ring', 'amulet']);
+// The map grew west in v0.12 (Hollowmere): every Hold and Wilderness x moved right by WEST_X. Keep in step with world.js.
+const WEST_X = 704;
+const HOLD_SPAWN = { x: 208 + WEST_X, y: 800 };   // where a defeated hero wakes up (the Hold's spawn in client-src/world.js)
 const recent = (o, now, ms) => { const r = {}; let k = 0; for (const [id, t] of Object.entries(o || {})) if (now - t < ms && k++ < 12) r[id] = t; return r; };
 export class Room {
   constructor(ctx, env) {
@@ -488,7 +492,7 @@ export class Room {
     for (const [id, n, slot] of risk) { const k = Math.min(keep, n); keep -= k; if (k) kept.push([id, k, slot]); if (n - k) lost.push([id, n - k, slot]); }
     const made = [];
     lost.forEach(([it, n], i) => { const a = i * 2.39996, r = i ? 5 + 2.2 * Math.sqrt(i) : 0;
-      made.push({ did: rid(10), it, n, x: Math.round(Math.max(20, Math.min(396, x + Math.cos(a) * r))), y: Math.round(Math.max(20, y - 3 + Math.sin(a) * r * .7)), vx: 0, vy: 0, f: null, by: killer.id, bag: true, pk: 1, at: now, pub: now + PVP.lootPrivate, exp: now + PVP.lootLife }); });
+      made.push({ did: rid(10), it, n, x: Math.round(Math.max(WEST_X + 20, Math.min(WEST_X + 396, x + Math.cos(a) * r))), y: Math.round(Math.max(20, y - 3 + Math.sin(a) * r * .7)), vx: 0, vy: 0, f: null, by: killer.id, bag: true, pk: 1, at: now, pub: now + PVP.lootPrivate, exp: now + PVP.lootLife }); });
     this.pruneDrops(); for (const d of made) this.drops.set(d.did, d); if (made.length) this.saveDrops();
     for (const r of this.players.values()) if (!r.ghost) for (const d of made) send(r.ws, { t: 'D', d: this.dropView(d, r.id) });
     const died = { by: killer.name, lost, kept, sk: skulled ? 1 : 0 };
@@ -661,11 +665,12 @@ export class Room {
     if (t === 'take') return this.onTake(p, m);
     if (t === 'chop') return this.onChop(p, m);
     if (TRADE_MSG.has(t)) return this.inst ? undefined : this.onTrade(p, t, m);
-    if (!this.inst && !(t === 'sw' && p.rd && wildLvl(p.y))) return;   // in a Hold world, swings only show in the Wilderness
+    if (!this.inst && !(t === 'sw' && p.rd && (wildLvl(p.y) || p.x < WEST_X))) return;   // in a Hold world, swings and casts only show in the Wilderness and Hollowmere
     if (t === 'sw') {   // a swing in a party dungeon: everyone else sees the blade, the damage numbers and the ore chips
       const now = Date.now(); if (now - (p.lastSw || 0) < 120) return; p.lastSw = now;
       const h = Array.isArray(m.h) ? m.h.slice(0, 8).filter(x => Array.isArray(x) && Number.isInteger(x[0]) && Number.isFinite(+x[1])).map(x => [x[0], Math.max(0, Math.min(9999, Math.round(+x[1])))]) : [];
-      return this.all({ t: 'W', id: p.id, d: DIRS.has(m.d) ? m.d : 'down', h, o: Number.isInteger(m.o) && m.o >= 0 && m.o < 5000 ? m.o : -1 }, p.id);
+      const c = typeof m.c === 'string' && /^[a-z]{3,12}$/.test(m.c) ? m.c : undefined, a = Number.isFinite(+m.a) ? Math.round(Math.max(-7, Math.min(7, +m.a)) * 100) / 100 : undefined;   // a spell cast (v0.12)
+      return this.all({ t: 'W', id: p.id, d: DIRS.has(m.d) ? m.d : 'down', h, o: Number.isInteger(m.o) && m.o >= 0 && m.o < 5000 ? m.o : -1, c, a }, p.id);
     }
     const host = this.cfg.host;
     if (HOST_OUT.has(t) && p.id === host) {
