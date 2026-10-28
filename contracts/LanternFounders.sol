@@ -2,13 +2,14 @@
 pragma solidity 0.8.26;
 
 /// @title Lanternhold Founders (the Founder's Lantern)
-/// @notice A free NFT for the first heroes of Lanternhold, on Robinhood Chain. Each token's ID is the hero's number
-/// (Hero #1 is the first hero ever made), so every hero number can be minted once, and only up to `maxId` (1,000 at
-/// launch: the whitelist is the first 1,000 heroes). The game's server checks the hero and signs a voucher; the
-/// player's wallet sends it here and pays only gas. One per wallet. Holders get the Founder's Flame in the game,
-/// a light colour no one else has, for as long as they hold one.
-/// Owner controls: pause, the voucher signer, the metadata address, royalties (max 10%), the mint end time, and
-/// raising `maxId` for a later phase. The owner can't mint, move or take anyone's token.
+/// @notice A free NFT for the heroes of Lanternhold, on Robinhood Chain: 2,222 in all, ever. Each token's ID is the
+/// hero's number (Hero #1 is the first hero ever made), so each hero can mint once. The supply is split in two pools:
+/// an open pool any hero can mint from, and a reserved pool held for giveaway winners. The game's server checks the
+/// hero, picks the pool and signs a voucher; the player's wallet sends it here and pays only gas. One per wallet.
+/// Holders get the Founder's Flame in the game, a light colour no one else has, for as long as they hold one.
+/// Owner controls: pause, the voucher signer, the metadata address, royalties (max 10%), the mint end time, and moving
+/// unclaimed reserved spots into the open pool. The total can never grow past MAX_SUPPLY, and the owner can't mint,
+/// move or take anyone's token.
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external returns (bytes4);
 }
@@ -20,7 +21,11 @@ contract LanternFounders {
     address public owner;
     address public signer;
     bool public paused;
-    uint256 public maxId;                 // highest hero number that can mint (1,000 = the first 1,000 heroes)
+    uint256 public immutable MAX_SUPPLY;  // every Founder's Lantern there will ever be (2,222)
+    uint256 public openCap;               // how many the open pool holds (any hero)
+    uint256 public reservedCap;           // how many are held for giveaway winners (openCap + reservedCap == MAX_SUPPLY)
+    uint256 public openMinted;
+    uint256 public reservedMinted;
     uint256 public mintEnd;               // 0 = no end; otherwise minting closes at this unix time
     uint256 public totalSupply;
     string private _base;                 // token metadata: _base + tokenId
@@ -35,7 +40,7 @@ contract LanternFounders {
     mapping(address => bool) public hasMinted;     // one mint per wallet, ever (even if they later sell it)
 
     bytes32 public immutable DOMAIN_SEPARATOR;
-    bytes32 public constant MINT_TYPEHASH = keccak256("Mint(address wallet,uint256 heroNo,uint256 deadline)");
+    bytes32 public constant MINT_TYPEHASH = keccak256("Mint(address wallet,uint256 heroNo,bool reserved,uint256 deadline)");
     uint256 private constant HALF_N = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
 
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
@@ -44,15 +49,16 @@ contract LanternFounders {
     event BatchMetadataUpdate(uint256 fromTokenId, uint256 toTokenId);
     event SignerChanged(address signer);
     event Paused(bool paused);
-    event MaxIdChanged(uint256 maxId);
+    event ReservedMoved(uint256 n, uint256 openCap, uint256 reservedCap);
     event MintEndChanged(uint256 mintEnd);
     event OwnerChanged(address owner);
 
     modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
 
-    constructor(address signer_, uint256 maxId_, string memory base_, string memory contractURI_) {
+    constructor(address signer_, uint256 openCap_, uint256 reservedCap_, string memory base_, string memory contractURI_) {
         require(signer_ != address(0), "zero address");
-        owner = msg.sender; signer = signer_; maxId = maxId_; _base = base_; _contractURI = contractURI_;
+        require(openCap_ + reservedCap_ > 0, "no supply");
+        owner = msg.sender; signer = signer_; openCap = openCap_; reservedCap = reservedCap_; MAX_SUPPLY = openCap_ + reservedCap_; _base = base_; _contractURI = contractURI_;
         royaltyReceiver = msg.sender; royaltyBps = 500;
         DOMAIN_SEPARATOR = keccak256(abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -61,17 +67,21 @@ contract LanternFounders {
 
     // ---- minting ----
     /// @notice Mint your Founder's Lantern with the voucher the game gave you. Free: you only pay gas.
-    function mint(uint256 heroNo, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+    /// `reserved` says which pool it comes from (set by the game: giveaway winners mint from the reserved pool).
+    function mint(uint256 heroNo, bool reserved, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         require(!paused, "paused");
         require(mintEnd == 0 || block.timestamp <= mintEnd, "minting has ended");
         require(block.timestamp <= deadline, "voucher expired");
-        require(heroNo >= 1 && heroNo <= maxId, "not on the whitelist");
+        require(heroNo >= 1, "no hero #0");
         require(_owners[heroNo] == address(0), "already minted");
         require(!hasMinted[msg.sender], "this wallet already minted one");
+        if (reserved) require(reservedMinted < reservedCap, "the reserved spots are all minted");
+        else require(openMinted < openCap, "the open spots are all minted");
         require(uint256(s) <= HALF_N, "bad signature");
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, keccak256(abi.encode(MINT_TYPEHASH, msg.sender, heroNo, deadline))));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, keccak256(abi.encode(MINT_TYPEHASH, msg.sender, heroNo, reserved, deadline))));
         address who = ecrecover(digest, v, r, s);
         require(who != address(0) && who == signer, "bad signature");
+        if (reserved) reservedMinted += 1; else openMinted += 1;
         hasMinted[msg.sender] = true;
         _owners[heroNo] = msg.sender;
         _balances[msg.sender] += 1;
@@ -122,8 +132,12 @@ contract LanternFounders {
     // ---- owner ----
     function setSigner(address s_) external onlyOwner { require(s_ != address(0), "zero address"); signer = s_; emit SignerChanged(s_); }
     function setPaused(bool p) external onlyOwner { paused = p; emit Paused(p); }
-    /// @notice Open a later phase to more hero numbers. It can only go up, so no one's place is ever taken away.
-    function setMaxId(uint256 m) external onlyOwner { require(m >= maxId, "can only raise"); maxId = m; emit MaxIdChanged(m); }
+    /// @notice Move reserved spots nobody claimed into the open pool. Only that way round, never past what's left in
+    /// the reserved pool, so the total stays MAX_SUPPLY and no winner's minted lantern is affected.
+    function moveReservedToOpen(uint256 n) external onlyOwner {
+        require(n > 0 && n <= reservedCap - reservedMinted, "not that many unclaimed");
+        reservedCap -= n; openCap += n; emit ReservedMoved(n, openCap, reservedCap);
+    }
     function setMintEnd(uint256 t) external onlyOwner { mintEnd = t; emit MintEndChanged(t); }
     function setBaseURI(string calldata b) external onlyOwner { _base = b; emit BatchMetadataUpdate(1, type(uint256).max); }
     function setContractURI(string calldata c) external onlyOwner { _contractURI = c; }
