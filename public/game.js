@@ -53,7 +53,8 @@ const TIER_COLORS={
   copper:{tun:PAL.orange,tun2:PAL.rust,trim:PAL.yellow},
   iron:{tun:PAL.silver,tun2:PAL.slate,trim:PAL.white},
   ember:{tun:PAL.red,tun2:PAL.plum,trim:PAL.ember},
-  steel:{tun:'#7d8fa3',tun2:'#3e4a5c',trim:'#c9d6e3'}
+  steel:{tun:'#7d8fa3',tun2:'#3e4a5c',trim:'#c9d6e3'},
+  gloam:{tun:'#2e4a52',tun2:'#1d2a33',trim:'#7affd6'},tide:{tun:'#24454d',tun2:'#173036',trim:'#73eff7'},voidrobe:{tun:'#2e2a42',tun2:'#1d1a2a',trim:'#c79bf2'}
 };
 // Appearance options. Expansions can add more swatches/styles here.
 const LOOKS={
@@ -64,7 +65,9 @@ const LOOKS={
 };
 const DEFAULT_LOOK={skin:1,hair:1,cloth:0,style:0};
 function shade(c,f){const [r,g,b]=hex(c);const k=v=>Math.max(0,Math.min(255,Math.round(f<1?v*f:v+(255-v)*(f-1))));return '#'+[k(r),k(g),k(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
-const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember},steel:{m:'#7d8fa3',m2:'#3e4a5c',hi:'#c9d6e3'}};
+const ARMOR={copper:{m:PAL.orange,m2:PAL.rust,hi:PAL.yellow},iron:{m:PAL.silver,m2:PAL.slate,hi:PAL.white},ember:{m:PAL.red,m2:PAL.plum,hi:PAL.ember},steel:{m:'#7d8fa3',m2:'#3e4a5c',hi:'#c9d6e3'},gloam:{m:'#2e4a52',m2:'#1d2a33',hi:'#7affd6'},
+  // robes: long, to the boots, with a glowing hem and sash
+  tide:{m:'#24454d',m2:'#173036',hi:'#73eff7',robe:true},voidrobe:{m:'#2e2a42',m2:'#1d1a2a',hi:'#c79bf2',robe:true}};
 // The hood style: a real hood with a pointed tip that flops back, a lit rim around a shadowed opening, and a short drape
 // over the shoulders that ends in a point (front) or falls down the back.
 function hoodHead(p,dir,c,face,face2){const c2=shade(c,.68),hi=shade(c,1.3),dk=shade(c,.42);
@@ -107,7 +110,9 @@ function heroFrame(dir,step,look){
   else if(dir==='up'){p.rect(5,8,6,1,tun2);p.rect(6,9,4,2,tunHi);}
   else{rect(5,9,4,2,tunHi);set(5,8,trim);}
   // armor over the clothes
-  if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down'){p.rect(6,8,4,1,A.hi);p.set(7,9,A.hi);}else p.rect(5,8,6,1,A.hi);p.set(10,9,A.m2);}
+  if(A&&A.robe){p.rect(4,8,8,6,A.m);p.rect(4,8,1,6,A.m2);p.rect(11,9,1,5,A.m2);p.rect(4,13,8,1,A.hi);p.rect(5,14,6,1,A.m2);
+    if(dir==='down'){p.rect(7,8,2,5,A.m2);p.set(7,9,A.hi).set(8,11,A.hi);p.set(6,8,A.hi).set(9,8,A.hi);}else if(dir==='up'){p.rect(6,9,4,3,A.m2);}else{rect(5,9,1,4,A.hi);}}
+  else if(A){p.rect(5,8,6,3,A.m).rect(5,10,6,1,A.m2);p.set(4,8,A.m2).set(11,8,A.m2);if(dir==='down'){p.rect(6,8,4,1,A.hi);p.set(7,9,A.hi);}else p.rect(5,8,6,1,A.hi);p.set(10,9,A.m2);}
   // belt with a buckle that catches the light
   p.rect(4,11,8,1,boot);if(dir==='down'){p.set(7,11,PAL.gold).set(8,11,PAL.yellow);}else if(dir!=='up')set(5,11,PAL.yellow);
   // arms: sleeve, cuff, hand
@@ -136,7 +141,7 @@ function heroFrame(dir,step,look){
     frontHair(p,dir,style,hair,hair2,hairHi,set,rect);
   }
   // helmet on top of the head
-  const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3'],star:['#2c3f86','#1a1c4c','#ffe9a8']}[look.helm];
+  const HM={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3'],gloam:['#2e4a52','#1d2a33','#7affd6'],star:['#2c3f86','#1a1c4c','#ffe9a8']}[look.helm];
   if(HM){p.ell(8,4,4.4,2.6,HM[0]);p.rect(4,5,8,1,HM[1]);p.set(6,2,HM[2]).set(7,2,HM[2]);if(dir==='down'||dir==='up')p.rect(7,1,2,1,HM[1]);if(dir==='down'){p.rect(5,4,6,1,HM[1]);}}
   if(look.helm==='star'){p.rect(7,0,2,2,'#ffe9a8');p.set(7,0,'#fff3c4');p.set(6,1,'#73eff7').set(9,1,'#73eff7');if(dir==='down')p.set(6,4,'#73eff7').set(9,4,'#73eff7');}
   if(look.helm==='partyhat'){p.rect(5,1,6,2,'#3b5dc9');p.set(6,1,'#73eff7').set(9,2,'#73eff7');p.rect(4,3,8,1,'#29366f');}
@@ -195,7 +200,7 @@ function heroImg(look,dir,frame){const k=[look.skin,look.hair,look.cloth,look.st
 // lantern carried by the hero (drawn separately so its glow can pulse)
 function lanternSprite(key,flame){const L=LANTERNS[key]||LANTERNS.basic,m=L.metal,gl=flame||L.glow,p=new Px(6,8);   // flame: the Founder's Flame colour
   p.rect(2,0,2,1,m).rect(1,1,4,1,m).rect(1,2,4,4,gl).rect(2,3,2,2,PAL.white).rect(1,6,4,1,m);if(L.r==='legendary'||L.r==='mythic'||L.r==='xrare')p.set(0,3,gl).set(5,3,gl);p.outline();return p.canvas();}
-function swordSprite(tier){if(tier==='cinder')return cinderSprite();const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:tier==='steel'?'#c9d6e3':PAL.silver;
+function swordSprite(tier){if(tier==='cinder')return cinderSprite();if(tier==='gloam')return gloamSwordSprite();if(STAFF_ART[tier])return staffSprite(tier);const p=new Px(16,16);const blade=tier==='ember'?PAL.ember:tier==='iron'?PAL.white:tier==='copper'?PAL.orange:tier==='steel'?'#c9d6e3':PAL.silver;
   for(let i=0;i<9;i++){p.set(4+i,11-i,blade);p.set(5+i,11-i,i<8?(tier==='ember'?PAL.red:tier==='steel'?'#7d8fa3':PAL.silver):blade);}
   if(tier==='steel'){p.set(13,2,'#f4f4f4');p.rect(2,11,4,2,'#3e4a5c');}
   p.rect(2,11,4,2,PAL.olive).set(3,13,PAL.bark).set(2,14,PAL.bark);p.set(1,12,PAL.gold).set(6,10,PAL.gold);p.outline();return p.canvas();}
@@ -298,7 +303,9 @@ const BIOMES={
   moss:{floor:[PAL.cave,PAL.cave2,PAL.moss],wall:[PAL.dusk,PAL.slate,PAL.fern],accent:PAL.fern,light:'#7fffb0',name:'Mossroot Caverns'},
   crypt:{floor:[PAL.dusk,PAL.cave2,PAL.slate],wall:[PAL.ink,PAL.slate,PAL.silver],accent:PAL.bone,light:'#b7d4ff',name:'Bone Crypts'},
   ember:{floor:['#2a1a1e','#3e272b','#56383a'],wall:['#12080a','#3e272b','#ff9f3d'],accent:PAL.ember,light:'#ffb070',name:'Emberforge Halls'},
-  star:{floor:['#1a1c4c','#2c3f86','#4a6fd0'],wall:['#0a0c22','#2c3f86','#73eff7'],accent:'#73eff7',light:'#b8f7ff',name:'Starfall Hollow'}
+  star:{floor:['#1a1c4c','#2c3f86','#4a6fd0'],wall:['#0a0c22','#2c3f86','#73eff7'],accent:'#73eff7',light:'#b8f7ff',name:'Starfall Hollow'},
+  tide:{floor:['#16303a','#1d3f4a','#2c5a66'],wall:['#08161a','#1d3f4a','#73eff7'],accent:'#73eff7',light:'#9ff0ff',name:'Drowned Archive'},
+  void:{floor:['#16131f','#211d2e','#2e2a42'],wall:['#07060b','#211d2e','#c79bf2'],accent:'#c79bf2',light:'#d8b8ff',name:'Hollow Throne'}
 };
 // ---- dungeon tiles: hand-set flagstones and stone walls, shaded so the Depths read like a real dungeon ----
 const DUN={
@@ -309,7 +316,11 @@ const DUN={
   ember:{mortar:'#1a0f12',stone:['#33242a','#302127','#372730','#2d1f25'],hi:'#3d2b32',lo:'#271a20',moss:['#4a2428','#5e2c2c','#ff9f3d'],
         brick:['#4a2f33','#43292e','#523439'],bhi:'#6a4448',blo:'#2a1a1e',bmortar:'#160c0e',cap:'#7a5054'},
   star:{mortar:'#11142c',stone:['#232a50','#212749','#262e55','#1f2546'],hi:'#2b3460',lo:'#1a1f40',moss:['#2a336a','#323d7a','#73eff7'],
-        brick:['#2c3566','#28305e','#323c70'],bhi:'#4a5896',blo:'#1a1f44',bmortar:'#0e1028',cap:'#5a68a8'}};
+        brick:['#2c3566','#28305e','#323c70'],bhi:'#4a5896',blo:'#1a1f44',bmortar:'#0e1028',cap:'#5a68a8'},
+  tide:{mortar:'#0c1a1f',stone:['#1f3a42','#1c353d','#234149','#1a3239'],hi:'#2a4a53',lo:'#132a30',moss:['#24504a','#2e6056','#73eff7'],
+        brick:['#25434b','#213e46','#2a4b54'],bhi:'#3d6670',blo:'#16282d',bmortar:'#0a1416',cap:'#4f7f8a'},
+  void:{mortar:'#0b0a10',stone:['#1d1a2a','#1a1726','#211d30','#181523'],hi:'#29253a',lo:'#121019',moss:['#2e2342','#3a2b55','#c79bf2'],
+        brick:['#25213a','#211d34','#2a2541'],bhi:'#3d3756',blo:'#15121f',bmortar:'#09080d',cap:'#4f4870'}};
 function floorTile(b,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*31+7);p.rect(0,0,16,16,D.mortar);
   const stone=(x,y,w,h)=>{if(w<2||h<2)return;const c=D.stone[r()*D.stone.length|0];p.rect(x,y,w,h,c);
     p.rect(x,y,w,1,D.hi);p.rect(x,y,1,h,D.hi);p.rect(x,y+h-1,w,1,D.lo);p.rect(x+w-1,y,1,h,D.lo);
@@ -329,6 +340,8 @@ function wallTile(b,face,seed){const D=DUN[b],p=new Px(16,16),r=rng(seed*17+3);
     if(b==='moss'){for(let i=0;i<4;i++){const x=r()*16|0,len=1+(r()*5|0);for(let k=0;k<len;k++)p.set(x,k,k===len-1?DUN.moss.moss[2]:DUN.moss.moss[k%2]);}}
     if(b==='ember'){for(let i=0;i<2;i++){const x=r()*16|0,y=r()*12|0;p.line(x,y,x+(r()*4|0)-2,y+3,D.moss[1]);p.set(x,y,D.moss[2]);}}
     if(b==='star'){for(let i=0;i<3;i++)p.set(r()*16|0,1+(r()*13|0),r()<.5?D.moss[2]:'#e8fbff');}
+    if(b==='tide'){for(let i=0;i<3;i++){const x=r()*16|0,len=2+(r()*6|0);for(let k=0;k<len;k++)p.set(x,4+k,k===len-1?'#73eff7':'#2e6056');}}   // water seeping down the bricks
+    if(b==='void'){for(let i=0;i<2;i++){const x=r()*16|0,y=2+(r()*10|0);p.line(x,y,x+(r()*4|0)-2,y+4,'#3a2b55');p.set(x,y,'#c79bf2');}}
   }
   else{p.rect(0,0,16,16,'#0d0e17');for(let i=0;i<6;i++)p.set(r()*16,r()*16,'#151726');}
   return p.canvas();}
@@ -356,9 +369,16 @@ function chestSprite(open){const p=new Px(16,16);p.rect(2,6,12,8,PAL.wood);p.rec
   if(open){p.rect(2,3,12,3,PAL.bark);p.rect(4,6,8,2,PAL.yellow);}else p.rect(2,4,12,2,PAL.wood);p.outline();return p.canvas();}
 function torchSprite(f){const p=new Px(8,14);p.rect(2,9,4,1,'#3a3f55').rect(1,8,1,2,'#3a3f55').rect(6,8,1,2,'#3a3f55');p.rect(3,6,2,7,PAL.bark).set(3,6,PAL.wood);
   p.ell(4,4,2.2+f*.4,3.2,PAL.red);p.ell(4,4.4,1.6,2.4,PAL.ember);p.ell(4,5,1,1.5,PAL.yellow);p.set(f?3:5,1,PAL.ember);p.outline();return p.canvas();}
-function oreSprite(kind){const c={copper:[PAL.orange,PAL.yellow],iron:[PAL.silver,PAL.white],ember:[PAL.ember,PAL.red],coal:['#14141c','#6d7391'],cobalt:['#3b5dc9','#73eff7']}[kind];const p=new Px(16,16);
-  if(kind==='coal'){[[4,5],[10,4],[7,10],[12,11],[3,12],[9,7]].forEach(([x,y])=>{p.rect(x,y,3,2,c[0]);p.set(x+1,y,c[1]);});return p.canvas();}
-  if(kind==='cobalt'){[[4,6],[10,4],[7,10],[12,11]].forEach(([x,y])=>{p.rect(x,y,2,3,c[0]);p.set(x,y,c[1]).set(x+1,y-1,c[1]);});p.set(3,12,c[1]);return p.canvas();}
+function oreSprite(kind){const c={copper:[PAL.orange,PAL.yellow],iron:[PAL.silver,PAL.white],ember:[PAL.ember,PAL.red],coal:['#14141c','#6d7391'],cobalt:['#3b5dc9','#73eff7'],gloam:['#2e7a6a','#7affd6']}[kind];const p=new Px(16,16);
+  // set into the wall like the other ores, but bigger chunks with a bright rim and a white glint, so they catch the eye
+  if(kind==='coal'){const K='#0e0e14',K2='#2e2f3a',RIM='#b8bfd6',W='#ffffff';
+    [[3,4,4,3],[9,3,4,3],[6,9,4,3],[11,10,3,3],[2,11,3,2]].forEach(([x,y,w,h])=>{p.rect(x,y,w,h,K);p.rect(x+1,y+1,w-2>0?w-2:1,h-2>0?h-2:1,K2);p.rect(x,y,w,1,RIM);p.rect(x,y,1,h,RIM);p.set(x+w-1,y+h-1,'#4b5068');});
+    p.set(4,4,W).set(10,3,W).set(7,9,W);return p.canvas();}
+  if(kind==='cobalt'){const B='#2a55d8',B2='#4f8bff',C='#73eff7',W='#ffffff';
+    [[4,7,4],[9,6,5],[12,11,3],[6,12,3],[2,12,2]].forEach(([x,y,h])=>{p.rect(x,y-h+3,2,h,B);p.rect(x,y-h+3,1,h,B2);p.set(x,y-h+2,C).set(x+1,y-h+2,C);p.set(x,y-h+3,W);});
+    return p.canvas();}
+  if(kind==='gloam'){const D='#1d2a33',G='#2e7a6a',L='#7affd6',W='#e8fff8';
+    [[3,4,4,4],[9,3,5,4],[6,9,4,4],[11,10,3,3]].forEach(([x,y,w,h])=>{p.rect(x,y,w,h,D);p.line(x,y+h-1,x+w-1,y,G);p.set(x+1,y+h-2,L);});p.set(10,4,W).set(7,10,W).set(4,5,L);return p.canvas();}
   [[4,5],[10,4],[7,10],[12,11],[3,12]].forEach(([x,y])=>{p.rect(x,y,2,2,c[0]);p.set(x,y,c[1]);});return p.canvas();}
 // Emberite: a lump of dark basalt split by molten cracks. Two frames so the lava pulses.
 function emberOreSprite(f){const p=new Px(16,16),crust='#170a10',crust2='#2a121c';
@@ -429,6 +449,19 @@ function pressSprite(){const p=new Px(32,32);
   p.rect(14,6,4,10,PAL.slate).rect(12,15,8,2,PAL.slate);
   p.ell(16,24,7,6,PAL.wood);for(let y=20;y<30;y+=3)p.rect(9,y,14,1,PAL.bark);p.rect(10,22,2,4,PAL.gold);
   p.rect(25,22,5,7,PAL.yellow).rect(26,20,3,2,PAL.olive);p.outline();return p.canvas();}
+// the Jeweler's Bench: a low wooden bench with a tiny anvil, a vice, a lamp and trays of gems (the gems twinkle)
+function benchSprite(f){const p=new Px(32,28),W=PAL.wood,W2=PAL.bark,M='#566c86',M2='#94b0c2';
+  p.rect(2,12,28,4,W).rect(2,12,28,1,PAL.tan).rect(2,15,28,1,W2);p.rect(4,16,3,11,W2).rect(25,16,3,11,W2).rect(7,22,18,2,W2);
+  p.rect(5,9,6,3,M).rect(4,8,8,1,M2).rect(7,7,2,1,M2);p.rect(13,10,7,2,'#3a3f55');[[14,'#e43b44'],[16,'#3b5dc9'],[18,'#38b764']].forEach(([x,c])=>p.set(x,10,c));
+  p.rect(23,4,2,8,'#3a3f55').rect(21,2,6,3,'#3a3f55');p.rect(22,5,4,1,PAL.yellow);
+  p.set(f?14:16,9,'#f4f4f4');if(f)p.set(18,9,'#f4f4f4');p.outline();return p.canvas();}
+function gemIcon(p,a,b,c){p.rows(4,3,['..cc..','.cbbc.','cbbbac','cbbaac','.caac.','..cc..'],{c:a,b,a:c});p.set(6,4,PAL.white);}
+function barIcon(p,a,b,c){p.rows(2,6,['...aaaaaaaa.','..abbbbbbbba','.abbbbbbbbac','accccccccccc','.ccccccccccc'],{a:b,b:a,c});p.set(5,7,PAL.white).set(6,7,PAL.white);}
+const JEWEL_COL={copper:['#ef7d57','#8f4a2b'],ruby:['#94b0c2','#566c86'],sapphire:['#94b0c2','#566c86'],emerald:['#c9d6e3','#7d8fa3'],ember:['#ff9f3d','#8f2d3f'],diamond:['#73a7f7','#2a55d8'],star:['#73a7f7','#2a55d8']};
+const GEM_COL={gem:['#41a6f6','#73eff7'],ruby:['#e43b44','#ff8a8a'],sapphire:['#3b5dc9','#73a7f7'],emerald:['#38b764','#a7f070'],diamond:['#e8fbff','#ffffff'],starshard:['#ffe9a8','#ffffff']};
+function jewelIcon(p,k){const J=JEWELS[k],metal=JEWEL_COL[k.split('_')[0]]||JEWEL_COL.copper,gk=Object.keys(J.need).find(g=>GEM_COL[g.replace('_ore','')])||'gem',G=GEM_COL[gk.replace('_ore','')];
+  if(J.slot==='ring'){p.ell(8,10,5,4,metal[0]);p.ell(8,10,3,2.2,null);for(let y=8;y<=12;y++)for(let x=6;x<=10;x++)if(((x-8)/3)**2+((y-10)/2.2)**2<1)p.set(x,y,null);p.set(4,10,metal[1]).set(12,10,metal[1]);p.rect(6,3,4,4,G[0]);p.set(7,4,G[1]).set(8,4,G[1]);p.rect(7,6,2,1,metal[1]);}
+  else{p.line(3,2,8,9,metal[1]).line(13,2,8,9,metal[1]);p.ell(8,11,3.5,3.5,metal[0]);p.ell(8,11,2.2,2.2,G[0]);p.set(7,10,G[1]);if(k==='star_amulet')p.set(8,6,'#ffe9a8').set(5,11,'#ffe9a8').set(11,11,'#ffe9a8');}}
 function boardSprite(){const p=new Px(32,32);p.rect(6,20,2,11,PAL.bark).rect(24,20,2,11,PAL.bark);
   p.rect(3,4,26,18,PAL.wood);p.rect(4,5,24,16,PAL.tan);
   [[6,7,7,6,PAL.white],[15,6,6,5,PAL.yellow],[22,8,5,7,PAL.white],[8,14,6,5,PAL.yellow],[17,13,8,6,PAL.white]].forEach(([x,y,w,h,c])=>{p.rect(x,y,w,h,c);p.rect(x+1,y+1,w-2,1,PAL.slate);p.set(x+w/2|0,y,PAL.red);});
@@ -541,7 +574,8 @@ function wellSprite(){const p=new Px(32,32);p.ell(16,22,10,6,PAL.slate);p.ell(16
 
 // ---------- crops ----------
 function cropSprite(kind,stage){const p=new Px(16,16);
-  const c={wheat:[PAL.lime,PAL.yellow,PAL.gold],lampseed:[PAL.green,PAL.yellow,PAL.ember],glowcap:[PAL.pink,PAL.pink,PAL.white]}[kind];
+  const c={wheat:[PAL.lime,PAL.yellow,PAL.gold],lampseed:[PAL.green,PAL.yellow,PAL.ember],glowcap:[PAL.pink,PAL.pink,PAL.white],moonpetal:['#b8a7ff','#e8e0ff','#73eff7']}[kind];
+  if(kind==='moonpetal'&&stage>0){for(const x of [5,9,12]){const h=stage===1?4:7;p.rect(x,14-h,1,h,'#2f6b55');if(stage===2){p.ell(x+.5,14-h-1,2,1.6,c[0]);p.set(x,14-h-1,c[1]);p.set(x+1,14-h-2,c[2]);}}p.outline();return p.canvas();}
   if(stage===0){p.set(5,11,PAL.lime).set(10,11,PAL.lime).set(8,9,PAL.lime);}
   else if(kind==='glowcap'){const r=stage===1?1.5:2.6;[[5,10],[11,11],[8,8]].forEach(([x,y])=>{p.rect(x,y,1,3,PAL.bone);p.ell(x+.5,y,r,r*.7,c[0]);if(stage===2)p.set(x,y-1,PAL.white);});}
   else{for(const x of [4,8,12]){const h=stage===1?4:8;p.rect(x,14-h,1,h,PAL.green);p.set(x-1,12,PAL.green);
@@ -555,7 +589,7 @@ function lanternIcon(k){const L=LANTERNS[k],p=new Px(16,16),m=L.metal;p.rect(6,1
 function capeIcon(k){const C=CAPES[k],p=new Px(16,16);
   p.rect(4,2,8,1,C.c2);p.rect(3,3,10,10,C.c1);p.rect(2,6,1,7,C.c1).rect(13,6,1,7,C.c1);p.rect(3,12,10,1,C.c2);p.rect(5,4,1,8,C.c2).rect(10,4,1,8,C.c2);p.rect(2,13,3,1,C.c2).rect(7,13,2,1,C.c2).rect(11,13,3,1,C.c2);
   p.rect(7,2,2,2,PAL.gold);p.set(7,2,PAL.yellow);p.outline();return p.canvas();}
-function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].lantern);if(ITEMS[id]&&ITEMS[id].cape)return capeIcon(ITEMS[id].cape);const p=new Px(16,16);
+function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].lantern);if(ITEMS[id]&&ITEMS[id].rune){const q=new Px(16,16);runeIcon(q,ITEMS[id].rune);q.outline();return q.canvas();}if(ITEMS[id]&&ITEMS[id].jewel){const q=new Px(16,16);jewelIcon(q,id);q.outline();return q.canvas();}if(ITEMS[id]&&ITEMS[id].cape)return capeIcon(ITEMS[id].cape);const p=new Px(16,16);
   const ore=(a,b)=>{p.ell(8,9,5,4,PAL.slate);p.ell(7,8,3,2,PAL.silver);p.rect(5,8,2,2,a).rect(9,7,2,2,a).rect(8,10,2,2,b);};
   switch(id){
     case 'gold':p.ell(8,9,5,5,PAL.gold);p.ell(8,9,3,3,PAL.yellow);p.rect(7,7,2,4,PAL.olive);break;
@@ -564,6 +598,15 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'coal_ore':p.ell(8,9,5,4,'#1d1d24');p.ell(7,8,3,2,'#2e2f3a');p.set(6,7,'#8d93ad').set(10,10,'#6d7391').set(9,7,'#6d7391');break;
     case 'cobalt_ore':ore('#3b5dc9','#73eff7');p.set(9,7,'#b8f7ff');break;
     case 'starshard_ore':p.rows(3,3,['....s....','...sws...','..swWws..','sswWWWwss','..swWws..','...sws...','....s....'],{s:'#ffe9a8',w:'#fff3c4',W:'#ffffff'});p.set(3,12,'#73eff7').set(12,4,'#73eff7');p.outline('#3d2f52');return p.canvas();
+    case 'ruby':gemIcon(p,'#e43b44','#ff8a8a','#8f2d3f');break;
+    case 'sapphire':gemIcon(p,'#3b5dc9','#73a7f7','#29366f');break;
+    case 'emerald':gemIcon(p,'#38b764','#a7f070','#257179');break;
+    case 'diamond':gemIcon(p,'#c9e8ff','#ffffff','#73a7f7');break;
+    case 'copper_bar':barIcon(p,'#ef7d57','#ffcd75','#8f4a2b');break;
+    case 'iron_bar':barIcon(p,'#94b0c2','#f4f4f4','#566c86');break;
+    case 'steel_bar':barIcon(p,'#7d8fa3','#c9d6e3','#3e4a5c');break;
+    case 'ember_bar':barIcon(p,'#ff9f3d','#ffcd75','#b13e53');break;
+    case 'cobalt_bar':barIcon(p,'#3b5dc9','#73eff7','#29366f');break;
     case 'pickaxe':p.line(4,13,11,6,PAL.wood).line(5,13,12,6,PAL.bark);p.rows(6,2,['.ssss....','s....ss..','.......s.','........s'],{s:'#94b0c2'});p.set(6,3,'#c9d6e3').set(14,6,'#566c86');break;
     case 'relic_heart':p.ell(8,9,5,5,'#7a1c2c');p.ell(8,9,3.6,3.6,PAL.red);p.ell(8,9,2,2,PAL.ember);p.set(8,9,PAL.yellow);p.line(3,4,5,6,'#3e272b').line(13,4,11,6,'#3e272b');p.set(6,7,'#ffcd75');break;
     case 'relic_star':p.rows(2,2,['.....s.....','.....s.....','....sws....','sssswWwssss','..swWWWws..','...swWws...','..sws.sws..','.ss.....ss.'],{s:'#ffe9a8',w:'#fff3c4',W:'#ffffff'});p.ell(8,13,4,1.5,'#4a6fd0');break;
@@ -584,13 +627,26 @@ function icon(id){if(ITEMS[id]&&ITEMS[id].lantern)return lanternIcon(ITEMS[id].l
     case 'stew':p.ell(8,11,6,3.5,PAL.wood);p.ell(8,9,5,1.6,PAL.lime);p.set(6,9,PAL.pink).set(10,9,PAL.orange);p.set(7,5,PAL.white).set(9,4,PAL.white);break;
     case 'oil':p.rect(6,3,4,2,PAL.bark);p.rect(5,5,6,9,PAL.silver);p.rect(6,7,4,6,PAL.ember);p.rect(6,7,4,1,PAL.yellow);break;
     case 'rusty_blade':return swordSprite('none');
-    case 'copper_helm':case 'iron_helm':case 'ember_helm':case 'steel_helm':{const C={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3']}[id.split('_')[0]];
+    case 'apprentice_staff':case 'blackwood_staff':case 'ember_staff':case 'gloam_staff':case 'moon_staff':case 'hollow_staff':return staffSprite({apprentice_staff:'apprentice',blackwood_staff:'blackwood',ember_staff:'emberwood',gloam_staff:'gloamwood',moon_staff:'moon',hollow_staff:'hollow'}[id]);
+    case 'gloam_blade':return gloamSwordSprite();
+    case 'gloam_ore':p.ell(8,9,5,4,'#1d2a33');p.ell(7,8,3,2,'#2e4a52');p.line(4,10,8,6,'#2e7a6a');p.set(6,8,'#7affd6').set(10,10,'#7affd6').set(9,7,'#e8fff8');break;
+    case 'gloam_bar':barIcon(p,'#2e7a6a','#7affd6','#1d2a33');break;
+    case 'oil2':p.rect(6,2,4,2,PAL.bark);p.rect(4,4,8,10,'#c9d6e3');p.rect(5,6,6,7,'#7affd6');p.rect(5,6,6,1,'#e8fff8');p.set(6,8,'#ffffff');p.rect(3,6,1,5,'#94b0c2').rect(12,6,1,5,'#94b0c2');break;
+    case 'moonpetal_seed':p.ell(8,9,3.5,4.5,'#5a4ab0');p.ell(8,8,2,3,'#b8a7ff');p.set(7,6,PAL.white);break;
+    case 'moonpetal':p.rect(7,9,2,5,'#2f6b55');p.ell(8,7,4.5,3.4,'#b8a7ff');p.ell(8,7,2,1.6,'#e8e0ff');p.set(8,6,'#73eff7').set(5,6,'#ffffff');break;
+    case 'raw_moonfin':fishIcon(p,'#b8a7ff','#5a4ab0','#29366f');p.set(9,8,'#73eff7');break;
+    case 'moonfin':fishIcon(p,'#d9a066','#5a4ab0','#3d2f52');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
+    case 'relic_tome':p.rect(3,4,10,10,'#24454d');p.rect(4,5,8,8,'#3c6e7a');p.rect(7,4,2,10,'#173036');p.ell(8,9,2,2,'#73eff7');p.set(8,9,'#ffffff');p.set(4,13,'#b8f7ff').set(12,4,'#b8f7ff');break;
+    case 'relic_throne':p.rows(2,4,['g..g..g..g.','gg.gg.gg.gg','ggggggggggg','gvgggvgggvg','ggggggggggg'],{g:'#ffcd75',v:'#c79bf2'});p.ell(8,13,4,1.5,'#5d275d');break;
+    case 'tide_robe':case 'void_robe':{const C=id==='tide_robe'?['#24454d','#173036','#73eff7']:['#2e2a42','#1d1a2a','#c79bf2'];
+      p.rect(4,3,8,12,C[0]);p.rect(3,6,1,8,C[0]).rect(12,6,1,8,C[0]);p.rect(2,4,3,4,C[1]).rect(11,4,3,4,C[1]);p.rect(6,3,4,2,PAL.ink);p.rect(4,14,8,1,C[2]);p.rect(7,5,2,9,C[1]);p.set(7,7,C[2]).set(8,10,C[2]);p.rect(4,9,8,1,C[2]);break;}
+    case 'copper_helm':case 'iron_helm':case 'ember_helm':case 'steel_helm':case 'gloam_helm':{const C={copper:['#ef7d57','#8f4a2b','#ffcd75'],iron:['#94b0c2','#566c86','#f4f4f4'],ember:['#b13e53','#5d275d','#ff9f3d'],steel:['#7d8fa3','#3e4a5c','#c9d6e3'],gloam:['#2e4a52','#1d2a33','#7affd6']}[id.split('_')[0]];
       p.ell(8,8,6,5,C[0]);p.rect(2,8,12,5,C[0]);p.rect(2,12,12,1,C[1]);p.rect(5,9,6,2,PAL.ink);p.rect(7,9,2,4,C[0]);p.rect(6,4,4,1,C[2]);p.rect(7,2,2,3,C[1]);break;}
     case 'partyhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#3b5dc9',s:'#73eff7',c:'#29366f'});p.set(7,1,PAL.yellow);break;
     case 'greenhat_helm':p.rows(3,1,['....yy....','....bb....','...bsbb...','...bbbs...','..bbsbbb..','..sbbbbs..','.bbbbsbbb.','.bbsbbbbb.','bbbbbbsbbb','bbbbbbbbbb','cccccccccc'],{y:PAL.gold,b:'#38b764',s:'#a7f070',c:'#257179'});p.set(7,1,PAL.yellow);break;
     case 'traveler_garb':p.rect(4,4,8,10,PAL.teal);p.rect(2,4,3,4,PAL.moss).rect(11,4,3,4,PAL.moss);p.rect(6,4,4,2,PAL.ink);p.rect(4,11,8,1,PAL.bark);p.rect(7,6,2,5,PAL.green);break;
     case 'copper_blade':case 'iron_blade':case 'ember_blade':case 'steel_blade':case 'cinder_blade':{const t=id.split('_')[0];return swordSprite(t);}
-    case 'copper_mail':case 'iron_mail':case 'ember_mail':case 'steel_mail':{const t=id.split('_')[0],C=TIER_COLORS[t==='ember'?'ember':t];
+    case 'copper_mail':case 'iron_mail':case 'ember_mail':case 'steel_mail':case 'gloam_mail':{const t=id.split('_')[0],C=TIER_COLORS[t==='ember'?'ember':t];
       p.rect(4,4,8,10,C.tun);p.rect(2,4,3,4,C.tun2).rect(11,4,3,4,C.tun2);p.rect(6,4,4,2,PAL.ink);p.rect(4,11,8,1,PAL.bark);p.rect(7,6,2,5,C.trim);break;}
     case 'raw_pondfin':fishIcon(p,'#7fb0c8','#41a6f6','#29366f');break;
     case 'pondfin':fishIcon(p,'#d9a066','#a0663b','#6b3e26');p.set(6,4,PAL.white).set(9,3,PAL.white);break;
@@ -665,6 +721,162 @@ function weedSprite(v){const p=new Px(16,16),A='#7a6e3c',B='#4a3d2a',R='#8f2d3f'
 // a small skull, the PvP mark shown over a hero's head
 function skullMark(){const p=new Px(9,9),W='#f4f4f4',G='#c2c7cf';p.ell(4.5,3.5,3.5,3.4,W);p.rect(2,5,5,2,W);p.rect(5,1,2,6,G);p.rect(2,3,2,2,PAL.ink);p.rect(5,3,2,2,PAL.ink);p.set(4,5,PAL.ink);p.set(2,7,W).set(4,7,W).set(6,7,W);p.outline();return p.canvas();}
 
+
+// =================== v0.12: Magic, floors 21–30, Hollowmere ===================
+// ---- staffs: a long shaft from bottom-left to top-right (drawn like a blade), a headpiece with a focus that glows ----
+const STAFF_ART={apprentice:{w:'#a0663b',w2:'#6b3e26',h:'#c2a26b',g:'#ffcd75',g2:'#fff3c4'},blackwood:{w:'#4a3640',w2:'#2a1e22',h:'#7a5ca8',g:'#73a7f7',g2:'#e8fbff'},
+  emberwood:{w:'#6b3e26',w2:'#3a1218',h:'#b13e53',g:'#ff9f3d',g2:'#ffcd75'},gloamwood:{w:'#2e2a42',w2:'#1d1a2a',h:'#4f8b9a',g:'#7affd6',g2:'#e8fff8'},
+  hollow:{w:'#1d1a2a',w2:'#0e0c16',h:'#5d275d',g:'#c79bf2',g2:'#f1e4ff'},moon:{w:'#c9d6e3',w2:'#566c86',h:'#73a7f7',g:'#b8f7ff',g2:'#ffffff'}};
+function staffSprite(t){const S=STAFF_ART[t]||STAFF_ART.apprentice,p=new Px(16,16);
+  for(let i=0;i<12;i++){p.set(2+i,14-i,S.w);if(i%3===0)p.set(3+i,14-i,S.w2);}            // the shaft
+  p.set(1,15,S.w2);
+  if(t==='moon'){p.ell(13,3,2.6,2.6,S.h);p.ell(13,3,1.5,1.5,S.g);p.set(13,3,S.g2);p.set(10,1,S.h).set(15,6,S.h).set(11,0,S.g).set(15,5,S.g);p.set(14,1,S.g2);}
+  else if(t==='hollow'){p.rows(10,0,['h...h.','hh.hh.','.hgh..','.hgh..','..h...'],{h:S.h,g:S.g});p.set(12,2,S.g2);}
+  else if(t==='gloamwood'){p.rows(10,0,['..hh..','.hggh.','.hggh.','..hh..'],{h:S.h,g:S.g});p.set(12,1,S.g2);p.set(10,5,S.h).set(15,4,S.h);}
+  else if(t==='emberwood'){p.rows(11,0,['.g.g.','gggg.','.hgh.','..h..'],{g:S.g,h:S.h});p.set(12,0,S.g2);}
+  else if(t==='blackwood'){p.rows(11,1,['hgh.','hggh','.hh.'],{h:S.h,g:S.g});p.set(12,2,S.g2);p.set(10,0,S.h).set(14,0,S.h);}
+  else{p.ell(13,3,2,2,S.h);p.set(13,3,S.g).set(12,2,S.g2);}
+  p.outline(t==='moon'?'#29366f':'#1a1c2c');return p.canvas();}
+// Gloamite: dark teal-black metal that shines green-white at the edge
+function gloamSwordSprite(){const p=new Px(16,16),B='#2e4a52',E='#7affd6',H='#e8fff8';
+  for(let i=0;i<10;i++){p.set(4+i,11-i,B);p.set(5+i,11-i,i<9?E:H);}p.set(14,1,H);p.rect(2,11,4,2,'#1d2a33').set(3,13,'#4f8b9a').set(2,14,'#4f8b9a');p.set(1,12,E).set(6,10,E);p.outline('#0b1418');return p.canvas();}
+// ---- runes: a small carved stone with a glowing glyph ----
+const RUNE_GLYPH={gale:['..x..','.x.x.','x...x','.x.x.','..x..'],stone:['xxxxx','x...x','x.x.x','x...x','xxxxx'],tide:['x.x.x','.x.x.','x.x.x','.....','xxxxx'],
+  ember:['..x..','.xx..','.xxx.','xxxxx','.xxx.'],soul:['.xxx.','x.x.x','.xxx.','..x..','.x.x.'],star:['..x..','x.x.x','.xxx.','x.x.x','..x..']};
+function runeIcon(p,k){const R=RUNES[k];p.ell(8,9,6,5.5,'#4b5068');p.ell(8,8.5,5.4,4.8,'#6d7391');p.ell(7,7,3,2,'#8d93ad');p.rows(6,6,RUNE_GLYPH[k],{x:R.c2});p.set(6,6,R.c);}
+// ---- floors 21–30 monsters ----
+function drownedFrame(f){const p=new Px(16,16),C='#3c6e7a',C2='#24454d',W='#b8f7ff',K='#1a2f36';
+  p.ell(8,5,3.4,3.2,C);p.rect(5,7,6,6,C2);p.rect(6,8,4,4,C);p.set(7,5,W).set(9,5,W);p.rect(7,7,3,1,K);
+  for(let x=5;x<=10;x+=2)p.rect(x,13,1,1+((x+f)%2),C2);p.line(4,8,2,11+f,C).line(11,8,13,11-f,C);p.set(2,12,W);p.rows(5,1,['g.g.g.','.g.g.g'],{g:'#4f7a3a'});p.outline('#0b161a');return p.canvas();}
+function eelFrame(f){const p=new Px(16,16),A='#2c5a8a',B='#41a6f6',Y='#ffe9a8';
+  for(let i=0;i<12;i++){const y=9+Math.round(Math.sin((i+f*2)*.9)*2);p.rect(2+i,y,1,3,A);p.set(2+i,y,B);}p.ell(13,9,2.6,2.2,A);p.set(14,8,Y);p.set(15,10,'#1a1c2c');p.rows(5,6,['b.b.b'],{b:B});p.outline('#0c1a2c');return p.canvas();}
+function tomeFrame(f){const p=new Px(16,16),C='#5d275d',C2='#3a1838',P='#f4e4c1',G='#73eff7';
+  const w=f?6:5;p.rect(8-w,6,w,6,C);p.rect(8,6,w,6,C);p.rect(8-w+1,7,w-1,4,P);p.rect(8,7,w-1,4,P);p.rect(7,6,2,7,C2);
+  for(let y=8;y<11;y++){p.set(9-w+2,y,'#8a7e62');p.set(9+w-3,y,'#8a7e62');}p.set(5,4-f,G).set(11,3+f,G).set(8,3,'#e8fbff');p.outline('#1a0c1a');return p.canvas();}
+function huskFrame(f){const p=new Px(16,16),K='#2e2a42',K2='#1d1a2a',V='#c79bf2',B='#45405e';
+  p.rect(4,5,8,8,K);p.rect(5,6,6,6,K2);p.ell(8,4,3.4,2.8,K);p.set(7,4,V).set(9,4,V);p.line(5,7,10,11,B);p.line(10,7,6,10,B);
+  p.rect(2,6,2,7,K).rect(12,6,2,7,K);p.rect(2,12+f,2,2,V).rect(12,13-f,2,1,V);p.rect(5,13,2,2,K).rect(9,13,2,2,K);p.outline('#08070d');return p.canvas();}
+function voidlingFrame(f){const p=new Px(16,16),V='#7a3b8f',V2='#c79bf2',K='#1d1a2a';
+  p.ell(8,8,4.5,4.5,K);p.ell(8,8,3.4,3.4,V);p.ell(8,8,1.6,1.6,V2);p.set(8,8,'#ffffff');
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2+f*.5;p.set(8+Math.round(Math.cos(a)*6),8+Math.round(Math.sin(a)*6),V2);}p.outline('#0e0718');return p.canvas();}
+function watcherFrame(f){const p=new Px(16,16),S='#45405e',S2='#2e2a42',E='#ff6b6b',W='#f4f4f4';
+  p.ell(8,7,5,4.6,S);p.ell(8,7,3.4,3.2,W);p.ell(8+(f?1:-1),7,1.8,1.8,E);p.set(8+(f?1:-1),7,'#1a1c2c');
+  for(let x=4;x<=12;x+=2)p.line(x,11,x+(x<8?-1:1),14-((x/2+f)%2),S2);p.rect(5,2,6,1,S2);p.outline('#0d0c14');return p.canvas();}
+function orbFrame(f){const p=new Px(16,16),A='#73eff7',B='#e8fbff',C='#3b5dc9';p.ell(8,10,3+f*.4,3+f*.4,C);p.ell(8,10,2.2,2.2,A);p.ell(8,10,1,1,B);p.set(5,7+f,A).set(11,12-f,A);return p.canvas();}
+function voidOrbFrame(f){const p=new Px(16,16),A='#c79bf2',B='#f1e4ff',C='#5d275d';p.ell(8,10,3+f*.4,3+f*.4,C);p.ell(8,10,2.2,2.2,A);p.ell(8,10,1,1,B);p.set(5,7+f,A).set(11,12-f,A);return p.canvas();}
+function riftFrame(f){const p=new Px(16,16),V='#c79bf2',K='#1d1a2a';p.ell(8,12,6,2.6,K);p.ell(8,12,4.6,1.8,'#5d275d');p.line(5,12,11,12,V);p.set(8,11,'#ffffff');if(f)p.set(4,11,V).set(12,13,V);return p.canvas();}
+function archmageFrame(f){const p=new Px(32,32),R='#24454d',R2='#3c6e7a',R3='#73a7f7',G='#73eff7',W='#e8fbff',K='#0b161a',S='#c9d6e3';
+  p.rect(9,12,14,15,R);p.rect(10,13,12,13,R2);p.rect(15,13,2,13,R3);for(let x=9;x<=22;x+=2)p.rect(x,27,1,2+((x/2+f)%2),R);
+  p.ell(16,8,6,6,R);p.rows(10,0,['.....rr.....','....rrrr....','...rrrrrr...'],{r:R});p.ell(16,9,4,3.6,K);p.set(14,9,G).set(18,9,G);p.rect(14,12,4,3,S);
+  p.rect(5,13,4,9,R);p.rect(23,13,4,9,R);p.ell(7,22,1.8,1.8,'#d8c8a0');p.ell(25,22,1.8,1.8,'#d8c8a0');
+  p.line(27,28,29,4,S);p.ell(29,4,3,3,R3);p.ell(29,4,1.8,1.8,G);p.set(29,4,W);if(f){p.set(26,1,W).set(31,7,G);}else p.set(31,2,W);
+  p.rows(3,6,['.g.','g.g','.g.'],{g:G});p.outline(K);return p.canvas();}
+function hollowKingFrame(f){const p=new Px(32,32),K='#1d1a2a',K2='#2e2a42',K3='#45405e',V='#c79bf2',V2='#7a3b8f',G='#ffcd75';
+  p.rect(8,11,16,14,K);p.rect(9,12,14,12,K2);p.ell(16,8,6,5.5,K2);p.rect(12,7,8,4,K);p.rect(13,8,2,1,V).rect(17,8,2,1,V);
+  p.rows(10,0,['g..g..g..g.','gg.gg.gg.gg','ggggggggggg'],{g:G});p.rect(13,15,6,6,V2);p.ell(16,18,2,2,V);p.set(16,18,'#ffffff');
+  p.rect(9,25,5,6-f,K).rect(18,25,5,5+f,K);p.rect(3,11,5,11,K2);p.rect(24,11,5,11,K2);p.set(5,15,V).set(26,16,V);
+  p.rect(1,3+f,3,20,K3);p.rect(0,1+f,5,3,V2);p.set(2,0+f,V);for(let i=0;i<4;i++)p.set(4+i*7,29,V2);p.outline('#06050a');return p.canvas();}
+// ---- Hollowmere monsters (out in the open, under the sky) ----
+function wolfFrame(f){const p=new Px(16,16),G='#6d7391',G2='#4b5068',W='#c2c7cf';
+  p.rect(3,8,9,4,G);p.rect(3,11,9,1,G2);p.ell(12,7,2.8,2.4,G);p.rows(11,3,['g.g','ggg'],{g:G2});p.set(13,7,'#ffcd75');p.set(15,8,'#1a1c2c');p.line(3,8,0,6+f,G);
+  p.rect(4,12,1,3-f,G2).rect(7,12,1,2+f,G2).rect(9,12,1,3-f,G2).rect(11,12,1,2+f,G2);p.rect(5,9,5,1,W);p.outline();return p.canvas();}
+function boarFrame(f){const p=new Px(16,16),B='#6b3e26',B2='#4b2a1a',T='#f4e4c1';
+  p.ell(7,9,5.5,3.6,B);p.ell(12,9,2.6,2.4,B);p.set(14,10,B2).set(15,10,'#3a2519');p.set(12,8,'#1a1c2c');p.set(14,11,T).set(13,12,T);p.rows(3,5,['b.b.b.b'],{b:B2});
+  p.rect(4,12,1,3-f,B2).rect(7,12,1,2+f,B2).rect(9,12,1,3-f,B2).rect(11,12,1,2+f,B2);p.outline();return p.canvas();}
+function boglingFrame(f){const p=new Px(16,16),M='#4f7a3a',M2='#2b4b3a',Y='#e8c66a';const sq=f?1:0;
+  p.ell(8,11+sq,5.5+sq,4-sq,M2);p.ell(8,10+sq,4.5,3,M);p.set(6,9+sq,Y).set(10,9+sq,Y);p.rect(7,12+sq,3,1,'#1a1c2c');p.set(4,7,M).set(12,7+sq,M).set(5,6,'#a7f070');p.outline('#141f18');return p.canvas();}
+function mirewispFrame(f){const p=new Px(16,16),A='#a7f070',B='#f4f4f4',C='#38b764';p.ell(8,9,3.6,3.6,C);p.ell(8,9,2.4,2.4,A);p.ell(8,9.5,1.2,1.2,B);
+  p.line(6,6,5+f,2,A).line(10,6,11-f,1,A);p.set(7,9,'#1a1c2c').set(9,9,'#1a1c2c');p.outline('#1b3a24');return p.canvas();}
+function treantFrame(f){const p=new Px(16,16),B='#4b3226',B2='#6b3e26',L='#2b4b3a',L2='#38b764';
+  p.ell(8,4,6,3.6,L);p.ell(7,3,4,2.2,L2);p.rect(5,6,6,7,B);p.rect(6,7,4,5,B2);p.set(6,8,'#ffcd75').set(9,8,'#ffcd75');p.rect(7,10,2,1,'#1a1c2c');
+  p.line(5,7,1,10+f,B).line(10,7,14,10-f,B);p.rect(5,13,2,2+f,B).rect(9,13,2,3-f,B);p.outline();return p.canvas();}
+// ---- Hollowmere ground ----
+function moorGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#2f6b55');
+  for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#285a48':'#3d8466');
+  for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#4a9a74').set(x+1,y-1,'#4a9a74').set(x+2,y,'#3d8466');}
+  if(r()<.35){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#b8f7ff');}return p.canvas();}
+function deepGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#243f45');
+  for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#1d3438':'#2e5056');for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#3a6268').set(x+1,y-1,'#3a6268');}
+  if(r()<.3)p.set(r()*16,r()*16,'#c79bf2');return p.canvas();}
+function moorPathTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#6a6656');
+  const st=(x,y,w,h)=>{p.rect(x,y,w,h,r()<.5?'#8a8572':'#7d7866');p.rect(x,y,w,1,'#a39e88');p.rect(x,y+h-1,w,1,'#5a5648');};
+  st(0,0,7,7);st(8,0,8,6);st(0,8,5,8);st(6,7,10,9);if(r()<.5)p.set(r()*16,r()*16,'#4f7a3a');return p.canvas();}
+function plazaTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#191626');
+  const st=(x,y,w,h)=>{p.rect(x,y,w,h,r()<.5?'#2e2a42':'#29263b');p.rect(x,y,w,1,'#3d3856');p.rect(x,y+h-1,w,1,'#1d1a2a');};st(0,0,8,8);st(8,0,8,8);st(0,8,8,8);st(8,8,8,8);
+  if(seed%3===0){p.set(4,4,'#7a3b8f').set(11,11,'#7a3b8f');}if(seed%5===1)p.line(2,13,6,9,'#1d1a2a');return p.canvas();}
+function moonWaterTile(f){const p=new Px(16,16);p.rect(0,0,16,16,'#1d3a6a');
+  for(let y=2;y<16;y+=5)for(let x=(y+f*3)%8;x<16;x+=8)p.rect(x,y,3,1,'#2f5a9a');p.set((5+f*4)%16,9,'#b8f7ff');p.set((12+f*5)%16,4,'#c79bf2');p.set((2+f*7)%16,13,'#73eff7');return p.canvas();}
+function canopyTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#0f1f1c');
+  for(let i=0;i<5;i++){const x=r()*16,y=r()*16;p.ell(x,y,3+r()*2,2.5+r()*2,r()<.5?'#173229':'#1c3a30');}for(let i=0;i<5;i++)p.set(r()*16,r()*16,'#2b4b3a');return p.canvas();}
+function cliffTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#211e30');
+  for(let y=0;y<16;y+=4){const o=(seed*3+y)%5;p.rect(0,y,16,1,'#2c2840');p.rect(0,y+3,16,1,'#17151f');for(let x=o;x<16;x+=6+((x+y)%3)){p.rect(x,y,1,4,'#17151f');p.set(x+1,y+1,'#3a3552');}}
+  for(let i=0;i<3;i++){const x=r()*14|0,y=r()*14|0;p.set(x,y,'#45405e').set(x+1,y,'#3a3552');}return p.canvas();}
+// a big weeping willow, blue-green
+function willowSprite(dx=0){const p=new Px(32,40),B='#3a2a24',L='#2f6b55',L2='#3d8466',L3='#73c7a0';
+  p.rect(14,22,4,16,B);p.rect(15,22,1,16,'#5a4236');p.ell(16+dx,12,13,10,L);p.ell(15+dx,9,9,6,L2);
+  for(let x=4;x<=28;x+=3){const len=8+((x*7)%7);p.rect(x+Math.round(dx),14,1,len,x%2?L:L2);p.set(x+Math.round(dx),14+len,L3);}p.set(11,6,L3).set(19,5,L3);p.outline('#0f1f1c');return p.canvas();}
+// standing stone with a glowing rune
+function menhirSprite(v){const p=new Px(16,32),S='#4b5068',S2='#3a3f55',S3='#6d7391',G=v?'#c79bf2':'#73eff7';
+  p.rect(4,6,8,24,S);p.rect(9,6,3,24,S2);p.ell(8,6,4,3,S);p.set(5,4,S3).set(6,3,S3);p.rect(3,29,10,2,S2);p.rect(7,11,2,7,G);p.set(6,13,G).set(9,15,G);p.set(5,22,'#4f7a3a').set(6,21,'#38b764');p.outline();return p.canvas();}
+function reedsSprite(v){const p=new Px(16,16),A='#4a9a74',B='#2f6b55',C='#a0663b';for(let i=0;i<4;i++){const x=3+i*3+(v?1:0),h=6+((i*5+v)%4);p.line(x,15,x+(i%2?1:-1),15-h,i%2?A:B);if(i%2===0)p.rect(x-1+(i%2?1:-1),15-h,1,3,C);}return p.canvas();}
+function mushRingSprite(){const p=new Px(16,16);[[3,9],[8,7],[13,9],[5,13],[11,13]].forEach(([x,y],i)=>{p.rect(x,y,1,2,'#d8c8a0');p.rect(x-1,y-1,3,1,i%2?'#c79bf2':'#73eff7');});return p.canvas();}
+function moonCrystalSprite(v){const p=new Px(16,22),A='#5a4ab0',B='#b8a7ff',W='#f1e4ff';
+  const spike=(x,h,w)=>{p.rect(x,21-h,w,h,A);p.rect(x,21-h,1,h,B);p.set(x,20-h,W);};if(v){spike(3,10,3);spike(7,15,3);spike(11,7,2);}else{spike(4,8,2);spike(7,12,3);spike(11,10,3);}p.outline('#1d1a2a');return p.canvas();}
+function campfireSprite(f){const p=new Px(16,16);p.line(3,13,12,11,'#6b3e26').line(3,11,12,13,'#4b3226');p.ell(8,9,3+f*.4,4,'#b13e53');p.ell(8,9.5,2,3,'#ff9f3d');p.ell(8,10,1,1.6,'#ffcd75');p.set(f?6:10,4,'#ff9f3d');p.rect(2,13,12,1,'#4b5068');p.outline();return p.canvas();}
+// the bank chest by the raid gate: an iron-bound strongbox with the Bank's gold seal
+function bankChestSprite(){const p=new Px(24,20),I='#4b5068',I2='#6d7391',W='#5a4236',W2='#3a2a24',G='#ffcd75';
+  p.rect(1,7,22,12,W);p.rect(1,7,22,2,W2);p.rect(1,3,22,5,W);p.ell(12,4,11,2.5,W);p.rect(1,7,22,1,I2);for(const x of [3,11,19])p.rect(x,2,2,17,I);
+  p.rect(9,9,6,6,G);p.rect(10,10,4,4,'#d9a066');p.set(11,11,'#fff3c4');p.rect(11,13,2,2,'#1a1c2c');p.rect(1,18,22,1,'#1a1c2c');p.outline();return p.canvas();}
+function hmSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#3a2a24');p.rect(8,8,1,16,'#5a4236');p.rect(1,1,16,9,'#2e2a42');p.rect(1,1,16,1,'#45405e');p.rect(1,9,16,1,'#1d1a2a');
+  p.rows(2,3,['..x..........','.xx.xxxxxxxx.','xxxxxxxxxxxx.','.xx.xxxxxxxx.','..x..........'],{x:'#c79bf2'});p.set(14,2,'#f1e4ff').set(13,3,'#f1e4ff');p.outline();return p.canvas();}
+function eyeIcon(){const p=new Px(16,16);p.ell(8,8,6,4,'#f4f4f4');p.ell(8,8,3,3,'#3b5dc9');p.ell(8,8,1.4,1.4,'#1a1c2c');p.set(6,6,'#ffffff');p.outline();return p.canvas();}
+// THE ABYSSAL MAW: the raid gate. A colossal horned skull of black stone set into a cliff, its jaw a portal of violet
+// fire, flanked by two obsidian spires crowned with braziers. 112 x 104 px, two frames (the fire breathes).
+function mawSprite(f){const W=144,H=128,p=new Px(W,H),r=rng(77),cx=72;
+  const K='#0b0a12',K2='#15131f',K3='#221f31',K4='#302b45',K5='#3d3756',B='#e2d5b0',B2='#bfb08a',B3='#8f8264',B4='#5e5442',V='#c79bf2',V2='#7a3b8f',V3='#f1e4ff',V4='#4a2366',E='#ff4d6d',E2='#ffb3c1';
+  const poly=(pts,c)=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const [x,y] of pts){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+    for(let y=Math.floor(y0);y<=Math.ceil(y1);y++)for(let x=Math.floor(x0);x<=Math.ceil(x1);x++){let inn=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){const [xi,yi]=pts[i],[xj,yj]=pts[j];if((yi>y+.5)!==(yj>y+.5)&&x+.5<(xj-xi)*(y+.5-yi)/(yj-yi)+xi)inn=!inn;}if(inn)p.set(x,y,c);}};
+  const mir=pts=>pts.map(([x,y])=>[2*cx-x,y]);
+  // the cliff: a jagged wall of black rock with violet veins
+  const ridge=[[0,H-14]];for(let x=0;x<=W;x+=6)ridge.push([x,(x/6)%2?30+(r()*14|0):12+(r()*12|0)]);ridge.push([W,H-14]);poly(ridge,K2);
+  for(let y=20;y<H-14;y+=5)for(let x=0;x<W;x++)if(p.get(x,y)===K2&&((x+y*3)%11)<7)p.set(x,y,K3);
+  for(let i=0;i<5;i++){let x=10+r()*124|0,y=40+r()*40|0;for(let k=0;k<14;k++){if(p.get(x,y))p.set(x,y,k%4?V4:V2);x+=r()<.5?1:-1;y+=1;}}
+  // horns: thick crescents from the temples, out and up to a point
+  const horn=(sgn)=>{for(let i=0;i<=26;i++){const t=i/26,x=cx+sgn*(26+t*34-t*t*10),y=46-t*30-t*t*8,rad=6.5*(1-t)+1;p.ell(x,y,rad,rad,i%5===0?B3:B2);p.ell(x-sgn*rad*.3,y-rad*.3,rad*.55,rad*.55,i%5===0?B2:B);}};horn(-1);horn(1);
+  // the skull: a broad angular cranium, heavy cheekbones, tapering to the jaw
+  const head=[[cx-22,18],[cx-30,26],[cx-36,40],[cx-38,56],[cx-32,66],[cx-30,76],[cx-20,80],[cx-12,72]];poly(head.concat(mir(head).reverse()),B);
+  poly([[cx-22,18],[cx-30,26],[cx-36,40],[cx-38,56],[cx-32,66],[cx-30,60],[cx-31,44],[cx-25,28]],B2);poly(mir([[cx-22,18],[cx-30,26],[cx-36,40],[cx-38,56],[cx-32,66],[cx-30,60],[cx-31,44],[cx-25,28]]),B3);
+  for(const [x,y,l] of [[cx-6,20,9],[cx+10,24,7],[cx-16,30,6],[cx+20,36,8]]){let px2=x,py=y;for(let k=0;k<l;k++){p.set(px2,py,B4);px2+=((k*7)%3)-1;py++;}}   // cracks
+  // the brow: a heavy V that makes the skull glare
+  poly([[cx-34,38],[cx-4,46],[cx,52],[cx+4,46],[cx+34,38],[cx+30,34],[cx,42],[cx-30,34]],B3);
+  // eye sockets: slanted, deep, burning
+  const eye=[[cx-30,42],[cx-8,48],[cx-12,56],[cx-26,54]];poly(eye,K);poly(mir(eye),K);
+  const glow=(x)=>{p.ell(x,51,4.5,2.6,f?E:'#d9304f');p.ell(x,51,2.2,1.4,E2);p.set(x,51,'#ffffff');};glow(cx-18);glow(cx+18);
+  // nose: an inverted, split triangle
+  poly([[cx-6,58],[cx+6,58],[cx+2,68],[cx-2,68]],K);p.rect(cx,58,1,10,K3);
+  // the open jaw: a portal of violet fire, framed by fangs
+  p.ell(cx,95,31,23,K);p.ell(cx,96,28,20,V4);p.ell(cx,97,24,17,f?V2:'#8a4aa8');p.ell(cx,98,19,13,f?'#a77de0':V);p.ell(cx,99,13,8,V);p.ell(cx,100,7,4,V3);p.ell(cx,100,3,2,'#ffffff');
+  for(let k=0;k<3;k++){const a0=(f?.6:0)+k*2.1;for(let t=0;t<16;t++){const a=a0+t*.35,rr=4+t*1.35;p.set(Math.round(cx+Math.cos(a)*rr*1.35),Math.round(99+Math.sin(a)*rr*.8),t%3?V3:V);}}   // the swirl
+  // cheek plates down to the jaw hinge
+  poly([[cx-32,66],[cx-36,74],[cx-30,92],[cx-26,80],[cx-22,74]],B2);poly(mir([[cx-32,66],[cx-36,74],[cx-30,92],[cx-26,80],[cx-22,74]]),B3);
+  // upper fangs (long at the corners) and lower fangs
+  const fang=(x,y,len,down,c)=>{for(let i=0;i<len;i++){const w=Math.max(0,Math.round(2.4*(1-i/len)));p.rect(x-w,y+(down?i:-i),w*2+1,1,c);}p.set(x,y+(down?len:-len),c);};
+  for(let i=-5;i<=5;i++){const L=Math.abs(i)===4?16:Math.abs(i)===5?9:7;fang(cx+i*5,74,L,true,i%2?B:B2);}
+  for(let i=-4;i<=4;i++){const L=Math.abs(i)===3?12:6;fang(cx+i*6+3,118,L,false,i%2?B2:B);}
+  poly([[cx-34,114],[cx+34,114],[cx+30,120],[cx-30,120]],B3);p.rect(cx-30,118,60,2,B4);
+  // spires with braziers of violet flame at either side
+  const spire=(x)=>{poly([[x,30],[x+5,14],[x+10,30],[x+10,112],[x,112]],K);p.rect(x+1,30,3,82,K4);for(let y=36;y<106;y+=10)p.rect(x+4,y,2,5,f?V:V2);p.rect(x-3,108,16,4,K4);
+    p.rect(x-2,26,14,3,K5);p.rect(x,23,10,3,K4);p.ell(x+5,17,4.5+f*.5,6,V2);p.ell(x+5,18,3,4,V);p.ell(x+5,19,1.4,2,V3);};spire(4);spire(W-14);
+  // chains from the horn tips to the spires
+  for(let i=0;i<16;i++){const t=i/16;p.set(Math.round(12+t*26),Math.round(28+Math.sin(t*Math.PI)*8+t*-8),i%2?'#6d7391':'#94b0c2');p.set(Math.round(W-12-t*26),Math.round(28+Math.sin(t*Math.PI)*8+t*-8),i%2?'#6d7391':'#94b0c2');}
+  // rune steps
+  p.rect(20,120,104,4,K4);p.rect(14,124,116,4,K5);p.rect(22,121,100,1,K5);for(let x=26;x<120;x+=8)p.set(x,125,f?V:V2).set(x+1,125,V4);
+  p.outline('#05040a');return p.canvas();}
+function globeIcon(){const p=new Px(16,16),O='#3b5dc9',L='#38b764',L2='#a7f070';p.ell(8,8,7,7,O);p.ell(8,8,5.6,5.6,'#41a6f6');
+  p.rows(3,3,['..ll.....','.llll..l.','..lll.ll.','...l..ll.','......l..','..ll.....','...l.....'],{l:L});p.set(5,4,L2).set(11,5,L2);p.set(5,3,'#e8fbff').set(4,4,'#e8fbff');p.outline();return p.canvas();}
+function uncommonChestSprite(open){const p=new Px(16,16),W='#2f6b55',W2='#1d4a3a',G='#a7f070',M='#94b0c2';p.rect(2,6,12,8,W);p.rect(2,6,12,2,W2);p.rect(2,10,12,1,W2);
+  p.rect(2,6,1,8,M).rect(13,6,1,8,M);p.rect(7,9,2,3,G);p.set(7,9,'#e8fff8');if(open){p.rect(2,3,12,3,W2);p.rect(4,6,8,2,G);}else{p.rect(2,4,12,2,W);p.rect(2,4,12,1,M);}p.outline();return p.canvas();}
+
 // ---------- build the atlas ----------
 const ART={};
 function buildArt(){
@@ -672,7 +884,7 @@ function buildArt(){
   
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
   ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
-  ART.sword={};for(const t of ['rusty','copper','iron','ember','steel','cinder'])ART.sword[t]=swordSprite(t==='rusty'?'none':t);
+  ART.sword={};for(const t of Object.keys(GEAR.blade))ART.sword[t]=swordSprite(t==='rusty'?'none':t);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
   ART.mother=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime,true));
@@ -686,20 +898,29 @@ function buildArt(){
   ART.floor={};ART.wall={};ART.face={};
   for(const b of Object.keys(BIOMES)){ART.floor[b]=[11,12,13,14].map(s=>floorTile(b,s));ART.wall[b]=[21,22].map(s=>wallTile(b,false,s));ART.face[b]=[31,32,33].map(s=>wallTile(b,true,s));}
   ART.stairs=stairsTile();ART.deco=decoSprites();ART.chest=[chestSprite(false),chestSprite(true)];ART.torch=[0,1].map(torchSprite);
-  ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0),coal:oreSprite('coal'),cobalt:oreSprite('cobalt'),starshard:starOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];ART.starOre=[starOreSprite(0),starOreSprite(1)];
+  ART.ore={copper:oreSprite('copper'),iron:oreSprite('iron'),ember:emberOreSprite(0),coal:oreSprite('coal'),cobalt:oreSprite('cobalt'),gloam:oreSprite('gloam'),starshard:starOreSprite(0)};ART.emberOre=[emberOreSprite(0),emberOreSprite(1)];ART.starOre=[starOreSprite(0),starOreSprite(1)];
   ART.cinders=[0,1].map(cindersSprite);ART.crystal=[0,1].map(crystalSprite);
   ART.glowcap=glowcapSprite();ART.bones=bonesSprite();
   ART.partyhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#3b5dc9',s:'#73eff7',c:'#29366f'});q.outline();return q.canvas();})();
   ART.greenhat=(()=>{const q=new Px(10,12);q.rows(0,0,['....yy....','....yy....','....bb....','...bsb....','...bbbs...','..sbbbb...','..bbbsbb..','.bbsbbbbs.','.bbbbbbbb.','bsbbbbsbbb','cccccccccc'],{y:'#f7c64a',b:'#38b764',s:'#a7f070',c:'#257179'});q.outline();return q.canvas();})();
   ART.tree=treeSprite();ART.crown=crownSprite();ART.crownS=crownSmall();ART.treeSway=[treeSprite(-.6),treeSprite(.6)];ART.stump=stumpSprite();ART.axe=axeSprite();ART.house=houseSprite();ART.bank=bankSprite();ART.forge=[0,1].map(forgeSprite);ART.kitchen=[0,1].map(kitchenSprite);
-  ART.press=pressSprite();ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
+  ART.press=pressSprite();ART.bench=[0,1].map(benchSprite);ART.board=boardSprite();ART.gate=[gateSprite(0),gateSprite(1)];ART.merchant=[merchantSprite(0),merchantSprite(1)];ART.wick=[wickSprite(0),wickSprite(1)];ART.stall=stallSprite();ART.sign=signSprite();ART.barricade=barricadeSprite();ART.lanternPost=[lanternPost(0),lanternPost(1)];ART.fence=fenceSprite();ART.well=wellSprite();
   ART.flowers=[PAL.pink,PAL.white,PAL.yellow,PAL.sky].map(flowerSprite);
   ART.wgrass=[41,42,43,44].map(wildGrassTile);ART.wpath=[45,46,47].map(wildPathTile);ART.gloom=[0,1].map(gloomTile);
   ART.wwall={};for(const e of ['',  'l','r'])for(const v of [0,1,2])ART.wwall[e+v]=wildWallSprite(v,e||null);
   ART.deadtree=[0,1].map(deadTreeSprite);ART.bwTree=blackwoodSprite();ART.bwSway=[blackwoodSprite(-.6),blackwoodSprite(.6)];
   ART.rock=[0,1].map(rockSprite);ART.grave=[0,1,2].map(graveSprite);ART.pillar=[0,1].map(pillarSprite);ART.obelisk=[0,1].map(obeliskSprite);
   ART.skullpost=skullPostSprite();ART.wsign=wildSignSprite();ART.wbones=[0,1,2].map(wildBonesSprite);ART.weed=[0,1,2].map(weedSprite);ART.skull=skullMark();
-  ART.crop={};for(const k of ['wheat','lampseed','glowcap'])ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
+  ART.crop={};for(const k of Object.keys(CROPS))ART.crop[k]=[0,1,2].map(s=>cropSprite(k,s));
+  // v0.12
+  ART.drowned=[0,1].map(drownedFrame);ART.eel=[0,1].map(eelFrame);ART.tome=[0,1].map(tomeFrame);ART.husk=[0,1].map(huskFrame);ART.voidling=[0,1].map(voidlingFrame);ART.watcher=[0,1].map(watcherFrame);
+  ART.orb=[0,1].map(orbFrame);ART.vorb=[0,1].map(voidOrbFrame);ART.rift=[0,1].map(riftFrame);ART.archmage=[0,1].map(archmageFrame);ART.hollowking=[0,1].map(hollowKingFrame);
+  ART.wolf=[0,1].map(wolfFrame);ART.boar=[0,1].map(boarFrame);ART.bogling=[0,1].map(boglingFrame);ART.mirewisp=[0,1].map(mirewispFrame);ART.treant=[0,1].map(treantFrame);
+  ART.mgrass=[51,52,53,54].map(moorGrassTile);ART.dgrass=[55,56,57,58].map(deepGrassTile);ART.mpath=[61,62,63].map(moorPathTile);ART.plaza=[64,65,66,67,68].map(plazaTile);
+  ART.moonw=[0,1].map(moonWaterTile);ART.canopy=[71,72,73,74].map(canopyTile);ART.cliff=[75,76].map(cliffTile);
+  ART.willow=willowSprite();ART.willowSway=[willowSprite(-.6),willowSprite(.6)];ART.menhir=[0,1].map(menhirSprite);ART.reeds=[0,1].map(reedsSprite);ART.mushring=mushRingSprite();
+  ART.mcrystal=[0,1].map(moonCrystalSprite);ART.campfire=[0,1].map(campfireSprite);ART.bankChest=bankChestSprite();ART.hmsign=hmSignSprite();ART.maw=[mawSprite(0),mawSprite(1)];
+  ART.globe=globeIcon();ART.uchest=[uncommonChestSprite(false),uncommonChestSprite(true)];
   ART.icon={};
 }
 function iconOf(id){if(!ART.icon[id])ART.icon[id]=icon(id);return ART.icon[id];}
@@ -709,12 +930,27 @@ const ITEMS={
   gold:{n:'Gold',v:1},
   copper_ore:{n:'Copper Ore',v:4},iron_ore:{n:'Iron Ore',v:9},ember_ore:{n:'Emberite Ore',v:30},
   coal_ore:{n:'Coal',v:14},cobalt_ore:{n:'Cobalt Ore',v:45},starshard_ore:{n:'Starshard',v:150},
+  // gems for jewelry: found in chests (the Cave Gem also drops from wisps and bosses)
+  ruby:{n:'Ruby',v:90,gem:true},sapphire:{n:'Sapphire',v:110,gem:true},emerald:{n:'Emerald',v:140,gem:true},diamond:{n:'Diamond',v:400,gem:true},
+  // bars: smelted from ore at the Forge, for jewelry
+  copper_bar:{n:'Copper Bar',v:12,bar:true},iron_bar:{n:'Iron Bar',v:28,bar:true},ember_bar:{n:'Emberite Bar',v:95,bar:true},steel_bar:{n:'Steel Bar',v:70,bar:true},cobalt_bar:{n:'Cobalt Bar',v:140,bar:true},
   gem:{n:'Cave Gem',v:40},slime_gel:{n:'Slime Gel',v:2},bone:{n:'Old Bone',v:3},
   wheat_seed:{n:'Wheat Seed',v:2},lampseed:{n:'Lampseed',v:12},glowcap_spore:{n:'Glowcap Spore',v:6},
   wheat:{n:'Wheat',v:3},glowcap:{n:'Glowcap',v:9},
   logs:{n:'Logs',v:2},blackwood_logs:{n:'Blackwood Logs',v:9},
   bread:{n:'Bread',v:8,heal:30,food:true},stew:{n:'Glowcap Stew',v:20,heal:70,food:true},
-  oil:{n:'Oil Flask',v:15,oil:50},
+  oil:{n:'Oil Flask',v:15,oil:50},oil2:{n:'Greater Oil Flask',v:90,oil:100},
+  moonpetal_seed:{n:'Moonpetal Seed',v:30},moonpetal:{n:'Moonpetal',v:45},
+  // floors 21–30: Gloamite, the one new ore of the Drowned Archive and the Hollow Throne
+  gloam_ore:{n:'Gloamite Ore',v:260},gloam_bar:{n:'Gloamite Bar',v:600,bar:true},
+  gloam_blade:{n:'Gloamite Blade',v:2600,gear:'blade',tier:'gloam'},gloam_helm:{n:'Gloamite Helm',v:1900,gear:'helm',tier:'gloam'},gloam_mail:{n:'Gloamite Mail',v:2900,gear:'mail',tier:'gloam'},
+  // staffs (the weapon slot): wield one and your attacks become spells, which train Magic instead of Fighting
+  apprentice_staff:{n:'Apprentice Staff',v:40,gear:'blade',tier:'apprentice'},blackwood_staff:{n:'Blackwood Staff',v:320,gear:'blade',tier:'blackwood'},
+  ember_staff:{n:'Emberwood Staff',v:900,gear:'blade',tier:'emberwood'},gloam_staff:{n:'Gloamwood Staff',v:3200,gear:'blade',tier:'gloamwood'},
+  // the boss drops of floors 21–30: the Drowned Archmage (Mythic staff, Legendary robe), the Hollow King (Legendary staff, Mythic robe)
+  moon_staff:{n:'Moonwell Staff',v:22000,gear:'blade',tier:'moon',rarity:'mythic'},hollow_staff:{n:'Hollow Scepter',v:9000,gear:'blade',tier:'hollow',rarity:'legendary'},
+  tide_robe:{n:"Archmage's Tiderobe",v:8000,gear:'mail',tier:'tide',rarity:'legendary'},void_robe:{n:'Voidwoven Robe',v:20000,gear:'mail',tier:'voidrobe',rarity:'mythic'},
+  raw_moonfin:{n:'Raw Moonfin',v:40},moonfin:{n:'Cooked Moonfin',v:90,heal:85,food:true},
   rusty_blade:{n:'Rusty Blade',v:1,gear:'blade',tier:'rusty'},traveler_garb:{n:'Traveler Garb',v:1,gear:'mail',tier:'none'},
   copper_blade:{n:'Copper Blade',v:60,gear:'blade',tier:'copper'},iron_blade:{n:'Iron Blade',v:160,gear:'blade',tier:'iron'},ember_blade:{n:'Ember Blade',v:520,gear:'blade',tier:'ember'},
   copper_mail:{n:'Copper Mail',v:70,gear:'mail',tier:'copper'},iron_mail:{n:'Iron Mail',v:180,gear:'mail',tier:'iron'},ember_mail:{n:'Ember Mail',v:560,gear:'mail',tier:'ember'},
@@ -727,13 +963,20 @@ const ITEMS={
   partyhat_helm:{n:'Blue Party Hat',v:0,gear:'helm',tier:'partyhat',rarity:'unique',bound:true},
   greenhat_helm:{n:'Green Party Hat',v:0,gear:'helm',tier:'greenhat',rarity:'unique',bound:true},
   relic_crown:{n:'Slime Crown',v:400,relic:true},relic_sigil:{n:"Knight's Sigil",v:900,relic:true},
-  relic_heart:{n:'Forge Heart',v:1800,relic:true},relic_star:{n:'Fallen Star',v:3000,relic:true}
+  relic_heart:{n:'Forge Heart',v:1800,relic:true},relic_star:{n:'Fallen Star',v:3000,relic:true},
+  relic_tome:{n:'Drowned Grimoire',v:4500,relic:true},relic_throne:{n:'Hollow Crown',v:6500,relic:true}
 };
 const GEAR={
-  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25},steel:{dmg:34},cinder:{dmg:46}},
-  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7},steel:{def:10}},
-  helm:{copper:{def:1},iron:{def:2},ember:{def:4},steel:{def:5},star:{def:9},partyhat:{def:25},greenhat:{def:25}}
+  // staffs: dmg is what they do as a club (in the Wilderness); mag is the bonus to spell damage, in %
+  blade:{rusty:{dmg:6,n:'Rusty Blade'},copper:{dmg:10},iron:{dmg:16},ember:{dmg:25},steel:{dmg:34},gloam:{dmg:40},cinder:{dmg:46},
+    apprentice:{dmg:4,staff:true,mag:0},blackwood:{dmg:6,staff:true,mag:6},emberwood:{dmg:9,staff:true,mag:12},gloamwood:{dmg:12,staff:true,mag:20},hollow:{dmg:14,staff:true,mag:30},moon:{dmg:16,staff:true,mag:40}},
+  // robes: lighter than plate, but they add to spell damage (mag, in %)
+  mail:{none:{def:0,n:'Traveler Garb'},copper:{def:2},iron:{def:4},ember:{def:7},steel:{def:10},gloam:{def:13},tide:{def:8,mag:15,robe:true},voidrobe:{def:11,mag:25,robe:true}},
+  helm:{copper:{def:1},iron:{def:2},ember:{def:4},steel:{def:5},gloam:{def:7},star:{def:9},partyhat:{def:25},greenhat:{def:25}}
 };
+// the item id for a gear tier in a slot (gear:'blade', tier:'apprentice' -> 'apprentice_staff')
+const GEAR_ITEM={};for(const [id,it] of Object.entries(ITEMS))if(it.gear)GEAR_ITEM[it.gear+':'+it.tier]=id;
+const isStaff=t=>!!(GEAR.blade[t]&&GEAR.blade[t].staff);
 // Helmets can carry attributes like capes. The Blue Party Hat is one of one: admin only, never drops, can't be sold or dropped.
 const HELM_ATTR={star:{hp:25,light:15,luck:10},partyhat:{dmg:900,hp:500,spd:25,light:40,luck:50},greenhat:{dmg:900,hp:500,spd:25,light:40,luck:50}};
 const ADMIN_HATS={partyhat:'Blue Party Hat',greenhat:'Green Party Hat'};
@@ -766,23 +1009,87 @@ const CAPES={
   wayfinder:{n:"Wayfinder's Mantle",r:'mythic',aura:'#ff77a8',c1:'#ff77a8',c2:'#29366f',attr:{spd:10,luck:15,light:15,fishXp:10,chopXp:10},v:7000,src:'goal',goal:true}
 };
 const ATTR_TXT={hp:v=>`+${v} max HP`,def:v=>`+${v} defense`,dmg:v=>`+${v}% damage`,oil:v=>`Oil lasts ${v}% longer`,spd:v=>`+${v}% move speed`,light:v=>`+${v}% light radius`,
-  luck:v=>`+${v}% loot luck`,regen:v=>`Regenerate ${v} HP/s in the Depths`,fishXp:v=>`+${v}% Fishing XP`,catch:v=>`+${v}% catch chance`,cookSafe:v=>`${v}% less burnt food`,chopXp:v=>`+${v}% Woodcutting XP`};
+  luck:v=>`+${v}% loot luck`,mag:v=>`+${v}% spell damage`,regen:v=>`Regenerate ${v} HP/s in the Depths`,fishXp:v=>`+${v}% Fishing XP`,catch:v=>`+${v}% catch chance`,cookSafe:v=>`${v}% less burnt food`,chopXp:v=>`+${v}% Woodcutting XP`};
 for(const [k,l] of Object.entries(LANTERNS))ITEMS[k+'_lantern']={n:l.n,v:l.v,lantern:k,rarity:l.r,keep:!!l.goal};
 for(const [k,c] of Object.entries(CAPES))ITEMS['cape_'+k]={n:c.n,v:c.v,cape:k,rarity:c.r,keep:!!c.goal};
+// ---------- jewelry: rings and amulets, made at the Jeweler's Bench (Crafting) from bars and gems. Each carries attributes,
+// like a cape. The item id is what you wear (S.gear.ring / S.gear.amulet). Bonuses work everywhere except Wilderness fights.
+const JEWELS={
+  copper_ring:{n:'Copper Ring',slot:'ring',lvl:1,need:{copper_bar:1,gem:1},xp:30,attr:{hp:6},v:70},
+  copper_amulet:{n:'Copper Amulet',slot:'amulet',lvl:5,need:{copper_bar:2,gem:1},xp:45,attr:{oil:8},v:85},
+  ruby_ring:{n:'Ruby Ring',slot:'ring',lvl:10,need:{iron_bar:1,ruby:1},xp:80,attr:{dmg:5},v:150},
+  sapphire_ring:{n:'Sapphire Ring',slot:'ring',lvl:15,need:{iron_bar:1,sapphire:1},xp:100,attr:{def:1,hp:5},v:180},
+  ruby_amulet:{n:'Ruby Amulet',slot:'amulet',lvl:20,need:{iron_bar:2,ruby:1},xp:140,attr:{dmg:8},v:190},
+  emerald_ring:{n:'Emerald Ring',slot:'ring',lvl:25,need:{steel_bar:1,emerald:1},xp:190,attr:{luck:8},v:270},
+  sapphire_amulet:{n:'Sapphire Amulet',slot:'amulet',lvl:30,need:{steel_bar:2,sapphire:1},xp:240,attr:{def:2,regen:.15},v:320},
+  ember_amulet:{n:'Emberheart Amulet',slot:'amulet',lvl:35,need:{ember_bar:2,ruby:2},xp:320,attr:{dmg:12,light:10},v:480},
+  diamond_ring:{n:'Diamond Ring',slot:'ring',lvl:40,need:{cobalt_bar:1,diamond:1},xp:400,attr:{def:3,hp:12},v:700},
+  star_amulet:{n:'Starshard Amulet',slot:'amulet',lvl:45,need:{cobalt_bar:2,starshard_ore:1,diamond:1},xp:550,attr:{light:15,luck:12,hp:15},v:1080}};
+for(const [k,j] of Object.entries(JEWELS))ITEMS[k]={n:j.n,v:j.v,jewel:j.slot};
+// ---------- runes: kept in the rune bag (part of the bag that never empties when you fall). Enchanting spells use them ----------
+const RUNES={gale:{n:'Gale Rune',c:'#c2d3e0',c2:'#73eff7',v:3},stone:{n:'Stone Rune',c:'#a0663b',c2:'#d9a066',v:5},tide:{n:'Tide Rune',c:'#3b5dc9',c2:'#73a7f7',v:9},
+  ember:{n:'Ember Rune',c:'#b13e53',c2:'#ff9f3d',v:12},soul:{n:'Soul Rune',c:'#7a3b8f',c2:'#c79bf2',v:40},star:{n:'Star Rune',c:'#ffcd75',c2:'#fff3c4',v:150}};
+for(const [k,r] of Object.entries(RUNES))ITEMS[k+'_rune']={n:r.n,v:r.v,rune:k};
+// ---------- Magic: wield a staff and your attack casts your chosen spell. Combat spells need no runes: the staff powers them.
+// max: the most a cast can hit before staff and robe bonuses. fx drives the look of the bolt (see castFx in game.js).
+const SPELLS={
+  spark:{n:'Spark',lvl:1,max:5,spd:190,col:'#ffcd75',col2:'#fff3c4',d:'A crackle of light. Weak, but it never misses its mark.'},
+  ember:{n:'Ember Bolt',lvl:8,max:9,spd:175,col:'#ff9f3d',col2:'#ff5a2a',d:'A ball of fire that leaves a trail of sparks.'},
+  frost:{n:'Frost Shard',lvl:16,max:13,spd:200,col:'#73eff7',col2:'#e8fbff',slow:.45,d:'An icicle that slows what it hits.'},
+  storm:{n:'Storm Lash',lvl:26,max:17,spd:260,col:'#b8f7ff',col2:'#41a6f6',chain:1,d:'Lightning that jumps to a second monster.'},
+  burst:{n:'Flame Burst',lvl:36,max:22,spd:170,col:'#ff5a2a',col2:'#ffcd75',aoe:22,d:'Explodes on impact, burning everything close by.'},
+  lance:{n:'Void Lance',lvl:48,max:28,spd:240,col:'#c79bf2',col2:'#5d275d',pierce:3,d:'A spear of nothing that passes through up to 3 monsters.'},
+  starfall:{n:'Starfall',lvl:62,max:34,spd:150,col:'#ffe9a8',col2:'#73eff7',aoe:28,d:'A falling star that bursts into light.'},
+  cataclysm:{n:'Cataclysm',lvl:80,max:42,spd:140,col:'#ff77a8',col2:'#7a3b8f',aoe:36,d:'The sky splits. Everything near the impact burns.'}};
+// Enchanting (Magic): on a worn ring or amulet. Each spell rolls attributes from its own pool; casting again rerolls.
+// tier scales the rolls; n is how many attributes it gives. The enchantment belongs to the piece you're wearing.
+const ENCH_ATTR={hp:[4,8],def:[.5,1],dmg:[2,4],mag:[3,5],luck:[2,4],oil:[3,5],light:[3,5],spd:[1,2],regen:[.04,.07],fishXp:[2,4],chopXp:[2,4]};
+const ENCHANTS={
+  lesser:{n:'Lesser Enchant',lvl:3,runes:{gale:3,soul:1},xp:40,tier:1,k:1,pool:['hp','oil','light','luck']},
+  enchant:{n:'Enchant',lvl:18,runes:{tide:3,stone:2,soul:1},xp:110,tier:2,k:1,pool:['hp','oil','light','luck','dmg','def','fishXp','chopXp']},
+  greater:{n:'Greater Enchant',lvl:35,runes:{ember:4,stone:3,soul:2},xp:240,tier:3,k:2,pool:['hp','def','dmg','mag','luck','regen','oil']},
+  arcane:{n:'Arcane Enchant',lvl:52,runes:{tide:3,soul:3,star:1},xp:420,tier:4,k:2,pool:['hp','def','dmg','mag','luck','regen','spd','light']},
+  mythic:{n:'Mythic Enchant',lvl:70,runes:{ember:3,soul:5,star:3},xp:750,tier:5,k:3,pool:['hp','def','dmg','mag','luck','regen','spd','oil','light']}};
+// the most an attribute can reach from any enchantment (the server clamps saves to this)
+const enchMax=k=>{const [a,b]=ENCH_ATTR[k]||[0,0];return Math.ceil(b*5*100)/100;};
+// the most an enchantment can roll for one bonus (the Hollow Crown raises every bonus on an enchantment to this)
+const enchTop=(sp,k)=>{const [a,b]=ENCH_ATTR[k]||[0,0],t=(ENCHANTS[sp]||{tier:0}).tier;return k==='regen'?Math.round(b*t*100)/100:Math.round(b*t);};
+// ---------- Relic-forging (v0.12.1). Each boss has a rare chance (RELIC_CHANCE) to drop its relic. Relics are spent at the
+// Forge to empower a piece you wear, +1 to +5, each step taking the next boss's relic, gold and Smithing. The Hollow Crown
+// instead perfects an enchantment. A forge stays with you while you own that piece; lose every copy and it's gone. ----------
+const RELIC_CHANCE=.04;
+const RELIC_FORGE=[null,
+  {relic:'relic_crown',gold:200,lvl:10,xp:150},
+  {relic:'relic_sigil',gold:600,lvl:20,xp:300},
+  {relic:'relic_heart',gold:1500,lvl:35,xp:500},
+  {relic:'relic_star',gold:4000,lvl:50,xp:650},
+  {relic:'relic_tome',gold:10000,lvl:65,xp:750}];
+const FORGE_MAX=RELIC_FORGE.length-1,RELIC_CROWN='relic_throne';
+// per forge level: blades +6% damage, staffs +5% spell damage, armor and helmets +1 defense (robes also +3% spell damage), rings and amulets +12% of their bonuses
+const FORGE_FX={blade:6,staff:5,def:1,robe:3,jewel:12};
+// an item's level: what it takes to make it (Smithing for forged gear, Crafting for jewelry and staffs); boss-only drops by how deep they come from
+const DROP_LVL={cinder_blade:50,star_helm:55,tide_robe:62,hollow_staff:68,moon_staff:72,void_robe:75};
+const itemLvl=id=>{if(DROP_LVL[id])return DROP_LVL[id];if(JEWELS[id])return JEWELS[id].lvl;const r=RECIPES.forge.find(q=>q.out===id)||RECIPES.staff.find(q=>q.out===id);return r?r.lvl:1;};
+// relic-forging gold: the step's base cost times (1 + item level / 10), so higher-level gear costs more to empower
+const forgeGold=(id,step)=>Math.round(RELIC_FORGE[step].gold*(1+itemLvl(id)/10)/50)*50;
+const forgeable=id=>{const it=ITEMS[id];if(!it)return false;if(it.jewel)return true;if(!it.gear||it.bound)return false;return !(it.tier==='rusty'||it.tier==='none');};
 // ---------- skills 1–99 (classic curve: early levels fly by, late levels take a very long time) ----------
-const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'},mining:{n:'Mining',icon:'pickaxe',c:'#c9a26b'}};
+const SKILLS={farming:{n:'Farming',icon:'wheat',c:'#a7f070'},fishing:{n:'Fishing',icon:'raw_pondfin',c:'#41a6f6'},cooking:{n:'Cooking',icon:'pondfin',c:'#ef7d57'},smithing:{n:'Smithing',icon:'copper_blade',c:'#94b0c2'},woodcutting:{n:'Woodcutting',icon:'logs',c:'#a0663b'},mining:{n:'Mining',icon:'pickaxe',c:'#c9a26b'},crafting:{n:'Crafting',icon:'copper_ring',c:'#e86fd0'},magic:{n:'Magic',icon:'apprentice_staff',c:'#9b7bff'}};
 // the skills combat level was built from before Mining (saves from then keep the level they had: see cbFloor)
-const SKILLS_V096=['farming','fishing','cooking','smithing','woodcutting'];
+const SKILLS_V096=['farming','fishing','cooking','smithing','woodcutting'],SKILLS_V010=SKILLS_V096.concat('mining'),SKILLS_V011=SKILLS_V010.concat('crafting');
+// a save from before a skill existed keeps the combat level the formula of its day gave it: [the new skill, the skills before it]
+const SKILL_ERAS=[['mining',SKILLS_V096],['crafting',SKILLS_V010],['magic',SKILLS_V011]];
 const FIGHT_MAX=99;   // Fighting tops out at 99 like every other skill
 const XP_TABLE=(()=>{const t=[0,0];let p=0;for(let l=1;l<99;l++){p+=Math.floor(l+300*Math.pow(2,l/7));t.push(Math.floor(p/4));}return t;})();
 const levelFor=xp=>{let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;};
 // Combat level: built from everything you do. Fighting (XP from monsters) counts double, and every other skill adds its
 // level: (2 × Fighting + all skill levels) ÷ (2 + number of skills). A new hero is combat level 1; combat level 10 takes
 // a mix like Fighting 16 with your skills around 8, so the whitelist for the Founder's Lantern is earned.
-const combatFrom=(fight,skills,keys)=>{const ks=keys||Object.keys(SKILLS);fight=Math.min(FIGHT_MAX,fight);return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
+// Magic is a fighting style too: whichever is higher, Fighting or Magic, counts double (Magic also counts once as a skill).
+const combatFrom=(fight,skills,keys)=>{const ks=keys||Object.keys(SKILLS);fight=Math.min(FIGHT_MAX,fight);if(ks.includes('magic'))fight=Math.max(fight,levelFor((skills||{}).magic||0));return Math.max(1,Math.min(200,Math.floor((2*fight+ks.reduce((a,k)=>a+levelFor((skills||{})[k]||0),0))/(2+ks.length))));};
 // ---------- fish: one species per map. Expansions add new waters and fish ----------
-const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'}};
-const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15}};
+const FISH={pondfin:{n:'Pondfin',lvl:1,xp:10,item:'raw_pondfin'},gloomfin:{n:'Gloomfin',lvl:15,xp:30,item:'raw_gloomfin'},moonfin:{n:'Moonfin',lvl:30,xp:60,item:'raw_moonfin'}};
+const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['gloomfin'],lvl:15},mere:{n:'the Moonmere',fish:['moonfin'],lvl:30}};
 // ---------- trees: shared by everyone in the world. Each holds a stack of logs, falls when it runs out, then regrows ----------
 // Expansions add new trees per area: the higher the level, the fewer logs and the longer the regrow. Logs feed a future skill.
 // Keep logs/regrow in step with TREE_TYPES in realtime/src/index.js (the server keeps the shared count).
@@ -790,26 +1097,38 @@ const WATERS={hold:{n:'Hold Lake',fish:['pondfin']},wild:{n:'Gloom Pond',fish:['
 const TREES={oak:{n:'Oak Tree',lvl:1,xp:3,logs:300,regrow:20,regenDelay:15,regenEvery:2,item:'logs'},
   // the Wilderness: fewer logs, slower to regrow, much more xp
   blackwood:{n:'Blackwood Tree',lvl:15,xp:9,logs:60,regrow:45,regenDelay:20,regenEvery:6,item:'blackwood_logs'}};
-// ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break ----------
-const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3},iron:{n:'Iron',lvl:10,xp:35,hp:3},coal:{n:'Coal',lvl:20,xp:50,hp:4},
-  ember:{n:'Emberite',lvl:25,xp:80,hp:4},cobalt:{n:'Cobalt',lvl:30,xp:100,hp:4},starshard:{n:'Starshard',lvl:40,xp:160,hp:5}};
+// ---------- ore veins in the Depths: Mining level to mine, XP per vein, hits to break, seconds to grow back ----------
+// respawn: seconds until a mined-out vein grows back (harder ores take longer)
+const ORES={copper:{n:'Copper',lvl:1,xp:20,hp:3,respawn:15},iron:{n:'Iron',lvl:10,xp:35,hp:3,respawn:25},coal:{n:'Coal',lvl:20,xp:50,hp:4,respawn:40},
+  ember:{n:'Emberite',lvl:25,xp:80,hp:4,respawn:60},cobalt:{n:'Cobalt',lvl:30,xp:100,hp:4,respawn:80},starshard:{n:'Starshard',lvl:40,xp:160,hp:5,respawn:150},
+  gloam:{n:'Gloamite',lvl:50,xp:240,hp:5,respawn:200}};
 const RECIPES={
+  // the Forge also smelts ore into bars (Smithing), for jewelry
+  smelt:[{out:'copper_bar',need:{copper_ore:2},lvl:1,xp:8},{out:'iron_bar',need:{iron_ore:2},lvl:10,xp:15},{out:'ember_bar',need:{ember_ore:2},lvl:25,xp:40},
+    {out:'steel_bar',need:{iron_ore:1,coal_ore:2},lvl:30,xp:30},{out:'cobalt_bar',need:{cobalt_ore:2},lvl:35,xp:55},{out:'gloam_bar',need:{gloam_ore:2,coal_ore:1},lvl:50,xp:90}],
   forge:[
     {out:'copper_blade',need:{copper_ore:6},gold:20,lvl:1,xp:60},{out:'copper_helm',need:{copper_ore:4},gold:10,lvl:3,xp:45},{out:'copper_mail',need:{copper_ore:8,slime_gel:4},gold:20,lvl:6,xp:90},
     {out:'iron_blade',need:{iron_ore:6,copper_ore:2},gold:60,lvl:10,xp:150},{out:'iron_helm',need:{iron_ore:4,bone:3},gold:40,lvl:12,xp:120},{out:'iron_mail',need:{iron_ore:8,bone:6},gold:60,lvl:14,xp:220},
     {out:'ember_blade',need:{ember_ore:4,gem:2},gold:200,lvl:25,xp:400},{out:'ember_helm',need:{ember_ore:3,gem:1},gold:150,lvl:28,xp:320},{out:'ember_mail',need:{ember_ore:6,gem:2},gold:200,lvl:32,xp:550},
-    {out:'steel_helm',need:{iron_ore:4,coal_ore:6},gold:300,lvl:35,xp:650},{out:'steel_blade',need:{iron_ore:6,coal_ore:8,cobalt_ore:2},gold:450,lvl:38,xp:850},{out:'steel_mail',need:{iron_ore:8,coal_ore:10,cobalt_ore:4},gold:500,lvl:42,xp:1100}
+    {out:'steel_helm',need:{iron_ore:4,coal_ore:6},gold:300,lvl:35,xp:650},{out:'steel_blade',need:{iron_ore:6,coal_ore:8,cobalt_ore:2},gold:450,lvl:38,xp:850},{out:'steel_mail',need:{iron_ore:8,coal_ore:10,cobalt_ore:4},gold:500,lvl:42,xp:1100},
+    {out:'gloam_helm',need:{gloam_bar:3,cobalt_ore:2},gold:700,lvl:52,xp:1500},{out:'gloam_blade',need:{gloam_bar:4,cobalt_bar:2},gold:900,lvl:55,xp:1900},{out:'gloam_mail',need:{gloam_bar:6,cobalt_bar:2,coal_ore:6},gold:1000,lvl:58,xp:2400}
   ],
   // time: seconds per item at the Kitchen. Fish take longer the better they are: 2 s + 0.05 s per Fishing level the fish needs.
   kitchen:[{out:'bread',need:{wheat:2},lvl:1,xp:6,time:1.5},{out:'pondfin',need:{raw_pondfin:1},lvl:1,xp:10,fish:'pondfin',burn:{chance:.45,safeAt:30,out:'burnt_fish'}},{out:'stew',need:{glowcap:1,wheat:1},lvl:5,xp:16,time:3},
-    {out:'gloomfin',need:{raw_gloomfin:1},lvl:15,xp:30,fish:'gloomfin',burn:{chance:.5,safeAt:50,out:'burnt_fish'}}],
-  press:[{out:'oil',n:2,need:{lampseed:1}}]
+    {out:'gloomfin',need:{raw_gloomfin:1},lvl:15,xp:30,fish:'gloomfin',burn:{chance:.5,safeAt:50,out:'burnt_fish'}},
+    {out:'moonfin',need:{raw_moonfin:1},lvl:30,xp:60,fish:'moonfin',burn:{chance:.5,safeAt:65,out:'burnt_fish'}}],
+  // the Greater Oil Flask refills the whole lantern: pressing it takes Farming 30 and a Moonpetal
+  press:[{out:'oil',n:2,need:{lampseed:1}},{out:'oil2',need:{lampseed:2,moonpetal:1},lvl:30,sk:'farming',xp:25}],
+  // staffs, carved at the Jeweler's Bench (Crafting)
+  staff:[{out:'apprentice_staff',need:{logs:10},lvl:1,xp:20},{out:'blackwood_staff',need:{blackwood_logs:8,sapphire:1},lvl:15,xp:140},
+    {out:'ember_staff',need:{blackwood_logs:10,ember_bar:2,ruby:2},lvl:30,xp:330},{out:'gloam_staff',need:{blackwood_logs:12,gloam_bar:3,diamond:1},lvl:50,xp:900}]
 };
 // growth in seconds (demo speed). Live: 30 min to 8 h.
 const CROPS={
   wheat:{seed:'wheat_seed',grow:45,yield:[3,4],out:'wheat',n:'Wheat',lvl:1,plantXp:2,xp:4},
   lampseed:{seed:'lampseed',grow:70,yield:[2,3],out:'lampseed',n:'Lampseed',lvl:3,plantXp:5,xp:7},
-  glowcap:{seed:'glowcap_spore',grow:100,yield:[2,3],out:'glowcap',n:'Glowcap',lvl:6,plantXp:8,xp:11}
+  glowcap:{seed:'glowcap_spore',grow:100,yield:[2,3],out:'glowcap',n:'Glowcap',lvl:6,plantXp:8,xp:11},
+  moonpetal:{seed:'moonpetal_seed',grow:150,yield:[1,2],out:'moonpetal',n:'Moonpetal',lvl:25,plantXp:14,xp:24}
 };
 // Farm plots: 12 squares (2 rows of 6). Everyone starts with 4; more open with Farming levels or for gold (each purchase costs more).
 const PLOT_BASE=4,PLOT_MAX=12,PLOT_LVLS=[5,10,15,20,30,40,50,60],PLOT_BUYS=[750,1500,3000,5000,8000,12000,18000,25000];
@@ -819,8 +1138,10 @@ function cleanPlots(o,now){const P0=Array.isArray(o.plots)?o.plots:[],legacy=o.p
   const v=p=>({crop:p.crop,t0:Math.min(now,Math.max(0,Number(p.t0)||now))});
   const plots=Array(PLOT_MAX).fill(null);if(legacy){let k=0;for(const p of P0)if(ok(p))plots[k++]=v(p);}else for(let i=0;i<PLOT_MAX;i++)if(ok(P0[i]))plots[i]=v(P0[i]);
   return {plots,plotBuys:legacy?2:Math.max(0,Math.min(PLOT_BUYS.length,Math.floor(Number(o.plotBuys)||0)))};}
-const SHOP=[{id:'wheat_seed',price:5},{id:'lampseed',price:30},{id:'oil',price:45},{id:'bread',price:20}];
-// enemies: hp, damage, speed (px/s), xp, AI, drops [item, chance, min, max]
+RECIPES.jewel=Object.entries(JEWELS).map(([k,j])=>({out:k,need:j.need,lvl:j.lvl,xp:j.xp}));
+const SHOP=[{id:'wheat_seed',price:5},{id:'lampseed',price:30},{id:'oil',price:45},{id:'bread',price:20},{id:'moonpetal_seed',price:90},
+  {id:'gale_rune',price:5},{id:'stone_rune',price:8},{id:'tide_rune',price:14},{id:'ember_rune',price:18}];
+// enemies: hp, damage, speed (px/s), xp, AI, drops [item, chance, min, max]. Runes come on top: see RUNE_DROPS.
 const ENEMIES={
   slime:{hp:14,dmg:5,spd:24,xp:4,ai:'hop',art:'slime',drops:[['slime_gel',.6,1,2],['gold',.5,1,4]]},
   gelling:{hp:6,dmg:3,spd:34,xp:1,ai:'hop',art:'gelling',small:true,drops:[['slime_gel',.3,1,1]]},
@@ -830,8 +1151,8 @@ const ENEMIES={
   wisp:{hp:18,dmg:8,spd:40,xp:8,ai:'float',art:'wisp',light:true,drops:[['gem',.06,1,1],['gold',.5,2,6],['lampseed',.12,1,1]]},
   spider:{hp:26,dmg:10,spd:52,xp:10,ai:'dash',art:'spider',drops:[['gold',.6,3,9],['bone',.3,1,1]]},
   shade:{hp:20,dmg:11,spd:56,xp:5,ai:'chase',art:'shade',drops:[]},
-  mother:{hp:280,dmg:11,spd:30,xp:120,ai:'mother',art:'mother',boss:true,big:true,drops:[['relic_crown',1,1,1],['gem',1,2,3],['gold',1,60,90],['lampseed',1,2,3]]},
-  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,drops:[['relic_sigil',1,1,1],['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4]]},
+  mother:{hp:280,dmg:11,spd:30,xp:120,ai:'mother',art:'mother',boss:true,big:true,relic:'relic_crown',drops:[['gem',1,2,3],['gold',1,60,90],['lampseed',1,2,3],['sapphire',.25,1,1]]},
+  knight:{hp:520,dmg:15,spd:34,xp:300,ai:'knight',art:'knight',boss:true,big:true,relic:'relic_sigil',drops:[['gem',1,3,4],['gold',1,150,220],['ember_ore',1,2,4],['ruby',.35,1,1],['emerald',.2,1,1]]},
   // Emberforge Halls (floors 11–15)
   imp:{hp:20,dmg:9,spd:50,xp:12,ai:'dash',art:'imp',drops:[['gold',.6,4,10],['coal_ore',.25,1,1]]},
   golem:{hp:48,dmg:12,spd:20,xp:18,ai:'chase',art:'golem',drops:[['coal_ore',.5,1,2],['gold',.6,5,12],['ember_ore',.06,1,1]]},
@@ -841,16 +1162,45 @@ const ENEMIES={
   sentinel:{hp:52,dmg:14,spd:30,xp:22,ai:'lunge',art:'sentinel',drops:[['cobalt_ore',.3,1,2],['gold',.6,8,16],['bone',.3,1,2]]},
   shardling:{hp:26,dmg:12,spd:58,xp:15,ai:'dash',art:'shardling',drops:[['gold',.5,4,10],['starshard_ore',.02,1,1]]},
   // rare: [item, chance] rolled once per kill for everyone who hit it (better with loot luck)
-  tyrant:{hp:700,dmg:16,spd:28,xp:700,ai:'tyrant',art:'tyrant',boss:true,big:true,drops:[['relic_heart',1,1,1],['coal_ore',1,4,8],['ember_ore',1,3,5],['gold',1,300,450],['gem',1,3,5]],rare:[['cinder_blade',.015]]},
-  warden:{hp:900,dmg:18,spd:32,xp:1100,ai:'warden',art:'warden',boss:true,big:true,drops:[['relic_star',1,1,1],['cobalt_ore',1,4,8],['starshard_ore',1,1,3],['gold',1,500,750],['gem',1,4,6]],rare:[['star_helm',.015]]}
+  tyrant:{hp:700,dmg:16,spd:28,xp:700,ai:'tyrant',art:'tyrant',boss:true,big:true,relic:'relic_heart',drops:[['coal_ore',1,4,8],['ember_ore',1,3,5],['gold',1,300,450],['gem',1,3,5],['ruby',.5,1,2],['diamond',.2,1,1]],rare:[['cinder_blade',.015]]},
+  warden:{hp:900,dmg:18,spd:32,xp:1100,ai:'warden',art:'warden',boss:true,big:true,relic:'relic_star',drops:[['cobalt_ore',1,4,8],['starshard_ore',1,1,3],['gold',1,500,750],['gem',1,4,6],['emerald',.5,1,2],['diamond',.35,1,1]],rare:[['star_helm',.015]]},
+  // the Drowned Archive (floors 21–25)
+  drowned:{hp:62,dmg:16,spd:30,xp:28,ai:'lunge',art:'drowned',drops:[['gold',.6,10,20],['bone',.3,1,2],['gloam_ore',.08,1,1]]},
+  eel:{hp:38,dmg:14,spd:62,xp:22,ai:'dash',art:'eel',drops:[['gold',.6,8,16],['raw_moonfin',.12,1,1]]},
+  tome:{hp:34,dmg:13,spd:46,xp:24,ai:'flutter',art:'tome',light:true,drops:[['gold',.6,8,18],['moonpetal_seed',.05,1,1]]},
+  // the Hollow Throne (floors 26–30)
+  husk:{hp:84,dmg:19,spd:26,xp:36,ai:'chase',art:'husk',drops:[['gold',.6,12,24],['gloam_ore',.12,1,2]]},
+  voidling:{hp:44,dmg:17,spd:52,xp:30,ai:'float',art:'voidling',light:true,drops:[['gold',.6,10,20],['gem',.1,1,1]]},
+  watcher:{hp:70,dmg:20,spd:34,xp:34,ai:'lunge',art:'watcher',drops:[['gold',.6,12,26],['diamond',.02,1,1]]},
+  // boss attacks: a bolt that flies straight and bursts on whatever it touches, and a rift that tears open where you stood
+  orb:{hp:1,dmg:18,spd:120,xp:0,ai:'orb',art:'orb',proj:true,light:true,drops:[]},
+  rift:{hp:1,dmg:24,spd:0,xp:0,ai:'rift',art:'rift',proj:true,drops:[]},
+  vorb:{hp:1,dmg:20,spd:110,xp:0,ai:'orb',art:'vorb',proj:true,light:true,drops:[]},
+  // The Drowned Archmage: blinks, throws fans of tide bolts, freezes the floor around it, calls grimoires to its side
+  archmage:{hp:1150,dmg:20,spd:30,xp:1600,ai:'archmage',art:'archmage',boss:true,big:true,relic:'relic_tome',drops:[['gloam_ore',1,4,8],['gold',1,700,1000],['gem',1,4,6],['sapphire',.6,1,2],['diamond',.4,1,1],['moonpetal_seed',.5,1,3]],rare:[['moon_staff',.012],['tide_robe',.03]]},
+  // The Hollow King: slams, charges, opens rifts under you, and below half health throws rings of void bolts
+  hollowking:{hp:1450,dmg:22,spd:32,xp:2300,ai:'hollowking',art:'hollowking',boss:true,big:true,relic:'relic_throne',drops:[['gloam_ore',1,6,10],['gold',1,900,1300],['gem',1,5,8],['emerald',.6,1,2],['diamond',.5,1,2]],rare:[['hollow_staff',.03],['void_robe',.012]]},
+  // Hollowmere, west of the Hold: they wander near their dens and attack if you get too close (levels 3–20)
+  wolf:{hp:26,dmg:7,spd:56,xp:7,ai:'dash',art:'wolf',drops:[['gold',.6,2,6],['bone',.3,1,1]]},
+  boar:{hp:40,dmg:9,spd:40,xp:10,ai:'lunge',art:'boar',drops:[['gold',.6,3,8],['bread',.06,1,1]]},
+  bogling:{hp:48,dmg:12,spd:30,xp:14,ai:'hop',art:'bogling',drops:[['gold',.6,5,10],['moonpetal_seed',.04,1,1],['glowcap_spore',.15,1,1]]},
+  mirewisp:{hp:42,dmg:13,spd:46,xp:16,ai:'float',art:'mirewisp',light:true,drops:[['gold',.6,6,12],['gem',.06,1,1]]},
+  treant:{hp:90,dmg:16,spd:24,xp:24,ai:'chase',art:'treant',drops:[['gold',.6,8,16],['blackwood_logs',.4,1,3],['logs',.5,2,4]]}
 };
+// runes on top of every monster's drops, by area: [rune, chance, min, max]. Bosses drop a handful.
+const RUNE_DROPS={moss:[['gale',.1,1,2]],crypt:[['stone',.1,1,2],['soul',.02,1,1]],ember:[['ember',.12,1,2],['soul',.03,1,1]],star:[['tide',.1,1,2],['soul',.04,1,1],['star',.004,1,1]],
+  tide:[['tide',.14,1,3],['soul',.06,1,1],['star',.008,1,1]],void:[['soul',.1,1,2],['ember',.08,1,3],['star',.015,1,1]],mere:[['gale',.12,1,3],['stone',.08,1,2],['soul',.02,1,1]],
+  boss:[['soul',1,2,5],['star',.5,1,2]]};
 // Biome packs: floors, enemy mix, ore, boss. Season 1 adds the next pack.
 const PACKS=[
 // veins: [ore, weight, from floor] (the ore walls of each floor are rolled from these). ore: the pack's main ore (chests).
   {id:'moss',from:1,to:5,enemies:['slime','bat','crawler'],ore:'copper',veins:[['copper',1]],boss:'mother',bossName:'Mother Slime'},
   {id:'crypt',from:6,to:10,enemies:['skeleton','wisp','spider','bat'],ore:'iron',veins:[['iron',3],['ember',1,8]],boss:'knight',bossName:'The Ossuary Knight'},
   {id:'ember',from:11,to:15,enemies:['imp','golem','cinderbat','imp'],ore:'coal',veins:[['coal',5],['iron',3],['ember',1.6,12]],boss:'tyrant',bossName:'The Forge Tyrant'},
-  {id:'star',from:16,to:20,enemies:['wraith','sentinel','shardling'],ore:'cobalt',veins:[['cobalt',6],['coal',3],['starshard',1,17]],boss:'warden',bossName:'The Starwarden'}
+  {id:'star',from:16,to:20,enemies:['wraith','sentinel','shardling'],ore:'cobalt',veins:[['cobalt',6],['coal',3],['starshard',1,17]],boss:'warden',bossName:'The Starwarden'},
+  // floors 21–30 have one new ore, Gloamite, and a new chest: the Uncommon Chest (glows green)
+  {id:'tide',from:21,to:25,enemies:['drowned','eel','tome'],ore:'gloam',veins:[['gloam',5],['cobalt',2],['coal',2]],boss:'archmage',bossName:'The Drowned Archmage',uchest:true},
+  {id:'void',from:26,to:30,enemies:['husk','voidling','watcher','voidling'],ore:'gloam',veins:[['gloam',7],['cobalt',1.5],['starshard',.6]],boss:'hollowking',bossName:'The Hollow King',uchest:true}
 ];
 const packOf=f=>PACKS.find(p=>f>=p.from&&f<=p.to);
 // the lift at the Gate: floor 1, then the first floor of each pack whose previous boss you've beaten
@@ -864,8 +1214,56 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.10.0',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.10.0'};
+const BUILD={version:'0.12.2',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.0'};
 const CHANGELOG=[
+  {v:'0.12.2',date:'2026-10-27',title:'Relic-forging by item level',notes:[
+    'The gold a relic-forge step costs now depends on the item’s level: the higher the level, the more gold. A Copper Blade costs about 18,000 gold to take all the way to +5, a Steel Blade about 78,000, and the Voidwoven Robe about 139,000.',
+    'An item’s level is what it takes to make it (Smithing for forged gear, Crafting for jewelry and staffs). Boss-only drops are levels 50 to 75. The Relic forge tab shows each piece’s level.']},
+  {v:'0.12.1',date:'2026-10-27',title:'Relic-forging',notes:[
+    'Boss relics are now rare: each boss drops its relic about once in every 25 kills (Loot Luck helps a little). Relics you already have are yours to keep.',
+    'Relics now have a use. At the Forge, the new Relic forge tab spends them to forge power into the gear you wear, up to +5: blades +6% damage per level, staffs +5% spell damage, armor and helmets +1 defense (robes also +3% spell damage), rings and amulets +12% to their bonuses.',
+    'Each step takes the next boss’s relic, plus gold and Smithing: +1 Slime Crown, +2 Knight’s Sigil, +3 Forge Heart, +4 Fallen Star, +5 Drowned Grimoire.',
+    'The Hollow Crown crowns an enchantment instead: spend it on an enchanted ring or amulet and every bonus rises to the most that enchantment can roll.',
+    'A forged piece keeps its power while you own it and counts everywhere except Wilderness fights. Sell, trade or lose every copy and the forging is gone.',
+    'A new goal: relic-forge a piece of gear.',
+    'You can mine ore while holding a staff: face a vein and your staff works as a pick.',
+    'Fixed: beating the Drowned Archmage or the Hollow King with a staff could be undone a moment later. The kill, its XP and its drops now stick.',
+    'Fixed: coming home from floors 21–30 with a big haul could be undone. What you carry now saves as you go.',
+    'Fixed: in a party, boss bolts and rifts hit everyone as hard as they hit the leader, and Frost Shard slows monsters whoever casts it.',
+    'Fixed: an enchantment could come back after its ring or amulet was lost in the Wilderness.',
+    'Other heroes now see a staff swing in the Wilderness.']},
+  {v:'0.12.0',date:'2026-10-27',title:'Magic, Hollowmere and ten more floors',notes:[
+    'A new skill, Magic. Wield a staff and your attack becomes a spell, with your Magic level deciding which spells you can cast: Spark at 1, Ember Bolt at 8, Frost Shard (slows) at 16, Storm Lash (jumps between monsters) at 26, Flame Burst (explodes) at 36, Void Lance (pierces) at 48, Starfall at 62 and Cataclysm at 80. Pick your spell on the Hero screen.',
+    'Spells start weak and hit harder as you level and move to new spells. Kills with a staff train Magic, never Fighting. Magic counts toward your combat level: the higher of Fighting and Magic counts double.',
+    'Four staffs to carve at the Jeweler’s Bench (new Staffs tab): the Apprentice Staff (10 logs), Blackwood Staff, Emberwood Staff and Gloamwood Staff. Each adds to your spell damage.',
+    'Enchanting: use Magic on the ring and amulet you wear. Five enchanting spells, from Lesser Enchant (Magic 3) to Mythic Enchant (Magic 70), each rolling its own kind of bonus. They use runes.',
+    'The rune bag, a new part of your bag: Gale, Stone, Tide, Ember, Soul and Star Runes. Monsters and chests drop them, and Tallow sells the first four. Runes never take bank space and are never lost.',
+    'Floors 21–30. The Drowned Archive (21–25): drowned scribes, tide eels and cursed grimoires, with the Drowned Archmage on floor 25. The Hollow Throne (26–30): husks, voidlings and watchers, with the Hollow King on floor 30. The lift reaches floors 21 and 26 once you beat the boss before them.',
+    'The new bosses fight with a mix of attacks: the Archmage throws fans of bolts, freezes the floor and blinks away; the Hollow King slams, charges, tears rifts open under you and throws rings of void bolts.',
+    'Their rarest drops: the Archmage can drop the Moonwell Staff (Mythic) or the Archmage’s Tiderobe (Legendary); the Hollow King can drop the Hollow Scepter (Legendary) or the Voidwoven Robe (Mythic). Robes add to spell damage.',
+    'One new ore on floors 21–30: Gloamite (Mining 50). Smelt it into bars and forge Gloamite Helm, Blade and Mail (Smithing 52–58).',
+    'The Uncommon Chest, on floors 21–30: it glows green and holds more, with a small chance of a Greater Oil Flask, which refills your whole lantern. You can also press Greater Oil Flasks yourself (Farming 30): 2 Lampseed and a Moonpetal, a new crop (Farming 25, seeds from Tallow and the deep floors).',
+    'A new area west of the Hold: Hollowmere, about four times the size of the Hold. A misty moor around the Moonmere, a great lake with a dock out to the middle (Moonfin, Fishing 30). Monsters roam its meadows, marsh and deepwood (levels 3 to 20) and attack if you get too close. Falling there costs nothing.',
+    'In Hollowmere’s far corner stands the Abyssal Maw, the gate to the raids coming in Season 1, with a Bank Chest beside it. The plaza around it is safe.',
+    'A globe under the compass opens your world map. It’s see-through, so you can watch the game while you look.',
+    'Other heroes in Hollowmere see your swings and spells, and you see theirs.',
+    '15 new goals.']},
+  {v:'0.11.1',date:'2026-10-27',title:'Ore that shines',notes:[
+    'Coal and Cobalt are set back into the wall like every other ore, without the pale rock around them.',
+    'They shine instead: Coal has bright silver edges and a soft glow, Cobalt glows blue, and Copper and Iron veins glow softly too. Every vein still twinkles now and then, so you can spot ore from across the room.']},
+  {v:'0.11.0',date:'2026-10-27',title:'Crafting: rings and amulets',notes:[
+    'A new skill, Crafting. Visit the new Jeweler’s Bench, between the road to the Delve Gate and the Forge, to set gems into bars and make rings and amulets.',
+    'You can wear one ring and one amulet. Like capes, they carry bonuses: more health, damage, defence, loot luck, light, or longer-lasting oil. Their bonuses work everywhere except fights in the Wilderness.',
+    '10 pieces to make, from the Copper Ring (Crafting 1) to the Starshard Amulet (Crafting 45).',
+    'Smelt bars at the Forge: open the Forge and pick Smelt bars. Copper, Iron, Emberite, Steel and Cobalt bars. Smelting trains Smithing, and you can smelt everything at once.',
+    'New gems in chests: Rubies and Sapphires on any floor, Emeralds from floor 6 and Diamonds from floor 11. The bosses drop them too. Cave Gems finally have a use: every Copper ring and amulet needs one.',
+    'Coal and Cobalt veins are much easier to spot: they now sit in pale rock, and every ore vein twinkles now and then.',
+    'Crafting counts toward your combat level, which is now (2 × Fighting + all your skill levels) ÷ 9. Nobody loses a level: you keep the combat level you had.',
+    '5 new goals for Crafting and smelting.']},
+  {v:'0.10.1',date:'2026-10-27',title:'Ore grows back',notes:[
+    'Fixed: after a reconnect (locking your phone, a signal drop, a server update) some heroes deep in the Depths were sent back to an earlier floor, like floor 14 back to floor 7. You now stay on the floor you were on.',
+    'Ore veins grow back after you mine them, so there is always something to swing at. The harder the ore, the longer it takes: Copper 15 seconds, Iron 25, Coal 40, Emberite 60, Cobalt 80 and Starshard 150.',
+    'In a party, everyone sees a vein grow back at the same moment.']},
   {v:'0.10.0',date:'2026-10-27',title:'Ten new floors and Mining',notes:[
     'The Depths go to floor 20. Floors 11–15 are the Emberforge Halls: fire imps, magma golems and cinder bats, with the Forge Tyrant on floor 15. Floors 16–20 are the Starfall Hollow: wraiths, crystal sentinels and shardlings, with the Starwarden on floor 20.',
     'A new skill, Mining. Mine the ore in the walls to train it. Each ore needs a Mining level: Copper 1, Iron 10, Coal 20, Emberite 25, Cobalt 30, Starshard 40. Mining counts toward your combat level like every other skill.',
@@ -1072,7 +1470,8 @@ const CHANGELOG=[
 ];
 
 // ===== Maps: the Hold (handmade) and the Depths (procedural) =====
-const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6,WILDG=7,WPATH=8,GLOOM=9;
+const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6,WILDG=7,WPATH=8,GLOOM=9,
+  MGRASS=10,DGRASS=11,MPATH=12,PLAZA=13,MOON=14,CANOPY=15,CLIFF=16;   // Hollowmere (v0.12)
 function newMap(w,h,kind,fill){return {w,h,kind,t:new Uint8Array(w*h).fill(fill),solid:new Uint8Array(w*h),objs:[],lights:[],seed:0};}
 const tAt=(m,x,y)=>x<0||y<0||x>=m.w||y>=m.h?WALL:m.t[y*m.w+x];
 const setT=(m,x,y,v)=>{if(x>=0&&y>=0&&x<m.w&&y<m.h)m.t[y*m.w+x]=v;};
@@ -1086,8 +1485,76 @@ function addObj(m,o){m.objs.push(o);if(o.block)for(const [x,y] of o.block)setSol
 // Keep WILD_ROWS in step with WILD_Y in realtime/src/index.js (2 rows per Wilderness level, levels 1–20).
 const WILD_ROWS=40,WILD_Y=WILD_ROWS*T,WILD_MAX=20,RETURN_MAX=20;   // the Return Flame works up to this Wilderness level (deeper areas will block it)
 const wildLvl=y=>y<WILD_Y?Math.min(WILD_MAX,Math.max(1,Math.ceil((WILD_Y-y)/(2*T)))):0;
-const isWater=t=>t===WATER||t===GLOOM;
-function buildHold(){
+const isWater=t=>t===WATER||t===GLOOM||t===MOON;
+// ---------- Hollowmere: a new area WEST of the Hold (v0.12), about four times its size ----------
+// The Hold and the Wilderness keep their shape; the map just grew WEST_COLS columns to the west (so every Hold and
+// Wilderness x moved right by WEST_X) and SOUTH_ROWS rows to the south. Keep WEST_X in step with realtime/src/index.js.
+const WEST_COLS=44,WEST_X=WEST_COLS*T,HM_ROWS=56,HM_Y0=WILD_ROWS;   // Hollowmere: columns 0–43, rows 40–95
+const inHollowmere=(x,y)=>x<WEST_X&&y>=WILD_Y;
+function buildHold(){const base=buildHoldBase(),DX=WEST_X,W=WEST_COLS+base.w,H=HM_Y0+HM_ROWS,m=newMap(W,H,'hold',CANOPY);
+  m.solid.fill(1);
+  for(let y=0;y<base.h;y++)for(let x=0;x<base.w;x++){m.t[y*W+x+WEST_COLS]=base.t[y*base.w+x];m.solid[y*W+x+WEST_COLS]=base.solid[y*base.w+x];}
+  for(let y=0;y<HM_Y0;y++)for(let x=0;x<WEST_COLS;x++)m.t[y*W+x]=CLIFF;   // west of the Wilderness: sheer cliffs
+  const sh=o=>{if(o.x!=null)o.x+=DX;if(o.act)o.act.x+=DX;if(o.block)o.block=o.block.map(([x,y])=>[x+WEST_COLS,y]);if(o.tile)o.tile=[o.tile[0]+WEST_COLS,o.tile[1]];return o;};
+  m.objs=base.objs.map(sh);m.trees=base.trees;m.plots=base.plots.map(p=>Object.assign(p,{tx:p.tx+WEST_COLS,cx:p.cx+DX}));m.lilies=base.lilies.map(([x,y,f])=>[x+WEST_COLS,y,f]);
+  m.spawn={x:base.spawn.x+DX,y:base.spawn.y};m.doors={gate:{x:base.doors.gate.x+DX,y:base.doors.gate.y}};
+  // open the Hold's west tree line where the road runs (rows 11–12 of the Hold) and carry the road through
+  const gy=[11+WILD_ROWS,12+WILD_ROWS],gx=WEST_COLS;
+  m.objs=m.objs.filter(o=>!(o.type==='tree'&&!o.chop&&o.block&&o.block.some(([x,y])=>x===gx&&gy.includes(y))));
+  for(const y of gy){setT(m,gx,y,PATH);setSolid(m,gx,y,0);}
+  buildHollowmere(m);
+  return m;}
+// Hollowmere: a misty moor around the Moonmere, a great lake with a dock running out to the middle. Wolves and boars roam
+// the meadows near the Hold (levels 3–6), bog things haunt the marsh (9–14) and treants walk the deepwood (15–20).
+// In the north-west corner, far from any den, stands the Abyssal Maw: the raid dungeon (Season 1), with a bank chest.
+function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(912);
+  const L=(x,y)=>[x+X0,y+Y0];
+  const put=(lx,ly,t,solid)=>{const [x,y]=L(lx,ly);setT(m,x,y,t);setSolid(m,x,y,solid?1:0);};
+  // the moor itself, with a ragged edge of deep forest (2–3 tiles)
+  for(let ly=0;ly<HR;ly++)for(let lx=0;lx<WC;lx++){const edge=Math.min(lx,ly,HR-1-ly),wob=((lx*7+ly*13)%5===0)?1:0;
+    if(edge<2+wob)put(lx,ly,CANOPY,1);else put(lx,ly,MGRASS,0);}
+  // the strip along the Hold's tree line stays forest except at the road
+  for(let ly=0;ly<HR;ly++){const lx=WC-1;if(ly!==11&&ly!==12)put(lx,ly,CANOPY,1);}
+  // the deepwood (south-east) and the marsh (south-west) are darker ground
+  for(let ly=34;ly<HR-2;ly++)for(let lx=28;lx<WC-1;lx++)if(tAt(m,...L(lx,ly))===MGRASS&&(lx-28)+(ly-34)>3)put(lx,ly,DGRASS,0);
+  for(let ly=36;ly<HR-2;ly++)for(let lx=2;lx<13;lx++)if(tAt(m,...L(lx,ly))===MGRASS&&((lx*5+ly*3)%4))put(lx,ly,DGRASS,0);
+  // roads: from the Hold gate west to the crossroads, north to the Maw, and around the lake
+  const road=(x0,y0,x1,y1,w)=>{w=w||2;const pave=(lx,ly)=>{if(lx<2||ly<2||ly>HR-3||lx>WC-1)return;const t=tAt(m,...L(lx,ly));if(t===MOON||t===PLAZA||t===DOCK)return;put(lx,ly,MPATH,0);};
+    if(y0===y1){for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)for(let k=0;k<w;k++)pave(x,y0+k);}else{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)for(let k=0;k<w;k++)pave(x0+k,y);}};
+  road(14,11,WC-1,11);road(14,6,14,12);road(14,6,20,6);road(32,12,32,22);road(32,22,38,22);road(38,22,38,44);road(10,12,10,30);road(5,30,10,30);road(5,30,5,46);road(14,12,30,12,1);
+  // the plaza of the Abyssal Maw (north-west): dark flagstones, kept clear
+  for(let ly=2;ly<=14;ly++)for(let lx=2;lx<=13;lx++)if(!(lx<3&&ly<3))put(lx,ly,PLAZA,0);
+  // the Moonmere: a great lake (about three times the Hold's), bigger rows in the middle
+  const cx=21,cy=31,rx=9.5,ry=8.5;for(let ly=20;ly<=42;ly++)for(let lx=10;lx<=33;lx++){const d=((lx+.5-cx)/rx)**2+((ly+.5-cy)/ry)**2+(Math.sin(lx*1.7+ly)*.06);if(d<1)put(lx,ly,MOON,1);}
+  // the dock: from the north shore straight out to a platform in the middle of the water
+  for(let ly=22;ly<=29;ly++)put(21,ly,DOCK,0);for(let ly=30;ly<=32;ly++)for(let lx=20;lx<=22;lx++)put(lx,ly,DOCK,0);
+  for(let ly=21;ly>=19;ly--)if(tAt(m,...L(21,ly))!==DOCK&&!solidAt(m,...L(21,ly)))put(21,ly,MPATH,0);
+  m.lilies.push(...[[14,27,1],[28,26,0],[17,37,0],[25,38,1],[30,31,0],[12,33,1],[19,24,0],[24,35,1]].map(([x,y,f])=>[x+X0,y+Y0,f,1]));
+  // buildings and landmarks
+  const obj=(type,lx,ly,extra)=>{const [x,y]=L(lx,ly);return addObj(m,Object.assign({type,x:x*T+8,y:y*T+14},extra||{}));};
+  // the Abyssal Maw: 7 tiles wide; you walk up to the portal in its jaw
+  // 9 tiles wide and 8 tall: the skull and its cliff block the way, the jaw (the portal) faces the plaza
+  {const [x,y]=L(7,9);const blk=[];for(let j=y-7;j<=y;j++)for(let i=x-4;i<=x+4;i++)blk.push([i,j]);for(const i of [x-4,x-3,x+3,x+4])blk.push([i,y+1]);
+    addObj(m,{type:'maw',x:x*T+8,y:(y+1)*T+14,sortY:(y-1)*T,block:blk,act:{x:x*T+8,y:(y+2)*T+6,label:'Enter',id:'raid'},light:{r:60,c:'violet'}});}
+  obj('bankchest',11,10,{block:[[...L(11,10)]],act:{x:L(11,10)[0]*T+8,y:L(11,11)[1]*T+4,label:'Bank',id:'bank'}});
+  obj('campfire',9,13,{block:[[...L(9,13)]],light:{r:30,c:'warm'}});
+  for(const [lx,ly,v] of [[3,4,0],[3,12,1],[12,3,1],[13,13,0]])obj('menhir',lx,ly,{v,block:[[...L(lx,ly)]]});
+  for(const [lx,ly] of [[16,10],[24,10],[30,13],[38,18],[38,28],[10,18],[5,36]])obj('lpost',lx,ly,{block:[[...L(lx,ly)]]});
+  obj('hmsign',41,10,{block:[[...L(41,10)]],act:{x:L(41,10)[0]*T+8,y:L(41,11)[1]*T+4,label:'Read',id:'hmsign'}});
+  // willows on the moor, reeds and moon crystals on the shore, fairy rings in the grass
+  const free=(lx,ly)=>{const [x,y]=L(lx,ly);return !solidAt(m,x,y)&&tAt(m,x,y)!==MPATH&&tAt(m,x,y)!==PLAZA&&tAt(m,x,y)!==DOCK;};
+  for(const [lx,ly] of [[19,4],[26,4],[35,6],[40,4],[29,17],[36,15],[6,20],[4,26],[13,46],[17,50],[24,47],[33,40],[40,40],[34,50],[41,47],[30,46],[8,45],[3,42],[36,32],[40,30]])if(free(lx,ly))obj('willow',lx,ly,{block:[[...L(lx,ly)]]});
+  for(let ly=19;ly<=43;ly++)for(let lx=9;lx<=34;lx++){const [x,y]=L(lx,ly);if(!free(lx,ly))continue;const nearW=[[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>tAt(m,x+a,y+b)===MOON);
+    if(nearW&&r()<.28)m.objs.push({type:'reeds',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0});else if(nearW&&r()<.06)obj('mcrystal',lx,ly,{v:r()*2|0,block:[[x,y]],light:{r:18,c:'violet'}});}
+  for(let i=0;i<14;i++){const lx=3+(r()*38|0),ly=3+(r()*50|0);if(free(lx,ly)){const [x,y]=L(lx,ly);m.objs.push({type:'mushring',x:x*T+8,y:y*T+15,flat:true});}}
+  for(let i=0;i<40;i++){const lx=2+(r()*40|0),ly=2+(r()*52|0);if(free(lx,ly)){const [x,y]=L(lx,ly);m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:(r()*4|0),flat:true,hm:true});}}
+  // monster dens: [type, local x, local y, level]. Each den holds one monster that respawns after a while.
+  m.dens=[['wolf',33,4,3],['wolf',36,8,4],['boar',27,7,4],['boar',22,15,5],['wolf',39,15,5],['boar',34,18,6],
+    ['wolf',36,24,7],['boar',30,27,8],['bogling',7,24,9],['mirewisp',4,32,10],['bogling',8,38,11],['mirewisp',10,44,12],['bogling',4,49,13],['mirewisp',12,51,14],
+    ['treant',32,38,15],['treant',36,43,16],['mirewisp',40,37,16],['treant',31,49,18],['treant',39,51,19],['treant',35,46,20]]
+    .map(([type,lx,ly,lvl],i)=>{const [x,y]=L(lx,ly);return {i,type,x:x*T+8,y:y*T+12,lvl};});
+  m.hm={x0:X0,y0:Y0,w:WC,h:HR};}
+function buildHoldBase(){
   const O=WILD_ROWS,W=26,HH=24,H=HH+O,m=newMap(W,H,'hold',GRASS);
   for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(x<1||y<1||x>=W-1||y>=H-1)setSolid(m,x,y,1);
   for(let y=5;y<HH-1;y++){setT(m,12,y+O,PATH);setT(m,13,y+O,PATH);}
@@ -1110,6 +1577,8 @@ function buildHold(){
   addObj(m,{type:'gate',x:13*T,y:(5+O)*T,sortY:(3+O)*T,spr:'gate',block:[[11,3+O],[12,3+O],[13,3+O],[14,3+O],[11,4+O],[14,4+O]],act:{x:13*T,y:(5+O)*T+6,label:'Delve',id:'gate'},light:{r:34,c:'warm'}});
   addObj(m,{type:'bank',x:5*T,y:(8+O)*T,spr:'bank',block:[[3,6+O],[4,6+O],[5,6+O],[6,6+O],[3,7+O],[4,7+O],[6,7+O]],act:{x:5*T,y:(8+O)*T+4,label:'Bank',id:'bank'}});
   addObj(m,{type:'forge',x:19*T,y:(8+O)*T,spr:'forge',anim:true,block:[[17,6+O],[18,6+O],[19,6+O],[20,6+O],[17,7+O],[18,7+O],[19,7+O],[20,7+O]],act:{x:18*T+2,y:(8+O)*T+6,label:'Forge',id:'forge'},light:{r:30,c:'warm',dx:-6,dy:-10}});
+  // the Jeweler's Bench (Crafting): on the grass between the road up to the Gate and the Forge
+  addObj(m,{type:'bench',x:15*T+8,y:(8+O)*T+2,spr:'bench',block:[[15,7+O],[16,7+O]],act:{x:15*T+8,y:(8+O)*T+10,label:'Craft',id:'bench'},light:{r:16,c:'warm',dx:4,dy:-14}});
   // the bulletin board (latest updates + build version), at the corner of the grass by the crossroads
   addObj(m,{type:'board',x:15*T,y:(10+O)*T+14,spr:'board',block:[[14,10+O],[15,10+O]],act:{x:15*T,y:(11+O)*T+6,label:'Bulletin',id:'bulletin'}});
   // the east road: a sign and a barricaded opening in the trees
@@ -1200,17 +1669,21 @@ function buildFloor(floor,runSeed){
   for(let i=0;i<(boss?6:9)&&fpool.length;i++){const [x,y]=pick(fpool);addObj(m,{type:'torch',x:x*T+8,y:y*T+12,tile:[x,y],light:{r:46,c:'warm'},onWall:true});}
   // ore veins: rolled from the pack's vein table (some ores only show up from a given floor)
   const veins=(pack.veins||[[pack.ore,1]]).filter(v=>!v[2]||floor>=v[2]),vw=veins.reduce((a,v)=>a+v[1],0);
-  const ORE_LIGHT={ember:{r:15,c:'lava'},cobalt:{r:12,c:'cool'},starshard:{r:18,c:'star'}};
+  const ORE_LIGHT={ember:{r:15,c:'lava'},coal:{r:11,c:'cool'},cobalt:{r:14,c:'cool'},starshard:{r:18,c:'star'},gloam:{r:16,c:'green'}};
   if(!boss)for(let i=0;i<10&&fpool.length;i++){const [x,y]=pick(fpool);let q=r()*vw,kind=veins[0][0];for(const v of veins){q-=v[1];if(q<=0){kind=v[0];break;}}
-    addObj(m,{type:'ore',kind,x:x*T+8,y:y*T+15,tile:[x,y],hp:(ORES[kind]||{hp:3}).hp,onWall:true,light:ORE_LIGHT[kind]||null});}
+    addObj(m,{type:'ore',kind,x:x*T+8,y:y*T+15,tile:[x,y],hp:(ORES[kind]||{hp:3}).hp,onWall:true,light:ORE_LIGHT[kind]||null,light0:ORE_LIGHT[kind]||null});}
   const cells=[];rooms.forEach((o,i)=>{if(i===0)return;for(let y=o.y;y<o.y+o.h;y++)for(let x=o.x;x<o.x+o.w;x++)cells.push([x,y]);});
   const free=cells.filter(([x,y])=>!(x===m.stairs.tx&&y===m.stairs.ty));
   if(!boss){
     for(let i=0;i<1+(r()<.6?1:0);i++){const [x,y]=pick(free);addObj(m,{type:'chest',x:x*T+8,y:y*T+14,open:false,act:{x:x*T+8,y:y*T+14,label:'Open',id:'chest'},block:[[x,y]]});}
+    // floors 21–30: an Uncommon Chest (glows green) on most floors, with more inside
+    if(pack.uchest&&r()<.75){const [x,y]=pick(free);addObj(m,{type:'chest',tier:'u',x:x*T+8,y:y*T+14,open:false,act:{x:x*T+8,y:y*T+14,label:'Open',id:'chest'},block:[[x,y]],light:{r:24,c:'green'}});}
     const glow=pack.id==='moss'?4:2;for(let i=0;i<glow;i++){const [x,y]=pick(free);addObj(m,{type:'glowcap',x:x*T+8,y:y*T+15,light:{r:20,c:'pink'},act:{x:x*T+8,y:y*T+12,label:'Pick',id:'glowcap'}});}
     if(pack.id==='crypt')for(let i=0;i<6;i++){const [x,y]=pick(free);m.objs.push({type:'bones',x:x*T+8,y:y*T+15,flat:true});}
     if(pack.id==='ember')for(let i=0;i<5;i++){const [x,y]=pick(free);m.objs.push({type:'cinders',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0});}
     if(pack.id==='star')for(let i=0;i<4;i++){const [x,y]=pick(free);addObj(m,{type:'crystal',x:x*T+8,y:y*T+15,v:r()*2|0,light:{r:16,c:'cool'}});}
+    if(pack.id==='tide')for(let i=0;i<6;i++){const [x,y]=pick(free);m.objs.push({type:'reeds',x:x*T+8,y:y*T+15,flat:true,v:r()*2|0,dun:true});}
+    if(pack.id==='void')for(let i=0;i<4;i++){const [x,y]=pick(free);addObj(m,{type:'mcrystal',x:x*T+8,y:y*T+14,v:r()*2|0,block:[[x,y]],light:{r:18,c:'violet'}});}
   }
   // enemies
   m.spawns=[];
@@ -1238,24 +1711,31 @@ function dressDungeon(m,g){const D=ART.deco,r=rng((m.floor||1)*131+(m.w*7)),isF=
     else if(k<(crypt?.085:.065))g.drawImage(D.bones,X+(r()*6|0),Y+4+(r()*6|0));
     else if(crypt&&k<.1)g.drawImage(D.skull,X+(r()*8|0),Y+4+(r()*6|0));
     else if(k<.115)g.drawImage(D.rubble,X+(r()*4|0),Y+6+(r()*4|0));
-    else if(!crypt&&k<.135)g.drawImage(D.puddle,X+(r()*4|0),Y+5+(r()*6|0));
+    else if(!crypt&&k<(m.biome==='tide'?.2:.135))g.drawImage(D.puddle,X+(r()*4|0),Y+5+(r()*6|0));
     else if(!crypt&&k<.15)g.drawImage(D.shrooms,X+(r()*6|0),Y+6+(r()*4|0));}
   // wall faces: banners and chains in the crypt, roots in the caverns
   for(const key of m.faces){const x=key%m.w,y=(key/m.w)|0;if(taken.has(key))continue;const k=r(),X=x*T,Y=y*T;
-    if(m.biome==='crypt'||m.biome==='ember'){if(k<.07)g.drawImage(D.banner,X+4,Y+1);else if(k<.14)g.drawImage(D.chain,X+5,Y+2);}
+    if(m.biome==='crypt'||m.biome==='ember'||m.biome==='tide'||m.biome==='void'){if(k<.07)g.drawImage(D.banner,X+4,Y+1);else if(k<.14)g.drawImage(D.chain,X+5,Y+2);}
     else if(k<.18)g.drawImage(D.roots,X+4,Y);}}
+// soft shadows where the forest and the cliffs meet open ground, so the edges of Hollowmere read as deep woods
+function edgeShade(m,g){const dark=t=>t===CANOPY||t===CLIFF;
+  for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const t=tAt(m,x,y);if(dark(t)||isWater(t))continue;const X=x*T,Y=y*T;
+    const sh=(dx,dy,x0,y0,x1,y1,w,h)=>{if(!dark(tAt(m,x+dx,y+dy)))return;const gr=g.createLinearGradient(x0,y0,x1,y1);gr.addColorStop(0,'rgba(5,12,14,.55)');gr.addColorStop(1,'rgba(5,12,14,0)');g.fillStyle=gr;g.fillRect(X+(dx>0?T-w:0),Y+(dy>0?T-h:0),w,h);};
+    sh(0,-1,X,Y,X,Y+8,T,8);sh(-1,0,X,Y,X+6,Y,6,T);sh(1,0,X+T,Y,X+T-6,Y,6,T);sh(0,1,X,Y+T,X,Y+T-5,T,5);}}
 // ---------- pre-render the static ground layer ----------
 function bakeGround(m){
   const cv=document.createElement('canvas');cv.width=m.w*T;cv.height=m.h*T;const g=cv.getContext('2d');
   const r=rng(m.floor||3);
   for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const t=tAt(m,x,y),v=(x*7+y*13)%4;let s=null;
-    if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WILDG)s=ART.wgrass[v];else if(t===WPATH)s=ART.wpath[v%3];else if(isWater(t))s=null;}
+    if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WILDG)s=ART.wgrass[v];else if(t===WPATH)s=ART.wpath[v%3];
+      else if(t===MGRASS)s=ART.mgrass[v];else if(t===DGRASS)s=ART.dgrass[v];else if(t===MPATH)s=ART.mpath[v%3];else if(t===PLAZA)s=ART.plaza[(x*3+y*5)%5];else if(t===CANOPY)s=ART.canopy[v];else if(t===CLIFF)s=ART.cliff[v%2];else if(isWater(t))s=null;}
     else{if(t===FLOOR)s=ART.floor[m.biome][v];else if(m.faces.has(y*m.w+x))s=ART.face[m.biome][v%3];else{g.fillStyle='#0d0e17';g.fillRect(x*T,y*T,T,T);
-        const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle={moss:'#3a4a4a',ember:'#4a2f33',star:'#2c3566'}[m.biome]||'#45425f';
+        const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle={moss:'#3a4a4a',ember:'#4a2f33',star:'#2c3566',tide:'#24454d',void:'#2e2a42'}[m.biome]||'#45425f';
         if(fl(-1,0))g.fillRect(x*T,y*T,2,T);if(fl(1,0))g.fillRect(x*T+T-2,y*T,2,T);if(fl(0,-1))g.fillRect(x*T,y*T,T,2);if(fl(0,1))g.fillRect(x*T,y*T+T-2,T,2);
         if((x*31+y*17)%5===0){g.fillStyle='#181a28';g.fillRect(x*T+5,y*T+6,3,2);}}}
     if(s)g.drawImage(s,x*T,y*T);}
   if(m.kind==='delve')dressDungeon(m,g);
+  if(m.kind==='hold')edgeShade(m,g);
   if(m.kind==='delve'&&m.stairs&&!m.stairs.hidden)g.drawImage(ART.stairs,m.stairs.tx*T,m.stairs.ty*T);
   m.ground=cv;
 }
@@ -1345,7 +1825,7 @@ window.NET={
 const $=id=>document.getElementById(id);
 buildArt();
 const cv=$('cv'),g=cv.getContext('2d');
-{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};{const p=new Px(16,16);p.rect(3,2,10,12,'#c2a26b');p.rect(4,3,8,10,'#f4e4c1');for(const y of [5,7,9,11])p.rect(5,y,6,1,'#8a6f30');p.rect(2,1,12,2,'#8a6f30');p.rect(2,13,12,2,'#8a6f30');p.set(12,4,PAL.gold).set(11,3,PAL.gold);p.outline();$('icSkill').src=u(p.canvas());}$('icBag').src=u(ART.chest[0]);$('icRet').src=u(ART.torch[0]);
+{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};{const p=new Px(16,16);p.rect(3,2,10,12,'#c2a26b');p.rect(4,3,8,10,'#f4e4c1');for(const y of [5,7,9,11])p.rect(5,y,6,1,'#8a6f30');p.rect(2,1,12,2,'#8a6f30');p.rect(2,13,12,2,'#8a6f30');p.set(12,4,PAL.gold).set(11,3,PAL.gold);p.outline();$('icSkill').src=u(p.canvas());}$('icBag').src=u(ART.chest[0]);$('mapIc').src=u(ART.globe);$('icRet').src=u(ART.torch[0]);
 }
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rand=Math.random,ri=(a,b)=>a+Math.floor(rand()*(b-a+1));
@@ -1353,7 +1833,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -1372,7 +1852,7 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.deepest=int(o.deepest,0,PACKS[PACKS.length-1].to,0);s.savedAt=int(o.savedAt,0,9e15,0);
   s.vault={};for(const [k,v] of Object.entries(obj(o.vault)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.vault[k]=n;}s.bankBuys=int(o.bankBuys,0,BANK_BUYS.length,0);
   if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}}
-  const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null};
+  const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null,ring:JEWELS[G.ring]&&JEWELS[G.ring].slot==='ring'?G.ring:null,amulet:JEWELS[G.amulet]&&JEWELS[G.amulet].slot==='amulet'?G.amulet:null};
   const K=obj(o.skills);s.skills={};for(const k of Object.keys(SKILLS))s.skills[k]=num(K[k],0,200e6,0);
   Object.assign(s,cleanPlots(o,Date.now()));
   s.bosses={};for(const k of Object.keys(obj(o.bosses)))if(ENEMIES[k]&&ENEMIES[k].boss)s.bosses[k]=true;
@@ -1384,13 +1864,18 @@ function normalize(raw){const o=obj(raw),s=fresh();
   // Combat level = Fighting (monster XP) counted double + every skill level (see combatFrom in data.js). Saves from before
   // this change keep the combat level they had as a floor, and their old combat progress becomes their Fighting level.
   {const legacy=o.flv===undefined;s.flv=Math.min(FIGHT_MAX,legacy?s.lvl:int(o.flv,1,200,1));s.cbFloor=legacy?s.lvl:int(o.cbFloor,1,200,1);
-   if(!legacy&&K.mining===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,SKILLS_V096));   // Mining joined in v0.10.0: nobody drops a level
+   if(!legacy)for(const [k,before] of SKILL_ERAS)if(K[k]===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,before));   // a new skill joined the formula: nobody drops a level
    s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
   s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
-  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x),y:Math.round(+q.y)}:null;}   // where you logged out
+  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x)+(q.v===2?0:WEST_X),y:Math.round(+q.y),v:2}:null;}   // where you logged out (v2: the map grew west in v0.12)
+  // the rune bag, enchantments on worn jewelry, the attack spell you've chosen
+  s.runes={};for(const [k,v] of Object.entries(obj(o.runes)))if(ITEMS[k]&&ITEMS[k].rune){const n=int(v,0,1e7,0);if(n>0)s.runes[k]=n;}
+  s.ench={};for(const sl of ['ring','amulet']){const e=obj(obj(o.ench)[sl]);if(e.id&&e.id===s.gear[sl]&&ENCHANTS[e.s]){const a={};for(const [k,v] of Object.entries(obj(e.a)).slice(0,3))if(ENCH_ATTR[k]){const n=num(v,0,enchMax(k),0);if(n>0)a[k]=Math.round(n*100)/100;}if(Object.keys(a).length)s.ench[sl]={id:e.id,s:e.s,a};}}
+  {const own=k=>(s.bank[k]||0)+(s.vault[k]||0)>0||['blade','mail','helm','ring','amulet'].some(sl=>wornId(s.gear,sl)===k);s.forged={};for(const [k,v] of Object.entries(obj(o.forged)))if(forgeable(k)&&own(k)){const n=int(v,0,FORGE_MAX,0);if(n>0)s.forged[k]=n;}}   // relic-forging: kept while you own the piece
+  s.spell=SPELLS[o.spell]?o.spell:'spark';
   return s;}
 let S=normalize({}),PID=null;
-function save(now){if(!PID)return;S.savedAt=Date.now();try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
+function save(now){if(!PID)return;S.savedAt=Date.now();S.pack=scene==='delve'&&run&&run.pack?Object.assign({},run.pack):{};if(S.forged)for(const k of Object.keys(S.forged))if(!ownsItem(k))delete S.forged[k];try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
 // Bag = what you carry (goes into the Depths, half lost if you fall). Vault = the Bank (always safe, limited slots).
 const atHold=()=>scene==='hold';
 const avail=id=>(S.bank[id]||0)+(atHold()?(S.vault[id]||0):0);
@@ -1398,17 +1883,31 @@ const allKeys=()=>[...new Set([...Object.keys(S.bank),...(atHold()?Object.keys(S
 const has=(id,n)=>avail(id)>=(n||1);
 const give=(bag,id,n)=>{bag[id]=(bag[id]||0)+n;};
 const take=(id,n)=>{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}n-=k;if(n>0&&atHold()&&S.vault[id]){S.vault[id]-=n;if(S.vault[id]<=0)delete S.vault[id];}};
-const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0);
+// the item worn in a gear slot (null for none), and its relic-forge level
+const wornId=(g,sl)=>{const t=g[sl];return !t?null:sl==='ring'||sl==='amulet'?t:sl==='blade'?(t==='rusty'?'rusty_blade':GEAR_ITEM['blade:'+t]||null):sl==='mail'?(t==='none'?'traveler_garb':GEAR_ITEM['mail:'+t]||null):sl==='helm'?GEAR_ITEM['helm:'+t]||null:null;};
+const fLv=sl=>{const id=wornId(S.gear,sl);return id&&S.forged&&S.forged[id]||0;};
+const ownsItem=id=>(S.bank[id]||0)+(S.vault[id]||0)>0||['blade','mail','helm','ring','amulet'].some(sl=>wornId(S.gear,sl)===id);
+const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const jewA=k=>(((JEWELS[S.gear.ring]||{}).attr||{})[k]||0)*(1+FORGE_FX.jewel*fLv('ring')/100)+(((JEWELS[S.gear.amulet]||{}).attr||{})[k]||0)*(1+FORGE_FX.jewel*fLv('amulet')/100);
+// an enchantment counts only while the piece it was cast on is the one you're wearing
+const enchA=k=>['ring','amulet'].reduce((a,sl)=>{const e=S.ench&&S.ench[sl];return a+(e&&e.id===S.gear[sl]&&e.a[k]||0);},0);
+const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0)+jewA(k)+enchA(k);
 let ADMIN=false,HAT='partyhat';
 const LAN=()=>LANTERNS[S.gear.lantern]||LANTERNS.basic;
-const maxHp=()=>60+8*(S.lvl-1)+A('hp');
+const maxHp=()=>Math.round(60+8*(S.lvl-1)+A('hp'));
 // In the Hold and the Wilderness your health follows the Wilderness rules (the same for everyone: no admin-hat bonus)
 const pvpMaxHp=()=>60+8*(S.lvl-1)+((((CAPES[S.gear.cape]||{}).attr)||{}).hp||0);
-const hpMax=()=>scene==='hold'?pvpMaxHp():maxHp();
+const hpMax=()=>scene==='hold'&&!inWest()?pvpMaxHp():maxHp();
 const inWild=()=>scene==='hold'&&P.y<WILD_Y;
+const inWest=()=>scene==='hold'&&inHollowmere(P.x,P.y);   // Hollowmere: monsters, no PvP, your full bonuses count
+const staffOn=()=>isStaff(S.gear.blade);
+// spell damage: the spell's max hit, plus the staff's and the robe's bonus (and enchantments and capes with +spell damage)
+const spellMax=sp=>Math.round((SPELLS[sp]||SPELLS.spark).max*(1+((GEAR.blade[S.gear.blade]||{}).mag||0)/100+((GEAR.mail[S.gear.mail]||{}).mag||0)/100+A('mag')/100+(staffOn()?FORGE_FX.staff*fLv('blade')/100:0)+((GEAR.mail[S.gear.mail]||{}).robe?FORGE_FX.robe*fLv('mail')/100:0)));
+const runeN=k=>(S.runes&&S.runes[k+'_rune'])||0;
+// runes always go into the rune bag (never the bag or the bank), wherever they come from
+const giveAny=(bag,id,n)=>{if(ITEMS[id]&&ITEMS[id].rune){S.runes[id]=(S.runes[id]||0)+n;return;}give(bag,id,n);};
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
-const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100);
-const defOf=()=>GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def');
+const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100)*(staffOn()?1:1+FORGE_FX.blade*fLv('blade')/100);
+const defOf=()=>Math.round((GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def')+FORGE_FX.def*(fLv('mail')+fLv('helm')))*10)/10;
 const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm,flame:flameOn()?'founder':null});
 // The Founder's Flame: a violet light only Founder's Lantern holders have (the realtime server hides it for anyone else)
 const FLAME='#b98cff',FLAMEC='185,140,255';
@@ -1499,18 +1998,20 @@ const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],f
   board:[-14,-30,28,30,'Bulletin Board'],stall:[-20,-30,40,32,'Tallow’s Cart'],sign:[-8,-22,16,22,'The Road East'],barricade:[-10,-58,20,58,'The Road East (closed)'],
   tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap'],
   wwall:[-8,-20,16,22,'Wilderness Wall'],deadtree:[-11,-30,22,32,'Dead Tree'],rock:[-7,-12,14,13,'Rock'],grave:[-6,-17,12,18,'Grave'],pillar:[-5,-28,10,30,'Ruined Pillar'],
-  obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning']};
+  obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning'],
+  maw:[-66,-124,132,124,'The Abyssal Maw'],bankchest:[-12,-18,24,19,'Bank Chest'],campfire:[-7,-13,14,14,'Campfire'],menhir:[-6,-30,12,30,'Standing Stone'],lpost:[-5,-28,10,28,'Lamp Post'],
+  hmsign:[-8,-22,16,22,'Hollowmere'],willow:[-13,-38,26,38,'Willow'],mcrystal:[-6,-20,12,20,'Moon Crystal']};
 function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
   for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
     if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
     else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
-      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':H[4];}
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':o.type==='chest'&&o.tier==='u'?'Uncommon Chest':H[4];}
     if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
   if(best)return best;
   const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
   if(scene==='hold'){
     if(map.plots&&map.plots.some(p=>p.tx===tx&&p.ty===ty))return {x:tx*T+8,y:ty*T-2,name:'Farm'};
-    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};if(t===GLOOM)return {x:tx*T+8,y:ty*T-2,name:'Gloom Pond'};}
+    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};if(t===MOON)return {x:tx*T+8,y:ty*T-2,name:'The Moonmere'};if(t===GLOOM)return {x:tx*T+8,y:ty*T-2,name:'Gloom Pond'};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden&&tx===map.stairs.tx&&ty===map.stairs.ty)return {x:tx*T+8,y:ty*T-2,name:'Stairs down'};
   return null;}
 function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acct').hidden){if(cv.style.cursor)cv.style.cursor='';return;}
@@ -1520,7 +2021,7 @@ function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acc
 let camX=0,camY=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||!started||!$('sheet').hidden||!$('acct').hidden)return;
   e.preventDefault();const a=document.activeElement;if(a&&a.id==='chatIn')a.blur();
-  if(scene==='delve'||inWild()){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
+  if(scene==='delve'||inWild()||inWest()){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
     if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
     if(inWild()){const o=otherAt(e.clientX,e.clientY);MP.aim=o?o.id:null;}}
   aPressed=true;});
@@ -1547,17 +2048,17 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
+function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];for(const d of HOLD.dens||[])d.e=null;P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
   updateHud();MP.toHold();}
 // where you are, kept in your save so you sign back in on the same spot (in the Depths: the entrance you went in by)
-function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y)};}
+function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y),v:2};}
 function placeAt(q){if(!q||!(q.x>0&&q.y>0&&q.x<map.w*T&&q.y<map.h*T)||blocked(q.x,q.y,4))return false;if(q.y<WILD_Y&&!S.flags.wildok)return false;P.x=q.x;P.y=q.y;return true;}
-function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y};save();}
+function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y,v:2};save();}
   run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0,door};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
   const sc=1+.12*(f-1);
-  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];slashes=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
+  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
   if(f>S.deepest){S.deepest=f;save();if(f>=3)MP.feed('deep',String(f));}updateHud();MP.floorEntered(f);
   if(map.pack.boss&&f===map.pack.to)setTimeout(()=>toast(map.pack.bossName+' awaits','bad'),400);
 }
@@ -1582,8 +2083,8 @@ function nearestAct(){
   return best;
 }
 function doAct(a){
-  if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
+  if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');if(a.id==='bench')return openCraft('jewel');
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -1594,7 +2095,8 @@ function doAct(a){
 }
 
 // ---------- combat ----------
-function swing(){if(P.swingCD>0)return;P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
+const oreAhead=()=>{if(scene!=='delve'||!map)return false;const b=hitBox();return map.objs.some(o=>o.type==='ore'&&!o.gone&&o.tile[0]*T+T>b.x&&o.tile[0]*T<b.x+b.w&&o.tile[1]*T+T>b.y&&o.tile[1]*T<b.y+b.h);};
+function swing(){if(P.swingCD>0)return;if(staffOn()&&!oreAhead())return cast();P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
 // ---- swing feel: the hero steps into the swing, the blade leaves a smear, and a hit flashes, sparks and briefly freezes ----
 const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d',steel:'#c9d6e3',cinder:'#ff5a2a'};
 const easeOut=t=>1-(1-t)*(1-t);
@@ -1606,7 +2108,7 @@ function impact(x,y,a,col,big,mine){
 function hitBox(){const d=P.dir,cx=P.x+(d==='left'?-11:d==='right'?11:0),cy=P.y-5+(d==='up'?-11:d==='down'?9:0);return {x:cx-10,y:cy-9,w:20,h:18};}
 function resolveSwing(){
   const b=hitBox(),dmg=dmgOf(),hits=[];let ore=-1;
-  for(const e of ents){if(e.dead)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
+  for(const e of ents){if(e.dead||e.d.proj)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
     const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;e.sq=.16;
     impact(e.x,e.y-(e.d.big?12:6),a,BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
     hits.push([e.id,d]);
@@ -1618,9 +2120,12 @@ function resolveSwing(){
       puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);ore=i;
       if(MP.client()){NET.send({t:'mine',o:i});break;}mineOre(o,i,MP.me());break;}}
   if(MP.shared())NET.send({t:'sw',d:P.dir,h:hits.slice(0,8),o:ore});   // the party sees your swing, your damage numbers and your pickaxe chips
+  else if(inWest()&&roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1});   // in Hollowmere, everyone nearby sees you swing
 }
 // another party member swung: show their blade, the damage they did and the ore they chipped
-function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&o.y<WILD_Y))return;o.dir=m.d||o.dir;o.swT=.2;
+function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&(o.y<WILD_Y||o.x<WEST_X)))return;o.dir=m.d||o.dir;
+  if(m.c&&SPELLS[m.c]){o.castT=.42;o.castSp=m.c;setTimeout(()=>{const tip=staffTip(o.x,o.y,o.dir);launchBolt(m.c,tip,typeof m.a==='number'?m.a:0,null,false,o.id);},130);return;}
+  o.swT=.2;   // a plain swing: a blade, or a staff used as a club (Wilderness) or a pick (ore)
   for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}
     else{const f=fallen.get(eid);if(f&&time-f.t<2){floatText(f.x,f.y-(f.big?28:16),String(d),'#f4f4f4');impact(f.x,f.y-(f.big?12:6),Math.atan2(f.y-o.y,f.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',f.big,false);}}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
@@ -1634,29 +2139,121 @@ function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit
 const fallen=new Map();   // monster id -> where it was when it died (for 2 s)
 function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;fallen.set(e.id,{x:e.x,y:e.y,big:!!e.d.big,t:time});if(fallen.size>40)fallen.delete(fallen.keys().next().value);MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
   // XP: everyone who hit it, and every party member in the same dungeon (even if they didn't land a hit)
-  if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}else if(MP.shared())gainXp(xp);puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
+  if(e.d.proj)return;
+  if(hit.includes(me)){if(run)run.kills++;S.kills++;killXp(xp);if(e.west)bump('hmkills');if(e.d.boss)bump('bossxp');}else if(MP.shared()){killXp(xp);if(e.d.boss)bump('bossxp');}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
-  if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);}
-  if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(LIFTS.includes(run.floor+1)&&run.floor+1>S.lift)S.lift=run.floor+1;save();
+  if(roll&&e.d.relic&&scene==='delve'&&rand()<RELIC_CHANCE*(1+A('luck')/200)){e.relicDrop=true;spawnLoot(e.x,e.y-4,[[e.d.relic,1,1,1]],true);setTimeout(()=>{sfx('rare');buzz([60,40,60,40,120]);toast('A relic! The '+ITEMS[e.d.relic].n+' fell from the boss','rare r-legendary');},700);}
+  if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);
+    const area=scene==='delve'&&run?packOf(run.floor).id:'mere';spawnLoot(e.x,e.y-4,(RUNE_DROPS[area]||[]).concat(e.d.boss?RUNE_DROPS.boss:[]).map(([k,c,a,b])=>[k+'_rune',c,a,b]),true);}
+  if(e.d.boss&&scene==='delve'){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(LIFTS.includes(run.floor+1)&&run.floor+1>S.lift)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
-    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.${packOf(run.floor+1)?'':' This is as deep as the Depths go for now.'}</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
+    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p>${e.relicDrop?'<p class="lead" style="color:#ffcd75">It dropped its relic, the '+ITEMS[e.d.relic].n+'! Relics are rare: spend them at the Forge to empower your gear.</p>':''}${packOf(run.floor+1)?'':'<p class="lead">This is as deep as the Depths go for now.</p>'}<div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
 // Monster XP trains Fighting. Combat level comes from Fighting plus every other skill, so it's checked after any XP.
 function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.flv<FIGHT_MAX&&S.xp>=xpNeed(S.flv)){S.xp-=xpNeed(S.flv);S.flv++;toast('Fighting level '+S.flv+'!','good');if(S.flv%10===0||S.flv===FIGHT_MAX)MP.feed('skill','Fighting '+S.flv);sfx('level');buzz(60);puff(P.x,P.y-8,'#ef7d57',12);}if(S.flv>=FIGHT_MAX)S.xp=0;combatCheck();}
-const cbPts=()=>2*Math.min(FIGHT_MAX,S.flv)+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
+const cbPts=()=>2*Math.max(Math.min(FIGHT_MAX,S.flv),lvlOf('magic'))+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
 function combatCheck(){const c=Math.max(S.cbFloor||1,combatFrom(S.flv,S.skills));if(c===S.lvl)return;const up=c>S.lvl;S.lvl=c;if(!up)return;
   P.hp=Math.min(hpMax(),P.hp+8);setTimeout(()=>{toast('Combat level '+S.lvl+'! Max HP '+hpMax(),'good');sfx('level');puff(P.x,P.y-8,'#ffcd75',16);floatText(P.x,P.y-40,'Combat '+S.lvl+'!','#ffcd75');},900);if(S.lvl%5===0)MP.feed('level',String(S.lvl));}
-function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
+function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god||P.hp<=0)return;P.hitT=time;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
   shake=!SET.shake?0:3;if(src){const a=Math.atan2(P.y-src.y,P.x-src.x);for(let i=0;i<6;i++)moveBody(P,Math.cos(a)*1.5,Math.sin(a)*1.5,4);}
   if(P.hp<=0)die();}
 let shake=0;
+// ---------- Magic: casting with a staff ----------
+// Your attack casts your chosen spell. A bolt flies from the staff's tip toward the nearest monster you're facing (or
+// straight ahead); Starfall and Cataclysm fall from the sky onto the target instead. Each spell looks and hits differently.
+let BOLTS=[],SPFX=[];
+const bestSpell=()=>{let b='spark';for(const [k,s] of Object.entries(SPELLS))if(lvlOf('magic')>=s.lvl)b=k;return b;};
+const curSpell=()=>SPELLS[S.spell]&&lvlOf('magic')>=SPELLS[S.spell].lvl?S.spell:bestSpell();
+const SKY=new Set(['starfall','cataclysm']);
+// where the staff's tip is while casting (the staff is raised on the side you face)
+function staffTip(x,y,dir){return {x:x+(dir==='left'?-7:dir==='right'?7:dir==='up'?5:-6),y:y-(dir==='up'?21:19)};}
+function cast(){if(P.swingCD>0)return;const sp=curSpell(),D=SPELLS[sp];P.swingCD=.55;P.cast=.42;P.castSp=sp;FISHING=null;CHOP=null;
+  const f={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[P.dir],tip=staffTip(P.x,P.y,P.dir);
+  let tgt=null,bd=170;for(const e of ents){if(e.dead||e.d.proj)continue;const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);if(d<bd&&(dx*f[0]+dy*f[1])>d*.3){bd=d;tgt=e;}}
+  const a=tgt?Math.atan2((tgt.y-(tgt.d.big?12:6))-tip.y,tgt.x-tip.x):Math.atan2(f[1],f[0]);
+  P.castA=a;P.castTip=tip;P.castLaunch=.13;P.castTgt=tgt;sfx('cast');
+  if(MP.shared()||inWest()&&roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1,c:sp,a:Math.round(a*100)/100});}   // the party (or anyone in Hollowmere) sees the cast
+function launchBolt(sp,tip,a,tgt,mine,who){const D=SPELLS[sp];
+  if(SKY.has(sp)){const tx=tgt?tgt.x:tip.x+Math.cos(a)*80,ty=tgt?tgt.y-4:tip.y+19+Math.sin(a)*80;BOLTS.push({sp,sky:true,x:tx-26,y:ty-120,sx:tx-26,sy:ty-120,tx,ty,t:0,life:.42,mine,who,hit:new Set()});}
+  else BOLTS.push({sp,x:tip.x,y:tip.y,a,v:D.spd,t:0,life:1.05,mine,who,pierce:D.pierce||1,hit:new Set(),tr:[]});
+  spellSfx(sp);for(let i=0;i<(reduceMotion?3:10);i++){const b=a+(rand()-.5)*1.6,s=30+rand()*50;fx.push({x:tip.x,y:tip.y,vx:Math.cos(b)*s,vy:Math.sin(b)*s-10,t:0,life:.25+rand()*.2,col:i%2?D.col:D.col2});}}
+function spellSfx(sp){const n={spark:[880,1320],ember:[300,600],frost:[1200,1800],storm:[150,2200],burst:[220,440],lance:[180,90],starfall:[1500,700],cataclysm:[120,60]}[sp]||[600,900];
+  tone(n[0],.14,sp==='frost'||sp==='spark'||sp==='starfall'?'triangle':sp==='storm'?'sawtooth':'square',.035,n[1]/n[0]);if(sp==='storm')tone(90,.12,'sawtooth',.03,.5,.02);if(sp==='cataclysm'||sp==='burst')tone(70,.3,'sawtooth',.04,.5,.08);}
+function updateBolts(dt){if(!BOLTS.length)return;
+  for(const b of BOLTS){if(b.done)continue;b.t+=dt;const D=SPELLS[b.sp];
+    if(b.sky){const k=Math.min(1,b.t/b.life),e2=k*k;b.x=b.sx+(b.tx-b.sx)*e2;b.y=b.sy+(b.ty-b.sy)*e2;
+      if(!reduceMotion&&rand()<.9)fx.push({x:b.x+(rand()-.5)*3,y:b.y+(rand()-.5)*3,vx:(rand()-.5)*14,vy:-8-rand()*14,t:0,life:.3+rand()*.25,col:rand()<.5?D.col:D.col2});
+      if(k>=1){b.done=true;spellImpact(b,b.tx,b.ty,null);}continue;}
+    const ox=b.x,oy=b.y;b.x+=Math.cos(b.a)*b.v*dt;b.y+=Math.sin(b.a)*b.v*dt;b.tr.push([b.x,b.y]);if(b.tr.length>(b.sp==='storm'?7:b.sp==='lance'?6:5))b.tr.shift();
+    if(!reduceMotion){const n=b.sp==='ember'||b.sp==='burst'?2:1;for(let i=0;i<n;i++)if(rand()<.8)fx.push({x:ox+(rand()-.5)*3,y:oy+(rand()-.5)*3,vx:(rand()-.5)*16,vy:(b.sp==='ember'||b.sp==='burst'?-18:-4)-rand()*10,t:0,life:.18+rand()*.22,col:rand()<.6?D.col:D.col2});}
+    if(solidAt(map,Math.floor(b.x/T),Math.floor((b.y+6)/T))){b.done=true;spellImpact(b,ox,oy,null);continue;}
+    if(b.t>=b.life){b.done=true;if(D.aoe)spellImpact(b,b.x,b.y,null);else SPFX.push({k:'fizzle',x:b.x,y:b.y,t:0,life:.25,c:D.col});continue;}
+    for(const e of ents){if(e.dead||e.d.proj||b.hit.has(e.id))continue;const ey=e.y-(e.d.big?12:6);if(Math.hypot(e.x-b.x,ey-b.y)<e.r+5){b.hit.add(e.id);spellImpact(b,b.x,b.y,e);if(--b.pierce<=0){b.done=true;break;}}}}
+  BOLTS=BOLTS.filter(b=>!b.done);}
+// damage one monster with a spell (party dungeons: the host decides, like a sword hit)
+function spellHit(e,d,a,col,slow){if(e.dead)return 0;floatText(e.x,e.y-(e.d.big?28:16),String(d),col);e.flash=.12;e.sq=.16;if(slow)e.slowT=1.8;
+  if(MP.client()){e.hp=Math.max(0,e.hp-d);NET.send(slow?{t:'hit',e:e.id,d,a:Math.round(a*100)/100,s:1}:{t:'hit',e:e.id,d,a:Math.round(a*100)/100});return d;}applyHit(e,d,a,MP.me());return d;}
+function spellImpact(b,x,y,e){const D=SPELLS[b.sp],R=D.aoe||0,mx=spellMax(b.sp);
+  SPFX.push({k:b.sp,x,y,t:0,life:R?.5:.32,R:R||10,c:D.col,c2:D.col2});
+  if(b.mine){hitStop=Math.max(hitStop,R?.06:.035);if(SET.shake)shake=Math.max(shake,b.sp==='cataclysm'?5:R?3:1.2);}
+  if(!b.mine)return;const roll=()=>Math.max(1,Math.round(mx*(.65+rand()*.35)));
+  if(e){const a=Math.atan2(e.y-P.y,e.x-P.x);spellHit(e,roll(),a,D.col2,!!D.slow);
+    if(D.chain){let n=D.chain,from=e;const done=new Set([e.id]);while(n-->0){let best=null,bd=70;for(const q of ents){if(q.dead||q.d.proj||done.has(q.id))continue;const k=Math.hypot(q.x-from.x,q.y-from.y);if(k<bd){bd=k;best=q;}}
+      if(!best)break;done.add(best.id);SPFX.push({k:'arc',x:from.x,y:from.y-6,x2:best.x,y2:best.y-6,t:0,life:.22,c:D.col});spellHit(best,Math.round(roll()*.75),Math.atan2(best.y-from.y,best.x-from.x),D.col2);from=best;}}}
+  if(R)for(const q of ents){if(q.dead||q.d.proj||q===e)continue;if(Math.hypot(q.x-x,(q.y-6)-y)<R+q.r)spellHit(q,Math.round(roll()*.7),Math.atan2(q.y-y,q.x-x),D.col2);}
+}
+// the look of casting: the staff raised, a turning circle of runes at your feet, light gathering at the tip
+function drawCastPose(x,y,dir,left,sp,blade){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=ART.sword[blade]||ART.sword.apprentice;
+  g.save();g.globalCompositeOperation='lighter';
+  const ring=(R,al,rot,n)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rot;g.globalAlpha=al*(.6+.4*Math.sin(a*3+time*8));g.fillStyle=i%3?D.col:D.col2;g.fillRect(Math.round(X+Math.cos(a)*R),Math.round(Y+1+Math.sin(a)*R*.38),1,1);}};
+  const fade=Math.min(1,k*3)*Math.min(1,(1-k)*4+.2);ring(11,fade,time*3,22);ring(7,fade*.8,-time*4,14);
+  const gr=g.createRadialGradient(X,Y+1,0,X,Y+1,14);gr.addColorStop(0,'rgba(255,255,255,'+(.18*fade)+')');gr.addColorStop(1,'rgba(255,255,255,0)');g.globalAlpha=1;g.fillStyle=gr;g.fillRect(X-14,Y-6,28,14);
+  // light gathering into the tip
+  const tg=g.createRadialGradient(tip.x,tip.y,0,tip.x,tip.y,6+fade*7);tg.addColorStop(0,D.col2);tg.addColorStop(.35,D.col);tg.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.85*fade;g.fillStyle=tg;g.fillRect(tip.x-13,tip.y-13,26,26);
+  if(!reduceMotion)for(let i=0;i<6;i++){const ph=((time*2.2+i/6)%1),a=i*1.047+time*2,r=(1-ph)*14;g.globalAlpha=ph*fade;g.fillStyle=i%2?D.col2:D.col;g.fillRect(Math.round(tip.x+Math.cos(a)*r),Math.round(tip.y+Math.sin(a)*r),1,1);}
+  g.restore();
+  // the staff, held upright beside you, tipped a little toward where you face
+  const lean=dir==='left'?-.35:dir==='right'?.35:dir==='up'?.15:-.15;g.save();g.translate(Math.round(tip.x-Math.sin(lean)*2),Math.round(tip.y+16));g.rotate(lean-Math.PI/4);g.drawImage(sw,-2,-14);g.restore();}
+function drawBolts(){if(!BOLTS.length&&!SPFX.length)return;g.save();g.globalCompositeOperation='lighter';
+  const glow=(x,y,r,c,a)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=a;g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);};
+  const px=(x,y,c,a)=>{g.globalAlpha=a==null?1:a;g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),1,1);};
+  for(const b of BOLTS){const D=SPELLS[b.sp],X=b.x,Y=b.y,fl=.85+.15*Math.sin(time*40+b.t*30);
+    switch(b.sp){
+      case 'spark':glow(X,Y,7,D.col,.7*fl);px(X,Y,'#ffffff');for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])px(X+dx,Y+dy,D.col2);for(const [i,[tx,ty]] of b.tr.entries())px(tx,ty,D.col,i/b.tr.length*.6);break;
+      case 'ember':glow(X,Y,10,D.col,.75*fl);glow(X,Y,4,D.col2,.9);g.globalAlpha=1;g.fillStyle='#fff3c4';g.fillRect(Math.round(X)-1,Math.round(Y)-1,3,3);for(const [i,[tx,ty]] of b.tr.entries())glow(tx,ty,3+i,D.col2,.12*i);break;
+      case 'frost':{const ca=Math.cos(b.a),sa=Math.sin(b.a);glow(X,Y,8,D.col,.55);g.globalAlpha=1;for(let i=-4;i<=3;i++){const w=i<-1?0:i>1?0:1;g.fillStyle=i>1?'#ffffff':D.col;g.fillRect(Math.round(X+ca*i-sa*w),Math.round(Y+sa*i+ca*w),1,1);g.fillRect(Math.round(X+ca*i),Math.round(Y+sa*i),1,1);}
+        for(const [i,[tx,ty]] of b.tr.entries())px(tx+Math.sin(i+time*20)*2,ty+Math.cos(i*2)*2,'#e8fbff',.15*i);break;}
+      case 'storm':{g.strokeStyle=D.col;g.lineWidth=1;g.globalAlpha=.95;g.beginPath();const pts=b.tr;pts.forEach(([tx,ty],i)=>{const j=(rand()-.5)*5;i?g.lineTo(tx+j,ty+j):g.moveTo(tx,ty);});g.stroke();
+        g.strokeStyle='#ffffff';g.globalAlpha=.7;g.beginPath();pts.forEach(([tx,ty],i)=>{const j=(rand()-.5)*2;i?g.lineTo(tx+j,ty+j):g.moveTo(tx,ty);});g.stroke();glow(X,Y,9,D.col2,.6*fl);break;}
+      case 'burst':glow(X,Y,13,D.col,.7*fl);glow(X,Y,6,D.col2,.9);g.globalAlpha=1;g.fillStyle='#ffffff';g.fillRect(Math.round(X)-1,Math.round(Y)-1,2,2);for(const [i,[tx,ty]] of b.tr.entries())glow(tx,ty,4+i*1.4,D.col,.14*i);break;
+      case 'lance':{const ca=Math.cos(b.a),sa=Math.sin(b.a),L=22;g.globalAlpha=.9;g.strokeStyle=D.col;g.lineWidth=3;g.beginPath();g.moveTo(X-ca*L,Y-sa*L);g.lineTo(X+ca*3,Y+sa*3);g.stroke();
+        g.strokeStyle='#f1e4ff';g.lineWidth=1;g.beginPath();g.moveTo(X-ca*L*.7,Y-sa*L*.7);g.lineTo(X+ca*4,Y+sa*4);g.stroke();glow(X,Y,10,D.col,.6*fl);break;}
+      case 'starfall':case 'cataclysm':{const big=b.sp==='cataclysm',dx=b.tx-b.sx,dy=b.ty-b.sy,l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l,L=big?34:26;
+        const gr=g.createLinearGradient(X-ux*L,Y-uy*L,X,Y);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,D.col);g.globalAlpha=.9;g.strokeStyle=gr;g.lineWidth=big?5:3;g.beginPath();g.moveTo(X-ux*L,Y-uy*L);g.lineTo(X,Y);g.stroke();
+        glow(X,Y,big?16:11,D.col,.85);glow(X,Y,big?6:4,'#ffffff',.9);
+        // where it will land: a shrinking ring on the ground
+        const k=Math.min(1,b.t/b.life);g.globalAlpha=.5+.4*k;g.strokeStyle=D.col2;g.lineWidth=1;g.beginPath();g.ellipse(b.tx,b.ty,(D.aoe||20)*(1.3-k*.5),(D.aoe||20)*(1.3-k*.5)*.45,0,0,Math.PI*2);g.stroke();break;}
+    }}
+  for(const f of SPFX){const p=f.t/f.life,X=f.x,Y=f.y,a=1-p;
+    if(f.k==='arc'){g.strokeStyle=f.c;g.lineWidth=1;g.globalAlpha=a;g.beginPath();g.moveTo(X,Y);const n=6;for(let i=1;i<=n;i++){const t=i/n,j=i<n?(rand()-.5)*8:0;g.lineTo(X+(f.x2-X)*t+j,Y+(f.y2-Y)*t+j);}g.stroke();glow(f.x2,f.y2,8,'#ffffff',.5*a);continue;}
+    if(f.k==='fizzle'){glow(X,Y,6*(1-p)+2,f.c,a*.6);continue;}
+    const R=f.R*(.3+.9*Math.sqrt(p));
+    if(f.k==='frost'){glow(X,Y,10,f.c,.7*a);g.globalAlpha=a;g.fillStyle='#e8fbff';for(let i=0;i<8;i++){const an=i/8*Math.PI*2,r=4+p*12;g.fillRect(Math.round(X+Math.cos(an)*r),Math.round(Y+Math.sin(an)*r),1,1);g.fillRect(Math.round(X+Math.cos(an)*r*.5),Math.round(Y+Math.sin(an)*r*.5),1,1);}continue;}
+    glow(X,Y,Math.max(4,R*.9),f.c,.65*a);glow(X,Y,Math.max(2,R*.35),f.c2||'#ffffff',.8*a);
+    if(f.R>10){g.globalAlpha=a*.9;g.strokeStyle=f.c2||f.c;g.lineWidth=f.k==='cataclysm'?2:1;g.beginPath();g.ellipse(X,Y,R,R*.5,0,0,Math.PI*2);g.stroke();
+      if(f.k==='cataclysm'||f.k==='starfall'){g.globalAlpha=a*.5;g.beginPath();g.ellipse(X,Y,R*.6,R*.3,0,0,Math.PI*2);g.stroke();}}
+    if(p<.18&&(f.k==='cataclysm'||f.k==='starfall'))glow(X,Y,f.R*(f.k==='cataclysm'?4:3),f.c2||'#ffffff',(1-p/.18)*.55);}
+  g.restore();g.globalAlpha=1;}
+function updateSpellFx(dt){for(const f of SPFX){f.t+=dt;if(f.t<dt*1.5&&!reduceMotion&&f.k!=='arc'&&f.k!=='fizzle'){const n=f.R>10?18:8;for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=(f.R>10?40:25)+rand()*60;fx.push({x:f.x,y:f.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.6-20,t:0,life:.3+rand()*.35,col:i%3?f.c:(f.c2||'#ffffff')});}}}SPFX=SPFX.filter(f=>f.t<f.life);}
+// kill XP: with a staff it trains Magic (never Fighting); with a blade, Fighting
+function killXp(xp){if(staffOn()){const n=Math.max(1,Math.round(xp*2));skillXp('magic',n);floatText(P.x,P.y-30,'+'+n+' Magic xp','#c79bf2');}else gainXp(xp);}
 
 // ---------- loot ----------
 function rollRarity(floor,boost){const w={};let tot=0;for(const r of RORDER){let x=RARITY[r].w;if(r==='rare')x*=1+floor*.08*boost;if(r==='xrare')x*=1+floor*.15*boost;if(r==='legendary')x*=1+floor*.25*boost;w[r]=x;tot+=x;}
   let q=rand()*tot;for(const r of RORDER){q-=w[r];if(q<=0)return r;}return 'common';}
 function gearDrops(src,floor,boss){const luck=1+A('luck')/100,out=[];
-  if(rand()<{chest:.10,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
-  if(rand()<{chest:.035,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
+  if(rand()<{chest:.10,uchest:.2,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
+  if(rand()<{chest:.035,uchest:.07,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
   if(boss){const k=Object.keys(CAPES).find(k=>CAPES[k].boss===boss);if(k&&rand()<.05*luck)out.push('cape_'+k);
     for(const [id,ch] of (ENEMIES[boss]&&ENEMIES[boss].rare)||[])if(rand()<ch*luck)out.push(id);}   // the rarest finds in the Depths
   return out;}
@@ -1678,7 +2275,7 @@ function addDrop(d,bag,own){d.ref='r'+(++dropRef);d.bag=!!bag;d.own=!!own&&MP.sh
 function netDrop(v,settled){if(drops.some(d=>d.did===v.did))return;if(scene==='delve'?(!run||v.f!==run.floor):v.f!=null)return;if(!ITEMS[v.it]&&v.it!=='gold')return;
   drops.push({pk:!!v.pk,x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
 const dropShown=d=>!d.showAt||Date.now()>=d.showAt;
-function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;give(into,d.id,d.n);
+function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;giveAny(into,d.id,d.n);
   if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');
   floatText(P.x,P.y-24,'+'+d.n+' '+(d.id==='gold'?'gold':ITEMS[d.id].n),d.id==='gold'?'#ffcd75':'#a7f070');if(scene==='hold')save();}
 function claimDrop(d){if(d.taken)return;
@@ -1703,14 +2300,16 @@ function mkDrop(x,y,id,n){const a=rand()*Math.PI*2,s=30+rand()*40;return {x,y,id
 function puff(x,y,col,n){if(reduceMotion)n=Math.min(n,3);for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=20+rand()*50;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,t:0,life:.4+rand()*.3,col});}}
 
 // ---------- consumables, return, death ----------
-function useFlask(){if(scene!=='delve')return;if(!has('oil')){toast('No Oil Flasks. Press Lampseed at the Hold.','bad');return;}if(run.oil>=99){toast('Lantern is full');return;}
-  take('oil',1);run.oil=Math.min(100,run.oil+ITEMS.oil.oil);puff(P.x,P.y-12,'#ffcd75',8);updateHud();}
-const FOODS=['bread','pondfin','gloomfin','stew'];
+// the plain flask refills half the lantern, the Greater Oil Flask all of it (used first when the lantern is low)
+function useFlask(id){if(scene!=='delve')return;if(run.oil>=99){toast('Lantern is full');return;}
+  id=id&&has(id)?id:run.oil<=45&&has('oil2')?'oil2':has('oil')?'oil':has('oil2')?'oil2':null;if(!id){toast('No Oil Flasks. Press Lampseed at the Hold.','bad');return;}
+  take(id,1);run.oil=Math.min(100,run.oil+ITEMS[id].oil);puff(P.x,P.y-12,id==='oil2'?'#7affd6':'#ffcd75',id==='oil2'?16:8);updateHud();}
+const FOODS=['bread','pondfin','gloomfin','stew','moonfin'];
 const foodCount=()=>FOODS.reduce((a,f)=>a+(S.bank[f]||0),0);
 function eat(id){if(scene==='hold')return eatHold(id);if(scene!=='delve'){toast('Save your food for the Depths');return;}if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}
   if(P.hp>=maxHp()){toast('Already at full health');return;}take(id,1);P.hp=Math.min(maxHp(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');sfx('pick');updateHud();}
 function useQuick(i){const id=S.quick[i];if(!id){if(scene==='hold')openQuickPick(i);else toast('Set quick slots from your bag');return;}
-  if(scene==='hold'&&(id==='oil'||!(inWild()||P.hp<hpMax()-.5))){openQuickPick(i);return;}if(id==='oil')useFlask();else eat(id);}
+  if(scene==='hold'&&(ITEMS[id].oil||!(inWild()||inWest()||P.hp<hpMax()-.5))){openQuickPick(i);return;}if(ITEMS[id].oil)useFlask(id);else eat(id);}
 // eating in the Hold and the Wilderness: from your bag only, one bite every 1.5 s (the world's server keeps your health)
 function eatHold(id){if(P.hp>=hpMax()-.5){toast(inWild()?'Already at full health':'Save your food for the Depths');return;}
   if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}if(time-(MP.eatT||-9)<1.5)return;MP.eatT=time;
@@ -1722,7 +2321,7 @@ function useFood(){if(scene==='hold'){const have=FOODS.filter(f=>S.bank[f]>0).so
 const halfLoss=n=>Math.floor(n/2)+(n%2&&rand()<.5?1:0);
 function returnHome(){setTimeout(()=>save(true),50);sfx('flame');const r=run,out={};for(const [id,n] of Object.entries(r.pack)){if(id==='gold')S.gold+=n;else give(S.bank,id,n);out[id]=n;}enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
   summary('Back at the Hold',`You lit the Return Flame on floor ${r.floor} with ${r.kills} kills. Your haul is in your bag. Bank anything you can't afford to lose.`,out,null,'Brought home');}
-function die(){setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;if(netOn()&&MP.party)NET.lsend({t:'pdie',k:'depths',floor:r.floor});const kept={},lost={};
+function die(){if(scene==='hold')return westDie();setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;if(netOn()&&MP.party)NET.lsend({t:'pdie',k:'depths',floor:r.floor});const kept={},lost={};
   for(const [id,n] of Object.entries(r.pack)){const l=id==='gold'?Math.floor(n/2):halfLoss(n),k=n-l;if(k>0){if(id==='gold')S.gold+=k;else give(S.bank,id,k);kept[id]=(kept[id]||0)+k;}if(l>0)lost[id]=(lost[id]||0)+l;}
   for(const [id,n] of Object.entries(S.bank)){const l=halfLoss(n);if(l>0){S.bank[id]-=l;if(S.bank[id]<=0)delete S.bank[id];lost[id]=(lost[id]||0)+l;}}
   enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
@@ -1737,12 +2336,12 @@ function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
-  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d],w=tAt(map,tx+dx,ty+dy);if(isWater(w)){let bx=tx+dx,by=ty+dy;if(isWater(tAt(map,bx+dx,by+dy))&&isWater(tAt(map,bx+2*dx,by+2*dy))){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9,w:w===GLOOM?'wild':'hold'};}}return null;}
+  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d],w=tAt(map,tx+dx,ty+dy);if(isWater(w)){let bx=tx+dx,by=ty+dy;if(isWater(tAt(map,bx+dx,by+dy))&&isWater(tAt(map,bx+2*dx,by+2*dy))){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9,w:w===GLOOM?'wild':w===MOON?'mere':'hold'};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
 function startFishing(sp){const W=WATERS[sp.w||'hold'];if(W.lvl&&lvlOf('fishing')<W.lvl){toast('You need Fishing '+W.lvl+' to fish the '+W.n+'.','bad');return;}CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
 let missRun=0;
-function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');
+function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');if(F.item==='raw_moonfin')bump('moonfin');
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
   if(rand()<(1/300)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
 function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.hypot(P.x-FISHING.px,P.y-FISHING.py)>3){FISHING=null;return;}const f=FISHING;f.t+=dt;
@@ -1860,16 +2459,16 @@ function wildHud(){const w=inWild(),l=w?wildLvl(P.y):0,key=l+'|'+S.lvl+'|'+(skul
 // what you'd drop if you fell: your bag and the gear you wear (not starter gear, not bound or goal items), most valuable first
 function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'};
   for(const [id,n] of Object.entries(S.bank))if(ITEMS[id]&&tradable(id)&&n>0)out.push([id,n,0,ITEMS[id].v||0]);
-  for(const sl of ['blade','mail','lantern','cape','helm']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
+  for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
   return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
 // the Return Flame (hold it for 2 s) works in the Wilderness up to level 20: home to the Hold. A hit interrupts it.
-function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y};
+function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y,v:2};
   if(roomUp()&&MP.pvpOn)NET.send({t:'home',x:Math.round(P.x),y:Math.round(P.y)});MP.sent='';sfx('flame');puff(P.x,P.y-10,'#ffcd75',16);toast('The Return Flame carries you home to the Hold.','good');save();}
 // back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
-function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
-function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null};
+function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y,v:2};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
+function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null};
   for(const [id,n,slot] of lost){if(!ITEMS[id]||!(n>0))continue;
-    if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id)S.gear[slot]=DEFG[slot];
+    if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id){S.gear[slot]=DEFG[slot];enchFade(slot);}
     else{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}}L[id]=(L[id]||0)+n;}
   for(const [id,n] of kept)if(ITEMS[id])K[id]=(K[id]||0)+n;
   const wasSk=!!m.sk;S.skull=0;bump('pkd');if(netOn())NET.lsend({t:'pdie',k:'wild',by:typeof m.by==='string'?m.by:undefined});if(scene==='hold')respawnHold();else S.pos=null;save(true);updateQuick(true);sfx('die');buzz(200);
@@ -1952,7 +2551,7 @@ $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();})
 function iconImg(id){return `<img class="ic" alt="" src="${iconOf(id).toDataURL()}">`;}
 function openGate(){
   if(MP.party&&MP.party.leader!==MP.id&&netOn())return MP.gateMember();
-  const lifts=LIFTS.filter(f=>f<=S.lift&&(!liftBoss(f)||S.bosses[liftBoss(f)])),LIFT_ORE={1:'copper_ore',6:'iron_ore',11:'coal_ore',16:'cobalt_ore'};
+  const lifts=LIFTS.filter(f=>f<=S.lift&&(!liftBoss(f)||S.bosses[liftBoss(f)])),LIFT_ORE={1:'copper_ore',6:'iron_ore',11:'coal_ore',16:'cobalt_ore',21:'gloam_ore',26:'gloam_ore'};
   openSheet(`<h2>The Delve Gate</h2><p class="lead">Your lantern starts full. It burns oil as you go, faster on deeper floors. At empty, Shades come for you.</p>
   <div class="kit"><span>${iconImg('oil')} Oil Flasks <b>${S.bank.oil||0}</b></span><span>${iconImg('bread')} Bread <b>${S.bank.bread||0}</b></span><span>${iconImg('pondfin')} Fish <b>${S.bank.pondfin||0}</b></span><span>${iconImg('stew')} Stew <b>${S.bank.stew||0}</b></span></div>
   <div class="gear" style="--rc:${RARITY[LANTERNS[S.gear.lantern].r].c}">${iconImg(S.gear.lantern+'_lantern')}<span><small>Your lantern</small><b>${LANTERNS[S.gear.lantern].n}</b><small>${lanStat(S.gear.lantern)}${A('oil')?' · cape: oil lasts '+A('oil')+'% longer':''}</small></span></div>
@@ -1968,7 +2567,7 @@ function openGate(){
 // ---- XP: the skill you're training shows as a thin strip under your health, and for a few seconds after each gain
 // the goals pill turns into "Fishing 12 · ▬▬ · 230 xp to 13" (tap it for the Skills tab). Combat counts too.
 let xpTipT=0,xpLast=null;
-function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);const mx=S.flv>=FIGHT_MAX;return {n:'Fighting',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.flv,p:mx?1:S.xp/need,left:need-S.xp,max:mx};}
+function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);const mx=S.flv>=FIGHT_MAX;return {n:'Fighting',c:'#ef7d57',icon:staffOn()?'rusty_blade':gearId('blade',S.gear.blade),l:S.flv,p:mx?1:S.xp/need,left:need-S.xp,max:mx};}
   const l=lvlOf(k),xp=S.skills[k]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)];return {n:SKILLS[k].n,c:SKILLS[k].c,icon:SKILLS[k].icon,l,p:l>=99?1:(xp-a)/(b-a),left:Math.ceil(b-xp),max:l>=99};}
 function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb'),g=$('guide');xpLast=k;
   bar.hidden=false;f.style.width=Math.max(2,Math.round(x.p*100))+'%';f.style.background=x.c;f.style.color=x.c;bar.title=x.n;
@@ -1978,7 +2577,7 @@ function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb
 function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)],p=l>=99?1:(xp-a)/(b-a);
   return `<div class="skl${xpLast===sk?' cur':''}">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small>${xpLast===sk?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':`<b>${fmt(Math.ceil(b-xp))}</b> xp to level ${l+1} · ${fmt(Math.floor(xp-a))} / ${fmt(b-a)} (${Math.floor(p*100)}%)`}</small></span></div>`;}
 function combatLine(){const x=xpInfo('combat'),pts=cbPts(),div=cbDiv(),base=combatFrom(S.flv,S.skills),nextAt=(base+1)*div,held=(S.cbFloor||1)>base,cp=Math.max(0,Math.min(1,(pts-base*div)/div));
-  return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting counts 2 points a level, every other skill 1`}</small></span></div>
+  return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting (or Magic, if higher) counts 2 points a level, every other skill 1`}</small></span></div>
    <div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Fighting <em>${x.l}</em><small>/${FIGHT_MAX}</small>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small>${x.max?'Max level':`<b>${fmt(x.left)}</b> xp to level ${x.l+1} · from monsters in the Depths`}</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
@@ -2013,20 +2612,55 @@ function openKitchen(){const lv=lvlOf('cooking');
     <div class="cookb"><button class="btn sm" data-ck="${i}" data-n="1" ${!lock&&m>=1?'':'disabled'}>Cook 1</button><button class="btn sm alt" data-ck="${i}" data-n="5" ${!lock&&m>=5?'':'disabled'}>×5</button><button class="btn sm alt" data-ck="${i}" data-n="${m}" ${!lock&&m>1?'':'disabled'}>All${m>1?' ('+m+')':''}</button></div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>startCook(RECIPES.kitchen[+b.dataset.ck],+b.dataset.n));}
 function needText(r){const p=Object.entries(r.need).map(([id,n])=>`<span class="${has(id,n)?'ok':'no'}">${iconImg(id)}${avail(id)}/${n}</span>`);if(r.gold)p.push(`<span class="${S.gold>=r.gold?'ok':'no'}">${iconImg('gold')}${r.gold}</span>`);return p.join('');}
-const canMake=r=>Object.entries(r.need).every(([id,n])=>has(id,n))&&S.gold>=(r.gold||0)&&(!r.lvl||RECIPES.forge.indexOf(r)<0||lvlOf('smithing')>=r.lvl);
+const canMake=r=>Object.entries(r.need).every(([id,n])=>has(id,n))&&S.gold>=(r.gold||0)&&(!r.lvl||!r.sk||lvlOf(r.sk)>=r.lvl);
+// which skill each workstation trains (and gates recipes by)
+const CRAFT_SK={forge:'smithing',smelt:'smithing',jewel:'crafting',staff:'crafting'};
+for(const [k,sk] of Object.entries(CRAFT_SK))RECIPES[k].forEach(r=>r.sk=sk);
+let craftQty=1;
 function openCraft(kind){
-  const T2={forge:['The Forge','Forge gear to train Smithing. Better gear unlocks as your level rises. New gear goes into your bag; equipping it swaps your old piece back into the bag.'],kitchen:['The Kitchen','Food heals you mid-delve. Use it with the food button.'],press:['The Oil Press','Lampseed becomes Oil Flasks, the fuel for your lantern.']}[kind];
-  openSheet(`<h2>${T2[0]}</h2>${kind==='forge'?skillLine('smithing'):''}<p class="lead${kind==='forge'?' small':''}">${T2[1]}</p><div class="list">${RECIPES[kind].map((r,i)=>{const lock=kind==='forge'&&lvlOf('smithing')<r.lvl;const it=ITEMS[r.out],owned=it.gear&&(S.gear[it.gear]===it.tier||(avail(r.out))>0);
-    const stat=it.gear?(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:'Defense '+GEAR[it.gear][it.tier].def):it.heal?'Heals '+it.heal:it.oil?'+'+it.oil+'% oil':'';
-    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock?'<span class="lockt">Needs Smithing '+r.lvl+'</span> · ':''}${stat}${kind==='forge'?' · '+r.xp+' xp':''}${owned?' · owned':''}${kind!=='forge'?' · have '+(avail(r.out)):''}</small></span><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button></div><div class="need">${needText(r)}</div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
-  $('sx').onclick=closeSheet;
-  $('sheet').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>{const r=RECIPES[kind][+b.dataset.make];if(!canMake(r))return;
-    for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;const it=ITEMS[r.out];
-    if(it.gear){give(S.bank,r.out,1);S.flags.forged=true;bump('forged');sfx('cook');if(r.xp)skillXp('smithing',r.xp);save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
-    else{give(S.bank,r.out,r.n||1);toast('Made '+it.n+(r.n?' ×'+r.n:''),'good');if(kind==='press'){S.flags.pressed=true;bump('pressed');}}
-    sfx('cook');
-    save();openCraft(kind);});
+  const T2={forge:['The Forge','Forge gear to train Smithing. Better gear unlocks as your level rises. New gear goes into your bag; equipping it swaps your old piece back into the bag.'],
+    smelt:['The Forge','Smelt ore into bars for Smithing XP. Bars are what the Jeweler’s Bench makes rings and amulets from.'],
+    jewel:['Jeweler’s Bench','Set gems into bars to craft rings and amulets for Crafting XP. You can wear one of each: they work like capes, everywhere except Wilderness fights.'],
+    staff:['Jeweler’s Bench','Carve staffs for Crafting XP. Wield one and your attacks become spells that train Magic.'],
+    kitchen:['The Kitchen','Food heals you mid-delve. Use it with the food button.'],press:['The Oil Press','Lampseed becomes Oil Flasks, the fuel for your lantern. The Greater Oil Flask refills it all: pressing one takes Farming 30 and a Moonpetal (grow it from Moonpetal Seeds, Farming 25).']}[kind];
+  const sk=CRAFT_SK[kind],forgeTabs=kind==='forge'||kind==='smelt',multi=kind==='smelt'||kind==='press';
+  const tabs=kind==='jewel'||kind==='staff'?`<div class="tabs" role="tablist"><button class="tab" role="tab" id="tbJ" aria-selected="${kind==='jewel'}">Rings &amp; amulets</button><button class="tab" role="tab" id="tbT" aria-selected="${kind==='staff'}">Staffs</button></div>`:forgeTabs?`<div class="tabs" role="tablist"><button class="tab" role="tab" id="tbF" aria-selected="${kind==='forge'}">Forge gear</button><button class="tab" role="tab" id="tbS" aria-selected="${kind==='smelt'}">Smelt bars</button><button class="tab" role="tab" id="tbR" aria-selected="false">Relic forge</button></div>`:'';
+  openSheet(`<h2>${T2[0]}</h2>${tabs}${sk?skillLine(sk):''}<p class="lead${sk?' small':''}">${T2[1]}</p><div class="list">${RECIPES[kind].map((r,i)=>{const lock=sk&&lvlOf(sk)<r.lvl;const it=ITEMS[r.out],owned=(it.gear&&(S.gear[it.gear]===it.tier||(avail(r.out))>0))||(it.jewel&&(S.gear[it.jewel]===r.out||avail(r.out)>0));
+    const lk=r.sk&&lvlOf(r.sk)<r.lvl,stat=it.gear?(it.gear==='blade'?(isStaff(it.tier)?'+'+GEAR.blade[it.tier].mag+'% spell damage':'Damage '+GEAR.blade[it.tier].dmg):'Defense '+GEAR[it.gear][it.tier].def):it.jewel?(it.jewel==='ring'?'Ring · ':'Amulet · ')+jewelStat(r.out):it.heal?'Heals '+it.heal:it.oil?'+'+it.oil+'% oil':'';
+    const mx=multi?maxMake(r):0;
+    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock||(!sk&&lk)?'<span class="lockt">Needs '+SKILLS[sk||r.sk].n+' '+r.lvl+'</span> · ':''}${stat?stat+' · ':''}${r.xp?r.xp+' xp':''}${owned?' · owned':''}${!it.gear&&!it.jewel?' · have '+(avail(r.out)):''}</small></span><span class="mk"><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button>${multi&&mx>1&&canMake(r)?`<button class="btn alt sm" data-all="${i}">All ${mx}</button>`:''}</span></div><div class="need">${needText(r)}</div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;if($('tbF'))$('tbF').onclick=()=>openCraft('forge');if($('tbS'))$('tbS').onclick=()=>openCraft('smelt');if($('tbR'))$('tbR').onclick=openRelicForge;if($('tbJ'))$('tbJ').onclick=()=>openCraft('jewel');if($('tbT'))$('tbT').onclick=()=>openCraft('staff');
+  const make=(r,times)=>{let made=0;for(let k=0;k<times&&canMake(r);k++){for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;give(S.bank,r.out,r.n||1);made++;if(r.xp&&r.sk)skillXp(r.sk,r.xp);}return made;};
+  $('sheet').querySelectorAll('[data-make],[data-all]').forEach(b=>b.onclick=()=>{const all=b.dataset.all!=null,r=RECIPES[kind][+(all?b.dataset.all:b.dataset.make)];if(!canMake(r))return;const it=ITEMS[r.out];
+    const n=make(r,all?maxMake(r):1);
+    if(it.gear&&!isStaff(it.tier)){S.flags.forged=true;bump('forged');sfx('cook');save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    if(it.gear&&isStaff(it.tier)){S.flags.staff=true;bump('staffs');sfx('rare');puff(P.x,P.y-12,'#9b7bff',14);save();toast('Carved '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    if(it.jewel){S.flags.crafted=true;bump('crafted');sfx('rare');puff(P.x,P.y-12,'#e86fd0',14);save();toast('Crafted '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    toast('Made '+it.n+((r.n||1)*n>1?' ×'+(r.n||1)*n:''),'good');if(kind==='press'){S.flags.pressed=true;bump('pressed');if(r.out==='oil2')bump('oiltwo');}if(kind==='smelt')bump('bars',n);
+    sfx('cook');save();openCraft(kind);});
 }
+// ---------- Relic-forging: spend boss relics to forge power into the gear you wear, +1 to +5 ----------
+const forgeFx=(id,l)=>{const it=ITEMS[id];if(!it||!l)return '';if(it.jewel)return '+'+FORGE_FX.jewel*l+'% to its bonuses';if(it.gear==='blade')return isStaff(it.tier)?'+'+FORGE_FX.staff*l+'% spell damage':'+'+FORGE_FX.blade*l+'% damage';
+  return '+'+FORGE_FX.def*l+' defense'+(it.gear==='mail'&&GEAR.mail[it.tier].robe?' · +'+FORGE_FX.robe*l+'% spell damage':'');};
+const fTag=sl=>{const l=fLv(sl);return l?' <em class="rt" style="color:#ffcd75">+'+l+'</em>':'';};
+function openRelicForge(){const sm=lvlOf('smithing'),relics=RELIC_FORGE.filter(Boolean).map(f=>f.relic).concat(RELIC_CROWN);
+  openSheet(`<h2>The Forge</h2><div class="tabs" role="tablist"><button class="tab" role="tab" id="tbF" aria-selected="false">Forge gear</button><button class="tab" role="tab" id="tbS" aria-selected="false">Smelt bars</button><button class="tab" role="tab" id="tbR" aria-selected="true">Relic forge</button></div>${skillLine('smithing')}
+   <p class="lead small">Spend boss relics to forge power into the gear you wear, up to +5. Each step takes the next boss’s relic (+1 Slime Crown, +2 Knight’s Sigil, +3 Forge Heart, +4 Fallen Star, +5 Drowned Grimoire) and gold: the higher the item’s level, the more gold. The Hollow Crown perfects an enchantment instead (Enchant, on the Hero screen).</p>
+   <p class="lead small">A forged piece keeps its power while you own it, and it counts everywhere except Wilderness fights. Sell, trade or lose every copy and the forging is gone. Relics you spend are gone for good.</p>
+   <div class="need relics">${relics.map(k=>`<span class="${avail(k)?'ok':'no'}" title="${ITEMS[k].n}">${iconImg(k)}${avail(k)}</span>`).join('')}</div>
+   <div class="list">${[['blade','Blade'],['mail','Armor'],['helm','Helmet'],['ring','Ring'],['amulet','Amulet']].map(([sl,L])=>{const id=wornId(S.gear,sl);
+     if(!id||!forgeable(id))return `<div class="recipe locked"><div class="rh"><i class="ic blank"></i><span><b>${L}</b><small>${id?ITEMS[id].n+' can’t be forged':'Nothing worn'}</small></span></div></div>`;
+     const l=S.forged[id]||0,R=RELIC_FORGE[l+1];
+     if(!R)return `<div class="recipe"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n} +${l}</b><small>Fully forged: ${forgeFx(id,l)}</small></span></div></div>`;
+     const G=forgeGold(id,l+1),can=sm>=R.lvl&&has(R.relic)&&S.gold>=G;
+     return `<div class="recipe${sm<R.lvl?' locked':''}"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n}${l?' +'+l:''}</b><small>Item level ${itemLvl(id)} · ${sm<R.lvl?'<span class="lockt">Needs Smithing '+R.lvl+'</span> · ':''}${l?'Now '+forgeFx(id,l)+' · ':''}+${l+1}: ${forgeFx(id,l+1)} · ${R.xp} xp</small></span><span class="mk"><button class="btn sm" data-rf="${sl}" ${can?'':'disabled'}>Forge</button></span></div><div class="need"><span class="${has(R.relic)?'ok':'no'}">${iconImg(R.relic)}${avail(R.relic)}/1</span><span class="${S.gold>=G?'ok':'no'}">${iconImg('gold')}${fmt(G)}</span></div></div>`;}).join('')}</div>
+   <div class="row"><button class="btn" id="sx">Done</button></div>`);
+  $('sx').onclick=closeSheet;$('tbF').onclick=()=>openCraft('forge');$('tbS').onclick=()=>openCraft('smelt');$('tbR').onclick=openRelicForge;
+  $('sheet').querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{const sl=b.dataset.rf,id=wornId(S.gear,sl);if(!id||!forgeable(id))return;const l=S.forged[id]||0,R=RELIC_FORGE[l+1];
+    const G=forgeGold(id,l+1);if(!R||lvlOf('smithing')<R.lvl||!has(R.relic)||S.gold<G)return;
+    take(R.relic,1);S.gold-=G;S.forged[id]=l+1;skillXp('smithing',R.xp);bump('relicforge');P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([40,30,40,30,90]);puff(P.x,P.y-12,'#ffcd75',26);SPFX.push({k:'starfall',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#ffcd75',c2:'#fff3c4'});
+    toast(ITEMS[id].n+' +'+(l+1)+': '+forgeFx(id,l+1),'rare r-legendary');save(true);openRelicForge();});}
 // market: sell to the Hold and buy from its shop. Player-to-player trading comes later.
 function openSettings(){
   const tog=(k,l,on)=>`<div class="setrow"><span>${l}</span><button class="btn alt sm" data-tog="${k}" aria-pressed="${!!on}">${on?'On':'Off'}</button></div>`;
@@ -2059,7 +2693,7 @@ function openMarket(tab,hello){if(hello)MP.tallowHi=TALLOW_HI[ri(0,TALLOW_HI.len
   const pricey=id=>ITEMS[id].relic||ITEMS[id].v>=300||(ITEMS[id].rarity&&RORDER.indexOf(ITEMS[id].rarity)>=2);
   q('[data-sell]').forEach(b=>b.onclick=()=>{const id=b.dataset.sell,from=b.dataset.from,key=from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;return openMarket('sell');}sellArm=null;if(sellFrom(from,id,1))toast('Sold '+ITEMS[id].n+' for '+fmt(ITEMS[id].v)+' gold');openMarket('sell');});
   q('[data-sellall]').forEach(b=>b.onclick=()=>{const id=b.dataset.sellall,from=b.dataset.from,key='all:'+from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;b.textContent='Sure?';b.classList.add('warn');return;}sellArm=null;const n=sellFrom(from,id,1e9);if(n)toast('Sold '+n+' '+ITEMS[id].n);openMarket('sell');});
-  q('[data-buy]').forEach(b=>b.onclick=()=>{const s=SHOP.find(x=>x.id===b.dataset.buy),n=+b.dataset.n||1;if(S.gold<s.price*n)return;S.gold-=s.price*n;give(S.bank,s.id,n);save();toast('Bought '+n+' '+ITEMS[s.id].n);openMarket('shop');});
+  q('[data-buy]').forEach(b=>b.onclick=()=>{const s=SHOP.find(x=>x.id===b.dataset.buy),n=+b.dataset.n||1;if(S.gold<s.price*n)return;S.gold-=s.price*n;giveAny(S.bank,s.id,n);save();toast('Bought '+n+' '+ITEMS[s.id].n);openMarket('shop');});
 }
 const rc=id=>ITEMS[id]&&ITEMS[id].rarity?RARITY[ITEMS[id].rarity]:null;
 const rTag=id=>{const R=rc(id);return R?`<em class="rt" style="color:${R.c}">${R.n}</em>`:'';};
@@ -2085,35 +2719,43 @@ function openBag(tab){bagTab=tab||'items';
   const owned=t=>allKeys().filter(id=>ITEMS[id][t]).length;
   let body='';
   if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${FND&&FND.no?'Hero #'+nfmt(FND.no)+' · ':''}${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
-   <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span><span>Damage <b>${Math.round(dmgOf())}</b></span><span>Defense <b>${defOf()}</b></span></div>
+   <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span>${staffOn()?`<span>Spell <b>${spellMax(curSpell())}</b></span>`:`<span>Damage <b>${Math.round(dmgOf())}</b></span>`}<span>Defense <b>${defOf()}</b></span></div>
    <div class="gears">
-    ${row(iconImg(gearId('blade',bl)),'Blade',ITEMS[gearId('blade',bl)].n,'Damage '+GEAR.blade[bl].dmg,`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
-    ${row(iconImg(gearId('mail',ml)),'Armor',ITEMS[gearId('mail',ml)].n,'Defense '+GEAR.mail[ml].def,`<button class="btn alt sm" data-eq="mail">Change${allKeys().some(id=>itemSlot(id)==='mail')?' ('+allKeys().filter(id=>itemSlot(id)==='mail').length+')':''}</button>`)}
+    ${row(iconImg(gearId('blade',bl)),isStaff(bl)?'Staff':'Blade',ITEMS[gearId('blade',bl)].n+fTag('blade'),(isStaff(bl)?'+'+GEAR.blade[bl].mag+'% spell damage · attacks cast spells':'Damage '+GEAR.blade[bl].dmg)+(fLv('blade')?' · forged '+forgeFx(gearId('blade',bl),fLv('blade')):''),`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
+    ${isStaff(bl)?row(`<i class="ic spic" style="--sc:${SPELLS[curSpell()].col}">✦</i>`,'Attack spell',SPELLS[curSpell()].n,'Hits up to '+spellMax(curSpell())+' · '+SPELLS[curSpell()].d,'<button class="btn alt sm" id="spB">Change</button>'):''}
+    ${row(iconImg(gearId('mail',ml)),'Armor',ITEMS[gearId('mail',ml)].n+fTag('mail'),'Defense '+GEAR.mail[ml].def+(GEAR.mail[ml].mag?' · +'+GEAR.mail[ml].mag+'% spell damage':'')+(fLv('mail')?' · forged '+forgeFx(gearId('mail',ml),fLv('mail')):''),`<button class="btn alt sm" data-eq="mail">Change${allKeys().some(id=>itemSlot(id)==='mail')?' ('+allKeys().filter(id=>itemSlot(id)==='mail').length+')':''}</button>`)}
     ${row(iconImg(ln+'_lantern'),'Lantern '+rTag(ln+'_lantern'),LANTERNS[ln].n,lanStat(ln),`<button class="btn alt sm" data-eq="lantern">Change${owned('lantern')?' ('+owned('lantern')+')':''}</button>`,ln+'_lantern')}
     ${cp?row(iconImg('cape_'+cp),'Cape '+rTag('cape_'+cp),CAPES[cp].n,capeStat(cp),`<button class="btn alt sm" data-eq="cape">Change</button>`,'cape_'+cp)
         :row('<i class="ic blank"></i>','Cape','No cape',owned('cape')?'You have '+owned('cape')+' to wear':'Capes are rare finds in the Depths',owned('cape')?`<button class="btn alt sm" data-eq="cape">Wear</button>`:'')}
-    ${S.gear.helm?row(iconImg(gearId('helm',S.gear.helm)),'Helmet '+rTag(gearId('helm',S.gear.helm)),ITEMS[gearId('helm',S.gear.helm)].n,helmStat(S.gear.helm),'<button class="btn alt sm" data-eq="helm">Change</button>',gearId('helm',S.gear.helm))
+    ${S.gear.helm?row(iconImg(gearId('helm',S.gear.helm)),'Helmet '+rTag(gearId('helm',S.gear.helm)),ITEMS[gearId('helm',S.gear.helm)].n+fTag('helm'),helmStat(S.gear.helm)+(fLv('helm')?' · forged '+forgeFx(gearId('helm',S.gear.helm),fLv('helm')):''),'<button class="btn alt sm" data-eq="helm">Change</button>',gearId('helm',S.gear.helm))
        :row('<i class="ic blank"></i>','Helmet','No helmet',allKeys().some(id=>itemSlot(id)==='helm')?'You have one to wear':'Forge one from Smithing 3',allKeys().some(id=>itemSlot(id)==='helm')?'<button class="btn alt sm" data-eq="helm">Wear</button>':'')}
+    ${['ring','amulet'].map(sl=>{const k=S.gear[sl],L=sl==='ring'?'Ring':'Amulet',n=allKeys().filter(id=>itemSlot(id)===sl).length,en=S.ench[sl]&&S.ench[sl].id===k?S.ench[sl]:null;return k?row(iconImg(k),L+(en?' <em class="rt" style="color:#c79bf2">Enchanted</em>':''),ITEMS[k].n+fTag(sl),jewelStat(k)+(fLv(sl)?' · forged '+forgeFx(k,fLv(sl)):'')+(en?' · <span style="color:#c79bf2">'+enchStat(en)+'</span>':''),`<span class="mk"><button class="btn alt sm" data-ench="${sl}">Enchant</button><button class="btn alt sm" data-eq="${sl}">Change</button></span>`)
+       :row('<i class="ic blank"></i>',L,'No '+sl,n?'You have '+n+' to wear':'Craft one at the Jeweler’s Bench',n?`<button class="btn alt sm" data-eq="${sl}">Wear</button>`:'');}).join('')}
     ${isFounder()?row('<i class="ic flameic"></i>','Founder','Founder’s Flame',SET.flame!==false?'Lit: your light burns violet':'Off',`<button class="btn alt sm" id="flH">${SET.flame!==false?'Turn off':'Light it'}</button>`):''}
    </div>
    ${ADMIN?'<button class="btn big admin" id="adm">Admin powers</button>':''}
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="row"><button class="btn alt" id="setO">Settings</button><button class="btn alt" id="gd">Goals</button></div>
    <div class="row"><button class="btn alt" id="reset">Reset progress</button><button class="btn alt" id="out">Sign out</button></div>`;}
-  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['woodcutting','fishing','farming','cooking','smithing','mining'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
+  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['magic','woodcutting','fishing','farming','cooking','smithing','mining','crafting'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
    <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
-   <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
+   <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32, Steel at 35–42. Smelt ore into bars at the Forge too.</p>
+   <p><b>Mining</b> Mine the ore in the walls of the Depths. Iron at 10, Coal at 20, Emberite at 25, Cobalt at 30, Starshard at 40. Veins grow back.</p>
+   <p><b>Crafting</b> Set gems into bars at the Jeweler’s Bench to make rings and amulets, and carve staffs there too. Find Rubies, Sapphires, Emeralds and Diamonds in chests.</p>
+   <p><b>Magic</b> Wield a staff and your attacks become spells: Spark at 1, Ember Bolt 8, Frost Shard 16, Storm Lash 26, Flame Burst 36, Void Lance 48, Starfall 62, Cataclysm 80. Kills with a staff train Magic, never Fighting. Magic also enchants your ring and amulet with runes from your rune bag.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
-   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × Fighting + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking, smithing and mining all raise it. Fighting tops out at 99.</p></div>`;}
+   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × the higher of Fighting and Magic + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking, smithing, mining, crafting and magic all raise it. Fighting tops out at 99.</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
    const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
    body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
+   <h3>Rune bag <small>never lost, even if you fall</small></h3><div class="grid runes">${Object.keys(RUNES).map(k=>{const id=k+'_rune',n=S.runes[id]||0;return `<button class="cell${n?'':' dim'}" data-rune="${id}" aria-label="${ITEMS[id].n}, ${n}">${iconImg(id)}<b>${fmt(n)}</b><small>${ITEMS[id].n}</small></button>`;}).join('')}</div>
    ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
   openSheet(`<h2>${{hero:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
   q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));if($('rewB'))$('rewB').onclick=()=>openRewards();
+  q.querySelectorAll('[data-ench]').forEach(b=>b.onclick=()=>openEnchant(b.dataset.ench));if($('spB'))$('spB').onclick=openSpells;q.querySelectorAll('[data-rune]').forEach(b=>b.onclick=()=>openRuneInfo(b.dataset.rune));
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
@@ -2127,12 +2769,20 @@ function openBag(tab){bagTab=tab||'items';
 }
 function itemInfo(id){const it=ITEMS[id],o=[];
   if(it.lantern)o.push(lanStat(it.lantern));if(it.cape)o.push(capeStat(it.cape));if(it.heal)o.push('Heals '+it.heal+' HP in the Depths');if(it.oil)o.push('Refills '+it.oil+'% lantern oil');
-  if(it.gear)o.push(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def);
+  if(it.gear)o.push(it.gear==='blade'?(isStaff(it.tier)?'+'+GEAR.blade[it.tier].mag+'% spell damage · a club ('+GEAR.blade[it.tier].dmg+' damage) in the Wilderness':'Damage '+GEAR.blade[it.tier].dmg):it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def+(GEAR.mail[it.tier].mag?' · +'+GEAR.mail[it.tier].mag+'% spell damage':''));
+  if(it.gear==='blade'&&isStaff(it.tier))o.push('Wield it and your attacks cast spells, which train Magic instead of Fighting');
+  if(id==='moon_staff'||id==='tide_robe')o.push('Only the Drowned Archmage drops it (floor 25)');if(id==='hollow_staff'||id==='void_robe')o.push('Only the Hollow King drops it (floor 30)');
+  if(id==='oil2')o.push('Pressed at the Oil Press: 2 Lampseed + 1 Moonpetal, Farming 30. Also found in Uncommon Chests');if(id==='moonpetal')o.push('Press it with Lampseed into a Greater Oil Flask');
+  if(id==='gloam_ore')o.push('The one ore of floors 21–30. Smelt it into Gloamite Bars at the Forge (Smithing 50)');if(id==='gloam_bar')o.push('Forge Gloamite gear (Smithing 52–58) and the Gloamwood Staff');
   {const ok=Object.keys(ORES).find(k=>k+'_ore'===id);if(ok)o.push('Mined in the Depths · Mining '+ORES[ok].lvl);}
-  if(it.rarity==='mythic'&&it.gear)o.push('One of the two rarest finds in the Depths');if(it.relic)o.push('Boss relic. Can be minted on-chain in the live game');
+  if(it.rarity==='mythic'&&it.gear)o.push('One of the rarest finds in the Depths');if(it.relic){const st=RELIC_FORGE.findIndex(f=>f&&f.relic===id),bk=Object.keys(ENEMIES).find(k=>ENEMIES[k].relic===id),pk=PACKS.find(p=>p.boss===bk);
+    o.push(id===RELIC_CROWN?'Crowns an enchantment: spend it on an enchanted ring or amulet (Enchant, on the Hero screen) and every bonus rises to the most that enchantment can roll':'Relic-forging: takes a piece you wear from +'+(st-1)+' to +'+st+' at the Forge (Relic forge tab, Smithing '+RELIC_FORGE[st].lvl+')');
+    if(pk)o.push('A rare drop from '+pk.bossName+' (about 1 kill in 25)');}
   const seedOf=Object.values(CROPS).find(c=>c.seed===id);if(seedOf)o.push('Plant at the Farm · Farming '+seedOf.lvl);
   const ck=RECIPES.kitchen.find(r=>r.need[id]);if(ck)o.push('Cook into '+ITEMS[ck.out].n+' at the Kitchen');
-  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id)&&RECIPES.forge.some(r=>r.need[id]))o.push('Used at the Forge');if(id==='starshard_ore')o.push('Prized by traders: sell it to Tallow');
+  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id)&&RECIPES.forge.some(r=>r.need[id]))o.push('Used at the Forge');if(RECIPES.smelt.some(r=>r.need[id]))o.push('Smelt into bars at the Forge');
+  if(RECIPES.jewel.some(r=>r.need[id]))o.push('Used at the Jeweler’s Bench for rings and amulets');if(it.gem&&id!=='gem')o.push('Found in chests in the Depths');
+  if(it.jewel)o.push((it.jewel==='ring'?'Ring':'Amulet')+': '+jewelStat(id),'Bonuses work everywhere except Wilderness fights');if(id==='starshard_ore')o.push('Prized by traders: sell it to Tallow');
   if(id==='burnt_fish')o.push('Not much use to anyone');return o;}
 let dropQty=1,dropArm=false;
 function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();return;}if(!keep){dropQty=1;dropArm=false;}dropQty=Math.min(dropQty,n);
@@ -2158,14 +2808,15 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();r
   if($('drop'))$('drop').onclick=()=>{if((rare||dropQty>=10||dropQty===n&&n>1)&&!dropArm){dropArm=true;openItem(id,true);return;}
     take(id,dropQty);dropToGround(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n+' at your feet');sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag();};}
 function openAdmin(){if(!ADMIN)return;
-  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock every lift (floors 6, 11, 16)'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?PACKS.map(p=>['f'+p.to,'Jump to '+p.bossName+' (F'+p.to+')']):[]);
+  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock every lift (floors 6 to 26)'],['runes','+100 of every rune'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?PACKS.map(p=>['f'+p.to,'Jump to '+p.bossName+' (F'+p.to+')']):[]);
   openSheet(`<h2>Admin powers</h2><p class="lead small">Only party hat owners see this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openHero();
   $('sheet').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const k=b.dataset.ad;
     if(k==='kit'){grantKit();S.gold-=100000;}
     if(k==='gold')S.gold+=10000;
-    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','coal_ore','cobalt_ore','starshard_ore','gem','slime_gel','bone','lampseed','glowcap_spore','wheat_seed','raw_pondfin','wheat','glowcap'])give(S.bank,id,50);
-    if(k==='food')for(const id of ['oil','bread','pondfin','stew'])give(S.bank,id,20);
+    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','coal_ore','cobalt_ore','starshard_ore','gloam_ore','gem','ruby','sapphire','emerald','diamond','copper_bar','iron_bar','steel_bar','ember_bar','cobalt_bar','gloam_bar','slime_gel','bone','lampseed','glowcap_spore','moonpetal_seed','moonpetal','wheat_seed','raw_pondfin','wheat','glowcap','logs','blackwood_logs'])give(S.bank,id,50);
+    if(k==='runes')for(const r of Object.keys(RUNES))giveAny(S.bank,r+'_rune',100);
+    if(k==='food')for(const id of ['oil','oil2','bread','pondfin','stew','moonfin'])give(S.bank,id,20);
     if(k==='skills')for(const sk of Object.keys(SKILLS))S.skills[sk]=XP_TABLE[99];
     if(k==='combat'){S.flv=Math.max(S.flv,60);S.cbFloor=Math.max(S.cbFloor||1,50);S.xp=0;combatCheck();P.hp=hpMax();}
     if(k==='bank')S.bankBuys=BANK_BUYS.length;
@@ -2174,7 +2825,7 @@ function openAdmin(){if(!ADMIN)return;
     if(k==='god')S.flags.god=!S.flags.god;
     const jump=/^f\d+$/.test(k);if(jump){enterFloor(+k.slice(1));closeSheet();}
     save();sfx('level');toast('Admin: done','good');if(!jump)openAdmin();});}
-function openQuickPick(i){const opts=['oil'].concat(FOODS);
+function openQuickPick(i){const opts=['oil','oil2'].concat(FOODS);
   openSheet(`<h2>Quick slot ${i+1}</h2><p class="lead small">Quick slots sit on your screen in the Depths. Tap one to eat or refill your lantern. Keys 1–5 work too.</p>
    <div class="qslots">${S.quick.map((id,j)=>`<button class="qs ${j===i?'on':''}" data-qs="${j}" aria-label="Slot ${j+1}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="list">${opts.map(id=>`<button class="item" aria-pressed="${S.quick[i]===id}" data-q="${id}">${iconImg(id)}<span><b>${ITEMS[id].n}</b><small>${ITEMS[id].heal?'Heals '+ITEMS[id].heal:'Refills '+ITEMS[id].oil+'% oil'} · ${S.bank[id]||0} in bag${S.vault[id]?' · '+S.vault[id]+' in bank':''}</small></span></button>`).join('')}</div>
@@ -2183,24 +2834,28 @@ function openQuickPick(i){const opts=['oil'].concat(FOODS);
   q.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const id=b.dataset.q,o=S.quick.indexOf(id);if(o>=0&&o!==i)S.quick[o]=S.quick[i];S.quick[i]=id;save();updateQuick(true);openQuickPick(i);});
   $('qclr').onclick=()=>{S.quick[i]=null;save();updateQuick(true);openQuickPick(i);};}
 // ---------- gear: every slot equips from the bag and swaps the old piece back into it ----------
-const gearId=(slot,t)=>!t?null:slot==='blade'?(t==='rusty'?'rusty_blade':t+'_blade'):slot==='mail'?(t==='none'?'traveler_garb':t+'_mail'):slot==='lantern'?t+'_lantern':slot==='helm'?t+'_helm':'cape_'+t;
-const itemSlot=id=>{const it=ITEMS[id];return !it?null:it.gear||(it.lantern?'lantern':it.cape?'cape':null);};
-const itemTier=id=>{const it=ITEMS[id];return it.tier||it.lantern||it.cape;};
+const gearId=(slot,t)=>!t?null:slot==='ring'||slot==='amulet'?t:slot==='blade'?(t==='rusty'?'rusty_blade':GEAR_ITEM['blade:'+t]||t+'_blade'):slot==='mail'?(t==='none'?'traveler_garb':GEAR_ITEM['mail:'+t]||t+'_mail'):slot==='lantern'?t+'_lantern':slot==='helm'?GEAR_ITEM['helm:'+t]||t+'_helm':'cape_'+t;
+const itemSlot=id=>{const it=ITEMS[id];return !it?null:it.gear||it.jewel||(it.lantern?'lantern':it.cape?'cape':null);};
+const itemTier=id=>{const it=ITEMS[id];return it.jewel?id:it.tier||it.lantern||it.cape;};
+const jewelStat=k=>Object.entries((JEWELS[k]||{}).attr||{}).map(([a,v])=>ATTR_TXT[a](v)).join(' · ');
 const helmStat=t=>'Defense '+GEAR.helm[t].def+(HELM_ATTR[t]?' · '+Object.entries(HELM_ATTR[t]).map(([a,v])=>ATTR_TXT[a](v)).join(' · '):'');
-const gearStat=(slot,t)=>slot==='helm'?helmStat(t):slot==='blade'?'Damage '+GEAR.blade[t].dmg:slot==='mail'?'Defense '+GEAR.mail[t].def:slot==='lantern'?lanStat(t):capeStat(t);
-function equipItem(id){const slot=itemSlot(id);if(!slot||!has(id))return;take(id,1);const old=gearId(slot,S.gear[slot]);if(old)give(S.bank,old,1);S.gear[slot]=itemTier(id);
-  P.hp=Math.min(P.hp,maxHp());save();sfx('pick');toast('Equipped '+ITEMS[id].n+(old?'. '+ITEMS[old].n+' went to your bag':''),'good');}
+const gearStat=(slot,t)=>slot==='ring'||slot==='amulet'?jewelStat(t):slot==='helm'?helmStat(t):slot==='blade'?'Damage '+GEAR.blade[t].dmg:slot==='mail'?'Defense '+GEAR.mail[t].def:slot==='lantern'?lanStat(t):capeStat(t);
+function equipItem(id){const slot=itemSlot(id);if(!slot||!has(id))return;take(id,1);const old=gearId(slot,S.gear[slot]);if(old)give(S.bank,old,1);S.gear[slot]=itemTier(id);const faded=enchFade(slot);
+  if(slot==='blade'){const was=old&&isStaff(itemTier(old)),now=staffOn();if(now!==!!was)setTimeout(()=>toast(now?'Staff in hand: your attacks are now spells and train Magic. Pick your spell on the Hero screen.':'Blade in hand: your attacks train Fighting again.','good'),900);}
+  P.hp=Math.min(P.hp,hpMax());save();sfx('pick');toast('Equipped '+ITEMS[id].n+(old?'. '+ITEMS[old].n+' went to your bag':'')+(faded?'. The old enchantment faded':''),'good');}
+// swapping or removing an enchanted ring or amulet lets its enchantment fade
+function enchFade(slot){const e=S.ench&&S.ench[slot];if(e&&e.id!==S.gear[slot]){delete S.ench[slot];return true;}return false;}
 function openEquip(slot){
-  const cur=S.gear[slot],curId=gearId(slot,cur),NAMES2={blade:'Blades',mail:'Armor',helm:'Helmets',lantern:'Lanterns',cape:'Capes'};
+  const cur=S.gear[slot],curId=gearId(slot,cur),NAMES2={blade:'Blades',mail:'Armor',helm:'Helmets',lantern:'Lanterns',cape:'Capes',ring:'Rings',amulet:'Amulets'};
   const opts=allKeys().filter(id=>itemSlot(id)===slot).sort((a,b)=>(RORDER.indexOf(ITEMS[b].rarity)-RORDER.indexOf(ITEMS[a].rarity))||(ITEMS[b].v-ITEMS[a].v));
   const line=(id,btn)=>`<div class="gear" style="--rc:${(rc(id)||{}).c||'var(--ink)'}">${iconImg(id)}<span><small>${rTag(id)}</small><b>${ITEMS[id].n}</b><small>${gearStat(slot,itemTier(id))}</small></span>${btn}</div>`;
-  const help={helm:'Forge helmets at the Forge from Smithing 3.',blade:'Forge better blades at the Forge.',mail:'Forge armor at the Forge.',lantern:'Better lanterns burn oil slower and light up more of the dark.',cape:'Capes carry special attributes. Find them in chests, from monsters and bosses, and rarely while fishing.'}[slot];
+  const help={helm:'Forge helmets at the Forge from Smithing 3.',blade:'Forge better blades at the Forge.',mail:'Forge armor at the Forge.',lantern:'Better lanterns burn oil slower and light up more of the dark.',cape:'Capes carry special attributes. Find them in chests, from monsters and bosses, and rarely while fishing.',ring:'Craft rings at the Jeweler’s Bench from bars and gems.',amulet:'Craft amulets at the Jeweler’s Bench from bars and gems.'}[slot];
   openSheet(`<h2>${NAMES2[slot]}</h2><p class="lead small">${help} Equipping swaps: what you wore goes into your bag, where you can sell, bank or drop it.</p>
-   <h3>Equipped</h3>${curId?line(curId,slot==='cape'||slot==='helm'?'<button class="btn alt sm" id="off">Take off</button>':''):'<p class="lead small">Nothing.</p>'}
+   <h3>Equipped</h3>${curId?line(curId,['cape','helm','ring','amulet'].includes(slot)?'<button class="btn alt sm" id="off">Take off</button>':''):'<p class="lead small">Nothing.</p>'}
    <h3>${scene==='hold'?'In your bag and bank':'In your bag'}</h3>${opts.length?`<div class="list">${opts.map(id=>line(id,`<button class="btn sm" data-wear="${id}">Equip</button>`)).join('')}</div>`:`<p class="lead small">None yet.${scene==='delve'?' Items found this delve go into your bag when you get home.':''}</p>`}
    <div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openHero();
-  if($('off'))$('off').onclick=()=>{give(S.bank,curId,1);S.gear[slot]=null;P.hp=Math.min(P.hp,maxHp());save();openEquip(slot);};
+  if($('off'))$('off').onclick=()=>{give(S.bank,curId,1);S.gear[slot]=null;if(enchFade(slot))toast('The enchantment faded','bad');P.hp=Math.min(P.hp,hpMax());save();openEquip(slot);};
   $('sheet').querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{equipItem(b.dataset.wear);openHero();});
 }
 // ---------- the Bank ----------
@@ -2282,6 +2937,11 @@ const GOALS=[
   {id:'smith10',cat:'skills',t:'Reach Smithing 10',hint:'Forge gear at the Forge.',...lv('smithing',10),gold:60},
   {id:'smith25',cat:'skills',t:'Reach Smithing 25',hint:'Ember gear starts at 25.',...lv('smithing',25),gold:200},
   {id:'smith35',cat:'skills',t:'Reach Smithing 35',hint:'Steel gear starts at 35: iron and coal at the Forge.',...lv('smithing',35),gold:300},
+  {id:'craft1',cat:'start',t:'Craft a ring',hint:'Smelt Copper Ore into bars at the Forge, then visit the Jeweler’s Bench beside it.',done:()=>!!S.flags.crafted,gold:25},
+  {id:'craft15',cat:'skills',t:'Reach Crafting 15',hint:'Rings and amulets at the Jeweler’s Bench.',...lv('crafting',15),gold:100},
+  {id:'craft35',cat:'skills',t:'Reach Crafting 35',hint:'The Emberheart Amulet waits at 35.',...lv('crafting',35),gold:300},
+  {id:'bars',cat:'skills',t:'Smelt 100 bars',hint:'At the Forge: Smelt bars.',...cn(()=>C('bars'),100),gold:100},
+  {id:'jewels',cat:'skills',t:'Wear a ring and an amulet',hint:'One of each, from the Jeweler’s Bench.',done:()=>!!(S.gear.ring&&S.gear.amulet),gold:75},
   {id:'mine10',cat:'skills',t:'Reach Mining 10',hint:'Mine the glinting rocks in the Depths. Iron needs Mining 10.',...lv('mining',10),gold:50},
   {id:'mine25',cat:'skills',t:'Reach Mining 25',hint:'Coal at 20, Emberite at 25.',...lv('mining',25),gold:150},
   {id:'mine40',cat:'skills',t:'Reach Mining 40',hint:'Enough to mine a Starshard.',...lv('mining',40),gold:400},
@@ -2291,6 +2951,22 @@ const GOALS=[
   {id:'f10',cat:'depths',t:'Reach floor 10',hint:'The crypt goes deep.',done:()=>S.deepest>=10,gold:100,prog:()=>[Math.min(10,S.deepest),10]},
   {id:'tyrant',cat:'depths',t:'Defeat the Forge Tyrant',hint:'Floor 15. Step out of the ring of fire before the hammer lands.',done:()=>!!S.bosses.tyrant,gold:300},
   {id:'warden',cat:'depths',t:'Defeat the Starwarden',hint:'Floor 20. When it vanishes, look behind you.',done:()=>!!S.bosses.warden,gold:500},
+  {id:'archmage',cat:'depths',t:'Defeat the Drowned Archmage',hint:'Floor 25. Step out of the frost ring, dodge the bolts, chase it down when it blinks.',done:()=>!!S.bosses.archmage,gold:700},
+  {id:'hollowking',cat:'depths',t:'Defeat the Hollow King',hint:'Floor 30. Keep moving: rifts open where you stand.',done:()=>!!S.bosses.hollowking,gold:1000},
+  {id:'f30',cat:'depths',t:'Reach floor 30',hint:'Below the Starfall Hollow: the Drowned Archive, then the Hollow Throne.',done:()=>S.deepest>=30,gold:500,prog:()=>[Math.min(30,S.deepest),30]},
+  {id:'relicf',cat:'depths',t:'Relic-forge a piece of gear',hint:'Bosses rarely drop relics. Spend one at the Forge (Relic forge tab).',...cn(()=>C('relicforge'),1),gold:150},
+  {id:'uchest',cat:'depths',t:'Open 10 Uncommon Chests',hint:'They glow green, on floors 21–30.',...cn(()=>C('uchests'),10),gold:200},
+  {id:'gloamset',cat:'depths',t:'Wear a full set of Gloamite',hint:'Gloamite Blade, Mail and Helm, forged from the ore of floors 21–30.',done:()=>S.gear.blade==='gloam'&&S.gear.mail==='gloam'&&S.gear.helm==='gloam',gold:600},
+  {id:'staff',cat:'start',t:'Carve a staff',hint:'At the Jeweler’s Bench, Staffs tab: an Apprentice Staff takes 10 logs.',done:()=>!!S.flags.staff,gold:20},
+  {id:'mage10',cat:'skills',t:'Reach Magic 10',hint:'Wield a staff: kills with spells train Magic.',...lv('magic',10),gold:60},
+  {id:'mage30',cat:'skills',t:'Reach Magic 30',hint:'Storm Lash at 26 jumps between monsters.',...lv('magic',30),gold:250},
+  {id:'mage60',cat:'skills',t:'Reach Magic 60',hint:'Starfall waits at 62.',...lv('magic',60),gold:600},
+  {id:'enchant',cat:'skills',t:'Enchant a ring or amulet',hint:'Hero screen → Enchant. Lesser Enchant needs Magic 3, 3 Gale Runes and a Soul Rune.',done:()=>!!S.flags.enchanted,gold:60},
+  {id:'oil2',cat:'skills',t:'Press a Greater Oil Flask',hint:'Farming 30 at the Oil Press: 2 Lampseed and a Moonpetal.',...cn(()=>C('oiltwo'),1),gold:120},
+  {id:'hmvisit',cat:'hold',t:'Walk into Hollowmere',hint:'Take the road west out of the Hold.',...cn(()=>C('hmvisit'),1),gold:20},
+  {id:'maw',cat:'hold',t:'Stand before the Abyssal Maw',hint:'In the far north-west of Hollowmere.',...cn(()=>C('maw'),1),gold:50},
+  {id:'hm100',cat:'hold',t:'Defeat 100 monsters in Hollowmere',hint:'From the meadow wolves to the deepwood treants.',...cn(()=>C('hmkills'),100),gold:200},
+  {id:'moonfin',cat:'hold',t:'Catch a Moonfin',hint:'Off the dock in the middle of the Moonmere. Needs Fishing 30.',...cn(()=>C('moonfin'),1),gold:100},
   {id:'f20',cat:'depths',t:'Reach floor 20',hint:'Below the Emberforge Halls lies the Starfall Hollow.',done:()=>S.deepest>=20,gold:250,prog:()=>[Math.min(20,S.deepest),20]},
   {id:'steel',cat:'depths',t:'Wear a full set of steel',hint:'Steel Blade, Steel Mail and Steel Helm, all equipped.',done:()=>S.gear.blade==='steel'&&S.gear.mail==='steel'&&S.gear.helm==='steel',gold:300},
   {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Fighting counts double, and every skill adds to it.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
@@ -2433,6 +3109,76 @@ function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refre
 function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
    <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+// ---------- the world map (the globe under the compass): see-through, so the game keeps going underneath ----------
+const WM_COL={[GRASS]:'#38b764',[PATH]:'#d9a066',[WATER]:'#3b5dc9',[SOIL]:'#6b3e26',[DOCK]:'#a0663b',[WILDG]:'#5a5634',[WPATH]:'#6e5844',[GLOOM]:'#2e2f5c',
+  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
+function miniBase(m){if(m.mini)return m.mini;const c=document.createElement('canvas');c.width=m.w;c.height=m.h;const x=c.getContext('2d'),id=x.createImageData(m.w,m.h);
+  for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){let t=tAt(m,i,y),col=WM_COL[t]||'#0d0e17';if(m.kind==='delve'){col=t===FLOOR?(BIOMES[m.biome]||BIOMES.moss).floor[2]:'#0b0c14';}
+    else if(solidAt(m,i,y)&&(t===GRASS||t===PATH||t===MGRASS||t===WILDG||t===PLAZA||t===DGRASS))col='#1d2a24';const [r,g2,b]=hex(col);const k=(y*m.w+i)*4;id.data[k]=r;id.data[k+1]=g2;id.data[k+2]=b;id.data[k+3]=255;}
+  x.putImageData(id,0,0);m.mini=c;return c;}
+let wmOpen=false,wmT=0;
+function toggleMap(force){wmOpen=force===undefined?!wmOpen:force;$('wmap').hidden=!wmOpen;$('mapB').setAttribute('aria-pressed',String(wmOpen));if(wmOpen){drawMap();sfx('pick');}}
+function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),dl=scene==='delve';
+  const availW=Math.min(innerWidth*.9,760),availH=innerHeight*.66,k=Math.max(2,Math.floor(Math.min(availW/m.w,availH/m.h)*(window.devicePixelRatio||1)));
+  cvm.width=m.w*k;cvm.height=m.h*k;const dpr=window.devicePixelRatio||1;cvm.style.width=(m.w*k/dpr)+'px';cvm.style.height=(m.h*k/dpr)+'px';
+  const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*k,m.h*k);
+  const P2=(px,py)=>[px/T*k,py/T*k],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
+  const label=(px,py,t,c,sz)=>{let [X,Y]=P2(px,py);x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;const hw=x.measureText(t).width/2+3;X=Math.max(hw,Math.min(cvm.width-hw,X));x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;x.textAlign='center';x.lineWidth=Math.max(2,k*.9);x.strokeStyle='rgba(10,12,24,.9)';x.strokeText(t,X,Y);x.fillStyle=c||'#f4f4f4';x.fillText(t,X,Y);};
+  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type))dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'?'#c79bf2':'#ffcd75');}
+    const W0=WEST_X,mid=W0+13*T;label(mid,WILD_Y+12*T,'The Hold','#ffcd75',1.1);label(mid,WILD_Y-20*T,'The Wilderness','#ff8a8a',1.1);label(mid,WILD_Y-4*T,'PvP north of the wall','#ff8a8a',.75);
+    const HY=WILD_Y;label(32*T,HY+19*T,'Hollowmere','#a7f0c8',1.2);label(21*T+8,HY+27*T,'Moonmere','#d8d0ff',.9);label(7*T+8,HY+16*T,'Abyssal Maw','#c79bf2',.85);
+    label(33*T,HY+3*T,'Lv 3–8','#a7f070',.75);label(8*T,HY+47*T,'Marsh · Lv 9–14','#ffcd75',.75);label(35*T,HY+53*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(22*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);
+    const g0=m.objs.find(o=>o.type==='gate');if(g0)label(g0.x,g0.y-26,'Delve Gate','#ffcd75',.8);}
+  else{if(m.stairs&&!m.stairs.hidden)dot(m.stairs.tx*T+8,m.stairs.ty*T+8,Math.max(3,k*1.2),'#ffffff','#1a1c2c');for(const o of m.objs)if(o.type==='chest'&&!o.open)dot(o.x,o.y-6,Math.max(2,k*.9),o.tier==='u'?'#a7f070':'#ffcd75');}
+  for(const o of OTH.values())if(!o.pend)dot(o.x,o.y-4,Math.max(2.5,k*.9),'#f4f4f4','#1a1c2c');
+  const pu=.6+.4*Math.sin(time*5);dot(P.x,P.y-4,Math.max(5,k*2.4)*(1+.25*pu),'rgba(255,205,117,.35)');dot(P.x,P.y-4,Math.max(3.5,k*1.4),'#ffcd75','#1a1c2c');
+  {const [X,Y]=P2(P.x,P.y-4);x.font=`700 ${Math.max(12,Math.round(k*3.4))}px system-ui,sans-serif`;x.textAlign='center';x.lineWidth=3;x.strokeStyle='#1a1c2c';x.strokeText('You',X,Y-Math.max(8,k*3));x.fillStyle='#ffcd75';x.fillText('You',X,Y-Math.max(8,k*3));}
+  $('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inWest()?'You are in Hollowmere':'You are in the Hold';
+  $('wmL').innerHTML=dl?'<span><i style="background:#ffcd75"></i>You</span><span><i style="background:#fff"></i>Stairs down</span><span><i style="background:#ffcd75"></i>Chest</span><span><i style="background:#a7f070"></i>Uncommon chest</span>'
+    :'<span><i style="background:#ffcd75;box-shadow:0 0 0 2px #1a1c2c"></i>You</span><span><i style="background:#f4f4f4"></i>Other players</span><span><i style="background:#c79bf2"></i>Raid gate</span>';}
+$('mapB').addEventListener('click',()=>{if(started)toggleMap();});$('wmX').addEventListener('click',e=>{e.stopPropagation();toggleMap(false);});$('wmap').addEventListener('click',()=>toggleMap(false));
+addEventListener('keydown',e=>{if(!started||e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;if(e.code==='KeyG'&&!e.repeat)toggleMap();else if(e.code==='Escape'&&wmOpen)toggleMap(false);});
+// ---------- the spellbook: pick the spell your attack casts ----------
+function openSpells(){const ml=lvlOf('magic'),cur=curSpell();
+  openSheet(`<h2>Spellbook</h2>${skillLine('magic')}<p class="lead small">With a staff in hand, your attack casts this spell. Combat spells need no runes: your staff powers them. Better staffs and robes hit harder.</p>
+   <div class="list">${Object.entries(SPELLS).map(([k,sp])=>{const lock=ml<sp.lvl;return `<button class="item spell${k===cur?' on':''}" data-sp="${k}" ${lock?'disabled':''} aria-pressed="${k===cur}"><i class="ic spic" style="--sc:${sp.col}">✦</i><span><b>${sp.n}${k===cur?' · selected':''}</b><small>${lock?'<span class="lockt">Needs Magic '+sp.lvl+'</span> · ':''}Hits up to ${spellMax(k)}${sp.aoe?' · hits everything close by':''}${sp.slow?' · slows':''}${sp.chain?' · chains':''}${sp.pierce?' · pierces '+sp.pierce:''}</small><small>${sp.d}</small></span></button>`;}).join('')}</div>
+   <div class="row"><button class="btn alt" id="back">Back</button></div>`);
+  $('back').onclick=()=>openHero();$('sheet').querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{S.spell=b.dataset.sp;save();sfx('cast');toast(SPELLS[S.spell].n+' ready','good');openSpells();});}
+// ---------- Enchanting (Magic): runes from the rune bag + a worn ring or amulet ----------
+const enchStat=en=>Object.entries(en.a).map(([a,v])=>ATTR_TXT[a](Math.round(v*100)/100)).join(' · ');
+function rollEnchant(sp){const E=ENCHANTS[sp],pool=E.pool.slice(),out={};
+  for(let i=0;i<E.k&&pool.length;i++){const k=pool.splice(ri(0,pool.length-1),1)[0],[lo,hi]=ENCH_ATTR[k],v=(lo+(hi-lo)*Math.pow(rand(),1.4))*E.tier;out[k]=v<1&&k!=='regen'?Math.max(1,Math.round(v)):k==='regen'?Math.round(v*100)/100:Math.round(v);}return out;}
+function openEnchant(slot){const k=S.gear[slot];if(!k)return openHero();const ml=lvlOf('magic'),en=S.ench[slot]&&S.ench[slot].id===k?S.ench[slot]:null;
+  const need=E=>Object.entries(E.runes).map(([r,n])=>`<span class="${runeN(r)>=n?'ok':'no'}">${iconImg(r+'_rune')}${runeN(r)}/${n}</span>`).join('');
+  openSheet(`<h2>Enchant your ${slot}</h2>${skillLine('magic')}
+   <div class="gear">${iconImg(k)}<span><small>${slot==='ring'?'Ring':'Amulet'}</small><b>${ITEMS[k].n}</b><small>${jewelStat(k)}</small>${en?`<small style="color:#c79bf2">Enchanted: ${enchStat(en)}</small>`:'<small>Not enchanted yet</small>'}</span></div>
+   <p class="lead small">Each spell rolls its own kind of bonus. Casting again rerolls it (the old roll is replaced). The enchantment stays on this ${slot} while you wear it, and fades if you take it off or swap it. Bonuses work everywhere except Wilderness fights.</p>
+   ${en?(()=>{const top=Object.keys(en.a).every(k=>en.a[k]>=enchTop(en.s,k)),prev=Object.keys(en.a).map(k=>ATTR_TXT[k](enchTop(en.s,k))).join(' · ');
+     return `<div class="recipe crown"><div class="rh">${iconImg(RELIC_CROWN)}<span><b>${top?'Crowned':'Crown this enchantment'}</b><small>${top?'Every bonus is at the most '+ENCHANTS[en.s].n+' can roll.':'Spend a Hollow Crown and every bonus rises to the most '+ENCHANTS[en.s].n+' can roll: '+prev+'. Casting a new enchantment replaces it.'}</small></span>${top?'':`<span class="mk"><button class="btn sm" id="crownB" ${has(RELIC_CROWN)?'':'disabled'}>Crown</button></span>`}</div>${top?'':`<div class="need"><span class="${has(RELIC_CROWN)?'ok':'no'}">${iconImg(RELIC_CROWN)}${avail(RELIC_CROWN)}/1</span></div>`}</div>`;})():''}
+   <div class="list">${Object.entries(ENCHANTS).map(([sp,E])=>{const lock=ml<E.lvl,can=!lock&&Object.entries(E.runes).every(([r,n])=>runeN(r)>=n);
+     return `<div class="recipe${lock?' locked':''}"><div class="rh"><i class="ic spic" style="--sc:#c79bf2">✧</i><span><b>${E.n}</b><small>${lock?'<span class="lockt">Needs Magic '+E.lvl+'</span> · ':''}${E.k} bonus${E.k>1?'es':''} from: ${E.pool.map(a=>({hp:'health',def:'defense',dmg:'damage',mag:'spell damage',luck:'loot luck',oil:'oil',light:'light',spd:'speed',regen:'regeneration',fishXp:'Fishing XP',chopXp:'Woodcutting XP'})[a]).join(', ')} · ${E.xp} xp</small></span><span class="mk"><button class="btn sm" data-en="${sp}" ${can?'':'disabled'}>Cast</button></span></div><div class="need">${need(E)}</div></div>`;}).join('')}</div>
+   <p class="lead small">Runes drop from monsters and chests (Soul and Star Runes only that way). Tallow sells Gale, Stone, Tide and Ember Runes.</p>
+   <div class="row"><button class="btn alt" id="back">Back</button></div>`);
+  $('back').onclick=()=>openHero();
+  if($('crownB'))$('crownB').onclick=()=>{const e=S.ench[slot];if(!e||e.id!==S.gear[slot]||!has(RELIC_CROWN))return;take(RELIC_CROWN,1);for(const a of Object.keys(e.a))e.a[a]=enchTop(e.s,a);bump('crowned');P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([40,30,40,30,90]);puff(P.x,P.y-12,'#ffcd75',26);SPFX.push({k:'cataclysm',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#ffcd75',c2:'#c79bf2'});toast('Crowned: '+enchStat(e),'rare r-legendary');save(true);openEnchant(slot);};
+  $('sheet').querySelectorAll('[data-en]').forEach(b=>b.onclick=()=>{const sp=b.dataset.en,E=ENCHANTS[sp];if(lvlOf('magic')<E.lvl||!Object.entries(E.runes).every(([r,n])=>runeN(r)>=n))return;
+    for(const [r,n] of Object.entries(E.runes)){S.runes[r+'_rune']-=n;if(S.runes[r+'_rune']<=0)delete S.runes[r+'_rune'];}
+    S.ench[slot]={id:k,s:sp,a:rollEnchant(sp)};skillXp('magic',E.xp);bump('enchants');S.flags.enchanted=true;P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([30,40,30]);puff(P.x,P.y-12,'#c79bf2',22);SPFX.push({k:'starfall',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#c79bf2',c2:'#f1e4ff'});save();toast(E.n+': '+enchStat(S.ench[slot]),'rare r-xrare');openEnchant(slot);});}
+function openRuneInfo(id){const k=ITEMS[id].rune,n=S.runes[id]||0,uses=Object.values(ENCHANTS).filter(E=>E.runes[k]).map(E=>E.n);
+  openSheet(`<div class="itemhd"><img class="big" alt="" src="${iconOf(id).toDataURL()}"><span><b>${ITEMS[id].n}</b><small>${fmt(n)} in your rune bag</small></span></div>
+   <ul class="info"><li>Used by: ${uses.join(', ')||'nothing yet'}</li><li>${k==='soul'||k==='star'?'Found only on monsters and in chests, more often deep down.':'Dropped by monsters, found in chests, sold by Tallow.'}</li><li>Runes live in your rune bag: they never take bank space and are never lost when you fall.</li></ul>
+   <div class="row"><button class="btn alt" id="back">Back to items</button></div>`);$('back').onclick=()=>openBag();}
+// ---------- the Abyssal Maw (the raid dungeon) and the Hollowmere sign ----------
+function openRaid(){bump('maw');sfx('boss');
+  openSheet(`<div class="rhead"><img alt="" src="${ART.maw[0].toDataURL()}"></div><h2>The Abyssal Maw</h2><p class="lead">The jaw of the great skull burns with violet fire. Something vast is breathing on the other side, and the stone hums under your feet.</p>
+   <div class="soon fnd"><b>Raids are coming in Season 1</b><p>The first raid of Lanternhold waits beyond the Maw: a dungeon for a full party, with its own bosses and its own treasure. Gather your party and get your gear ready.</p></div>
+   <p class="lead small">The plaza around the Maw is safe: no monster dens nearby. The Bank Chest beside it works just like the Bank.</p><div class="row"><button class="btn" id="sx">Step back</button></div>`);$('sx').onclick=closeSheet;}
+function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A moor at dusk around the Moonmere, the great lake. Lamp posts mark the roads.</p>
+   <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Meadows by the Hold: levels 3–6. The marsh (south-west): 9–14. The deepwood (south-east): 15–20.</li>
+   <li>Falling here costs nothing: you wake up at the Hold.</li><li>Fish for Moonfin off the dock in the middle of the Moonmere (Fishing 30).</li>
+   <li>In the far north-west stands the Abyssal Maw, the raid dungeon (Season 1), with a Bank Chest beside it.</li></ul><div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
 function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
   const list=GOALS.filter(g=>g.cat===goalTab).map(g=>{const ok=!!S.goals[g.id],hid=g.secret&&!ok,pr=!ok&&g.prog?g.prog():null;
     return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
@@ -2467,12 +3213,14 @@ function update(dt){
     if(P.swing<=0)P.dir=Math.abs(mx)>Math.abs(my)?(mx>0?'right':'left'):(my>0?'down':'up');}
   if(P.inv>0)P.inv-=dt;if(P.swingCD>0)P.swingCD-=dt;
   if(P.swing>0){P.swing-=dt;if(!P.hitDone&&P.swing<.14){P.hitDone=true;resolveSwing();}}
+  if(P.cast>0)P.cast-=dt;if(P.castLaunch>0){P.castLaunch-=dt;if(P.castLaunch<=0){const t=P.castTgt&&!P.castTgt.dead?P.castTgt:null,tip=staffTip(P.x,P.y,P.dir);launchBolt(P.castSp,tip,t?Math.atan2((t.y-(t.d.big?12:6))-tip.y,t.x-tip.x):P.castA,t,true);}}
+  updateBolts(dt);updateSpellFx(dt);
   // context
   const ctx=nearestAct();setActLabel(ctx);
-  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();else if(inWild())pvpSwing();}
+  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve'||inWest())swing();else if(inWild())pvpSwing();}
   if(inWild()){if(retHeld&&P.hp>0){if(wildLvl(P.y)>RETURN_MAX){P.chan=0;if(time-whyT>2){whyT=time;toast('Too deep for the Return Flame. Head south of Wilderness level '+RETURN_MAX+'.','bad');}}else{P.chan+=dt;if(P.chan>=2){retHeld=false;P.chan=0;wildReturn();}}}else P.chan=0;}
   else if(scene==='hold')P.chan=0;
-  if(scene==='hold'){wildStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
+  if(scene==='hold'){wildStep(dt);westStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -2484,6 +3232,7 @@ function update(dt){
     // return flame
     if(retHeld&&P.hp>0){P.chan+=dt;if(P.chan>=2){retHeld=false;returnHome();return;}}else P.chan=0;
     updateEnemies(dt);
+    if(!MP.client())oreTick();
     updateDrops(dt);
   }
   for(const f of fx){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=90*dt;}fx=fx.filter(f=>f.t<f.life);
@@ -2492,6 +3241,7 @@ function update(dt){
   for(const k of slashes)k.t+=dt;if(slashes.length)slashes=slashes.filter(k=>k.t<.16);
   if(P.swing>0&&(S.gear.blade==='ember'||S.gear.blade==='cinder')&&!reduceMotion&&rand()<.7){const t=easeOut(1-P.swing/.2),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir]||0,a=base-1.2+t*2.4;
     fx.push({x:P.x+Math.cos(a)*14,y:P.y-6+Math.sin(a)*14,vx:(rand()-.5)*20,vy:-20-rand()*25,t:0,life:.3+rand()*.2,col:rand()<.5?'#ff9f3d':'#ffcd75'});}
+  if(wmOpen){wmT-=dt;if(wmT<=0){wmT=.25;drawMap();}}
   updateHud();
 }
 // a boss slam or starburst lands: everyone inside the ring is hit (through the normal contact damage, for 0.22 s)
@@ -2502,9 +3252,11 @@ function updateEnemies(dt){
   if(MP.client())return followEnemies(dt);
   for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;
     e.kb.x*=.82;e.kb.y*=.82;moveBody(e,e.kb.x*dt,e.kb.y*dt,e.r>6?8:4);
-    const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd;let vx=0,vy=0;
+    const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd*(e.slowT>0?.5:1);let vx=0,vy=0;if(e.slowT>0)e.slowT-=dt;
+    if(e.d.proj){projStep(e,dt);continue;}
+    if(e.west&&westIdle(e,d,dt))continue;
     e.losT=(e.losT||0)-dt;if(e.losT<=0){e.losT=.25;e.los=d<(e.d.boss?400:130)&&lineOfSight(e.x,e.y-6,TG.x,TG.y-6);if(e.los)e.mem=3;}
-    e.mem=(e.mem||0)-dt;const sees=e.d.ai==='flutter'?d<130:(e.los||e.mem>0);
+    e.mem=(e.mem||0)-dt;const sees=e.west?true:e.d.ai==='flutter'?d<130:(e.los||e.mem>0);
     switch(e.d.ai){
       case 'hop':e.cd-=dt;if(e.st==='hop'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=.6+rand()*.5;}}else if(e.cd<=0&&sees){e.st='hop';e.cd=.35;e.vx=ux*sp*2.4;e.vy=uy*sp*2.4;}break;
       case 'flutter':if(sees){vx=ux*sp+Math.cos(e.t*6)*uy*30;vy=uy*sp-Math.cos(e.t*6)*ux*30;}else{vx=Math.cos(e.t)*15;vy=Math.sin(e.t*1.3)*15;}break;
@@ -2538,19 +3290,71 @@ function updateEnemies(dt){
         else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.6;}}
         else{vx=ux*sp;vy=uy*sp+Math.sin(e.t*2)*10;if(e.bl<=0&&d<200){e.st='blinkw';e.cd=.45;e.flash=.45;e.bl=fast?3.4:5.2;}}
         if(e.sm<=0){e.sm=fast?8:11;if(ents.filter(o=>o.type==='wraith'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('wraith',e.x+(i?22:-22),e.y,e.dmgSc));puff(e.x,e.y-12,'#73eff7',12);}break;}
+      // The Drowned Archmage: keeps its distance, throws fans of tide bolts at you, blinks away when you close in and
+      // freezes the floor around it (a ring of frost shows the reach). Calls grimoires. Below half health: wider fans, faster.
+      case 'archmage':{const fast=e.hp<e.max/2;e.cd-=dt;e.vo=(e.vo??2)-dt;e.nv=(e.nv??6)-dt;e.sm=(e.sm??8)-dt;e.bl=(e.bl??5)-dt;
+        if(e.st==='novaw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,50,'#73eff7');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.6;}}
+        else if(e.st==='volw'){if(e.cd<=0){const n=fast?5:3,a0=Math.atan2(dy,dx);for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.32;ents.push(projOf('orb',e.x+Math.cos(a)*10,e.y-8+Math.sin(a)*8,a,e.dmgSc));}sfx('cast');e.st='idle';e.cd=.4;}}
+        else{const want=d<70?-1:d>130?1:0;vx=ux*sp*want+(-uy)*sp*.6*Math.sin(e.t*.8);vy=uy*sp*want+ux*sp*.6*Math.sin(e.t*.8);
+          if(d<46&&e.bl<=0){const a=Math.atan2(e.y-TG.y,e.x-TG.x)+(rand()-.5),nx=TG.x+Math.cos(a)*110,ny=TG.y+Math.sin(a)*110;puff(e.x,e.y-12,'#73eff7',14);if(!blocked(nx,ny,8)){e.x=nx;e.y=ny;}puff(e.x,e.y-12,'#b8f7ff',14);sfx('stairs',.6);e.bl=fast?3:4.5;}
+          else if(e.nv<=0&&d<70){e.st='novaw';e.wind=e.cd=fast?.7:.9;e.tg=1;e.tgR=50;e.tgK=0;e.nv=fast?5:7;}
+          else if(e.vo<=0&&d<220){e.st='volw';e.cd=.35;e.flash=.35;e.vo=fast?1.6:2.4;}}
+        if(e.sm<=0){e.sm=fast?9:12;if(ents.filter(o=>o.type==='tome'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('tome',e.x+(i?22:-22),e.y,e.dmgSc));puff(e.x,e.y-12,'#73eff7',12);}break;}
+      // The Hollow King: walks you down, slams the floor (a violet ring), charges, and tears rifts open under your feet.
+      // Below half health it also throws rings of void bolts, and calls husks.
+      case 'hollowking':{const fast=e.hp<e.max/2;e.cd-=dt;e.sl=(e.sl??4)-dt;e.rf=(e.rf??3)-dt;e.rg=(e.rg??6)-dt;e.sm=(e.sm??9)-dt;
+        if(e.st==='slamw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,52,'#c79bf2');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.8;}}
+        else if(e.st==='wind'){if(e.cd<=0){e.st='charge';e.cd=.55;e.vx=ux*sp*4.4;e.vy=uy*sp*4.4;}}
+        else if(e.st==='charge'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=fast?1.4:2.2;}}
+        else{vx=ux*sp;vy=uy*sp;if(e.sl<=0&&d<100){e.st='slamw';e.wind=e.cd=fast?.7:.95;e.tg=1;e.tgR=52;e.tgK=0;e.sl=fast?3.4:4.8;}else if(e.cd<=0&&d<170&&d>60){e.st='wind';e.cd=.55;e.flash=.55;}}
+        if(e.rf<=0){e.rf=fast?2.2:3.2;const n=fast?3:2;for(let i=0;i<n;i++){const a=rand()*Math.PI*2,r=i?14+rand()*26:0;ents.push(projOf('rift',TG.x+Math.cos(a)*r,TG.y+Math.sin(a)*r,0,e.dmgSc));}}
+        if(fast&&e.rg<=0){e.rg=5;for(let i=0;i<10;i++){const a=i/10*Math.PI*2;ents.push(projOf('vorb',e.x+Math.cos(a)*12,e.y-10+Math.sin(a)*8,a,e.dmgSc));}sfx('boss');}
+        if(e.sm<=0){e.sm=fast?8:11;if(ents.filter(o=>o.type==='husk'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('husk',e.x+(i?22:-22),e.y+6,e.dmgSc));puff(e.x,e.y-12,'#c79bf2',12);}break;}
     }
     if(e.side>0){e.side-=dt;const px=-vy,py=vx;vx=vx*.3+px*e.sd;vy=vy*.3+py*e.sd;}
     const ox=e.x,oy=e.y;moveBody(e,vx*dt,vy*dt,e.r>6?8:4);
     if((vx||vy)&&Math.hypot(e.x-ox,e.y-oy)<Math.hypot(vx,vy)*dt*.2&&!(e.side>0)){e.side=.5;e.sd=rand()<.5?1:-1;}
     // contact
-    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;if(e.aoeR)dmg*=1.5;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<(e.aoeR||e.r)+6)hurtPlayer(dmg,e);if(OTH.size)MP.contact(e,dmg);
+    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;if(e.aoeR)dmg*=1.5;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<(e.aoeR||e.r)+6)hurtPlayer(dmg,e);if(OTH.size&&scene==='delve')MP.contact(e,dmg);
   }
   ents=ents.filter(e=>!e.dead);
 }
 
+// boss attacks that fly or open on the floor: they hurt whoever they touch and can't be hit back
+function projOf(type,x,y,a,sc){const e=makeEnemy(type,x,y,sc);e.a=a;e.life=type==='rift'?1.25:2.6;e.r=4;if(type==='rift'){e.tg=1;e.tgR=16;e.tgK=0;e.st='open';}return e;}
+function projStep(e,dt){e.t+=dt;e.life-=dt;
+  if(e.type==='rift'){if(e.st==='open'){e.tgK=Math.min(1,1-(e.life-.25)/1);if(e.life<=.25){e.st='burst';e.tg=2;e.aoeR=16;blastFx(e,16,'#c79bf2');}}
+    else if(e.life<=0)e.dead=true;if(e.st==='burst'&&Math.hypot(P.x-e.x,(P.y-4)-e.y)<20)hurtPlayer(e.d.dmg*(1+.08*(e.dmgSc-1)/.12),e);if(e.st==='burst'&&OTH.size&&scene==='delve')MP.contact(e,e.d.dmg*(1+.08*(e.dmgSc-1)/.12));return;}
+  const sp=e.d.spd;const nx=e.x+Math.cos(e.a)*sp*dt,ny=e.y+Math.sin(e.a)*sp*dt;if(solidAt(map,Math.floor(nx/T),Math.floor(ny/T))||e.life<=0){e.dead=true;puff(e.x,e.y-6,e.type==='vorb'?'#c79bf2':'#73eff7',5);return;}e.x=nx;e.y=ny;
+  if(Math.hypot(P.x-e.x,(P.y-6)-(e.y-4))<9){hurtPlayer(e.d.dmg*(1+.08*(e.dmgSc-1)/.12),e);e.dead=true;puff(e.x,e.y-6,'#ffffff',6);}else if(OTH.size&&scene==='delve')MP.contact(e,e.d.dmg*(1+.08*(e.dmgSc-1)/.12));}
+// ---------- Hollowmere: dens, aggro, respawns ----------
+const WEST_NAMES={wolf:'Moor Wolf',boar:'Bristleboar',bogling:'Bogling',mirewisp:'Mirewisp',treant:'Deepwood Treant'};
+let wasWest=false;
+function westStep(dt){const now=Date.now(),w=inWest();
+  if(w!==wasWest){wasWest=w;P.hp=Math.min(P.hp,hpMax());if(w){bump('hmvisit');if(!S.flags.hmseen){S.flags.hmseen=true;setTimeout(()=>toast('Hollowmere. Monsters here attack if you get close. The road and the Maw are safe.','good'),400);}}else for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}}
+  if(P.x>WEST_X+260&&!ents.length)return;
+  for(const d of HOLD.dens){if(d.e&&!d.e.dead)continue;if(d.e){d.e=null;d.next=now+(18+d.lvl*1.2)*1000;}
+    if(now>=(d.next||0)&&Math.hypot(d.x-P.x,d.y-P.y)>120){const sc=1+.1*(d.lvl-3),e=makeEnemy(d.type,d.x,d.y,sc);Object.assign(e,{west:true,den:d,home:{x:d.x,y:d.y},lvl:d.lvl,wt:rand()*2});ents.push(e);d.e=e;}}
+  if(inWest()&&P.hp>0&&time-(P.hitT??-99)>6&&P.hp<hpMax())P.hp=Math.min(hpMax(),P.hp+3*dt);
+  updateEnemies(dt);}
+// out of a fight a Hollowmere monster wanders near its den; get too close (or hit it) and it comes for you
+// the plaza of the Abyssal Maw is safe ground: monsters won't follow you onto it
+const mawSafe=()=>{const o=HOLD.maw||(HOLD.maw=HOLD.objs.find(q=>q.type==='maw'));return !!o&&Math.abs(P.x-o.x)<7*T&&P.y>o.y-6*T&&P.y<o.y+5*T;};
+function westIdle(e,d,dt){const fh=Math.hypot(e.x-e.home.x,e.y-e.home.y),sp=e.d.spd,safe=mawSafe();
+  if(e.aggro&&(fh>170||P.hp<=0||!inWest()||safe)){e.aggro=false;e.ret=true;}
+  if(!e.aggro&&!e.ret&&inWest()&&!safe&&P.hp>0&&d<44+e.lvl*1.4&&lineOfSight(e.x,e.y-6,P.x,P.y-6)){e.aggro=true;e.flash=.15;}
+  if(e.aggro)return false;
+  let vx=0,vy=0;if(e.ret){const a=Math.atan2(e.home.y-e.y,e.home.x-e.x);vx=Math.cos(a)*sp*.9;vy=Math.sin(a)*sp*.9;if(fh<8){e.ret=false;e.hp=e.max;e.st='idle';e.tg=0;}}
+  else{e.wt-=dt;if(e.wt<=0){e.wt=1.5+rand()*3;e.wa=rand()<.45?null:fh>40?Math.atan2(e.home.y-e.y,e.home.x-e.x):rand()*Math.PI*2;}if(e.wa!=null){vx=Math.cos(e.wa)*sp*.3;vy=Math.sin(e.wa)*sp*.3;}}
+  moveBody(e,vx*dt,vy*dt,4);return true;}
+function westDie(){setTimeout(()=>save(true),50);sfx('die');buzz(200);S.deaths++;bump('hmdeaths');FISHING=null;CHOP=null;BOLTS=[];
+  for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}respawnHold();P.inv=2;save();
+  openSheet(`<h2>Knocked out in Hollowmere</h2><p class="lead">You woke up back at the Hold. Nothing was lost: out in Hollowmere a fall only costs you the walk back.</p><p class="lead small">The monsters there are levels 3 to 20. The meadows by the Hold are the gentlest; the marsh and the deepwood are not.</p><div class="row"><button class="btn" id="sx">Back on my feet</button></div>`);$('sx').onclick=closeSheet;}
 // ---------- HUD ----------
 let lastAct=null;
-function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
+function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWest()?(staffOn()?'Cast':'Attack'):inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
 const PT=['hpTxt','oilTxt','packN'];
 let quickKey='';
 function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S.bank[id]||0:'').join(',')+'|'+scene+'|'+(force?Math.random():'');if(key===quickKey)return;quickKey=key;
@@ -2564,7 +3368,7 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=hpMax();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
-  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):inWest()?'Hollowmere':'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!(dv||inWild());$('retRing').style.setProperty('--p',Math.min(1,P.chan/2));$('feed').hidden=dv;updateQuick(force);
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -2597,27 +3401,30 @@ function render(){TAGS.length=0;
   camX=cx;camY=cy;g.save();g.translate(-cx,-cy);
   g.drawImage(map.ground,0,0);
   const x0=Math.floor(cx/T),y0=Math.floor(cy/T),x1=Math.ceil((cx+VW)/T),y1=Math.ceil((cy+VH)/T),wf=Math.floor(time*2)%2;
-  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
-      if(tt===DOCK)g.drawImage(tAt(map,x,y+1)===WATER&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
+  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===MOON||tt===DOCK&&x<WEST_COLS){g.drawImage(ART.moonw[(wf+x+y)%2],x*T,y*T);if(tt===MOON){g.fillStyle='#b8a7ff';if(!isWater(tAt(map,x,y-1))&&tAt(map,x,y-1)!==DOCK)g.fillRect(x*T,y*T,T,1);g.fillStyle='#10223f';if(!isWater(tAt(map,x,y+1))&&tAt(map,x,y+1)!==DOCK)g.fillRect(x*T,y*T+T-2,T,2);}}else if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
+      if(tt===DOCK)g.drawImage(isWater(tAt(map,x,y+1))&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
     for(const [lx,ly,lf] of map.lilies||[])g.drawImage(ART.lily[lf],lx*T+4+Math.round(Math.sin(time*.8+lx)*.6),ly*T+5);
     {const open=plotsOpen();for(const p of map.plots)if(p.i>=open&&!S.plots[p.i])g.drawImage(ART.soilLocked,p.tx*T,p.ty*T);}
     for(const p of map.plots){const st=S.plots[p.i];if(!st)continue;const gr=growth(st),stg=gr>=1?2:gr>=.5?1:0;spr(ART.crop[st.crop][stg],p.cx-8,p.cy-10);
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}
   const vis=o=>o.x>cx-60&&o.x<cx+VW+60&&o.y>cy-20&&o.y<cy+VH+70;
-  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);}
+  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);else if(o.type==='reeds')spr(ART.reeds[o.v],o.x-8+(reduceMotion?0:Math.round(Math.sin(time*1.3+o.x*.1)*.6)),o.y-15);else if(o.type==='mushring')spr(ART.mushring,o.x-8,o.y-15);}
   if(scene==='hold'&&cy<WILD_Y)wildShade(cx,cy);
   for(const o of map.objs){if(!o.onWall||o.gone||!vis(o))continue;const [tx,ty]=o.tile;
-    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else if(o.kind==='starshard'){spr(ART.starOre[Math.floor(time*2+tx)%2],tx*T,ty*T);const ph=(time*.9+tx*.31)%1;g.globalAlpha=1-ph;g.fillStyle=ph<.5?'#fff3c4':'#73eff7';g.fillRect(Math.round(tx*T+8+Math.sin(time*2+tx)*4),Math.round(ty*T+5-ph*8),1,1);g.globalAlpha=1;}else spr(ART.ore[o.kind]||ART.ore.copper,tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
+    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else if(o.kind==='starshard'){spr(ART.starOre[Math.floor(time*2+tx)%2],tx*T,ty*T);const ph=(time*.9+tx*.31)%1;g.globalAlpha=1-ph;g.fillStyle=ph<.5?'#fff3c4':'#73eff7';g.fillRect(Math.round(tx*T+8+Math.sin(time*2+tx)*4),Math.round(ty*T+5-ph*8),1,1);g.globalAlpha=1;}else{const SH=ORE_SHINE[o.kind];if(SH&&!reduceMotion){const pu=.5+.5*Math.sin(time*2.2+tx*1.3),X=tx*T+8,Y=ty*T+8,R=11+pu*3,gr=g.createRadialGradient(X,Y,0,X,Y,R);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,`rgba(${SH},${.22+.18*pu})`);gr.addColorStop(1,`rgba(${SH},0)`);g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.restore();}
+      spr(ART.ore[o.kind]||ART.ore.copper,tx*T,ty*T);const ph=(time*.8+tx*.37+ty*.21)%1.6;if(ph<.25){const k=1-Math.abs(ph-.125)/.125,gx=tx*T+5+((tx*7)%6),gy=ty*T+5+((ty*5)%5);g.globalAlpha=k;g.fillStyle='#ffffff';g.fillRect(gx,gy,1,1);g.fillRect(gx-1,gy,3,1);g.fillRect(gx,gy-1,1,3);g.globalAlpha=1;}}}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
   // y-sorted
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&o.y<WILD_Y,sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&(o.y<WILD_Y||inHollowmere(o.x,o.y)),sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish&&!(o.castT>0),ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.castT>0)drawCastPose(ox,oy,o.dir,o.castT,o.castSp,bl);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
+  if(scene==='hold'&&cx<WEST_X)drawHollowmere(cx,cy,x0,y0,x1,y1);
+  drawBolts();
   if(scene==='hold'&&cy<WILD_Y&&!reduceMotion)wildAsh(cx,cy);
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
   if(slashes.length)drawSlashes();
@@ -2641,6 +3448,27 @@ function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
   for(const o of map.objs){if(o.type!=='torch'||Math.abs(o.x-P.x)>VW*.7||Math.abs(o.y-P.y)>VH*.7)continue;const [tx,ty]=o.tile;
     for(let k=0;k<3;k++){const ph=(t*.9+k/3+tx*.31)%1,x=tx*T+8+Math.sin(ph*9+k*2+tx)*2,y=ty*T+4-ph*14;g.globalAlpha=(1-ph)*.9;g.fillStyle=ph<.4?'#ffcd75':'#ff9f3d';g.fillRect(Math.round(x),Math.round(y),1,1);}}
   g.globalAlpha=1;g.restore();}
+// ---- Hollowmere at dusk: a cool twilight over the moor, fireflies, moonlight on the lake, the Maw breathing violet fire ----
+function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WEST_X),top=Math.max(cy,WILD_Y);if(right<=cx)return;
+  g.save();const gr=g.createLinearGradient(WEST_X-120,0,WEST_X,0);g.fillStyle='rgba(18,26,58,.22)';if(WEST_X-120>cx)g.fillRect(cx,top,Math.min(right,WEST_X-120)-cx,cy+VH-top);
+  gr.addColorStop(0,'rgba(18,26,58,.22)');gr.addColorStop(1,'rgba(18,26,58,0)');g.fillStyle=gr;const a0=Math.max(cx,WEST_X-120);if(right>a0)g.fillRect(a0,top,right-a0,cy+VH-top);
+  g.globalCompositeOperation='lighter';
+  const pool=(X,Y,R,c,a)=>{const q=g.createRadialGradient(X,Y,0,X,Y,R);q.addColorStop(0,`rgba(${c},${a})`);q.addColorStop(1,`rgba(${c},0)`);g.fillStyle=q;g.fillRect(X-R,Y-R,R*2,R*2);};
+  for(const o of map.objs){if(o.x>right+80||o.x<cx-80||o.y<cy-40||o.y>cy+VH+120)continue;
+    if(o.type==='maw'){const f=.85+.15*Math.sin(t*3);pool(o.x,o.y-26,52*f,'199,155,242',.34);pool(o.x-63,o.y-108,16*f,'199,155,242',.5);pool(o.x+63,o.y-108,16*f,'199,155,242',.5);pool(o.x-18,o.y-75,9,'255,77,109',.6*f);pool(o.x+18,o.y-75,9,'255,77,109',.6*f);
+      // embers and runes rising out of the portal, and a slow swirl in it
+      for(let k=0;k<14;k++){const ph=(t*.35+k/14)%1,x=o.x+Math.sin(ph*7+k*1.9)*16*(1-ph*.4),y=o.y-20-ph*70;g.globalAlpha=(1-ph)*.9;g.fillStyle=k%3?'#c79bf2':'#f1e4ff';g.fillRect(Math.round(x),Math.round(y),1,k%4?1:2);}
+      for(let k=0;k<10;k++){const a=t*1.6+k/10*Math.PI*2,r=6+(k%3)*4;g.globalAlpha=.6;g.fillStyle=k%2?'#f1e4ff':'#7a3b8f';g.fillRect(Math.round(o.x+Math.cos(a)*r*1.4),Math.round(o.y-24+Math.sin(a)*r*.7),1,1);}g.globalAlpha=1;}
+    else if(o.type==='campfire'){const f=.8+.2*Math.sin(t*11+Math.sin(t*5));pool(o.x,o.y-6,30*f,'255,150,70',.35);}
+    else if(o.type==='lpost'){const f=.85+.15*Math.sin(t*9+o.x);pool(o.x-1,o.y-24,18*f,'255,190,100',.3);}
+    else if(o.type==='mcrystal')pool(o.x,o.y-10,16+2*Math.sin(t*2+o.x),'184,167,255',.28);
+    else if(o.type==='menhir')pool(o.x,o.y-16,12,o.v?'199,155,242':'115,239,247',.22+.1*Math.sin(t*2+o.x));}
+  // fireflies drifting over the moor
+  for(let i=0;i<26;i++){const bx=(i*173.7)%(WEST_X-60)+30,by=WILD_Y+((i*97.3)%(HM_ROWS*T-60))+30,x=bx+Math.sin(t*.4+i)*22,y=by+Math.cos(t*.53+i*1.7)*14;if(x<cx-4||x>right||y<cy-4||y>cy+VH)continue;
+    const on=.5+.5*Math.sin(t*3+i*2.3);if(on<.25)continue;pool(x,y,4,'200,255,140',.35*on);g.globalAlpha=on;g.fillStyle='#e8ffb0';g.fillRect(Math.round(x),Math.round(y),1,1);g.globalAlpha=1;}
+  // moonlight glinting on the Moonmere
+  const tick=Math.floor(t*2);for(let y=Math.max(y0,HM_Y0);y<=y1;y++)for(let x=x0;x<=Math.min(x1,WEST_COLS);x++)if(tAt(map,x,y)===MOON&&((x*31+y*57+tick*5)%19)===0){g.globalAlpha=.8;g.fillStyle=(x+y)%2?'#f1e4ff':'#b8f7ff';g.fillRect(x*T+((x*5+tick)%12)+2,y*T+((y*3+tick*3)%12)+2,2,1);g.globalAlpha=1;}
+  g.restore();}
 // the Wilderness: the ground darkens past the wall (deeper = darker), and ash drifts down
 function wildShade(cx,cy){const top=Math.max(0,cy),bot=Math.min(WILD_Y,cy+VH);if(bot<=top)return;
   const gr=g.createLinearGradient(0,WILD_Y-14*T,0,WILD_Y);gr.addColorStop(0,'rgba(30,12,36,.2)');gr.addColorStop(1,'rgba(30,12,36,.04)');
@@ -2656,6 +3484,7 @@ function drawObj(o){
   else if(o.type==='forge')spr(ART.forge[Math.floor(time*4)%2],o.x-24,o.y-40);
   else if(o.type==='kitchen')spr(ART.kitchen[Math.floor(time*3)%2],o.x-16,o.y-32);
   else if(o.type==='press')spr(ART.press,o.x-16,o.y-32);
+  else if(o.type==='bench')spr(ART.bench[Math.floor(time*2)%2],o.x-16,o.y-26);
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
   else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
@@ -2677,7 +3506,16 @@ function drawObj(o){
   else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
   else if(o.type==='well')spr(ART.well,o.x-16,o.y-32);
   else if(o.type==='fence')spr(ART.fence,o.x-8,o.y-14);
-  else if(o.type==='chest')spr(ART.chest[o.open?1:0],o.x-8,o.y-14);
+  else if(o.type==='chest'){if(o.tier==='u'){if(!o.open&&!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x),Y=Math.round(o.y-8),R=14+2*Math.sin(time*3),gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,'rgba(167,240,112,.45)');gr.addColorStop(1,'rgba(167,240,112,0)');g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.restore();
+      for(let k=0;k<3;k++){const ph=(time*.6+k/3)%1;g.globalAlpha=1-ph;g.fillStyle=k%2?'#a7f070':'#e8fff8';g.fillRect(Math.round(o.x-5+k*5+Math.sin(ph*6+k)*1.5),Math.round(o.y-12-ph*12),1,1);}g.globalAlpha=1;}spr(ART.uchest[o.open?1:0],o.x-8,o.y-14);}else spr(ART.chest[o.open?1:0],o.x-8,o.y-14);}
+  else if(o.type==='maw'){const fl=Math.floor(time*3)%2;spr(ART.maw[fl],o.x-72,o.y-126);}
+  else if(o.type==='bankchest')spr(ART.bankChest,o.x-12,o.y-18);
+  else if(o.type==='campfire')spr(ART.campfire[Math.floor(time*6)%2],o.x-8,o.y-15);
+  else if(o.type==='menhir'){spr(ART.menhir[o.v],o.x-8,o.y-30);if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.25+.15*Math.sin(time*2+o.x);g.fillStyle=o.v?'#c79bf2':'#73eff7';g.fillRect(Math.round(o.x-2),Math.round(o.y-20),4,9);g.restore();}}
+  else if(o.type==='lpost'){const fl=Math.floor(time*5+o.x)%2;spr(ART.lanternPost[fl],o.x-7,o.y-28);}
+  else if(o.type==='hmsign')spr(ART.hmsign,o.x-9,o.y-22);
+  else if(o.type==='willow'){const sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16,o.y-38);}
+  else if(o.type==='mcrystal'){spr(ART.mcrystal[o.v],o.x-8,o.y-20);if(!reduceMotion){const ph=(time*.5+o.x*.013)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#f1e4ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-16-ph*10),1,1);g.globalAlpha=1;}}
   else if(o.type==='glowcap')spr(ART.glowcap,o.x-8,o.y-15);
 }
 // ---- life at the Hold: chimney smoke, kitchen steam, butterflies over the flowers, falling leaves, glints on the lake ----
@@ -2745,15 +3583,15 @@ function drawPlayer(){
 function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
-  const dun=scene!=='hold',held=(dun||inWild()&&!CHOP&&!FISHING)&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
-  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);
+  const dun=scene!=='hold',casting=P.cast>0&&staffOn(),held=(dun||(inWild()||inWest())&&!CHOP&&!FISHING)&&!(P.swing>0)&&!casting;   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
+  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);if(casting&&d==='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
   if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames||inWild()?5:0)-(inWild()?9:0),say:P.say});
   if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
-  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
+  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);if(casting&&d!=='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
@@ -2762,6 +3600,7 @@ function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
 // Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
 const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
 function drawHeldBlade(x,y,dir,blade,moving,anim){const h=HELD[dir]||HELD.down,sw=ART.sword[blade]||ART.sword.rusty;
+  if(isStaff(blade)&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
   const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
   g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-14);g.restore();}
 function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
@@ -2780,7 +3619,7 @@ function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.
   g.strokeStyle=k.col;g.lineWidth=1;g.beginPath();g.moveTo(cx-dy*L*.5,cy+dx*L*.5);g.lineTo(cx+dy*L*.5,cy-dx*L*.5);g.stroke();
   if(p<.35){g.fillStyle='#ffffff';g.fillRect(cx-1,cy-1,3,3);}g.restore();}}
 function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=e.d.big;
-  if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),warden=e.type==='warden',col=warden?'115,239,247':'255,110,40';g.save();
+  if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),col=e.type==='warden'||e.type==='archmage'?'115,239,247':e.type==='hollowking'||e.type==='rift'?'199,155,242':'255,110,40';g.save();
     if(e.tg===1){const k=Math.min(1,e.tgK||0);g.fillStyle=`rgba(${col},${.08+.1*k})`;g.beginPath();g.ellipse(X,Y,R*k,R*k*.6,0,0,Math.PI*2);g.fill();g.strokeStyle=`rgba(${col},${.5+.4*Math.sin(time*20)})`;g.lineWidth=1;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.stroke();}
     else{g.fillStyle=`rgba(${col},.35)`;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.fill();}g.restore();}
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(e.x-(big?10:4)),Math.round(e.y),big?20:8,1);
@@ -2788,6 +3627,9 @@ function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=
   const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
   if(e.flash>0&&Math.floor(e.flash*30)%2){g.save();g.filter='brightness(3)';spr(img,e.x-ox,e.y-oy);g.restore();}else spr(img,e.x-ox,e.y-oy);
   if(sq)g.restore();
+  if(e.d.proj){if(e.type!=='rift'&&!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(e.x),Y=Math.round(e.y-5),gr=g.createRadialGradient(X,Y,0,X,Y,9);gr.addColorStop(0,e.type==='vorb'?'rgba(199,155,242,.6)':'rgba(115,239,247,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(X-9,Y-9,18,18);g.restore();}return;}
+  if(e.west&&Math.hypot(e.x-P.x,e.y-P.y)<110)TAGS.push({x:e.x,y:e.y-oy-(e.hp<e.max?8:3),name:WEST_NAMES[e.type]||e.type,lv:e.lvl,mob:true});
+  if(e.slowT>0){g.save();g.globalAlpha=.35;g.fillStyle='#73eff7';g.fillRect(Math.round(e.x-5),Math.round(e.y-oy+3),10,10);g.restore();}
   if(!e.d.boss&&e.hp<e.max){const w=Math.max(0,Math.min(12,Math.round(12*e.hp/e.max)));g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);if(w){g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),w,2);}}
 }
 function drawLight(cx,cy){
@@ -2844,22 +3686,34 @@ MP.gateMember=()=>{const p=MP.party,lead=(p.members.find(m=>m.id===p.leader)||{}
   $('sx').onclick=closeSheet;if($('jp'))$('jp').onclick=()=>MP.enterInst(p.inst.room,p.inst.floor,p.inst.seed);$('lv').onclick=()=>{NET.lsend({t:'leave'});closeSheet();setTimeout(openGate,400);};};
 // ---- shared objects (chests, glowcaps, ore): the host decides who gets them ----
 function objTaken(o,by){const mine=by===MP.me();
-  if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');bump('chests');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
+  if(o.type==='chest'){o.open=true;o.act=null;const u=o.tier==='u';if(u)o.light=null;
+    if(mine){sfx('chest');bump('chests');const f=run.floor,runes=(RUNE_DROPS[map.pack.id]||[]).map(([k,c,a,b])=>[k+'_rune',Math.min(1,c*(u?6:3)),a,b+(u?2:0)]);
+      if(u){bump('uchests');sfx('rare');spawnLoot(o.x,o.y-4,[['gold',1,(6+f*3)*2,(14+f*5)*2],[map.pack.ore+'_ore',1,3,6],['lampseed',.6,1,3],['gem',.5,1,2],['oil',.6,1,2],['moonpetal_seed',.3,1,2],['glowcap_spore',.4,1,3],...chestGems(f).map(([k,c,a,b])=>[k,c*2.5,a,b]),...runes,['oil2',.07,1,1]]);dropGear(o.x,o.y-4,'uchest');}
+      else{spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2],...chestGems(f),...runes]);dropGear(o.x,o.y-4,'chest');}}
+    puff(o.x,o.y-6,u?'#a7f070':'#ffcd75',u?18:10);}
   else if(o.type==='glowcap'){o.gone=true;o.light=null;o.act=null;if(mine)spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);}
-  else if(o.type==='ore'){o.gone=true;o.light=null;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');const OR=ORES[o.kind]||ORES.copper;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,o.kind==='starshard'?1:2,o.kind==='starshard'?2:3],['gem',.06,1,1]]);skillXp('mining',OR.xp);floatText(ox+8,oy-6,'+'+OR.xp+' Mining xp','#c9a26b');}puff(ox+8,oy+12,'#ffcd75',10);}}
+  else if(o.type==='ore'){o.gone=true;o.light=null;o.back=Date.now()+(ORES[o.kind]||ORES.copper).respawn*1000;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');const OR=ORES[o.kind]||ORES.copper;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,o.kind==='starshard'?1:2,o.kind==='starshard'?2:3],['gem',.06,1,1]]);skillXp('mining',OR.xp);floatText(ox+8,oy-6,'+'+OR.xp+' Mining xp','#c9a26b');}puff(ox+8,oy+12,'#ffcd75',10);}}
+// special gems in chests, for jewelry: rubies and sapphires anywhere, emeralds from floor 6, diamonds from floor 11
+const chestGems=f=>[['ruby',.07,1,1],['sapphire',.06,1,1]].concat(f>=6?[['emerald',.05,1,1]]:[],f>=11?[['diamond',.03,1,1]]:[]);
 function mineOre(o,i,who){if(o.gone)return;o.hp--;if(o.hp<=0){objTaken(o,who);MP.objOut(i,o,who);}else MP.objOut(i,o,null);}
+// mined-out veins grow back after a while (the harder the ore, the longer); the dungeon leader keeps the clock
+function oreRegrow(i,o){o.gone=false;o.hp=(ORES[o.kind]||ORES.copper).hp;o.light=o.light0||null;o.back=0;const ox=o.tile[0]*T,oy=o.tile[1]*T;puff(ox+8,oy+12,'#c9a26b',8);}
+// ores that would blend into the wall get a soft pulsing shine around them
+const ORE_SHINE={coal:'220,228,255',cobalt:'90,170,255',iron:'230,240,255',copper:'255,170,110'};
+function oreTick(){if(!map||!map.objs)return;const now=Date.now();map.objs.forEach((o,i)=>{if(o.type==='ore'&&o.gone&&o.back&&now>=o.back){oreRegrow(i,o);if(MP.shared())NET.send({t:'obj',o:i,open:0,gone:0,hp:o.hp,rs:1});}});}
 MP.objOut=(i,o,by)=>{if(MP.shared())NET.send({t:'obj',o:i,open:o.open?1:0,gone:o.gone?1:0,hp:o.hp,by});};
-function applyHit(e,d,a,who){e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
-function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
+function applyHit(e,d,a,who){if(e.west){e.aggro=true;e.ret=false;}e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
+function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);if(scene==='hold')return best;/* Hollowmere's monsters are yours alone */for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
 MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OTH.values()){if(Math.hypot(o.x-e.x,(o.y-4)-(e.y-e.r))<(e.aoeR||e.r)+6&&now-(e.hc[o.id]||0)>700){e.hc[o.id]=now;NET.send({t:'hurt',to:o.id,d:Math.round(dmg),x:Math.round(e.x),y:Math.round(e.y)});}}};
 MP.askDown=()=>{const h=OTH.get(MP.host);toast((h?h.name:'Your host')+' leads the way down. Wait at the stairs.');if(!MP.downT||time-MP.downT>4){MP.downT=time;NET.send({t:'down'});}};
-MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
+// the room always learns the floor (solo too): a reconnect asks the room which floor you're on, so it must never be stale
+MP.floorOut=f=>{if(netOn()&&MP.inInst()&&NET.roomOpen())NET.send({t:'floor',f});};
 // followers: monsters come from the host's snapshots and glide to their new spots
 function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
 // ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
 MP.tick=dt=>{
   for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>40||Math.abs(dy)>40){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
-    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;
+    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;if(o.castT>0)o.castT-=dt;
     if(o.hp!=null&&o.max&&o.hp<o.max&&time-(o.lc??-99)>8)o.hp=Math.min(o.max,o.hp+dt);}
   if(!netOn()||!NET.roomOpen()||!MP.room)return;
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
@@ -2906,7 +3760,9 @@ if(window.NET){
     if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
     if(m.room[0]==='d'){
-      if(run&&m.floor&&m.floor!==run.floor)enterFloor(m.floor);
+      // a reconnect: you lead the dungeon, so the room follows you (older rooms could remember an earlier floor);
+      // a party member follows the leader's floor
+      if(run&&m.floor&&m.floor!==run.floor){if(MP.host===MP.id){NET.send({t:'floor',f:run.floor});NET.lsend({t:'where',room:m.room,floor:run.floor});}else enterFloor(m.floor);}
       if(MP.host!==MP.id){ents=[];NET.send({t:'sync'});}
       else MP.nextEid=Math.max(MP.nextEid,...ents.map(e=>e.id+1),1);
     }});
@@ -2966,14 +3822,14 @@ if(window.NET){
     for(const e of ents)if(!seen.has(e.id))e.dead=true;});
   NET.onR('kill',m=>{if(!MP.client()||scene!=='delve')return;let e=ents.find(q=>q.id===m.e);
     if(!e){if(!ENEMIES[m.ty])return;e=makeEnemy(m.ty,m.x,m.y,1);}e.x=m.x;e.y=m.y;e.dead=true;onKilled(e,m.top,m.hit||[],m.xp|0);});
-  NET.onR('obj',m=>{if(scene!=='delve'||!map.objs)return;const o=map.objs[m.o];if(!o)return;if(m.hp!=null)o.hp=m.hp;
+  NET.onR('obj',m=>{if(scene!=='delve'||!map.objs)return;const o=map.objs[m.o];if(!o)return;if(m.rs&&o.type==='ore'){if(o.gone)oreRegrow(m.o,o);return;}if(m.hp!=null)o.hp=m.hp;
     if((m.gone&&!o.gone)||(m.open&&!o.open)){objTaken(o,m.by);const who=m.by&&m.by!==MP.me()&&OTH.get(m.by);if(who&&o.type==='chest'){floatText(o.x,o.y-18,who.name+' opened a chest','#ffcd75');if(Math.hypot(o.x-P.x,o.y-P.y)<200)sfx('chest',.5);}}o.req=0;});
   NET.onR('objs',m=>{if(scene!=='delve'||m.f!==run.floor)return;for(const [i,op,gn,hp] of m.s){const o=map.objs[i];if(!o)continue;if(op){o.open=true;o.act=null;}if(gn){o.gone=true;o.light=null;o.act=null;}if(hp!=null)o.hp=hp;}
     if(m.bd&&map.stairs&&map.stairs.hidden){map.stairs.hidden=false;bakeGround(map);}});
   NET.onR('floor',m=>{if(scene!=='delve'||m.f===run.floor)return;sfx('stairs');enterFloor(m.f);toast('Floor '+m.f+' · '+BIOMES[packOf(m.f).id].name);});
   NET.onR('hurt',m=>{if(scene==='delve')hurtPlayer(m.d,{x:m.x,y:m.y});});
   // player → host
-  NET.onR('hit',m=>{if(MP.client()||scene!=='delve')return;const e=ents.find(q=>q.id===m.e&&!q.dead);if(!e)return;applyHit(e,Math.max(1,Math.min(e.max,m.d|0)),+m.a||0,m.from);});
+  NET.onR('hit',m=>{if(MP.client()||scene!=='delve')return;const e=ents.find(q=>q.id===m.e&&!q.dead);if(!e)return;if(m.s===1)e.slowT=1.8;applyHit(e,Math.max(1,Math.min(e.max,m.d|0)),+m.a||0,m.from);});
   NET.onR('act',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||(o.type!=='chest'&&o.type!=='glowcap')||o.open||o.gone)return;objTaken(o,m.from);MP.objOut(m.o,o,m.from);const who=OTH.get(m.from);if(who&&o.type==='chest'){floatText(o.x,o.y-18,who.name+' opened a chest','#ffcd75');sfx('chest');}});
   NET.onR('mine',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||o.type!=='ore')return;mineOre(o,m.o,m.from);});
   NET.onR('shade',m=>{if(MP.client()||scene!=='delve')return;if(ents.filter(e=>e.type==='shade'&&!e.dead).length>=8)return;if(!blocked(m.x,m.y,4))ents.push(makeEnemy('shade',m.x,m.y,1+.1*run.floor));});
@@ -3236,13 +4092,14 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 let posTick=0;setInterval(()=>{if(started){if(++posTick%3===0)notePos();save();}},10000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started){notePos();save();}});addEventListener('pagehide',()=>{if(started){notePos();save();}});
 // Admin loadout: the best gear equipped, one of every lantern, cape and top-tier piece in the bank, both relics, max bank space.
-function grantKit(){const old=S.gear,eq={blade:'cinder',mail:'steel',lantern:'wisp',cape:'mother',helm:HAT};
-  for(const sl of ['blade','mail','lantern','cape','helm']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
+function grantKit(){const old=S.gear,eq={blade:'cinder',mail:'steel',lantern:'wisp',cape:'mother',helm:HAT,ring:'diamond_ring',amulet:'star_amulet'};
+  for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
   S.gear=Object.assign({},eq);S.bankBuys=BANK_BUYS.length;S.gold+=100000;
   const has=id=>(S.bank[id]||0)+(S.vault[id]||0)>0;
   for(const k of Object.keys(LANTERNS))if(k!=='wisp'&&k!=='basic'&&!has(k+'_lantern'))give(S.vault,k+'_lantern',1);
   for(const k of Object.keys(CAPES))if(k!=='mother'&&!has('cape_'+k))give(S.vault,'cape_'+k,1);
-  for(const id of ['ember_blade','ember_mail','ember_helm','steel_blade','steel_helm','star_helm','relic_crown','relic_sigil','relic_heart','relic_star'])if(!has(id))give(S.vault,id,1);
+  for(const id of ['ember_blade','ember_mail','ember_helm','steel_blade','steel_helm','gloam_blade','gloam_helm','gloam_mail','star_helm','relic_crown','relic_sigil','relic_heart','relic_star','relic_tome','relic_throne',
+    'apprentice_staff','blackwood_staff','ember_staff','gloam_staff','moon_staff','hollow_staff','tide_robe','void_robe',...Object.keys(JEWELS).filter(k=>k!=='diamond_ring'&&k!=='star_amulet')])if(!has(id))give(S.vault,id,1);
   for(const id of ['pondfin','stew','oil'])give(S.bank,id,20);
   S.quick=['stew','pondfin','oil','bread',null];S.flags.kit=true;P.hp=maxHp();save(true);}
 function applyAdmin(on,hat){ADMIN=!!on;HAT=ADMIN_HATS[hat]?hat:'partyhat';
@@ -3298,7 +4155,7 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},updateHud,hurtPlayer,killXp};
 })();
 
 // ===== Lanternhold accounts (Season 0): sign in with a wallet or Google, one hero per account, server-side saves =====
