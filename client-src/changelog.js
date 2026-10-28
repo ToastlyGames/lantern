@@ -4,8 +4,56 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.10.0',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.10.0'};
+const BUILD={version:'0.12.2',season:'Season 0 (Beta)',date:'2026-10-27',minClient:'0.12.0'};
 const CHANGELOG=[
+  {v:'0.12.2',date:'2026-10-27',title:'Relic-forging by item level',notes:[
+    'The gold a relic-forge step costs now depends on the item’s level: the higher the level, the more gold. A Copper Blade costs about 18,000 gold to take all the way to +5, a Steel Blade about 78,000, and the Voidwoven Robe about 139,000.',
+    'An item’s level is what it takes to make it (Smithing for forged gear, Crafting for jewelry and staffs). Boss-only drops are levels 50 to 75. The Relic forge tab shows each piece’s level.']},
+  {v:'0.12.1',date:'2026-10-27',title:'Relic-forging',notes:[
+    'Boss relics are now rare: each boss drops its relic about once in every 25 kills (Loot Luck helps a little). Relics you already have are yours to keep.',
+    'Relics now have a use. At the Forge, the new Relic forge tab spends them to forge power into the gear you wear, up to +5: blades +6% damage per level, staffs +5% spell damage, armor and helmets +1 defense (robes also +3% spell damage), rings and amulets +12% to their bonuses.',
+    'Each step takes the next boss’s relic, plus gold and Smithing: +1 Slime Crown, +2 Knight’s Sigil, +3 Forge Heart, +4 Fallen Star, +5 Drowned Grimoire.',
+    'The Hollow Crown crowns an enchantment instead: spend it on an enchanted ring or amulet and every bonus rises to the most that enchantment can roll.',
+    'A forged piece keeps its power while you own it and counts everywhere except Wilderness fights. Sell, trade or lose every copy and the forging is gone.',
+    'A new goal: relic-forge a piece of gear.',
+    'You can mine ore while holding a staff: face a vein and your staff works as a pick.',
+    'Fixed: beating the Drowned Archmage or the Hollow King with a staff could be undone a moment later. The kill, its XP and its drops now stick.',
+    'Fixed: coming home from floors 21–30 with a big haul could be undone. What you carry now saves as you go.',
+    'Fixed: in a party, boss bolts and rifts hit everyone as hard as they hit the leader, and Frost Shard slows monsters whoever casts it.',
+    'Fixed: an enchantment could come back after its ring or amulet was lost in the Wilderness.',
+    'Other heroes now see a staff swing in the Wilderness.']},
+  {v:'0.12.0',date:'2026-10-27',title:'Magic, Hollowmere and ten more floors',notes:[
+    'A new skill, Magic. Wield a staff and your attack becomes a spell, with your Magic level deciding which spells you can cast: Spark at 1, Ember Bolt at 8, Frost Shard (slows) at 16, Storm Lash (jumps between monsters) at 26, Flame Burst (explodes) at 36, Void Lance (pierces) at 48, Starfall at 62 and Cataclysm at 80. Pick your spell on the Hero screen.',
+    'Spells start weak and hit harder as you level and move to new spells. Kills with a staff train Magic, never Fighting. Magic counts toward your combat level: the higher of Fighting and Magic counts double.',
+    'Four staffs to carve at the Jeweler’s Bench (new Staffs tab): the Apprentice Staff (10 logs), Blackwood Staff, Emberwood Staff and Gloamwood Staff. Each adds to your spell damage.',
+    'Enchanting: use Magic on the ring and amulet you wear. Five enchanting spells, from Lesser Enchant (Magic 3) to Mythic Enchant (Magic 70), each rolling its own kind of bonus. They use runes.',
+    'The rune bag, a new part of your bag: Gale, Stone, Tide, Ember, Soul and Star Runes. Monsters and chests drop them, and Tallow sells the first four. Runes never take bank space and are never lost.',
+    'Floors 21–30. The Drowned Archive (21–25): drowned scribes, tide eels and cursed grimoires, with the Drowned Archmage on floor 25. The Hollow Throne (26–30): husks, voidlings and watchers, with the Hollow King on floor 30. The lift reaches floors 21 and 26 once you beat the boss before them.',
+    'The new bosses fight with a mix of attacks: the Archmage throws fans of bolts, freezes the floor and blinks away; the Hollow King slams, charges, tears rifts open under you and throws rings of void bolts.',
+    'Their rarest drops: the Archmage can drop the Moonwell Staff (Mythic) or the Archmage’s Tiderobe (Legendary); the Hollow King can drop the Hollow Scepter (Legendary) or the Voidwoven Robe (Mythic). Robes add to spell damage.',
+    'One new ore on floors 21–30: Gloamite (Mining 50). Smelt it into bars and forge Gloamite Helm, Blade and Mail (Smithing 52–58).',
+    'The Uncommon Chest, on floors 21–30: it glows green and holds more, with a small chance of a Greater Oil Flask, which refills your whole lantern. You can also press Greater Oil Flasks yourself (Farming 30): 2 Lampseed and a Moonpetal, a new crop (Farming 25, seeds from Tallow and the deep floors).',
+    'A new area west of the Hold: Hollowmere, about four times the size of the Hold. A misty moor around the Moonmere, a great lake with a dock out to the middle (Moonfin, Fishing 30). Monsters roam its meadows, marsh and deepwood (levels 3 to 20) and attack if you get too close. Falling there costs nothing.',
+    'In Hollowmere’s far corner stands the Abyssal Maw, the gate to the raids coming in Season 1, with a Bank Chest beside it. The plaza around it is safe.',
+    'A globe under the compass opens your world map. It’s see-through, so you can watch the game while you look.',
+    'Other heroes in Hollowmere see your swings and spells, and you see theirs.',
+    '15 new goals.']},
+  {v:'0.11.1',date:'2026-10-27',title:'Ore that shines',notes:[
+    'Coal and Cobalt are set back into the wall like every other ore, without the pale rock around them.',
+    'They shine instead: Coal has bright silver edges and a soft glow, Cobalt glows blue, and Copper and Iron veins glow softly too. Every vein still twinkles now and then, so you can spot ore from across the room.']},
+  {v:'0.11.0',date:'2026-10-27',title:'Crafting: rings and amulets',notes:[
+    'A new skill, Crafting. Visit the new Jeweler’s Bench, between the road to the Delve Gate and the Forge, to set gems into bars and make rings and amulets.',
+    'You can wear one ring and one amulet. Like capes, they carry bonuses: more health, damage, defence, loot luck, light, or longer-lasting oil. Their bonuses work everywhere except fights in the Wilderness.',
+    '10 pieces to make, from the Copper Ring (Crafting 1) to the Starshard Amulet (Crafting 45).',
+    'Smelt bars at the Forge: open the Forge and pick Smelt bars. Copper, Iron, Emberite, Steel and Cobalt bars. Smelting trains Smithing, and you can smelt everything at once.',
+    'New gems in chests: Rubies and Sapphires on any floor, Emeralds from floor 6 and Diamonds from floor 11. The bosses drop them too. Cave Gems finally have a use: every Copper ring and amulet needs one.',
+    'Coal and Cobalt veins are much easier to spot: they now sit in pale rock, and every ore vein twinkles now and then.',
+    'Crafting counts toward your combat level, which is now (2 × Fighting + all your skill levels) ÷ 9. Nobody loses a level: you keep the combat level you had.',
+    '5 new goals for Crafting and smelting.']},
+  {v:'0.10.1',date:'2026-10-27',title:'Ore grows back',notes:[
+    'Fixed: after a reconnect (locking your phone, a signal drop, a server update) some heroes deep in the Depths were sent back to an earlier floor, like floor 14 back to floor 7. You now stay on the floor you were on.',
+    'Ore veins grow back after you mine them, so there is always something to swing at. The harder the ore, the longer it takes: Copper 15 seconds, Iron 25, Coal 40, Emberite 60, Cobalt 80 and Starshard 150.',
+    'In a party, everyone sees a vein grow back at the same moment.']},
   {v:'0.10.0',date:'2026-10-27',title:'Ten new floors and Mining',notes:[
     'The Depths go to floor 20. Floors 11–15 are the Emberforge Halls: fire imps, magma golems and cinder bats, with the Forge Tyrant on floor 15. Floors 16–20 are the Starfall Hollow: wraiths, crystal sentinels and shardlings, with the Starwarden on floor 20.',
     'A new skill, Mining. Mine the ore in the walls to train it. Each ore needs a Mining level: Copper 1, Iron 10, Coal 20, Emberite 25, Cobalt 30, Starshard 40. Mining counts toward your combat level like every other skill.',

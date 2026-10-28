@@ -8,12 +8,12 @@
     <div id="xpb" hidden aria-hidden="true"><i id="xpFill"></i></div>
     <div class="lbl" id="oilRow" hidden><span>OIL</span><div class="bar" aria-label="Lantern oil"><i id="oilFill"></i><canvas class="pt" id="oilTxt"></canvas></div></div>
   </div>
-  <div id="side"><div class="sidetop"><button id="compass" class="px card" aria-label="Compass: north is up. The Wilderness lies north."><i class="cn">N</i><i class="ce">E</i><i class="cs">S</i><i class="cw">W</i><b></b></button><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button></div><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div>
+  <div id="side"><div class="sidetop"><button id="compass" class="px card" aria-label="Compass: north is up. The Wilderness lies north."><i class="cn">N</i><i class="ce">E</i><i class="cs">S</i><i class="cw">W</i><b></b></button><button id="setB" class="px card" aria-label="Settings"><img id="setIc" alt=""></button></div><div class="siderow"><button id="mapB" class="px card" aria-label="World map: where you are"><img id="mapIc" alt=""></button><button id="socB" class="px card" aria-label="Social: friends and party"><img id="socIc" alt=""><span class="badge" id="socN" hidden></span></button></div></div>
 </div>
 <button id="guide" class="px" hidden></button>
 <div id="wildB" class="px" hidden aria-live="polite"><img id="wildIc" alt=""><b id="wildL">Wilderness</b><small id="wildR"></small></div>
 <div id="feed"></div>
-<div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd>/<kbd>Click</kbd> attack · <kbd>Scroll</kbd> zoom<br><kbd>B</kbd> bag · <kbd>H</kbd> hero · <kbd>K</kbd> skills · <kbd>1</kbd>–<kbd>5</kbd> quick · hold <kbd>R</kbd> return</div>
+<div class="keyhint"><kbd>WASD</kbd> move · <kbd>Space</kbd>/<kbd>Click</kbd> attack · <kbd>Scroll</kbd> zoom<br><kbd>B</kbd> bag · <kbd>H</kbd> hero · <kbd>K</kbd> skills · <kbd>1</kbd>–<kbd>5</kbd> quick · hold <kbd>R</kbd> return · <kbd>G</kbd> map</div>
 <div id="ctl">
   <div id="pad" aria-label="Move"><div id="knob"></div></div>
   <div id="acts">
@@ -32,6 +32,7 @@
 <section id="chat" hidden aria-label="Chat"><header><span class="ctabs" role="tablist"><button class="ctab" id="ctW" role="tab" aria-selected="true">World<i hidden></i></button><button class="ctab" id="ctP" role="tab" aria-selected="false">Party<i hidden></i></button></span><b id="chatWhere">the Hold</b><button id="chatX" aria-label="Close chat">×</button></header>
   <div id="chatLog" aria-live="polite"></div>
   <div class="chatRow"><input id="chatIn" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="Say something…" aria-label="Message"><button id="chatGo" class="btn sm">Send</button></div></section>
+<div id="wmap" hidden role="dialog" aria-label="World map"><div class="wmbox"><header><b id="wmT">World map</b><small id="wmS"></small><button id="wmX" aria-label="Close the map">×</button></header><canvas id="wmC"></canvas><footer id="wmL"></footer></div></div>
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>

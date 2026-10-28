@@ -96,6 +96,23 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 .land #wildB{top:auto;left:auto;right:calc(var(--sr) + 10px);top:calc(var(--st) + 128px);font-size:15px;padding:3px 8px}
 .tag .sk{position:absolute;left:0;top:-17px;width:11px;height:11px;transform:translateX(-50%);image-rendering:pixelated;filter:drop-shadow(0 1px 1px rgba(0,0,0,.8))}
 .wildhd{display:flex;gap:12px;align-items:center;margin-bottom:6px}.wildhd img{width:48px;height:auto;image-rendering:pixelated}.wildhd b{display:block;color:#ff8a8a;font-size:24px}.wildhd small{color:#c2d3e0}
+/* the globe (under the compass) opens the world map, see-through so the game shows under it */
+.siderow{display:flex;gap:4px;align-items:center}
+#mapB{display:grid;place-items:center;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto}#mapB img{width:22px;height:22px;image-rendering:pixelated}.land #mapB{width:30px;height:30px}
+#mapB[aria-pressed=true]{box-shadow:inset 0 0 0 2px #73eff7,0 3px 0 var(--ink)}
+#wmap{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(8,10,22,.38);pointer-events:auto;touch-action:none}
+#wmap[hidden]{display:none}
+#wmap .wmbox{display:grid;gap:6px;justify-items:center;max-width:94vw;padding:8px 10px 10px;border-radius:4px;background:rgba(18,20,38,.62);box-shadow:0 0 0 2px rgba(115,239,247,.35),0 6px 24px rgba(0,0,0,.5)}
+#wmap header{display:flex;align-items:baseline;gap:10px;width:100%;color:#f4f4f4}#wmap header b{font-size:22px;font-weight:600}#wmap header small{color:#c2d3e0;font-size:15px;flex:1}
+#wmX{margin-left:auto;background:none;border:0;color:#f4f4f4;font-size:28px;line-height:1;cursor:pointer;padding:0 4px}
+#wmC{image-rendering:pixelated;opacity:.86;max-width:90vw;max-height:72vh;border-radius:2px}
+#wmap footer{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;color:#c2d3e0;font-size:14px}#wmap footer i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+/* v0.12: spells, the rune bag, the raid gate */
+.ic.spic{display:grid;place-items:center;font-style:normal;font-size:20px;color:var(--sc);text-shadow:0 0 6px var(--sc),1px 1px 0 #1a1c2c;background:rgba(26,28,44,.6);border-radius:3px}
+.item.spell.on{box-shadow:inset 0 0 0 2px #9b7bff}.item.spell small+small{color:#94b0c2}
+.grid.runes .cell.dim{opacity:.45}
+.rhead{display:grid;place-items:center;margin:-4px 0 4px}.rhead img{width:224px;height:auto;image-rendering:pixelated;filter:drop-shadow(0 0 12px rgba(199,155,242,.55))}
+.gear .mk{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 #socB{position:relative;display:grid;place-items:center;width:36px;height:36px;padding:0;cursor:pointer;pointer-events:auto}#socB img{width:22px;height:22px;image-rendering:pixelated}.land #socB{width:30px;height:30px}
 #socB.off{opacity:.55}#socB.off::after{content:'';position:absolute;bottom:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#ef7d57;box-shadow:0 0 0 2px #1a1c2c}
 #socB .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#b13e53;color:#f4f4f4;font-size:12px;line-height:16px;text-align:center;padding:0 3px}
@@ -226,7 +243,7 @@ h3 small{text-transform:none;letter-spacing:0}
 .item span,.rh span,.gear span,.hero span{display:grid;gap:2px;flex:1;min-width:0}.item b,.rh b,.hero b{font-size:21px;font-weight:600}
 small{font-size:17px;color:var(--muted)}
 .recipe{background:var(--panel2);border:2px solid var(--ink);padding:8px 10px}
-.rh{display:flex;gap:8px;align-items:center}
+.rh{display:flex;gap:8px;align-items:center}.rh .mk{display:flex;flex-direction:column;gap:4px;flex:none}
 .need{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:18px}.need span{display:flex;align-items:center;gap:3px}.need .ic{width:18px;height:18px}
 .need .ok{color:var(--green)}.need .no{color:#ff9a9a}
 .tabs{display:flex;gap:6px;margin:4px 0 10px}.tabs.gt{flex-wrap:wrap}.tabs.gt .tab{flex:1 1 30%;font-size:17px;padding:5px 6px;min-height:0}.tab{flex:1;font-size:20px;color:var(--muted);background:var(--ink);border:2px solid var(--ink);padding:8px;min-height:42px}

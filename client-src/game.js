@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 buildArt();
 const cv=$('cv'),g=cv.getContext('2d');
-{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};{const p=new Px(16,16);p.rect(3,2,10,12,'#c2a26b');p.rect(4,3,8,10,'#f4e4c1');for(const y of [5,7,9,11])p.rect(5,y,6,1,'#8a6f30');p.rect(2,1,12,2,'#8a6f30');p.rect(2,13,12,2,'#8a6f30');p.set(12,4,PAL.gold).set(11,3,PAL.gold);p.outline();$('icSkill').src=u(p.canvas());}$('icBag').src=u(ART.chest[0]);$('icRet').src=u(ART.torch[0]);
+{const u=c=>c.toDataURL();{const p=new Px(16,16);p.ell(8,8,5.5,5.5,PAL.silver);for(const [x,y] of [[7,1],[7,13],[1,7],[13,7],[3,3],[11,3],[3,11],[11,11]])p.rect(x,y,2,2,PAL.silver);p.ell(8,8,2.2,2.2,PAL.ink);p.set(6,5,PAL.white).set(5,6,PAL.white);p.outline();$('setIc').src=u(p.canvas());}$('setB').onclick=()=>{if(started)openSettings();};{const p=new Px(16,16);p.rect(3,2,10,12,'#c2a26b');p.rect(4,3,8,10,'#f4e4c1');for(const y of [5,7,9,11])p.rect(5,y,6,1,'#8a6f30');p.rect(2,1,12,2,'#8a6f30');p.rect(2,13,12,2,'#8a6f30');p.set(12,4,PAL.gold).set(11,3,PAL.gold);p.outline();$('icSkill').src=u(p.canvas());}$('icBag').src=u(ART.chest[0]);$('mapIc').src=u(ART.globe);$('icRet').src=u(ART.torch[0]);
 }
 const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rand=Math.random,ri=(a,b)=>a+Math.floor(rand()*(b-a+1));
@@ -11,7 +11,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -30,7 +30,7 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.deepest=int(o.deepest,0,PACKS[PACKS.length-1].to,0);s.savedAt=int(o.savedAt,0,9e15,0);
   s.vault={};for(const [k,v] of Object.entries(obj(o.vault)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.vault[k]=n;}s.bankBuys=int(o.bankBuys,0,BANK_BUYS.length,0);
   if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}}
-  const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null};
+  const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null,ring:JEWELS[G.ring]&&JEWELS[G.ring].slot==='ring'?G.ring:null,amulet:JEWELS[G.amulet]&&JEWELS[G.amulet].slot==='amulet'?G.amulet:null};
   const K=obj(o.skills);s.skills={};for(const k of Object.keys(SKILLS))s.skills[k]=num(K[k],0,200e6,0);
   Object.assign(s,cleanPlots(o,Date.now()));
   s.bosses={};for(const k of Object.keys(obj(o.bosses)))if(ENEMIES[k]&&ENEMIES[k].boss)s.bosses[k]=true;
@@ -42,13 +42,18 @@ function normalize(raw){const o=obj(raw),s=fresh();
   // Combat level = Fighting (monster XP) counted double + every skill level (see combatFrom in data.js). Saves from before
   // this change keep the combat level they had as a floor, and their old combat progress becomes their Fighting level.
   {const legacy=o.flv===undefined;s.flv=Math.min(FIGHT_MAX,legacy?s.lvl:int(o.flv,1,200,1));s.cbFloor=legacy?s.lvl:int(o.cbFloor,1,200,1);
-   if(!legacy&&K.mining===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,SKILLS_V096));   // Mining joined in v0.10.0: nobody drops a level
+   if(!legacy)for(const [k,before] of SKILL_ERAS)if(K[k]===undefined)s.cbFloor=Math.max(s.cbFloor,combatFrom(s.flv,s.skills,before));   // a new skill joined the formula: nobody drops a level
    s.lvl=Math.max(s.cbFloor,combatFrom(s.flv,s.skills));}
   s.skull=int(o.skull,0,9e15,0);   // the Wilderness skull: until when (it follows you to other worlds)
-  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x),y:Math.round(+q.y)}:null;}   // where you logged out
+  {const q=obj(o.pos);s.pos=Number.isFinite(+q.x)&&Number.isFinite(+q.y)&&+q.x>0&&+q.y>0&&+q.x<20000&&+q.y<20000?{x:Math.round(+q.x)+(q.v===2?0:WEST_X),y:Math.round(+q.y),v:2}:null;}   // where you logged out (v2: the map grew west in v0.12)
+  // the rune bag, enchantments on worn jewelry, the attack spell you've chosen
+  s.runes={};for(const [k,v] of Object.entries(obj(o.runes)))if(ITEMS[k]&&ITEMS[k].rune){const n=int(v,0,1e7,0);if(n>0)s.runes[k]=n;}
+  s.ench={};for(const sl of ['ring','amulet']){const e=obj(obj(o.ench)[sl]);if(e.id&&e.id===s.gear[sl]&&ENCHANTS[e.s]){const a={};for(const [k,v] of Object.entries(obj(e.a)).slice(0,3))if(ENCH_ATTR[k]){const n=num(v,0,enchMax(k),0);if(n>0)a[k]=Math.round(n*100)/100;}if(Object.keys(a).length)s.ench[sl]={id:e.id,s:e.s,a};}}
+  {const own=k=>(s.bank[k]||0)+(s.vault[k]||0)>0||['blade','mail','helm','ring','amulet'].some(sl=>wornId(s.gear,sl)===k);s.forged={};for(const [k,v] of Object.entries(obj(o.forged)))if(forgeable(k)&&own(k)){const n=int(v,0,FORGE_MAX,0);if(n>0)s.forged[k]=n;}}   // relic-forging: kept while you own the piece
+  s.spell=SPELLS[o.spell]?o.spell:'spark';
   return s;}
 let S=normalize({}),PID=null;
-function save(now){if(!PID)return;S.savedAt=Date.now();try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
+function save(now){if(!PID)return;S.savedAt=Date.now();S.pack=scene==='delve'&&run&&run.pack?Object.assign({},run.pack):{};if(S.forged)for(const k of Object.keys(S.forged))if(!ownsItem(k))delete S.forged[k];try{localStorage.setItem('lanternhold.p.'+PID,JSON.stringify(S));}catch(e){}if(window.ACC)ACC.cloudSave(S,now);}
 // Bag = what you carry (goes into the Depths, half lost if you fall). Vault = the Bank (always safe, limited slots).
 const atHold=()=>scene==='hold';
 const avail=id=>(S.bank[id]||0)+(atHold()?(S.vault[id]||0):0);
@@ -56,17 +61,31 @@ const allKeys=()=>[...new Set([...Object.keys(S.bank),...(atHold()?Object.keys(S
 const has=(id,n)=>avail(id)>=(n||1);
 const give=(bag,id,n)=>{bag[id]=(bag[id]||0)+n;};
 const take=(id,n)=>{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}n-=k;if(n>0&&atHold()&&S.vault[id]){S.vault[id]-=n;if(S.vault[id]<=0)delete S.vault[id];}};
-const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0);
+// the item worn in a gear slot (null for none), and its relic-forge level
+const wornId=(g,sl)=>{const t=g[sl];return !t?null:sl==='ring'||sl==='amulet'?t:sl==='blade'?(t==='rusty'?'rusty_blade':GEAR_ITEM['blade:'+t]||null):sl==='mail'?(t==='none'?'traveler_garb':GEAR_ITEM['mail:'+t]||null):sl==='helm'?GEAR_ITEM['helm:'+t]||null:null;};
+const fLv=sl=>{const id=wornId(S.gear,sl);return id&&S.forged&&S.forged[id]||0;};
+const ownsItem=id=>(S.bank[id]||0)+(S.vault[id]||0)>0||['blade','mail','helm','ring','amulet'].some(sl=>wornId(S.gear,sl)===id);
+const capeA=()=>S.gear.cape&&CAPES[S.gear.cape]?CAPES[S.gear.cape].attr:{};const jewA=k=>(((JEWELS[S.gear.ring]||{}).attr||{})[k]||0)*(1+FORGE_FX.jewel*fLv('ring')/100)+(((JEWELS[S.gear.amulet]||{}).attr||{})[k]||0)*(1+FORGE_FX.jewel*fLv('amulet')/100);
+// an enchantment counts only while the piece it was cast on is the one you're wearing
+const enchA=k=>['ring','amulet'].reduce((a,sl)=>{const e=S.ench&&S.ench[sl];return a+(e&&e.id===S.gear[sl]&&e.a[k]||0);},0);
+const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0)+jewA(k)+enchA(k);
 let ADMIN=false,HAT='partyhat';
 const LAN=()=>LANTERNS[S.gear.lantern]||LANTERNS.basic;
-const maxHp=()=>60+8*(S.lvl-1)+A('hp');
+const maxHp=()=>Math.round(60+8*(S.lvl-1)+A('hp'));
 // In the Hold and the Wilderness your health follows the Wilderness rules (the same for everyone: no admin-hat bonus)
 const pvpMaxHp=()=>60+8*(S.lvl-1)+((((CAPES[S.gear.cape]||{}).attr)||{}).hp||0);
-const hpMax=()=>scene==='hold'?pvpMaxHp():maxHp();
+const hpMax=()=>scene==='hold'&&!inWest()?pvpMaxHp():maxHp();
 const inWild=()=>scene==='hold'&&P.y<WILD_Y;
+const inWest=()=>scene==='hold'&&inHollowmere(P.x,P.y);   // Hollowmere: monsters, no PvP, your full bonuses count
+const staffOn=()=>isStaff(S.gear.blade);
+// spell damage: the spell's max hit, plus the staff's and the robe's bonus (and enchantments and capes with +spell damage)
+const spellMax=sp=>Math.round((SPELLS[sp]||SPELLS.spark).max*(1+((GEAR.blade[S.gear.blade]||{}).mag||0)/100+((GEAR.mail[S.gear.mail]||{}).mag||0)/100+A('mag')/100+(staffOn()?FORGE_FX.staff*fLv('blade')/100:0)+((GEAR.mail[S.gear.mail]||{}).robe?FORGE_FX.robe*fLv('mail')/100:0)));
+const runeN=k=>(S.runes&&S.runes[k+'_rune'])||0;
+// runes always go into the rune bag (never the bag or the bank), wherever they come from
+const giveAny=(bag,id,n)=>{if(ITEMS[id]&&ITEMS[id].rune){S.runes[id]=(S.runes[id]||0)+n;return;}give(bag,id,n);};
 const xpNeed=l=>Math.round(22*Math.pow(l,1.5));
-const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100);
-const defOf=()=>GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def');
+const dmgOf=()=>GEAR.blade[S.gear.blade].dmg*(1+A('dmg')/100)*(staffOn()?1:1+FORGE_FX.blade*fLv('blade')/100);
+const defOf=()=>Math.round((GEAR.mail[S.gear.mail].def+(S.gear.helm?GEAR.helm[S.gear.helm].def:0)+A('def')+FORGE_FX.def*(fLv('mail')+fLv('helm')))*10)/10;
 const myLook=()=>Object.assign({},S.look,{armor:S.gear.mail==='none'?null:S.gear.mail,cape:S.gear.cape,helm:S.gear.helm,flame:flameOn()?'founder':null});
 // The Founder's Flame: a violet light only Founder's Lantern holders have (the realtime server hides it for anyone else)
 const FLAME='#b98cff',FLAMEC='185,140,255';
@@ -157,18 +176,20 @@ const HOVER_BOX={gate:[-26,-52,52,56,'Delve Gate'],bank:[-22,-46,44,46,'Bank'],f
   board:[-14,-30,28,30,'Bulletin Board'],stall:[-20,-30,40,32,'Tallow’s Cart'],sign:[-8,-22,16,22,'The Road East'],barricade:[-10,-58,20,58,'The Road East (closed)'],
   tree:[-11,-30,22,32,'Oak Tree'],chest:[-7,-13,14,14,'Chest'],glowcap:[-7,-14,14,14,'Glowcap'],
   wwall:[-8,-20,16,22,'Wilderness Wall'],deadtree:[-11,-30,22,32,'Dead Tree'],rock:[-7,-12,14,13,'Rock'],grave:[-6,-17,12,18,'Grave'],pillar:[-5,-28,10,30,'Ruined Pillar'],
-  obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning']};
+  obelisk:[-10,-50,20,52,'The Old Obelisk'],skullpost:[-6,-26,12,26,'Wilderness Warning'],
+  maw:[-66,-124,132,124,'The Abyssal Maw'],bankchest:[-12,-18,24,19,'Bank Chest'],campfire:[-7,-13,14,14,'Campfire'],menhir:[-6,-30,12,30,'Standing Stone'],lpost:[-5,-28,10,28,'Lamp Post'],
+  hmsign:[-8,-22,16,22,'Hollowmere'],willow:[-13,-38,26,38,'Willow'],mcrystal:[-6,-20,12,20,'Moon Crystal']};
 function hoverTarget(wx,wy){let best=null;const hit=(x,y,w,h)=>wx>=x&&wx<x+w&&wy>=y&&wy<y+h;
   for(const o of map.objs){if(o.gone)continue;let b=null,name=null;
     if(o.type==='ore'){const x=o.tile[0]*T,y=o.tile[1]*T;if(hit(x,y,T,T))b=[x,y,T,T],name=(ITEMS[o.kind+'_ore']||{}).n||'Ore';}
     else{const H=HOVER_BOX[o.type];if(!H||(o.type==='chest'&&o.open))continue;if(o.type==='tree'&&o.chop&&!treeUp(o))continue;
-      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':H[4];}
+      if(hit(o.x+H[0],o.y+H[1],H[2],H[3]))b=[o.x+H[0],o.y+H[1],H[2],H[3]],name=o.type==='tree'&&TREES[o.kind]?TREES[o.kind].n:o.type==='sign'&&o.wild?'Wilderness Warning':o.type==='chest'&&o.tier==='u'?'Uncommon Chest':H[4];}
     if(b&&(!best||o.y>best.z))best={x:b[0]+b[2]/2,y:b[1]-3,name,z:o.y};}
   if(best)return best;
   const tx=Math.floor(wx/T),ty=Math.floor(wy/T),t=tAt(map,tx,ty);
   if(scene==='hold'){
     if(map.plots&&map.plots.some(p=>p.tx===tx&&p.ty===ty))return {x:tx*T+8,y:ty*T-2,name:'Farm'};
-    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};if(t===GLOOM)return {x:tx*T+8,y:ty*T-2,name:'Gloom Pond'};}
+    if(t===DOCK)return {x:tx*T+8,y:ty*T-2,name:'Dock'};if(t===WATER)return {x:tx*T+8,y:ty*T-2,name:'Lake'};if(t===MOON)return {x:tx*T+8,y:ty*T-2,name:'The Moonmere'};if(t===GLOOM)return {x:tx*T+8,y:ty*T-2,name:'Gloom Pond'};}
   if(scene==='delve'&&map.stairs&&!map.stairs.hidden&&tx===map.stairs.tx&&ty===map.stairs.ty)return {x:tx*T+8,y:ty*T-2,name:'Stairs down'};
   return null;}
 function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acct').hidden){if(cv.style.cursor)cv.style.cursor='';return;}
@@ -178,7 +199,7 @@ function hoverTag(){if(!HOVER_OK||!HOV.on||!started||!$('sheet').hidden||!$('acc
 let camX=0,camY=0;
 cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||!started||!$('sheet').hidden||!$('acct').hidden)return;
   e.preventDefault();const a=document.activeElement;if(a&&a.id==='chatIn')a.blur();
-  if(scene==='delve'||inWild()){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
+  if(scene==='delve'||inWild()||inWest()){const r=cv.getBoundingClientRect(),wx=camX+(e.clientX-r.left)*VW/r.width,wy=camY+(e.clientY-r.top)*VH/r.height,dx=wx-P.x,dy=wy-(P.y-6);
     if(Math.abs(dx)>3||Math.abs(dy)>3)P.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down');
     if(inWild()){const o=otherAt(e.clientX,e.clientY);MP.aim=o?o.id:null;}}
   aPressed=true;});
@@ -205,17 +226,17 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
+function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];for(const d of HOLD.dens||[])d.e=null;P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
   updateHud();MP.toHold();}
 // where you are, kept in your save so you sign back in on the same spot (in the Depths: the entrance you went in by)
-function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y)};}
+function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y),v:2};}
 function placeAt(q){if(!q||!(q.x>0&&q.y>0&&q.x<map.w*T&&q.y<map.h*T)||blocked(q.x,q.y,4))return false;if(q.y<WILD_Y&&!S.flags.wildok)return false;P.x=q.x;P.y=q.y;return true;}
-function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y};save();}
+function startDelve(from,seed,door){door=door||'gate';const d=HOLD.doors[door];if(d){S.pos={x:d.x,y:d.y,v:2};save();}
   run={seed:seed!=null?seed:(rand()*1e9)|0,floor:from,pack:{},oil:100,kills:0,start:from,shadeT:0,door};enterFloor(from);closeSheet();toast('Floor '+from+' · '+BIOMES[packOf(from).id].name);}
 function enterFloor(f){
   run.floor=f;map=buildFloor(f,run.seed);bakeGround(map);scene='delve';
   const sc=1+.12*(f-1);
-  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];slashes=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
+  ents=map.spawns.map((s,i)=>Object.assign(makeEnemy(s.type,s.x,s.y,sc),{id:i+1}));MP.nextEid=ents.length+1;if(MP.client())ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];P.x=map.spawn.x;P.y=map.spawn.y;P.chan=0;
   if(f>S.deepest){S.deepest=f;save();if(f>=3)MP.feed('deep',String(f));}updateHud();MP.floorEntered(f);
   if(map.pack.boss&&f===map.pack.to)setTimeout(()=>toast(map.pack.bossName+' awaits','bad'),400);
 }
@@ -240,8 +261,8 @@ function nearestAct(){
   return best;
 }
 function doAct(a){
-  if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();
+  if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');if(a.id==='bench')return openCraft('jewel');
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return openMarket('shop',true);if(a.id==='wick')return openWick();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -252,7 +273,8 @@ function doAct(a){
 }
 
 // ---------- combat ----------
-function swing(){if(P.swingCD>0)return;P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
+const oreAhead=()=>{if(scene!=='delve'||!map)return false;const b=hitBox();return map.objs.some(o=>o.type==='ore'&&!o.gone&&o.tile[0]*T+T>b.x&&o.tile[0]*T<b.x+b.w&&o.tile[1]*T+T>b.y&&o.tile[1]*T<b.y+b.h);};
+function swing(){if(P.swingCD>0)return;if(staffOn()&&!oreAhead())return cast();P.swing=.2;P.swingCD=.32;P.hitDone=false;sfx('swing');}
 // ---- swing feel: the hero steps into the swing, the blade leaves a smear, and a hit flashes, sparks and briefly freezes ----
 const BLADE_FX={rusty:'#c2c7cf',copper:'#ef7d57',iron:'#f4f4f4',ember:'#ff9f3d',steel:'#c9d6e3',cinder:'#ff5a2a'};
 const easeOut=t=>1-(1-t)*(1-t);
@@ -264,7 +286,7 @@ function impact(x,y,a,col,big,mine){
 function hitBox(){const d=P.dir,cx=P.x+(d==='left'?-11:d==='right'?11:0),cy=P.y-5+(d==='up'?-11:d==='down'?9:0);return {x:cx-10,y:cy-9,w:20,h:18};}
 function resolveSwing(){
   const b=hitBox(),dmg=dmgOf(),hits=[];let ore=-1;
-  for(const e of ents){if(e.dead)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
+  for(const e of ents){if(e.dead||e.d.proj)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
     const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;e.sq=.16;
     impact(e.x,e.y-(e.d.big?12:6),a,BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
     hits.push([e.id,d]);
@@ -276,9 +298,12 @@ function resolveSwing(){
       puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');const i=map.objs.indexOf(o);ore=i;
       if(MP.client()){NET.send({t:'mine',o:i});break;}mineOre(o,i,MP.me());break;}}
   if(MP.shared())NET.send({t:'sw',d:P.dir,h:hits.slice(0,8),o:ore});   // the party sees your swing, your damage numbers and your pickaxe chips
+  else if(inWest()&&roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1});   // in Hollowmere, everyone nearby sees you swing
 }
 // another party member swung: show their blade, the damage they did and the ore they chipped
-function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&o.y<WILD_Y))return;o.dir=m.d||o.dir;o.swT=.2;
+function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&(o.y<WILD_Y||o.x<WEST_X)))return;o.dir=m.d||o.dir;
+  if(m.c&&SPELLS[m.c]){o.castT=.42;o.castSp=m.c;setTimeout(()=>{const tip=staffTip(o.x,o.y,o.dir);launchBolt(m.c,tip,typeof m.a==='number'?m.a:0,null,false,o.id);},130);return;}
+  o.swT=.2;   // a plain swing: a blade, or a staff used as a club (Wilderness) or a pick (ore)
   for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}
     else{const f=fallen.get(eid);if(f&&time-f.t<2){floatText(f.x,f.y-(f.big?28:16),String(d),'#f4f4f4');impact(f.x,f.y-(f.big?12:6),Math.atan2(f.y-o.y,f.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',f.big,false);}}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
@@ -292,29 +317,121 @@ function killEnemy(e){if(e.dead)return;const me=MP.me(),top=lootOwner(e)||me,hit
 const fallen=new Map();   // monster id -> where it was when it died (for 2 s)
 function onKilled(e,top,hit,xp){const me=MP.me(),mine=top===me;e.dead=true;fallen.set(e.id,{x:e.x,y:e.y,big:!!e.d.big,t:time});if(fallen.size>40)fallen.delete(fallen.keys().next().value);MP.lastKill={e:e.id,top,hit:hit.slice(),xp};
   // XP: everyone who hit it, and every party member in the same dungeon (even if they didn't land a hit)
-  if(hit.includes(me)){run.kills++;S.kills++;gainXp(xp);}else if(MP.shared())gainXp(xp);puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
+  if(e.d.proj)return;
+  if(hit.includes(me)){if(run)run.kills++;S.kills++;killXp(xp);if(e.west)bump('hmkills');if(e.d.boss)bump('bossxp');}else if(MP.shared()){killXp(xp);if(e.d.boss)bump('bossxp');}puff(e.x,e.y-6,e.d.boss?'#ffcd75':'#a7f070',e.d.boss?30:9);
   const roll=hit.includes(me)||(!hit.length&&mine);MP.lastRoll=roll;
-  if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);}
-  if(e.d.boss){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(LIFTS.includes(run.floor+1)&&run.floor+1>S.lift)S.lift=run.floor+1;save();
+  if(roll&&e.d.relic&&scene==='delve'&&rand()<RELIC_CHANCE*(1+A('luck')/200)){e.relicDrop=true;spawnLoot(e.x,e.y-4,[[e.d.relic,1,1,1]],true);setTimeout(()=>{sfx('rare');buzz([60,40,60,40,120]);toast('A relic! The '+ITEMS[e.d.relic].n+' fell from the boss','rare r-legendary');},700);}
+  if(roll){spawnLoot(e.x,e.y-4,e.d.drops,true);if(e.type!=='shade'&&e.type!=='gelling')dropGear(e.x,e.y-4,e.d.boss?'boss':'enemy',e.d.boss?e.type:null,true);
+    const area=scene==='delve'&&run?packOf(run.floor).id:'mere';spawnLoot(e.x,e.y-4,(RUNE_DROPS[area]||[]).concat(e.d.boss?RUNE_DROPS.boss:[]).map(([k,c,a,b])=>[k+'_rune',c,a,b]),true);}
+  if(e.d.boss&&scene==='delve'){if(hit.includes(me)){MP.feed('boss',map.pack.bossName);bump('boss'+e.type);}sfx('boss');buzz([60,40,60]);map.stairs.hidden=false;bakeGround(map);S.bosses[e.type]=true;if(LIFTS.includes(run.floor+1)&&run.floor+1>S.lift)S.lift=run.floor+1;save();
     ents.forEach(o=>{if(!o.d.boss&&!o.dead){o.dead=true;puff(o.x,o.y-6,'#a7f070',6);}});
-    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p><p class="lead">It dropped a Relic. In the live game, Relics can be minted on-chain and traded.${packOf(run.floor+1)?'':' This is as deep as the Depths go for now.'}</p><div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
+    setTimeout(()=>openSheet(`<h2>${map.pack.bossName} falls</h2><p class="lead">The stairs are open.${S.lift>run.floor?' The lift at the Gate now reaches floor '+S.lift+'.':''}</p>${e.relicDrop?'<p class="lead" style="color:#ffcd75">It dropped its relic, the '+ITEMS[e.d.relic].n+'! Relics are rare: spend them at the Forge to empower your gear.</p>':''}${packOf(run.floor+1)?'':'<p class="lead">This is as deep as the Depths go for now.</p>'}<div class="row"><button class="btn" id="sx">Onward</button></div>`,()=>{}),300);
     setTimeout(()=>{const b=$('sx');if(b)b.onclick=closeSheet;},320);}}
 // Monster XP trains Fighting. Combat level comes from Fighting plus every other skill, so it's checked after any XP.
 function gainXp(n){S.xp+=n;setTimeout(()=>xpShow('combat'),0);while(S.flv<FIGHT_MAX&&S.xp>=xpNeed(S.flv)){S.xp-=xpNeed(S.flv);S.flv++;toast('Fighting level '+S.flv+'!','good');if(S.flv%10===0||S.flv===FIGHT_MAX)MP.feed('skill','Fighting '+S.flv);sfx('level');buzz(60);puff(P.x,P.y-8,'#ef7d57',12);}if(S.flv>=FIGHT_MAX)S.xp=0;combatCheck();}
-const cbPts=()=>2*Math.min(FIGHT_MAX,S.flv)+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
+const cbPts=()=>2*Math.max(Math.min(FIGHT_MAX,S.flv),lvlOf('magic'))+Object.keys(SKILLS).reduce((a,k)=>a+lvlOf(k),0),cbDiv=()=>2+Object.keys(SKILLS).length;
 function combatCheck(){const c=Math.max(S.cbFloor||1,combatFrom(S.flv,S.skills));if(c===S.lvl)return;const up=c>S.lvl;S.lvl=c;if(!up)return;
   P.hp=Math.min(hpMax(),P.hp+8);setTimeout(()=>{toast('Combat level '+S.lvl+'! Max HP '+hpMax(),'good');sfx('level');puff(P.x,P.y-8,'#ffcd75',16);floatText(P.x,P.y-40,'Combat '+S.lvl+'!','#ffcd75');},900);if(S.lvl%5===0)MP.feed('level',String(S.lvl));}
-function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god)return;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
+function hurtPlayer(dmg,src){if(P.inv>0||ADMIN&&S.flags.god||P.hp<=0)return;P.hitT=time;const d=Math.max(1,Math.round(dmg)-defOf());P.hp-=d;P.inv=.7;P.chan=0;sfx('hurt');buzz(40);floatText(P.x,P.y-20,'-'+d,'#ff6b6b');
   shake=!SET.shake?0:3;if(src){const a=Math.atan2(P.y-src.y,P.x-src.x);for(let i=0;i<6;i++)moveBody(P,Math.cos(a)*1.5,Math.sin(a)*1.5,4);}
   if(P.hp<=0)die();}
 let shake=0;
+// ---------- Magic: casting with a staff ----------
+// Your attack casts your chosen spell. A bolt flies from the staff's tip toward the nearest monster you're facing (or
+// straight ahead); Starfall and Cataclysm fall from the sky onto the target instead. Each spell looks and hits differently.
+let BOLTS=[],SPFX=[];
+const bestSpell=()=>{let b='spark';for(const [k,s] of Object.entries(SPELLS))if(lvlOf('magic')>=s.lvl)b=k;return b;};
+const curSpell=()=>SPELLS[S.spell]&&lvlOf('magic')>=SPELLS[S.spell].lvl?S.spell:bestSpell();
+const SKY=new Set(['starfall','cataclysm']);
+// where the staff's tip is while casting (the staff is raised on the side you face)
+function staffTip(x,y,dir){return {x:x+(dir==='left'?-7:dir==='right'?7:dir==='up'?5:-6),y:y-(dir==='up'?21:19)};}
+function cast(){if(P.swingCD>0)return;const sp=curSpell(),D=SPELLS[sp];P.swingCD=.55;P.cast=.42;P.castSp=sp;FISHING=null;CHOP=null;
+  const f={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[P.dir],tip=staffTip(P.x,P.y,P.dir);
+  let tgt=null,bd=170;for(const e of ents){if(e.dead||e.d.proj)continue;const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);if(d<bd&&(dx*f[0]+dy*f[1])>d*.3){bd=d;tgt=e;}}
+  const a=tgt?Math.atan2((tgt.y-(tgt.d.big?12:6))-tip.y,tgt.x-tip.x):Math.atan2(f[1],f[0]);
+  P.castA=a;P.castTip=tip;P.castLaunch=.13;P.castTgt=tgt;sfx('cast');
+  if(MP.shared()||inWest()&&roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1,c:sp,a:Math.round(a*100)/100});}   // the party (or anyone in Hollowmere) sees the cast
+function launchBolt(sp,tip,a,tgt,mine,who){const D=SPELLS[sp];
+  if(SKY.has(sp)){const tx=tgt?tgt.x:tip.x+Math.cos(a)*80,ty=tgt?tgt.y-4:tip.y+19+Math.sin(a)*80;BOLTS.push({sp,sky:true,x:tx-26,y:ty-120,sx:tx-26,sy:ty-120,tx,ty,t:0,life:.42,mine,who,hit:new Set()});}
+  else BOLTS.push({sp,x:tip.x,y:tip.y,a,v:D.spd,t:0,life:1.05,mine,who,pierce:D.pierce||1,hit:new Set(),tr:[]});
+  spellSfx(sp);for(let i=0;i<(reduceMotion?3:10);i++){const b=a+(rand()-.5)*1.6,s=30+rand()*50;fx.push({x:tip.x,y:tip.y,vx:Math.cos(b)*s,vy:Math.sin(b)*s-10,t:0,life:.25+rand()*.2,col:i%2?D.col:D.col2});}}
+function spellSfx(sp){const n={spark:[880,1320],ember:[300,600],frost:[1200,1800],storm:[150,2200],burst:[220,440],lance:[180,90],starfall:[1500,700],cataclysm:[120,60]}[sp]||[600,900];
+  tone(n[0],.14,sp==='frost'||sp==='spark'||sp==='starfall'?'triangle':sp==='storm'?'sawtooth':'square',.035,n[1]/n[0]);if(sp==='storm')tone(90,.12,'sawtooth',.03,.5,.02);if(sp==='cataclysm'||sp==='burst')tone(70,.3,'sawtooth',.04,.5,.08);}
+function updateBolts(dt){if(!BOLTS.length)return;
+  for(const b of BOLTS){if(b.done)continue;b.t+=dt;const D=SPELLS[b.sp];
+    if(b.sky){const k=Math.min(1,b.t/b.life),e2=k*k;b.x=b.sx+(b.tx-b.sx)*e2;b.y=b.sy+(b.ty-b.sy)*e2;
+      if(!reduceMotion&&rand()<.9)fx.push({x:b.x+(rand()-.5)*3,y:b.y+(rand()-.5)*3,vx:(rand()-.5)*14,vy:-8-rand()*14,t:0,life:.3+rand()*.25,col:rand()<.5?D.col:D.col2});
+      if(k>=1){b.done=true;spellImpact(b,b.tx,b.ty,null);}continue;}
+    const ox=b.x,oy=b.y;b.x+=Math.cos(b.a)*b.v*dt;b.y+=Math.sin(b.a)*b.v*dt;b.tr.push([b.x,b.y]);if(b.tr.length>(b.sp==='storm'?7:b.sp==='lance'?6:5))b.tr.shift();
+    if(!reduceMotion){const n=b.sp==='ember'||b.sp==='burst'?2:1;for(let i=0;i<n;i++)if(rand()<.8)fx.push({x:ox+(rand()-.5)*3,y:oy+(rand()-.5)*3,vx:(rand()-.5)*16,vy:(b.sp==='ember'||b.sp==='burst'?-18:-4)-rand()*10,t:0,life:.18+rand()*.22,col:rand()<.6?D.col:D.col2});}
+    if(solidAt(map,Math.floor(b.x/T),Math.floor((b.y+6)/T))){b.done=true;spellImpact(b,ox,oy,null);continue;}
+    if(b.t>=b.life){b.done=true;if(D.aoe)spellImpact(b,b.x,b.y,null);else SPFX.push({k:'fizzle',x:b.x,y:b.y,t:0,life:.25,c:D.col});continue;}
+    for(const e of ents){if(e.dead||e.d.proj||b.hit.has(e.id))continue;const ey=e.y-(e.d.big?12:6);if(Math.hypot(e.x-b.x,ey-b.y)<e.r+5){b.hit.add(e.id);spellImpact(b,b.x,b.y,e);if(--b.pierce<=0){b.done=true;break;}}}}
+  BOLTS=BOLTS.filter(b=>!b.done);}
+// damage one monster with a spell (party dungeons: the host decides, like a sword hit)
+function spellHit(e,d,a,col,slow){if(e.dead)return 0;floatText(e.x,e.y-(e.d.big?28:16),String(d),col);e.flash=.12;e.sq=.16;if(slow)e.slowT=1.8;
+  if(MP.client()){e.hp=Math.max(0,e.hp-d);NET.send(slow?{t:'hit',e:e.id,d,a:Math.round(a*100)/100,s:1}:{t:'hit',e:e.id,d,a:Math.round(a*100)/100});return d;}applyHit(e,d,a,MP.me());return d;}
+function spellImpact(b,x,y,e){const D=SPELLS[b.sp],R=D.aoe||0,mx=spellMax(b.sp);
+  SPFX.push({k:b.sp,x,y,t:0,life:R?.5:.32,R:R||10,c:D.col,c2:D.col2});
+  if(b.mine){hitStop=Math.max(hitStop,R?.06:.035);if(SET.shake)shake=Math.max(shake,b.sp==='cataclysm'?5:R?3:1.2);}
+  if(!b.mine)return;const roll=()=>Math.max(1,Math.round(mx*(.65+rand()*.35)));
+  if(e){const a=Math.atan2(e.y-P.y,e.x-P.x);spellHit(e,roll(),a,D.col2,!!D.slow);
+    if(D.chain){let n=D.chain,from=e;const done=new Set([e.id]);while(n-->0){let best=null,bd=70;for(const q of ents){if(q.dead||q.d.proj||done.has(q.id))continue;const k=Math.hypot(q.x-from.x,q.y-from.y);if(k<bd){bd=k;best=q;}}
+      if(!best)break;done.add(best.id);SPFX.push({k:'arc',x:from.x,y:from.y-6,x2:best.x,y2:best.y-6,t:0,life:.22,c:D.col});spellHit(best,Math.round(roll()*.75),Math.atan2(best.y-from.y,best.x-from.x),D.col2);from=best;}}}
+  if(R)for(const q of ents){if(q.dead||q.d.proj||q===e)continue;if(Math.hypot(q.x-x,(q.y-6)-y)<R+q.r)spellHit(q,Math.round(roll()*.7),Math.atan2(q.y-y,q.x-x),D.col2);}
+}
+// the look of casting: the staff raised, a turning circle of runes at your feet, light gathering at the tip
+function drawCastPose(x,y,dir,left,sp,blade){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=ART.sword[blade]||ART.sword.apprentice;
+  g.save();g.globalCompositeOperation='lighter';
+  const ring=(R,al,rot,n)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rot;g.globalAlpha=al*(.6+.4*Math.sin(a*3+time*8));g.fillStyle=i%3?D.col:D.col2;g.fillRect(Math.round(X+Math.cos(a)*R),Math.round(Y+1+Math.sin(a)*R*.38),1,1);}};
+  const fade=Math.min(1,k*3)*Math.min(1,(1-k)*4+.2);ring(11,fade,time*3,22);ring(7,fade*.8,-time*4,14);
+  const gr=g.createRadialGradient(X,Y+1,0,X,Y+1,14);gr.addColorStop(0,'rgba(255,255,255,'+(.18*fade)+')');gr.addColorStop(1,'rgba(255,255,255,0)');g.globalAlpha=1;g.fillStyle=gr;g.fillRect(X-14,Y-6,28,14);
+  // light gathering into the tip
+  const tg=g.createRadialGradient(tip.x,tip.y,0,tip.x,tip.y,6+fade*7);tg.addColorStop(0,D.col2);tg.addColorStop(.35,D.col);tg.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.85*fade;g.fillStyle=tg;g.fillRect(tip.x-13,tip.y-13,26,26);
+  if(!reduceMotion)for(let i=0;i<6;i++){const ph=((time*2.2+i/6)%1),a=i*1.047+time*2,r=(1-ph)*14;g.globalAlpha=ph*fade;g.fillStyle=i%2?D.col2:D.col;g.fillRect(Math.round(tip.x+Math.cos(a)*r),Math.round(tip.y+Math.sin(a)*r),1,1);}
+  g.restore();
+  // the staff, held upright beside you, tipped a little toward where you face
+  const lean=dir==='left'?-.35:dir==='right'?.35:dir==='up'?.15:-.15;g.save();g.translate(Math.round(tip.x-Math.sin(lean)*2),Math.round(tip.y+16));g.rotate(lean-Math.PI/4);g.drawImage(sw,-2,-14);g.restore();}
+function drawBolts(){if(!BOLTS.length&&!SPFX.length)return;g.save();g.globalCompositeOperation='lighter';
+  const glow=(x,y,r,c,a)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=a;g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);};
+  const px=(x,y,c,a)=>{g.globalAlpha=a==null?1:a;g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),1,1);};
+  for(const b of BOLTS){const D=SPELLS[b.sp],X=b.x,Y=b.y,fl=.85+.15*Math.sin(time*40+b.t*30);
+    switch(b.sp){
+      case 'spark':glow(X,Y,7,D.col,.7*fl);px(X,Y,'#ffffff');for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])px(X+dx,Y+dy,D.col2);for(const [i,[tx,ty]] of b.tr.entries())px(tx,ty,D.col,i/b.tr.length*.6);break;
+      case 'ember':glow(X,Y,10,D.col,.75*fl);glow(X,Y,4,D.col2,.9);g.globalAlpha=1;g.fillStyle='#fff3c4';g.fillRect(Math.round(X)-1,Math.round(Y)-1,3,3);for(const [i,[tx,ty]] of b.tr.entries())glow(tx,ty,3+i,D.col2,.12*i);break;
+      case 'frost':{const ca=Math.cos(b.a),sa=Math.sin(b.a);glow(X,Y,8,D.col,.55);g.globalAlpha=1;for(let i=-4;i<=3;i++){const w=i<-1?0:i>1?0:1;g.fillStyle=i>1?'#ffffff':D.col;g.fillRect(Math.round(X+ca*i-sa*w),Math.round(Y+sa*i+ca*w),1,1);g.fillRect(Math.round(X+ca*i),Math.round(Y+sa*i),1,1);}
+        for(const [i,[tx,ty]] of b.tr.entries())px(tx+Math.sin(i+time*20)*2,ty+Math.cos(i*2)*2,'#e8fbff',.15*i);break;}
+      case 'storm':{g.strokeStyle=D.col;g.lineWidth=1;g.globalAlpha=.95;g.beginPath();const pts=b.tr;pts.forEach(([tx,ty],i)=>{const j=(rand()-.5)*5;i?g.lineTo(tx+j,ty+j):g.moveTo(tx,ty);});g.stroke();
+        g.strokeStyle='#ffffff';g.globalAlpha=.7;g.beginPath();pts.forEach(([tx,ty],i)=>{const j=(rand()-.5)*2;i?g.lineTo(tx+j,ty+j):g.moveTo(tx,ty);});g.stroke();glow(X,Y,9,D.col2,.6*fl);break;}
+      case 'burst':glow(X,Y,13,D.col,.7*fl);glow(X,Y,6,D.col2,.9);g.globalAlpha=1;g.fillStyle='#ffffff';g.fillRect(Math.round(X)-1,Math.round(Y)-1,2,2);for(const [i,[tx,ty]] of b.tr.entries())glow(tx,ty,4+i*1.4,D.col,.14*i);break;
+      case 'lance':{const ca=Math.cos(b.a),sa=Math.sin(b.a),L=22;g.globalAlpha=.9;g.strokeStyle=D.col;g.lineWidth=3;g.beginPath();g.moveTo(X-ca*L,Y-sa*L);g.lineTo(X+ca*3,Y+sa*3);g.stroke();
+        g.strokeStyle='#f1e4ff';g.lineWidth=1;g.beginPath();g.moveTo(X-ca*L*.7,Y-sa*L*.7);g.lineTo(X+ca*4,Y+sa*4);g.stroke();glow(X,Y,10,D.col,.6*fl);break;}
+      case 'starfall':case 'cataclysm':{const big=b.sp==='cataclysm',dx=b.tx-b.sx,dy=b.ty-b.sy,l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l,L=big?34:26;
+        const gr=g.createLinearGradient(X-ux*L,Y-uy*L,X,Y);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,D.col);g.globalAlpha=.9;g.strokeStyle=gr;g.lineWidth=big?5:3;g.beginPath();g.moveTo(X-ux*L,Y-uy*L);g.lineTo(X,Y);g.stroke();
+        glow(X,Y,big?16:11,D.col,.85);glow(X,Y,big?6:4,'#ffffff',.9);
+        // where it will land: a shrinking ring on the ground
+        const k=Math.min(1,b.t/b.life);g.globalAlpha=.5+.4*k;g.strokeStyle=D.col2;g.lineWidth=1;g.beginPath();g.ellipse(b.tx,b.ty,(D.aoe||20)*(1.3-k*.5),(D.aoe||20)*(1.3-k*.5)*.45,0,0,Math.PI*2);g.stroke();break;}
+    }}
+  for(const f of SPFX){const p=f.t/f.life,X=f.x,Y=f.y,a=1-p;
+    if(f.k==='arc'){g.strokeStyle=f.c;g.lineWidth=1;g.globalAlpha=a;g.beginPath();g.moveTo(X,Y);const n=6;for(let i=1;i<=n;i++){const t=i/n,j=i<n?(rand()-.5)*8:0;g.lineTo(X+(f.x2-X)*t+j,Y+(f.y2-Y)*t+j);}g.stroke();glow(f.x2,f.y2,8,'#ffffff',.5*a);continue;}
+    if(f.k==='fizzle'){glow(X,Y,6*(1-p)+2,f.c,a*.6);continue;}
+    const R=f.R*(.3+.9*Math.sqrt(p));
+    if(f.k==='frost'){glow(X,Y,10,f.c,.7*a);g.globalAlpha=a;g.fillStyle='#e8fbff';for(let i=0;i<8;i++){const an=i/8*Math.PI*2,r=4+p*12;g.fillRect(Math.round(X+Math.cos(an)*r),Math.round(Y+Math.sin(an)*r),1,1);g.fillRect(Math.round(X+Math.cos(an)*r*.5),Math.round(Y+Math.sin(an)*r*.5),1,1);}continue;}
+    glow(X,Y,Math.max(4,R*.9),f.c,.65*a);glow(X,Y,Math.max(2,R*.35),f.c2||'#ffffff',.8*a);
+    if(f.R>10){g.globalAlpha=a*.9;g.strokeStyle=f.c2||f.c;g.lineWidth=f.k==='cataclysm'?2:1;g.beginPath();g.ellipse(X,Y,R,R*.5,0,0,Math.PI*2);g.stroke();
+      if(f.k==='cataclysm'||f.k==='starfall'){g.globalAlpha=a*.5;g.beginPath();g.ellipse(X,Y,R*.6,R*.3,0,0,Math.PI*2);g.stroke();}}
+    if(p<.18&&(f.k==='cataclysm'||f.k==='starfall'))glow(X,Y,f.R*(f.k==='cataclysm'?4:3),f.c2||'#ffffff',(1-p/.18)*.55);}
+  g.restore();g.globalAlpha=1;}
+function updateSpellFx(dt){for(const f of SPFX){f.t+=dt;if(f.t<dt*1.5&&!reduceMotion&&f.k!=='arc'&&f.k!=='fizzle'){const n=f.R>10?18:8;for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=(f.R>10?40:25)+rand()*60;fx.push({x:f.x,y:f.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.6-20,t:0,life:.3+rand()*.35,col:i%3?f.c:(f.c2||'#ffffff')});}}}SPFX=SPFX.filter(f=>f.t<f.life);}
+// kill XP: with a staff it trains Magic (never Fighting); with a blade, Fighting
+function killXp(xp){if(staffOn()){const n=Math.max(1,Math.round(xp*2));skillXp('magic',n);floatText(P.x,P.y-30,'+'+n+' Magic xp','#c79bf2');}else gainXp(xp);}
 
 // ---------- loot ----------
 function rollRarity(floor,boost){const w={};let tot=0;for(const r of RORDER){let x=RARITY[r].w;if(r==='rare')x*=1+floor*.08*boost;if(r==='xrare')x*=1+floor*.15*boost;if(r==='legendary')x*=1+floor*.25*boost;w[r]=x;tot+=x;}
   let q=rand()*tot;for(const r of RORDER){q-=w[r];if(q<=0)return r;}return 'common';}
 function gearDrops(src,floor,boss){const luck=1+A('luck')/100,out=[];
-  if(rand()<{chest:.10,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
-  if(rand()<{chest:.035,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
+  if(rand()<{chest:.10,uchest:.2,enemy:.006,boss:.5}[src]*luck){const r=rollRarity(floor,src==='boss'?2:1);let pool=Object.keys(LANTERNS).filter(k=>k!=='basic'&&!LANTERNS[k].goal&&LANTERNS[k].r===r);if(!pool.length)pool=['tin'];out.push(pool[ri(0,pool.length-1)]+'_lantern');}
+  if(rand()<{chest:.035,uchest:.07,enemy:.0025,boss:.25}[src]*luck){const r=rollRarity(floor,1);let pool=Object.keys(CAPES).filter(k=>!CAPES[k].src&&!CAPES[k].boss&&CAPES[k].r===r);if(!pool.length)pool=['glow'];out.push('cape_'+pool[ri(0,pool.length-1)]);}
   if(boss){const k=Object.keys(CAPES).find(k=>CAPES[k].boss===boss);if(k&&rand()<.05*luck)out.push('cape_'+k);
     for(const [id,ch] of (ENEMIES[boss]&&ENEMIES[boss].rare)||[])if(rand()<ch*luck)out.push(id);}   // the rarest finds in the Depths
   return out;}
@@ -336,7 +453,7 @@ function addDrop(d,bag,own){d.ref='r'+(++dropRef);d.bag=!!bag;d.own=!!own&&MP.sh
 function netDrop(v,settled){if(drops.some(d=>d.did===v.did))return;if(scene==='delve'?(!run||v.f!==run.floor):v.f!=null)return;if(!ITEMS[v.it]&&v.it!=='gold')return;
   drops.push({pk:!!v.pk,x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
 const dropShown=d=>!d.showAt||Date.now()>=d.showAt;
-function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;give(into,d.id,d.n);
+function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;giveAny(into,d.id,d.n);
   if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');
   floatText(P.x,P.y-24,'+'+d.n+' '+(d.id==='gold'?'gold':ITEMS[d.id].n),d.id==='gold'?'#ffcd75':'#a7f070');if(scene==='hold')save();}
 function claimDrop(d){if(d.taken)return;
@@ -361,14 +478,16 @@ function mkDrop(x,y,id,n){const a=rand()*Math.PI*2,s=30+rand()*40;return {x,y,id
 function puff(x,y,col,n){if(reduceMotion)n=Math.min(n,3);for(let i=0;i<n;i++){const a=rand()*Math.PI*2,s=20+rand()*50;fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-20,t:0,life:.4+rand()*.3,col});}}
 
 // ---------- consumables, return, death ----------
-function useFlask(){if(scene!=='delve')return;if(!has('oil')){toast('No Oil Flasks. Press Lampseed at the Hold.','bad');return;}if(run.oil>=99){toast('Lantern is full');return;}
-  take('oil',1);run.oil=Math.min(100,run.oil+ITEMS.oil.oil);puff(P.x,P.y-12,'#ffcd75',8);updateHud();}
-const FOODS=['bread','pondfin','gloomfin','stew'];
+// the plain flask refills half the lantern, the Greater Oil Flask all of it (used first when the lantern is low)
+function useFlask(id){if(scene!=='delve')return;if(run.oil>=99){toast('Lantern is full');return;}
+  id=id&&has(id)?id:run.oil<=45&&has('oil2')?'oil2':has('oil')?'oil':has('oil2')?'oil2':null;if(!id){toast('No Oil Flasks. Press Lampseed at the Hold.','bad');return;}
+  take(id,1);run.oil=Math.min(100,run.oil+ITEMS[id].oil);puff(P.x,P.y-12,id==='oil2'?'#7affd6':'#ffcd75',id==='oil2'?16:8);updateHud();}
+const FOODS=['bread','pondfin','gloomfin','stew','moonfin'];
 const foodCount=()=>FOODS.reduce((a,f)=>a+(S.bank[f]||0),0);
 function eat(id){if(scene==='hold')return eatHold(id);if(scene!=='delve'){toast('Save your food for the Depths');return;}if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}
   if(P.hp>=maxHp()){toast('Already at full health');return;}take(id,1);P.hp=Math.min(maxHp(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');sfx('pick');updateHud();}
 function useQuick(i){const id=S.quick[i];if(!id){if(scene==='hold')openQuickPick(i);else toast('Set quick slots from your bag');return;}
-  if(scene==='hold'&&(id==='oil'||!(inWild()||P.hp<hpMax()-.5))){openQuickPick(i);return;}if(id==='oil')useFlask();else eat(id);}
+  if(scene==='hold'&&(ITEMS[id].oil||!(inWild()||inWest()||P.hp<hpMax()-.5))){openQuickPick(i);return;}if(ITEMS[id].oil)useFlask(id);else eat(id);}
 // eating in the Hold and the Wilderness: from your bag only, one bite every 1.5 s (the world's server keeps your health)
 function eatHold(id){if(P.hp>=hpMax()-.5){toast(inWild()?'Already at full health':'Save your food for the Depths');return;}
   if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}if(time-(MP.eatT||-9)<1.5)return;MP.eatT=time;
@@ -380,7 +499,7 @@ function useFood(){if(scene==='hold'){const have=FOODS.filter(f=>S.bank[f]>0).so
 const halfLoss=n=>Math.floor(n/2)+(n%2&&rand()<.5?1:0);
 function returnHome(){setTimeout(()=>save(true),50);sfx('flame');const r=run,out={};for(const [id,n] of Object.entries(r.pack)){if(id==='gold')S.gold+=n;else give(S.bank,id,n);out[id]=n;}enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
   summary('Back at the Hold',`You lit the Return Flame on floor ${r.floor} with ${r.kills} kills. Your haul is in your bag. Bank anything you can't afford to lose.`,out,null,'Brought home');}
-function die(){setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;if(netOn()&&MP.party)NET.lsend({t:'pdie',k:'depths',floor:r.floor});const kept={},lost={};
+function die(){if(scene==='hold')return westDie();setTimeout(()=>save(true),50);sfx('die');buzz(200);const r=run;S.deaths++;if(netOn()&&MP.party)NET.lsend({t:'pdie',k:'depths',floor:r.floor});const kept={},lost={};
   for(const [id,n] of Object.entries(r.pack)){const l=id==='gold'?Math.floor(n/2):halfLoss(n),k=n-l;if(k>0){if(id==='gold')S.gold+=k;else give(S.bank,id,k);kept[id]=(kept[id]||0)+k;}if(l>0)lost[id]=(lost[id]||0)+l;}
   for(const [id,n] of Object.entries(S.bank)){const l=halfLoss(n);if(l>0){S.bank[id]-=l;if(S.bank[id]<=0)delete S.bank[id];lost[id]=(lost[id]||0)+l;}}
   enterHold(HOLD.doors[r.door]||HOLD.doors.gate);notePos();save();
@@ -395,12 +514,12 @@ function skillXp(sk,n){if(sk==='fishing')n*=1+A('fishXp')/100;const before=lvlOf
 // ---------- fishing ----------
 let FISHING=null;
 function fishSpot(){if(scene!=='hold')return null;const tx=Math.floor(P.x/T),ty=Math.floor((P.y-3)/T),O={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]};
-  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d],w=tAt(map,tx+dx,ty+dy);if(isWater(w)){let bx=tx+dx,by=ty+dy;if(isWater(tAt(map,bx+dx,by+dy))&&isWater(tAt(map,bx+2*dx,by+2*dy))){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9,w:w===GLOOM?'wild':'hold'};}}return null;}
+  for(const d of [P.dir,'down','right','left','up']){const [dx,dy]=O[d],w=tAt(map,tx+dx,ty+dy);if(isWater(w)){let bx=tx+dx,by=ty+dy;if(isWater(tAt(map,bx+dx,by+dy))&&isWater(tAt(map,bx+2*dx,by+2*dy))){bx+=dx;by+=dy;}return {dir:d,bx:bx*T+8,by:by*T+9,w:w===GLOOM?'wild':w===MOON?'mere':'hold'};}}return null;}
 const catchChance=()=>Math.min(.93,.32+.006*(lvlOf('fishing')-1)+A('catch')/100);
 const biteWait=()=>(2.5+rand()*3.5)*(1-.004*(lvlOf('fishing')-1));
 function startFishing(sp){const W=WATERS[sp.w||'hold'];if(W.lvl&&lvlOf('fishing')<W.lvl){toast('You need Fishing '+W.lvl+' to fish the '+W.n+'.','bad');return;}CHOP=null;if(COOK)stopCook();sfx('cast');FISHING=Object.assign({phase:'cast',t:0,wait:0,px:P.x,py:P.y},sp);P.dir=sp.dir;}
 let missRun=0;
-function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');
+function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');if(F.item==='raw_moonfin')bump('moonfin');
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
   if(rand()<(1/300)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
 function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.hypot(P.x-FISHING.px,P.y-FISHING.py)>3){FISHING=null;return;}const f=FISHING;f.t+=dt;
@@ -518,16 +637,16 @@ function wildHud(){const w=inWild(),l=w?wildLvl(P.y):0,key=l+'|'+S.lvl+'|'+(skul
 // what you'd drop if you fell: your bag and the gear you wear (not starter gear, not bound or goal items), most valuable first
 function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'};
   for(const [id,n] of Object.entries(S.bank))if(ITEMS[id]&&tradable(id)&&n>0)out.push([id,n,0,ITEMS[id].v||0]);
-  for(const sl of ['blade','mail','lantern','cape','helm']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
+  for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
   return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
 // the Return Flame (hold it for 2 s) works in the Wilderness up to level 20: home to the Hold. A hit interrupts it.
-function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y};
+function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y,v:2};
   if(roomUp()&&MP.pvpOn)NET.send({t:'home',x:Math.round(P.x),y:Math.round(P.y)});MP.sent='';sfx('flame');puff(P.x,P.y-10,'#ffcd75',16);toast('The Return Flame carries you home to the Hold.','good');save();}
 // back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
-function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
-function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null};
+function respawnHold(){MP.deadAt=0;FISHING=null;CHOP=null;if(COOK)stopCook();P.x=HOLD.spawn.x;P.y=HOLD.spawn.y+8;S.pos={x:P.x,y:P.y,v:2};P.dir='down';P.hp=hpMax();P.inv=1.2;P.swing=0;MP.lc=-99;MP.sent='';MP.aim=null;}
+function applyPkDeath(m){const lost=Array.isArray(m.lost)?m.lost:[],kept=Array.isArray(m.kept)?m.kept:[],L={},K={},DEFG={blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null};
   for(const [id,n,slot] of lost){if(!ITEMS[id]||!(n>0))continue;
-    if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id)S.gear[slot]=DEFG[slot];
+    if(slot&&DEFG.hasOwnProperty(slot)&&gearId(slot,S.gear[slot])===id){S.gear[slot]=DEFG[slot];enchFade(slot);}
     else{const k=Math.min(n,S.bank[id]||0);if(k){S.bank[id]-=k;if(S.bank[id]<=0)delete S.bank[id];}}L[id]=(L[id]||0)+n;}
   for(const [id,n] of kept)if(ITEMS[id])K[id]=(K[id]||0)+n;
   const wasSk=!!m.sk;S.skull=0;bump('pkd');if(netOn())NET.lsend({t:'pdie',k:'wild',by:typeof m.by==='string'?m.by:undefined});if(scene==='hold')respawnHold();else S.pos=null;save(true);updateQuick(true);sfx('die');buzz(200);
@@ -610,7 +729,7 @@ $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();})
 function iconImg(id){return `<img class="ic" alt="" src="${iconOf(id).toDataURL()}">`;}
 function openGate(){
   if(MP.party&&MP.party.leader!==MP.id&&netOn())return MP.gateMember();
-  const lifts=LIFTS.filter(f=>f<=S.lift&&(!liftBoss(f)||S.bosses[liftBoss(f)])),LIFT_ORE={1:'copper_ore',6:'iron_ore',11:'coal_ore',16:'cobalt_ore'};
+  const lifts=LIFTS.filter(f=>f<=S.lift&&(!liftBoss(f)||S.bosses[liftBoss(f)])),LIFT_ORE={1:'copper_ore',6:'iron_ore',11:'coal_ore',16:'cobalt_ore',21:'gloam_ore',26:'gloam_ore'};
   openSheet(`<h2>The Delve Gate</h2><p class="lead">Your lantern starts full. It burns oil as you go, faster on deeper floors. At empty, Shades come for you.</p>
   <div class="kit"><span>${iconImg('oil')} Oil Flasks <b>${S.bank.oil||0}</b></span><span>${iconImg('bread')} Bread <b>${S.bank.bread||0}</b></span><span>${iconImg('pondfin')} Fish <b>${S.bank.pondfin||0}</b></span><span>${iconImg('stew')} Stew <b>${S.bank.stew||0}</b></span></div>
   <div class="gear" style="--rc:${RARITY[LANTERNS[S.gear.lantern].r].c}">${iconImg(S.gear.lantern+'_lantern')}<span><small>Your lantern</small><b>${LANTERNS[S.gear.lantern].n}</b><small>${lanStat(S.gear.lantern)}${A('oil')?' · cape: oil lasts '+A('oil')+'% longer':''}</small></span></div>
@@ -626,7 +745,7 @@ function openGate(){
 // ---- XP: the skill you're training shows as a thin strip under your health, and for a few seconds after each gain
 // the goals pill turns into "Fishing 12 · ▬▬ · 230 xp to 13" (tap it for the Skills tab). Combat counts too.
 let xpTipT=0,xpLast=null;
-function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);const mx=S.flv>=FIGHT_MAX;return {n:'Fighting',c:'#ef7d57',icon:S.gear.blade==='rusty'?'rusty_blade':S.gear.blade+'_blade',l:S.flv,p:mx?1:S.xp/need,left:need-S.xp,max:mx};}
+function xpInfo(k){if(k==='combat'){const need=xpNeed(S.flv);const mx=S.flv>=FIGHT_MAX;return {n:'Fighting',c:'#ef7d57',icon:staffOn()?'rusty_blade':gearId('blade',S.gear.blade),l:S.flv,p:mx?1:S.xp/need,left:need-S.xp,max:mx};}
   const l=lvlOf(k),xp=S.skills[k]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)];return {n:SKILLS[k].n,c:SKILLS[k].c,icon:SKILLS[k].icon,l,p:l>=99?1:(xp-a)/(b-a),left:Math.ceil(b-xp),max:l>=99};}
 function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb'),g=$('guide');xpLast=k;
   bar.hidden=false;f.style.width=Math.max(2,Math.round(x.p*100))+'%';f.style.background=x.c;f.style.color=x.c;bar.title=x.n;
@@ -636,7 +755,7 @@ function xpShow(k){if(!started)return;const x=xpInfo(k),f=$('xpFill'),bar=$('xpb
 function skillLine(sk){const l=lvlOf(sk),xp=S.skills[sk]||0,a=XP_TABLE[l],b=XP_TABLE[Math.min(99,l+1)],p=l>=99?1:(xp-a)/(b-a);
   return `<div class="skl${xpLast===sk?' cur':''}">${iconImg(SKILLS[sk].icon)}<span><b>${SKILLS[sk].n} <em>${l}</em><small>/99</small>${xpLast===sk?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(p*100)}%;background:${SKILLS[sk].c}"></i></i><small>${l>=99?'Max level':`<b>${fmt(Math.ceil(b-xp))}</b> xp to level ${l+1} · ${fmt(Math.floor(xp-a))} / ${fmt(b-a)} (${Math.floor(p*100)}%)`}</small></span></div>`;}
 function combatLine(){const x=xpInfo('combat'),pts=cbPts(),div=cbDiv(),base=combatFrom(S.flv,S.skills),nextAt=(base+1)*div,held=(S.cbFloor||1)>base,cp=Math.max(0,Math.min(1,(pts-base*div)/div));
-  return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting counts 2 points a level, every other skill 1`}</small></span></div>
+  return `<div class="skl cbsum"><span class="ic cbic">⚔</span><span><b>Combat level <em>${S.lvl}</em></b><i class="xpb"><i style="width:${held?100:Math.round(cp*100)}%;background:#ffcd75"></i></i><small>${held?`Kept from before the update. It climbs again once Fighting and your skills pass it (${pts}/${(S.lvl+1)*div} points).`:`<b>${nextAt-pts}</b> more point${nextAt-pts===1?'':'s'} to combat level ${base+1} · Fighting (or Magic, if higher) counts 2 points a level, every other skill 1`}</small></span></div>
    <div class="skl${xpLast==='combat'?' cur':''}">${iconImg(x.icon)}<span><b>Fighting <em>${x.l}</em><small>/${FIGHT_MAX}</small>${xpLast==='combat'?' <small class="trn">training</small>':''}</b><i class="xpb"><i style="width:${Math.round(x.p*100)}%;background:${x.c}"></i></i><small>${x.max?'Max level':`<b>${fmt(x.left)}</b> xp to level ${x.l+1} · from monsters in the Depths`}</small></span></div>`;}
 const burnChance=r=>!r.burn?0:Math.max(0,r.burn.chance*(1-(lvlOf('cooking')-1)/(r.burn.safeAt-1)))*(1-A('cookSafe')/100);
 function maxMake(r){let n=Infinity;for(const [id,q] of Object.entries(r.need))n=Math.min(n,Math.floor(avail(id)/q));return n===Infinity?0:n;}
@@ -671,20 +790,55 @@ function openKitchen(){const lv=lvlOf('cooking');
     <div class="cookb"><button class="btn sm" data-ck="${i}" data-n="1" ${!lock&&m>=1?'':'disabled'}>Cook 1</button><button class="btn sm alt" data-ck="${i}" data-n="5" ${!lock&&m>=5?'':'disabled'}>×5</button><button class="btn sm alt" data-ck="${i}" data-n="${m}" ${!lock&&m>1?'':'disabled'}>All${m>1?' ('+m+')':''}</button></div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
   $('sx').onclick=closeSheet;$('sheet').querySelectorAll('[data-ck]').forEach(b=>b.onclick=()=>startCook(RECIPES.kitchen[+b.dataset.ck],+b.dataset.n));}
 function needText(r){const p=Object.entries(r.need).map(([id,n])=>`<span class="${has(id,n)?'ok':'no'}">${iconImg(id)}${avail(id)}/${n}</span>`);if(r.gold)p.push(`<span class="${S.gold>=r.gold?'ok':'no'}">${iconImg('gold')}${r.gold}</span>`);return p.join('');}
-const canMake=r=>Object.entries(r.need).every(([id,n])=>has(id,n))&&S.gold>=(r.gold||0)&&(!r.lvl||RECIPES.forge.indexOf(r)<0||lvlOf('smithing')>=r.lvl);
+const canMake=r=>Object.entries(r.need).every(([id,n])=>has(id,n))&&S.gold>=(r.gold||0)&&(!r.lvl||!r.sk||lvlOf(r.sk)>=r.lvl);
+// which skill each workstation trains (and gates recipes by)
+const CRAFT_SK={forge:'smithing',smelt:'smithing',jewel:'crafting',staff:'crafting'};
+for(const [k,sk] of Object.entries(CRAFT_SK))RECIPES[k].forEach(r=>r.sk=sk);
+let craftQty=1;
 function openCraft(kind){
-  const T2={forge:['The Forge','Forge gear to train Smithing. Better gear unlocks as your level rises. New gear goes into your bag; equipping it swaps your old piece back into the bag.'],kitchen:['The Kitchen','Food heals you mid-delve. Use it with the food button.'],press:['The Oil Press','Lampseed becomes Oil Flasks, the fuel for your lantern.']}[kind];
-  openSheet(`<h2>${T2[0]}</h2>${kind==='forge'?skillLine('smithing'):''}<p class="lead${kind==='forge'?' small':''}">${T2[1]}</p><div class="list">${RECIPES[kind].map((r,i)=>{const lock=kind==='forge'&&lvlOf('smithing')<r.lvl;const it=ITEMS[r.out],owned=it.gear&&(S.gear[it.gear]===it.tier||(avail(r.out))>0);
-    const stat=it.gear?(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:'Defense '+GEAR[it.gear][it.tier].def):it.heal?'Heals '+it.heal:it.oil?'+'+it.oil+'% oil':'';
-    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock?'<span class="lockt">Needs Smithing '+r.lvl+'</span> · ':''}${stat}${kind==='forge'?' · '+r.xp+' xp':''}${owned?' · owned':''}${kind!=='forge'?' · have '+(avail(r.out)):''}</small></span><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button></div><div class="need">${needText(r)}</div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
-  $('sx').onclick=closeSheet;
-  $('sheet').querySelectorAll('[data-make]').forEach(b=>b.onclick=()=>{const r=RECIPES[kind][+b.dataset.make];if(!canMake(r))return;
-    for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;const it=ITEMS[r.out];
-    if(it.gear){give(S.bank,r.out,1);S.flags.forged=true;bump('forged');sfx('cook');if(r.xp)skillXp('smithing',r.xp);save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
-    else{give(S.bank,r.out,r.n||1);toast('Made '+it.n+(r.n?' ×'+r.n:''),'good');if(kind==='press'){S.flags.pressed=true;bump('pressed');}}
-    sfx('cook');
-    save();openCraft(kind);});
+  const T2={forge:['The Forge','Forge gear to train Smithing. Better gear unlocks as your level rises. New gear goes into your bag; equipping it swaps your old piece back into the bag.'],
+    smelt:['The Forge','Smelt ore into bars for Smithing XP. Bars are what the Jeweler’s Bench makes rings and amulets from.'],
+    jewel:['Jeweler’s Bench','Set gems into bars to craft rings and amulets for Crafting XP. You can wear one of each: they work like capes, everywhere except Wilderness fights.'],
+    staff:['Jeweler’s Bench','Carve staffs for Crafting XP. Wield one and your attacks become spells that train Magic.'],
+    kitchen:['The Kitchen','Food heals you mid-delve. Use it with the food button.'],press:['The Oil Press','Lampseed becomes Oil Flasks, the fuel for your lantern. The Greater Oil Flask refills it all: pressing one takes Farming 30 and a Moonpetal (grow it from Moonpetal Seeds, Farming 25).']}[kind];
+  const sk=CRAFT_SK[kind],forgeTabs=kind==='forge'||kind==='smelt',multi=kind==='smelt'||kind==='press';
+  const tabs=kind==='jewel'||kind==='staff'?`<div class="tabs" role="tablist"><button class="tab" role="tab" id="tbJ" aria-selected="${kind==='jewel'}">Rings &amp; amulets</button><button class="tab" role="tab" id="tbT" aria-selected="${kind==='staff'}">Staffs</button></div>`:forgeTabs?`<div class="tabs" role="tablist"><button class="tab" role="tab" id="tbF" aria-selected="${kind==='forge'}">Forge gear</button><button class="tab" role="tab" id="tbS" aria-selected="${kind==='smelt'}">Smelt bars</button><button class="tab" role="tab" id="tbR" aria-selected="false">Relic forge</button></div>`:'';
+  openSheet(`<h2>${T2[0]}</h2>${tabs}${sk?skillLine(sk):''}<p class="lead${sk?' small':''}">${T2[1]}</p><div class="list">${RECIPES[kind].map((r,i)=>{const lock=sk&&lvlOf(sk)<r.lvl;const it=ITEMS[r.out],owned=(it.gear&&(S.gear[it.gear]===it.tier||(avail(r.out))>0))||(it.jewel&&(S.gear[it.jewel]===r.out||avail(r.out)>0));
+    const lk=r.sk&&lvlOf(r.sk)<r.lvl,stat=it.gear?(it.gear==='blade'?(isStaff(it.tier)?'+'+GEAR.blade[it.tier].mag+'% spell damage':'Damage '+GEAR.blade[it.tier].dmg):'Defense '+GEAR[it.gear][it.tier].def):it.jewel?(it.jewel==='ring'?'Ring · ':'Amulet · ')+jewelStat(r.out):it.heal?'Heals '+it.heal:it.oil?'+'+it.oil+'% oil':'';
+    const mx=multi?maxMake(r):0;
+    return `<div class="recipe"><div class="rh">${iconImg(r.out)}<span><b>${it.n}${r.n?' ×'+r.n:''}</b><small>${lock||(!sk&&lk)?'<span class="lockt">Needs '+SKILLS[sk||r.sk].n+' '+r.lvl+'</span> · ':''}${stat?stat+' · ':''}${r.xp?r.xp+' xp':''}${owned?' · owned':''}${!it.gear&&!it.jewel?' · have '+(avail(r.out)):''}</small></span><span class="mk"><button class="btn sm" data-make="${i}" ${canMake(r)?'':'disabled'}>Make</button>${multi&&mx>1&&canMake(r)?`<button class="btn alt sm" data-all="${i}">All ${mx}</button>`:''}</span></div><div class="need">${needText(r)}</div></div>`;}).join('')}</div><div class="row"><button class="btn alt" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;if($('tbF'))$('tbF').onclick=()=>openCraft('forge');if($('tbS'))$('tbS').onclick=()=>openCraft('smelt');if($('tbR'))$('tbR').onclick=openRelicForge;if($('tbJ'))$('tbJ').onclick=()=>openCraft('jewel');if($('tbT'))$('tbT').onclick=()=>openCraft('staff');
+  const make=(r,times)=>{let made=0;for(let k=0;k<times&&canMake(r);k++){for(const [id,n] of Object.entries(r.need))take(id,n);S.gold-=r.gold||0;give(S.bank,r.out,r.n||1);made++;if(r.xp&&r.sk)skillXp(r.sk,r.xp);}return made;};
+  $('sheet').querySelectorAll('[data-make],[data-all]').forEach(b=>b.onclick=()=>{const all=b.dataset.all!=null,r=RECIPES[kind][+(all?b.dataset.all:b.dataset.make)];if(!canMake(r))return;const it=ITEMS[r.out];
+    const n=make(r,all?maxMake(r):1);
+    if(it.gear&&!isStaff(it.tier)){S.flags.forged=true;bump('forged');sfx('cook');save();toast('Forged '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    if(it.gear&&isStaff(it.tier)){S.flags.staff=true;bump('staffs');sfx('rare');puff(P.x,P.y-12,'#9b7bff',14);save();toast('Carved '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    if(it.jewel){S.flags.crafted=true;bump('crafted');sfx('rare');puff(P.x,P.y-12,'#e86fd0',14);save();toast('Crafted '+it.n+'. It is in your bag.','good');openItem(r.out);return;}
+    toast('Made '+it.n+((r.n||1)*n>1?' ×'+(r.n||1)*n:''),'good');if(kind==='press'){S.flags.pressed=true;bump('pressed');if(r.out==='oil2')bump('oiltwo');}if(kind==='smelt')bump('bars',n);
+    sfx('cook');save();openCraft(kind);});
 }
+// ---------- Relic-forging: spend boss relics to forge power into the gear you wear, +1 to +5 ----------
+const forgeFx=(id,l)=>{const it=ITEMS[id];if(!it||!l)return '';if(it.jewel)return '+'+FORGE_FX.jewel*l+'% to its bonuses';if(it.gear==='blade')return isStaff(it.tier)?'+'+FORGE_FX.staff*l+'% spell damage':'+'+FORGE_FX.blade*l+'% damage';
+  return '+'+FORGE_FX.def*l+' defense'+(it.gear==='mail'&&GEAR.mail[it.tier].robe?' · +'+FORGE_FX.robe*l+'% spell damage':'');};
+const fTag=sl=>{const l=fLv(sl);return l?' <em class="rt" style="color:#ffcd75">+'+l+'</em>':'';};
+function openRelicForge(){const sm=lvlOf('smithing'),relics=RELIC_FORGE.filter(Boolean).map(f=>f.relic).concat(RELIC_CROWN);
+  openSheet(`<h2>The Forge</h2><div class="tabs" role="tablist"><button class="tab" role="tab" id="tbF" aria-selected="false">Forge gear</button><button class="tab" role="tab" id="tbS" aria-selected="false">Smelt bars</button><button class="tab" role="tab" id="tbR" aria-selected="true">Relic forge</button></div>${skillLine('smithing')}
+   <p class="lead small">Spend boss relics to forge power into the gear you wear, up to +5. Each step takes the next boss’s relic (+1 Slime Crown, +2 Knight’s Sigil, +3 Forge Heart, +4 Fallen Star, +5 Drowned Grimoire) and gold: the higher the item’s level, the more gold. The Hollow Crown perfects an enchantment instead (Enchant, on the Hero screen).</p>
+   <p class="lead small">A forged piece keeps its power while you own it, and it counts everywhere except Wilderness fights. Sell, trade or lose every copy and the forging is gone. Relics you spend are gone for good.</p>
+   <div class="need relics">${relics.map(k=>`<span class="${avail(k)?'ok':'no'}" title="${ITEMS[k].n}">${iconImg(k)}${avail(k)}</span>`).join('')}</div>
+   <div class="list">${[['blade','Blade'],['mail','Armor'],['helm','Helmet'],['ring','Ring'],['amulet','Amulet']].map(([sl,L])=>{const id=wornId(S.gear,sl);
+     if(!id||!forgeable(id))return `<div class="recipe locked"><div class="rh"><i class="ic blank"></i><span><b>${L}</b><small>${id?ITEMS[id].n+' can’t be forged':'Nothing worn'}</small></span></div></div>`;
+     const l=S.forged[id]||0,R=RELIC_FORGE[l+1];
+     if(!R)return `<div class="recipe"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n} +${l}</b><small>Fully forged: ${forgeFx(id,l)}</small></span></div></div>`;
+     const G=forgeGold(id,l+1),can=sm>=R.lvl&&has(R.relic)&&S.gold>=G;
+     return `<div class="recipe${sm<R.lvl?' locked':''}"><div class="rh">${iconImg(id)}<span><b>${ITEMS[id].n}${l?' +'+l:''}</b><small>Item level ${itemLvl(id)} · ${sm<R.lvl?'<span class="lockt">Needs Smithing '+R.lvl+'</span> · ':''}${l?'Now '+forgeFx(id,l)+' · ':''}+${l+1}: ${forgeFx(id,l+1)} · ${R.xp} xp</small></span><span class="mk"><button class="btn sm" data-rf="${sl}" ${can?'':'disabled'}>Forge</button></span></div><div class="need"><span class="${has(R.relic)?'ok':'no'}">${iconImg(R.relic)}${avail(R.relic)}/1</span><span class="${S.gold>=G?'ok':'no'}">${iconImg('gold')}${fmt(G)}</span></div></div>`;}).join('')}</div>
+   <div class="row"><button class="btn" id="sx">Done</button></div>`);
+  $('sx').onclick=closeSheet;$('tbF').onclick=()=>openCraft('forge');$('tbS').onclick=()=>openCraft('smelt');$('tbR').onclick=openRelicForge;
+  $('sheet').querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{const sl=b.dataset.rf,id=wornId(S.gear,sl);if(!id||!forgeable(id))return;const l=S.forged[id]||0,R=RELIC_FORGE[l+1];
+    const G=forgeGold(id,l+1);if(!R||lvlOf('smithing')<R.lvl||!has(R.relic)||S.gold<G)return;
+    take(R.relic,1);S.gold-=G;S.forged[id]=l+1;skillXp('smithing',R.xp);bump('relicforge');P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([40,30,40,30,90]);puff(P.x,P.y-12,'#ffcd75',26);SPFX.push({k:'starfall',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#ffcd75',c2:'#fff3c4'});
+    toast(ITEMS[id].n+' +'+(l+1)+': '+forgeFx(id,l+1),'rare r-legendary');save(true);openRelicForge();});}
 // market: sell to the Hold and buy from its shop. Player-to-player trading comes later.
 function openSettings(){
   const tog=(k,l,on)=>`<div class="setrow"><span>${l}</span><button class="btn alt sm" data-tog="${k}" aria-pressed="${!!on}">${on?'On':'Off'}</button></div>`;
@@ -717,7 +871,7 @@ function openMarket(tab,hello){if(hello)MP.tallowHi=TALLOW_HI[ri(0,TALLOW_HI.len
   const pricey=id=>ITEMS[id].relic||ITEMS[id].v>=300||(ITEMS[id].rarity&&RORDER.indexOf(ITEMS[id].rarity)>=2);
   q('[data-sell]').forEach(b=>b.onclick=()=>{const id=b.dataset.sell,from=b.dataset.from,key=from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;return openMarket('sell');}sellArm=null;if(sellFrom(from,id,1))toast('Sold '+ITEMS[id].n+' for '+fmt(ITEMS[id].v)+' gold');openMarket('sell');});
   q('[data-sellall]').forEach(b=>b.onclick=()=>{const id=b.dataset.sellall,from=b.dataset.from,key='all:'+from+':'+id;if(pricey(id)&&sellArm!==key){sellArm=key;b.textContent='Sure?';b.classList.add('warn');return;}sellArm=null;const n=sellFrom(from,id,1e9);if(n)toast('Sold '+n+' '+ITEMS[id].n);openMarket('sell');});
-  q('[data-buy]').forEach(b=>b.onclick=()=>{const s=SHOP.find(x=>x.id===b.dataset.buy),n=+b.dataset.n||1;if(S.gold<s.price*n)return;S.gold-=s.price*n;give(S.bank,s.id,n);save();toast('Bought '+n+' '+ITEMS[s.id].n);openMarket('shop');});
+  q('[data-buy]').forEach(b=>b.onclick=()=>{const s=SHOP.find(x=>x.id===b.dataset.buy),n=+b.dataset.n||1;if(S.gold<s.price*n)return;S.gold-=s.price*n;giveAny(S.bank,s.id,n);save();toast('Bought '+n+' '+ITEMS[s.id].n);openMarket('shop');});
 }
 const rc=id=>ITEMS[id]&&ITEMS[id].rarity?RARITY[ITEMS[id].rarity]:null;
 const rTag=id=>{const R=rc(id);return R?`<em class="rt" style="color:${R.c}">${R.n}</em>`:'';};
@@ -743,35 +897,43 @@ function openBag(tab){bagTab=tab||'items';
   const owned=t=>allKeys().filter(id=>ITEMS[id][t]).length;
   let body='';
   if(bagTab==='hero'){body=`<div class="hero"><img class="ic" alt="" src="${hc.toDataURL()}"><span><b>${esc(S.name||'Adventurer')}</b><small>${FND&&FND.no?'Hero #'+nfmt(FND.no)+' · ':''}${wl}${window.ACC&&ACC.online()?' · saved to your account':''}</small></span>${scene==='hold'?'<button class="btn alt sm" id="look">Change look</button>':''}</div>${linkRows()}${xRow()}
-   <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span><span>Damage <b>${Math.round(dmgOf())}</b></span><span>Defense <b>${defOf()}</b></span></div>
+   <div class="stats"><span>Combat <b>${S.lvl}</b></span><span>HP <b>${Math.ceil(P.hp)}/${maxHp()}</b></span>${staffOn()?`<span>Spell <b>${spellMax(curSpell())}</b></span>`:`<span>Damage <b>${Math.round(dmgOf())}</b></span>`}<span>Defense <b>${defOf()}</b></span></div>
    <div class="gears">
-    ${row(iconImg(gearId('blade',bl)),'Blade',ITEMS[gearId('blade',bl)].n,'Damage '+GEAR.blade[bl].dmg,`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
-    ${row(iconImg(gearId('mail',ml)),'Armor',ITEMS[gearId('mail',ml)].n,'Defense '+GEAR.mail[ml].def,`<button class="btn alt sm" data-eq="mail">Change${allKeys().some(id=>itemSlot(id)==='mail')?' ('+allKeys().filter(id=>itemSlot(id)==='mail').length+')':''}</button>`)}
+    ${row(iconImg(gearId('blade',bl)),isStaff(bl)?'Staff':'Blade',ITEMS[gearId('blade',bl)].n+fTag('blade'),(isStaff(bl)?'+'+GEAR.blade[bl].mag+'% spell damage · attacks cast spells':'Damage '+GEAR.blade[bl].dmg)+(fLv('blade')?' · forged '+forgeFx(gearId('blade',bl),fLv('blade')):''),`<button class="btn alt sm" data-eq="blade">Change${owned('gear')&&allKeys().some(id=>itemSlot(id)==='blade')?' ('+allKeys().filter(id=>itemSlot(id)==='blade').length+')':''}</button>`)}
+    ${isStaff(bl)?row(`<i class="ic spic" style="--sc:${SPELLS[curSpell()].col}">✦</i>`,'Attack spell',SPELLS[curSpell()].n,'Hits up to '+spellMax(curSpell())+' · '+SPELLS[curSpell()].d,'<button class="btn alt sm" id="spB">Change</button>'):''}
+    ${row(iconImg(gearId('mail',ml)),'Armor',ITEMS[gearId('mail',ml)].n+fTag('mail'),'Defense '+GEAR.mail[ml].def+(GEAR.mail[ml].mag?' · +'+GEAR.mail[ml].mag+'% spell damage':'')+(fLv('mail')?' · forged '+forgeFx(gearId('mail',ml),fLv('mail')):''),`<button class="btn alt sm" data-eq="mail">Change${allKeys().some(id=>itemSlot(id)==='mail')?' ('+allKeys().filter(id=>itemSlot(id)==='mail').length+')':''}</button>`)}
     ${row(iconImg(ln+'_lantern'),'Lantern '+rTag(ln+'_lantern'),LANTERNS[ln].n,lanStat(ln),`<button class="btn alt sm" data-eq="lantern">Change${owned('lantern')?' ('+owned('lantern')+')':''}</button>`,ln+'_lantern')}
     ${cp?row(iconImg('cape_'+cp),'Cape '+rTag('cape_'+cp),CAPES[cp].n,capeStat(cp),`<button class="btn alt sm" data-eq="cape">Change</button>`,'cape_'+cp)
         :row('<i class="ic blank"></i>','Cape','No cape',owned('cape')?'You have '+owned('cape')+' to wear':'Capes are rare finds in the Depths',owned('cape')?`<button class="btn alt sm" data-eq="cape">Wear</button>`:'')}
-    ${S.gear.helm?row(iconImg(gearId('helm',S.gear.helm)),'Helmet '+rTag(gearId('helm',S.gear.helm)),ITEMS[gearId('helm',S.gear.helm)].n,helmStat(S.gear.helm),'<button class="btn alt sm" data-eq="helm">Change</button>',gearId('helm',S.gear.helm))
+    ${S.gear.helm?row(iconImg(gearId('helm',S.gear.helm)),'Helmet '+rTag(gearId('helm',S.gear.helm)),ITEMS[gearId('helm',S.gear.helm)].n+fTag('helm'),helmStat(S.gear.helm)+(fLv('helm')?' · forged '+forgeFx(gearId('helm',S.gear.helm),fLv('helm')):''),'<button class="btn alt sm" data-eq="helm">Change</button>',gearId('helm',S.gear.helm))
        :row('<i class="ic blank"></i>','Helmet','No helmet',allKeys().some(id=>itemSlot(id)==='helm')?'You have one to wear':'Forge one from Smithing 3',allKeys().some(id=>itemSlot(id)==='helm')?'<button class="btn alt sm" data-eq="helm">Wear</button>':'')}
+    ${['ring','amulet'].map(sl=>{const k=S.gear[sl],L=sl==='ring'?'Ring':'Amulet',n=allKeys().filter(id=>itemSlot(id)===sl).length,en=S.ench[sl]&&S.ench[sl].id===k?S.ench[sl]:null;return k?row(iconImg(k),L+(en?' <em class="rt" style="color:#c79bf2">Enchanted</em>':''),ITEMS[k].n+fTag(sl),jewelStat(k)+(fLv(sl)?' · forged '+forgeFx(k,fLv(sl)):'')+(en?' · <span style="color:#c79bf2">'+enchStat(en)+'</span>':''),`<span class="mk"><button class="btn alt sm" data-ench="${sl}">Enchant</button><button class="btn alt sm" data-eq="${sl}">Change</button></span>`)
+       :row('<i class="ic blank"></i>',L,'No '+sl,n?'You have '+n+' to wear':'Craft one at the Jeweler’s Bench',n?`<button class="btn alt sm" data-eq="${sl}">Wear</button>`:'');}).join('')}
     ${isFounder()?row('<i class="ic flameic"></i>','Founder','Founder’s Flame',SET.flame!==false?'Lit: your light burns violet':'Off',`<button class="btn alt sm" id="flH">${SET.flame!==false?'Turn off':'Light it'}</button>`):''}
    </div>
    ${ADMIN?'<button class="btn big admin" id="adm">Admin powers</button>':''}
    <h3>Quick slots <small>tap to set</small></h3><div class="qslots">${S.quick.map((id,j)=>`<button class="qs" data-qs="${j}" aria-label="Quick slot ${j+1}${id?': '+ITEMS[id].n:''}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="row"><button class="btn alt" id="setO">Settings</button><button class="btn alt" id="gd">Goals</button></div>
    <div class="row"><button class="btn alt" id="reset">Reset progress</button><button class="btn alt" id="out">Sign out</button></div>`;}
-  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['woodcutting','fishing','farming','cooking','smithing','mining'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
+  else if(bagTab==='skills'){body=`<div class="list">${combatLine()}${['magic','woodcutting','fishing','farming','cooking','smithing','mining','crafting'].map(skillLine).join('')}</div><p class="small">Total level ${totalLvl()} · <button class="linkb" id="gd2">Goals ${goalsDone()}/${GOALS.length}</button></p>
    <div class="perks"><p><b>Farming</b> ${Math.round(lvlOf('farming'))}% chance of a bonus crop. Unlocks Lampseed at 3, Glowcap at 6.</p>
    <p><b>Fishing</b> ${Math.round(catchChance()*100)}% catch chance if you don't hook. Tap <b>Hook!</b> when the bobber dips for a sure catch. ${fmt(S.caught||0)} fish caught.</p>
    <p><b>Woodcutting</b> ${Math.round(chopChance()*100)}% chance per swing, one swing every ${chopEvery().toFixed(1)} s. Oaks at the Hold hold 300 logs, shared by everyone, then fall and regrow. ${fmt(C('logs'))} logs cut. Logs will feed a new skill soon, so stack them.</p>
-   <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32.</p>
+   <p><b>Smithing</b> Forge gear for XP. Helmets at 3, armor at 6, Iron at 10–14, Ember at 25–32, Steel at 35–42. Smelt ore into bars at the Forge too.</p>
+   <p><b>Mining</b> Mine the ore in the walls of the Depths. Iron at 10, Coal at 20, Emberite at 25, Cobalt at 30, Starshard at 40. Veins grow back.</p>
+   <p><b>Crafting</b> Set gems into bars at the Jeweler’s Bench to make rings and amulets, and carve staffs there too. Find Rubies, Sapphires, Emeralds and Diamonds in chests.</p>
+   <p><b>Magic</b> Wield a staff and your attacks become spells: Spark at 1, Ember Bolt 8, Frost Shard 16, Storm Lash 26, Flame Burst 36, Void Lance 48, Starfall 62, Cataclysm 80. Kills with a staff train Magic, never Fighting. Magic also enchants your ring and amulet with runes from your rune bag.</p>
    <p><b>Cooking</b> ${Math.round(burnChance(RECIPES.kitchen[1])*100)}% chance to burn Pondfin (none at level 30). Unlocks Glowcap Stew at 5.</p>
-   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × Fighting + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking, smithing and mining all raise it. Fighting tops out at 99.</p></div>`;}
+   <p class="small">Combat level ${S.lvl} · Fighting ${S.flv} · deepest floor ${S.deepest||'—'}</p><p><b>Combat level</b> = (2 × the higher of Fighting and Magic + all your skill levels) ÷ ${cbDiv()}. Every skill counts, so fishing, chopping, farming, cooking, smithing, mining, crafting and magic all raise it. Fighting tops out at 99.</p></div>`;}
   else{const items=Object.entries(S.bank).filter(([id])=>ITEMS[id]).sort((a,b)=>(RORDER.indexOf(ITEMS[b[0]].rarity)+1)-(RORDER.indexOf(ITEMS[a[0]].rarity)+1));
    const pg=scene==='delve'&&run?(run.pack.gold||0):0,found=scene==='delve'&&run?Object.fromEntries(Object.entries(run.pack).filter(([id])=>id!=='gold')):{};
    body=`<div class="goldline">${iconImg('gold')}<span><b>${fmt(S.gold)}</b> gold${pg?` <em>+${fmt(pg)} found this delve</em>`:''}</span></div>${tokLine()}
+   <h3>Rune bag <small>never lost, even if you fall</small></h3><div class="grid runes">${Object.keys(RUNES).map(k=>{const id=k+'_rune',n=S.runes[id]||0;return `<button class="cell${n?'':' dim'}" data-rune="${id}" aria-label="${ITEMS[id].n}, ${n}">${iconImg(id)}<b>${fmt(n)}</b><small>${ITEMS[id].n}</small></button>`;}).join('')}</div>
    ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
   openSheet(`<h2>${{hero:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
   q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));if($('rewB'))$('rewB').onclick=()=>openRewards();
+  q.querySelectorAll('[data-ench]').forEach(b=>b.onclick=()=>openEnchant(b.dataset.ench));if($('spB'))$('spB').onclick=openSpells;q.querySelectorAll('[data-rune]').forEach(b=>b.onclick=()=>openRuneInfo(b.dataset.rune));
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
   if($('look'))$('look').onclick=()=>{closeSheet();ACC.editLook(S.name,S.look);};
@@ -785,12 +947,20 @@ function openBag(tab){bagTab=tab||'items';
 }
 function itemInfo(id){const it=ITEMS[id],o=[];
   if(it.lantern)o.push(lanStat(it.lantern));if(it.cape)o.push(capeStat(it.cape));if(it.heal)o.push('Heals '+it.heal+' HP in the Depths');if(it.oil)o.push('Refills '+it.oil+'% lantern oil');
-  if(it.gear)o.push(it.gear==='blade'?'Damage '+GEAR.blade[it.tier].dmg:it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def);
+  if(it.gear)o.push(it.gear==='blade'?(isStaff(it.tier)?'+'+GEAR.blade[it.tier].mag+'% spell damage · a club ('+GEAR.blade[it.tier].dmg+' damage) in the Wilderness':'Damage '+GEAR.blade[it.tier].dmg):it.gear==='helm'?helmStat(it.tier):'Defense '+GEAR.mail[it.tier].def+(GEAR.mail[it.tier].mag?' · +'+GEAR.mail[it.tier].mag+'% spell damage':''));
+  if(it.gear==='blade'&&isStaff(it.tier))o.push('Wield it and your attacks cast spells, which train Magic instead of Fighting');
+  if(id==='moon_staff'||id==='tide_robe')o.push('Only the Drowned Archmage drops it (floor 25)');if(id==='hollow_staff'||id==='void_robe')o.push('Only the Hollow King drops it (floor 30)');
+  if(id==='oil2')o.push('Pressed at the Oil Press: 2 Lampseed + 1 Moonpetal, Farming 30. Also found in Uncommon Chests');if(id==='moonpetal')o.push('Press it with Lampseed into a Greater Oil Flask');
+  if(id==='gloam_ore')o.push('The one ore of floors 21–30. Smelt it into Gloamite Bars at the Forge (Smithing 50)');if(id==='gloam_bar')o.push('Forge Gloamite gear (Smithing 52–58) and the Gloamwood Staff');
   {const ok=Object.keys(ORES).find(k=>k+'_ore'===id);if(ok)o.push('Mined in the Depths · Mining '+ORES[ok].lvl);}
-  if(it.rarity==='mythic'&&it.gear)o.push('One of the two rarest finds in the Depths');if(it.relic)o.push('Boss relic. Can be minted on-chain in the live game');
+  if(it.rarity==='mythic'&&it.gear)o.push('One of the rarest finds in the Depths');if(it.relic){const st=RELIC_FORGE.findIndex(f=>f&&f.relic===id),bk=Object.keys(ENEMIES).find(k=>ENEMIES[k].relic===id),pk=PACKS.find(p=>p.boss===bk);
+    o.push(id===RELIC_CROWN?'Crowns an enchantment: spend it on an enchanted ring or amulet (Enchant, on the Hero screen) and every bonus rises to the most that enchantment can roll':'Relic-forging: takes a piece you wear from +'+(st-1)+' to +'+st+' at the Forge (Relic forge tab, Smithing '+RELIC_FORGE[st].lvl+')');
+    if(pk)o.push('A rare drop from '+pk.bossName+' (about 1 kill in 25)');}
   const seedOf=Object.values(CROPS).find(c=>c.seed===id);if(seedOf)o.push('Plant at the Farm · Farming '+seedOf.lvl);
   const ck=RECIPES.kitchen.find(r=>r.need[id]);if(ck)o.push('Cook into '+ITEMS[ck.out].n+' at the Kitchen');
-  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id)&&RECIPES.forge.some(r=>r.need[id]))o.push('Used at the Forge');if(id==='starshard_ore')o.push('Prized by traders: sell it to Tallow');
+  if(id==='lampseed')o.push('Press into Oil Flasks at the Oil Press');if(/_ore$|gem|gel|bone/.test(id)&&RECIPES.forge.some(r=>r.need[id]))o.push('Used at the Forge');if(RECIPES.smelt.some(r=>r.need[id]))o.push('Smelt into bars at the Forge');
+  if(RECIPES.jewel.some(r=>r.need[id]))o.push('Used at the Jeweler’s Bench for rings and amulets');if(it.gem&&id!=='gem')o.push('Found in chests in the Depths');
+  if(it.jewel)o.push((it.jewel==='ring'?'Ring':'Amulet')+': '+jewelStat(id),'Bonuses work everywhere except Wilderness fights');if(id==='starshard_ore')o.push('Prized by traders: sell it to Tallow');
   if(id==='burnt_fish')o.push('Not much use to anyone');return o;}
 let dropQty=1,dropArm=false;
 function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();return;}if(!keep){dropQty=1;dropArm=false;}dropQty=Math.min(dropQty,n);
@@ -816,14 +986,15 @@ function openItem(id,keep){const it=ITEMS[id],n=S.bank[id]||0;if(!n){openBag();r
   if($('drop'))$('drop').onclick=()=>{if((rare||dropQty>=10||dropQty===n&&n>1)&&!dropArm){dropArm=true;openItem(id,true);return;}
     take(id,dropQty);dropToGround(id,dropQty);save();toast('Dropped '+dropQty+' '+it.n+' at your feet');sfx('drop');dropArm=false;if(S.bank[id])openItem(id,true);else openBag();};}
 function openAdmin(){if(!ADMIN)return;
-  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock every lift (floors 6, 11, 16)'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?PACKS.map(p=>['f'+p.to,'Jump to '+p.bossName+' (F'+p.to+')']):[]);
+  const acts=[['kit','Top loadout: best gear + every lantern, cape and relic'],['gold','+10,000 gold'],['mats','+50 of every ore, gem and material'],['food','+20 food and Oil Flasks'],['skills','All skills to 99'],['combat','Combat level 50'],['bank','Max bank space'],['lift','Unlock every lift (floors 6 to 26)'],['runes','+100 of every rune'],['heal','Full health and oil'],['god',(S.flags.god?'Turn off':'Turn on')+' god mode']].concat(scene==='delve'?PACKS.map(p=>['f'+p.to,'Jump to '+p.bossName+' (F'+p.to+')']):[]);
   openSheet(`<h2>Admin powers</h2><p class="lead small">Only party hat owners see this. Admin changes save to your account; the server skips its usual checks for admin heroes.</p><div class="list">${acts.map(([k,l])=>`<button class="item" data-ad="${k}"><span><b>${l}</b></span></button>`).join('')}</div><div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openHero();
   $('sheet').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const k=b.dataset.ad;
     if(k==='kit'){grantKit();S.gold-=100000;}
     if(k==='gold')S.gold+=10000;
-    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','coal_ore','cobalt_ore','starshard_ore','gem','slime_gel','bone','lampseed','glowcap_spore','wheat_seed','raw_pondfin','wheat','glowcap'])give(S.bank,id,50);
-    if(k==='food')for(const id of ['oil','bread','pondfin','stew'])give(S.bank,id,20);
+    if(k==='mats')for(const id of ['copper_ore','iron_ore','ember_ore','coal_ore','cobalt_ore','starshard_ore','gloam_ore','gem','ruby','sapphire','emerald','diamond','copper_bar','iron_bar','steel_bar','ember_bar','cobalt_bar','gloam_bar','slime_gel','bone','lampseed','glowcap_spore','moonpetal_seed','moonpetal','wheat_seed','raw_pondfin','wheat','glowcap','logs','blackwood_logs'])give(S.bank,id,50);
+    if(k==='runes')for(const r of Object.keys(RUNES))giveAny(S.bank,r+'_rune',100);
+    if(k==='food')for(const id of ['oil','oil2','bread','pondfin','stew','moonfin'])give(S.bank,id,20);
     if(k==='skills')for(const sk of Object.keys(SKILLS))S.skills[sk]=XP_TABLE[99];
     if(k==='combat'){S.flv=Math.max(S.flv,60);S.cbFloor=Math.max(S.cbFloor||1,50);S.xp=0;combatCheck();P.hp=hpMax();}
     if(k==='bank')S.bankBuys=BANK_BUYS.length;
@@ -832,7 +1003,7 @@ function openAdmin(){if(!ADMIN)return;
     if(k==='god')S.flags.god=!S.flags.god;
     const jump=/^f\d+$/.test(k);if(jump){enterFloor(+k.slice(1));closeSheet();}
     save();sfx('level');toast('Admin: done','good');if(!jump)openAdmin();});}
-function openQuickPick(i){const opts=['oil'].concat(FOODS);
+function openQuickPick(i){const opts=['oil','oil2'].concat(FOODS);
   openSheet(`<h2>Quick slot ${i+1}</h2><p class="lead small">Quick slots sit on your screen in the Depths. Tap one to eat or refill your lantern. Keys 1–5 work too.</p>
    <div class="qslots">${S.quick.map((id,j)=>`<button class="qs ${j===i?'on':''}" data-qs="${j}" aria-label="Slot ${j+1}">${id?`<img alt="" src="${iconOf(id).toDataURL()}">`:''}<i>${j+1}</i></button>`).join('')}</div>
    <div class="list">${opts.map(id=>`<button class="item" aria-pressed="${S.quick[i]===id}" data-q="${id}">${iconImg(id)}<span><b>${ITEMS[id].n}</b><small>${ITEMS[id].heal?'Heals '+ITEMS[id].heal:'Refills '+ITEMS[id].oil+'% oil'} · ${S.bank[id]||0} in bag${S.vault[id]?' · '+S.vault[id]+' in bank':''}</small></span></button>`).join('')}</div>
@@ -841,24 +1012,28 @@ function openQuickPick(i){const opts=['oil'].concat(FOODS);
   q.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const id=b.dataset.q,o=S.quick.indexOf(id);if(o>=0&&o!==i)S.quick[o]=S.quick[i];S.quick[i]=id;save();updateQuick(true);openQuickPick(i);});
   $('qclr').onclick=()=>{S.quick[i]=null;save();updateQuick(true);openQuickPick(i);};}
 // ---------- gear: every slot equips from the bag and swaps the old piece back into it ----------
-const gearId=(slot,t)=>!t?null:slot==='blade'?(t==='rusty'?'rusty_blade':t+'_blade'):slot==='mail'?(t==='none'?'traveler_garb':t+'_mail'):slot==='lantern'?t+'_lantern':slot==='helm'?t+'_helm':'cape_'+t;
-const itemSlot=id=>{const it=ITEMS[id];return !it?null:it.gear||(it.lantern?'lantern':it.cape?'cape':null);};
-const itemTier=id=>{const it=ITEMS[id];return it.tier||it.lantern||it.cape;};
+const gearId=(slot,t)=>!t?null:slot==='ring'||slot==='amulet'?t:slot==='blade'?(t==='rusty'?'rusty_blade':GEAR_ITEM['blade:'+t]||t+'_blade'):slot==='mail'?(t==='none'?'traveler_garb':GEAR_ITEM['mail:'+t]||t+'_mail'):slot==='lantern'?t+'_lantern':slot==='helm'?GEAR_ITEM['helm:'+t]||t+'_helm':'cape_'+t;
+const itemSlot=id=>{const it=ITEMS[id];return !it?null:it.gear||it.jewel||(it.lantern?'lantern':it.cape?'cape':null);};
+const itemTier=id=>{const it=ITEMS[id];return it.jewel?id:it.tier||it.lantern||it.cape;};
+const jewelStat=k=>Object.entries((JEWELS[k]||{}).attr||{}).map(([a,v])=>ATTR_TXT[a](v)).join(' · ');
 const helmStat=t=>'Defense '+GEAR.helm[t].def+(HELM_ATTR[t]?' · '+Object.entries(HELM_ATTR[t]).map(([a,v])=>ATTR_TXT[a](v)).join(' · '):'');
-const gearStat=(slot,t)=>slot==='helm'?helmStat(t):slot==='blade'?'Damage '+GEAR.blade[t].dmg:slot==='mail'?'Defense '+GEAR.mail[t].def:slot==='lantern'?lanStat(t):capeStat(t);
-function equipItem(id){const slot=itemSlot(id);if(!slot||!has(id))return;take(id,1);const old=gearId(slot,S.gear[slot]);if(old)give(S.bank,old,1);S.gear[slot]=itemTier(id);
-  P.hp=Math.min(P.hp,maxHp());save();sfx('pick');toast('Equipped '+ITEMS[id].n+(old?'. '+ITEMS[old].n+' went to your bag':''),'good');}
+const gearStat=(slot,t)=>slot==='ring'||slot==='amulet'?jewelStat(t):slot==='helm'?helmStat(t):slot==='blade'?'Damage '+GEAR.blade[t].dmg:slot==='mail'?'Defense '+GEAR.mail[t].def:slot==='lantern'?lanStat(t):capeStat(t);
+function equipItem(id){const slot=itemSlot(id);if(!slot||!has(id))return;take(id,1);const old=gearId(slot,S.gear[slot]);if(old)give(S.bank,old,1);S.gear[slot]=itemTier(id);const faded=enchFade(slot);
+  if(slot==='blade'){const was=old&&isStaff(itemTier(old)),now=staffOn();if(now!==!!was)setTimeout(()=>toast(now?'Staff in hand: your attacks are now spells and train Magic. Pick your spell on the Hero screen.':'Blade in hand: your attacks train Fighting again.','good'),900);}
+  P.hp=Math.min(P.hp,hpMax());save();sfx('pick');toast('Equipped '+ITEMS[id].n+(old?'. '+ITEMS[old].n+' went to your bag':'')+(faded?'. The old enchantment faded':''),'good');}
+// swapping or removing an enchanted ring or amulet lets its enchantment fade
+function enchFade(slot){const e=S.ench&&S.ench[slot];if(e&&e.id!==S.gear[slot]){delete S.ench[slot];return true;}return false;}
 function openEquip(slot){
-  const cur=S.gear[slot],curId=gearId(slot,cur),NAMES2={blade:'Blades',mail:'Armor',helm:'Helmets',lantern:'Lanterns',cape:'Capes'};
+  const cur=S.gear[slot],curId=gearId(slot,cur),NAMES2={blade:'Blades',mail:'Armor',helm:'Helmets',lantern:'Lanterns',cape:'Capes',ring:'Rings',amulet:'Amulets'};
   const opts=allKeys().filter(id=>itemSlot(id)===slot).sort((a,b)=>(RORDER.indexOf(ITEMS[b].rarity)-RORDER.indexOf(ITEMS[a].rarity))||(ITEMS[b].v-ITEMS[a].v));
   const line=(id,btn)=>`<div class="gear" style="--rc:${(rc(id)||{}).c||'var(--ink)'}">${iconImg(id)}<span><small>${rTag(id)}</small><b>${ITEMS[id].n}</b><small>${gearStat(slot,itemTier(id))}</small></span>${btn}</div>`;
-  const help={helm:'Forge helmets at the Forge from Smithing 3.',blade:'Forge better blades at the Forge.',mail:'Forge armor at the Forge.',lantern:'Better lanterns burn oil slower and light up more of the dark.',cape:'Capes carry special attributes. Find them in chests, from monsters and bosses, and rarely while fishing.'}[slot];
+  const help={helm:'Forge helmets at the Forge from Smithing 3.',blade:'Forge better blades at the Forge.',mail:'Forge armor at the Forge.',lantern:'Better lanterns burn oil slower and light up more of the dark.',cape:'Capes carry special attributes. Find them in chests, from monsters and bosses, and rarely while fishing.',ring:'Craft rings at the Jeweler’s Bench from bars and gems.',amulet:'Craft amulets at the Jeweler’s Bench from bars and gems.'}[slot];
   openSheet(`<h2>${NAMES2[slot]}</h2><p class="lead small">${help} Equipping swaps: what you wore goes into your bag, where you can sell, bank or drop it.</p>
-   <h3>Equipped</h3>${curId?line(curId,slot==='cape'||slot==='helm'?'<button class="btn alt sm" id="off">Take off</button>':''):'<p class="lead small">Nothing.</p>'}
+   <h3>Equipped</h3>${curId?line(curId,['cape','helm','ring','amulet'].includes(slot)?'<button class="btn alt sm" id="off">Take off</button>':''):'<p class="lead small">Nothing.</p>'}
    <h3>${scene==='hold'?'In your bag and bank':'In your bag'}</h3>${opts.length?`<div class="list">${opts.map(id=>line(id,`<button class="btn sm" data-wear="${id}">Equip</button>`)).join('')}</div>`:`<p class="lead small">None yet.${scene==='delve'?' Items found this delve go into your bag when you get home.':''}</p>`}
    <div class="row"><button class="btn alt" id="back">Back</button></div>`);
   $('back').onclick=()=>openHero();
-  if($('off'))$('off').onclick=()=>{give(S.bank,curId,1);S.gear[slot]=null;P.hp=Math.min(P.hp,maxHp());save();openEquip(slot);};
+  if($('off'))$('off').onclick=()=>{give(S.bank,curId,1);S.gear[slot]=null;if(enchFade(slot))toast('The enchantment faded','bad');P.hp=Math.min(P.hp,hpMax());save();openEquip(slot);};
   $('sheet').querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{equipItem(b.dataset.wear);openHero();});
 }
 // ---------- the Bank ----------
@@ -940,6 +1115,11 @@ const GOALS=[
   {id:'smith10',cat:'skills',t:'Reach Smithing 10',hint:'Forge gear at the Forge.',...lv('smithing',10),gold:60},
   {id:'smith25',cat:'skills',t:'Reach Smithing 25',hint:'Ember gear starts at 25.',...lv('smithing',25),gold:200},
   {id:'smith35',cat:'skills',t:'Reach Smithing 35',hint:'Steel gear starts at 35: iron and coal at the Forge.',...lv('smithing',35),gold:300},
+  {id:'craft1',cat:'start',t:'Craft a ring',hint:'Smelt Copper Ore into bars at the Forge, then visit the Jeweler’s Bench beside it.',done:()=>!!S.flags.crafted,gold:25},
+  {id:'craft15',cat:'skills',t:'Reach Crafting 15',hint:'Rings and amulets at the Jeweler’s Bench.',...lv('crafting',15),gold:100},
+  {id:'craft35',cat:'skills',t:'Reach Crafting 35',hint:'The Emberheart Amulet waits at 35.',...lv('crafting',35),gold:300},
+  {id:'bars',cat:'skills',t:'Smelt 100 bars',hint:'At the Forge: Smelt bars.',...cn(()=>C('bars'),100),gold:100},
+  {id:'jewels',cat:'skills',t:'Wear a ring and an amulet',hint:'One of each, from the Jeweler’s Bench.',done:()=>!!(S.gear.ring&&S.gear.amulet),gold:75},
   {id:'mine10',cat:'skills',t:'Reach Mining 10',hint:'Mine the glinting rocks in the Depths. Iron needs Mining 10.',...lv('mining',10),gold:50},
   {id:'mine25',cat:'skills',t:'Reach Mining 25',hint:'Coal at 20, Emberite at 25.',...lv('mining',25),gold:150},
   {id:'mine40',cat:'skills',t:'Reach Mining 40',hint:'Enough to mine a Starshard.',...lv('mining',40),gold:400},
@@ -949,6 +1129,22 @@ const GOALS=[
   {id:'f10',cat:'depths',t:'Reach floor 10',hint:'The crypt goes deep.',done:()=>S.deepest>=10,gold:100,prog:()=>[Math.min(10,S.deepest),10]},
   {id:'tyrant',cat:'depths',t:'Defeat the Forge Tyrant',hint:'Floor 15. Step out of the ring of fire before the hammer lands.',done:()=>!!S.bosses.tyrant,gold:300},
   {id:'warden',cat:'depths',t:'Defeat the Starwarden',hint:'Floor 20. When it vanishes, look behind you.',done:()=>!!S.bosses.warden,gold:500},
+  {id:'archmage',cat:'depths',t:'Defeat the Drowned Archmage',hint:'Floor 25. Step out of the frost ring, dodge the bolts, chase it down when it blinks.',done:()=>!!S.bosses.archmage,gold:700},
+  {id:'hollowking',cat:'depths',t:'Defeat the Hollow King',hint:'Floor 30. Keep moving: rifts open where you stand.',done:()=>!!S.bosses.hollowking,gold:1000},
+  {id:'f30',cat:'depths',t:'Reach floor 30',hint:'Below the Starfall Hollow: the Drowned Archive, then the Hollow Throne.',done:()=>S.deepest>=30,gold:500,prog:()=>[Math.min(30,S.deepest),30]},
+  {id:'relicf',cat:'depths',t:'Relic-forge a piece of gear',hint:'Bosses rarely drop relics. Spend one at the Forge (Relic forge tab).',...cn(()=>C('relicforge'),1),gold:150},
+  {id:'uchest',cat:'depths',t:'Open 10 Uncommon Chests',hint:'They glow green, on floors 21–30.',...cn(()=>C('uchests'),10),gold:200},
+  {id:'gloamset',cat:'depths',t:'Wear a full set of Gloamite',hint:'Gloamite Blade, Mail and Helm, forged from the ore of floors 21–30.',done:()=>S.gear.blade==='gloam'&&S.gear.mail==='gloam'&&S.gear.helm==='gloam',gold:600},
+  {id:'staff',cat:'start',t:'Carve a staff',hint:'At the Jeweler’s Bench, Staffs tab: an Apprentice Staff takes 10 logs.',done:()=>!!S.flags.staff,gold:20},
+  {id:'mage10',cat:'skills',t:'Reach Magic 10',hint:'Wield a staff: kills with spells train Magic.',...lv('magic',10),gold:60},
+  {id:'mage30',cat:'skills',t:'Reach Magic 30',hint:'Storm Lash at 26 jumps between monsters.',...lv('magic',30),gold:250},
+  {id:'mage60',cat:'skills',t:'Reach Magic 60',hint:'Starfall waits at 62.',...lv('magic',60),gold:600},
+  {id:'enchant',cat:'skills',t:'Enchant a ring or amulet',hint:'Hero screen → Enchant. Lesser Enchant needs Magic 3, 3 Gale Runes and a Soul Rune.',done:()=>!!S.flags.enchanted,gold:60},
+  {id:'oil2',cat:'skills',t:'Press a Greater Oil Flask',hint:'Farming 30 at the Oil Press: 2 Lampseed and a Moonpetal.',...cn(()=>C('oiltwo'),1),gold:120},
+  {id:'hmvisit',cat:'hold',t:'Walk into Hollowmere',hint:'Take the road west out of the Hold.',...cn(()=>C('hmvisit'),1),gold:20},
+  {id:'maw',cat:'hold',t:'Stand before the Abyssal Maw',hint:'In the far north-west of Hollowmere.',...cn(()=>C('maw'),1),gold:50},
+  {id:'hm100',cat:'hold',t:'Defeat 100 monsters in Hollowmere',hint:'From the meadow wolves to the deepwood treants.',...cn(()=>C('hmkills'),100),gold:200},
+  {id:'moonfin',cat:'hold',t:'Catch a Moonfin',hint:'Off the dock in the middle of the Moonmere. Needs Fishing 30.',...cn(()=>C('moonfin'),1),gold:100},
   {id:'f20',cat:'depths',t:'Reach floor 20',hint:'Below the Emberforge Halls lies the Starfall Hollow.',done:()=>S.deepest>=20,gold:250,prog:()=>[Math.min(20,S.deepest),20]},
   {id:'steel',cat:'depths',t:'Wear a full set of steel',hint:'Steel Blade, Steel Mail and Steel Helm, all equipped.',done:()=>S.gear.blade==='steel'&&S.gear.mail==='steel'&&S.gear.helm==='steel',gold:300},
   {id:'cb10',cat:'depths',t:'Reach combat level 10',hint:'Fighting counts double, and every skill adds to it.',done:()=>S.lvl>=10,prog:()=>[Math.min(10,S.lvl),10],gold:50},
@@ -1091,6 +1287,76 @@ function openFounders(fresh){if(!FND)return refreshFounder(true);if(!fresh)refre
 function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The path beyond the barricade is closed… for now.</p>
    <div class="soon"><b>Coming in Season 1: a new area</b><ul><li>A new fishing pond with new fish to catch</li><li>A new kind of tree for Woodcutting</li><li>A brand new skill</li><li>…and a lot more</li></ul></div>
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
+// ---------- the world map (the globe under the compass): see-through, so the game keeps going underneath ----------
+const WM_COL={[GRASS]:'#38b764',[PATH]:'#d9a066',[WATER]:'#3b5dc9',[SOIL]:'#6b3e26',[DOCK]:'#a0663b',[WILDG]:'#5a5634',[WPATH]:'#6e5844',[GLOOM]:'#2e2f5c',
+  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
+function miniBase(m){if(m.mini)return m.mini;const c=document.createElement('canvas');c.width=m.w;c.height=m.h;const x=c.getContext('2d'),id=x.createImageData(m.w,m.h);
+  for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){let t=tAt(m,i,y),col=WM_COL[t]||'#0d0e17';if(m.kind==='delve'){col=t===FLOOR?(BIOMES[m.biome]||BIOMES.moss).floor[2]:'#0b0c14';}
+    else if(solidAt(m,i,y)&&(t===GRASS||t===PATH||t===MGRASS||t===WILDG||t===PLAZA||t===DGRASS))col='#1d2a24';const [r,g2,b]=hex(col);const k=(y*m.w+i)*4;id.data[k]=r;id.data[k+1]=g2;id.data[k+2]=b;id.data[k+3]=255;}
+  x.putImageData(id,0,0);m.mini=c;return c;}
+let wmOpen=false,wmT=0;
+function toggleMap(force){wmOpen=force===undefined?!wmOpen:force;$('wmap').hidden=!wmOpen;$('mapB').setAttribute('aria-pressed',String(wmOpen));if(wmOpen){drawMap();sfx('pick');}}
+function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),dl=scene==='delve';
+  const availW=Math.min(innerWidth*.9,760),availH=innerHeight*.66,k=Math.max(2,Math.floor(Math.min(availW/m.w,availH/m.h)*(window.devicePixelRatio||1)));
+  cvm.width=m.w*k;cvm.height=m.h*k;const dpr=window.devicePixelRatio||1;cvm.style.width=(m.w*k/dpr)+'px';cvm.style.height=(m.h*k/dpr)+'px';
+  const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*k,m.h*k);
+  const P2=(px,py)=>[px/T*k,py/T*k],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
+  const label=(px,py,t,c,sz)=>{let [X,Y]=P2(px,py);x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;const hw=x.measureText(t).width/2+3;X=Math.max(hw,Math.min(cvm.width-hw,X));x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;x.textAlign='center';x.lineWidth=Math.max(2,k*.9);x.strokeStyle='rgba(10,12,24,.9)';x.strokeText(t,X,Y);x.fillStyle=c||'#f4f4f4';x.fillText(t,X,Y);};
+  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type))dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'?'#c79bf2':'#ffcd75');}
+    const W0=WEST_X,mid=W0+13*T;label(mid,WILD_Y+12*T,'The Hold','#ffcd75',1.1);label(mid,WILD_Y-20*T,'The Wilderness','#ff8a8a',1.1);label(mid,WILD_Y-4*T,'PvP north of the wall','#ff8a8a',.75);
+    const HY=WILD_Y;label(32*T,HY+19*T,'Hollowmere','#a7f0c8',1.2);label(21*T+8,HY+27*T,'Moonmere','#d8d0ff',.9);label(7*T+8,HY+16*T,'Abyssal Maw','#c79bf2',.85);
+    label(33*T,HY+3*T,'Lv 3–8','#a7f070',.75);label(8*T,HY+47*T,'Marsh · Lv 9–14','#ffcd75',.75);label(35*T,HY+53*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(22*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);
+    const g0=m.objs.find(o=>o.type==='gate');if(g0)label(g0.x,g0.y-26,'Delve Gate','#ffcd75',.8);}
+  else{if(m.stairs&&!m.stairs.hidden)dot(m.stairs.tx*T+8,m.stairs.ty*T+8,Math.max(3,k*1.2),'#ffffff','#1a1c2c');for(const o of m.objs)if(o.type==='chest'&&!o.open)dot(o.x,o.y-6,Math.max(2,k*.9),o.tier==='u'?'#a7f070':'#ffcd75');}
+  for(const o of OTH.values())if(!o.pend)dot(o.x,o.y-4,Math.max(2.5,k*.9),'#f4f4f4','#1a1c2c');
+  const pu=.6+.4*Math.sin(time*5);dot(P.x,P.y-4,Math.max(5,k*2.4)*(1+.25*pu),'rgba(255,205,117,.35)');dot(P.x,P.y-4,Math.max(3.5,k*1.4),'#ffcd75','#1a1c2c');
+  {const [X,Y]=P2(P.x,P.y-4);x.font=`700 ${Math.max(12,Math.round(k*3.4))}px system-ui,sans-serif`;x.textAlign='center';x.lineWidth=3;x.strokeStyle='#1a1c2c';x.strokeText('You',X,Y-Math.max(8,k*3));x.fillStyle='#ffcd75';x.fillText('You',X,Y-Math.max(8,k*3));}
+  $('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inWest()?'You are in Hollowmere':'You are in the Hold';
+  $('wmL').innerHTML=dl?'<span><i style="background:#ffcd75"></i>You</span><span><i style="background:#fff"></i>Stairs down</span><span><i style="background:#ffcd75"></i>Chest</span><span><i style="background:#a7f070"></i>Uncommon chest</span>'
+    :'<span><i style="background:#ffcd75;box-shadow:0 0 0 2px #1a1c2c"></i>You</span><span><i style="background:#f4f4f4"></i>Other players</span><span><i style="background:#c79bf2"></i>Raid gate</span>';}
+$('mapB').addEventListener('click',()=>{if(started)toggleMap();});$('wmX').addEventListener('click',e=>{e.stopPropagation();toggleMap(false);});$('wmap').addEventListener('click',()=>toggleMap(false));
+addEventListener('keydown',e=>{if(!started||e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;if(e.code==='KeyG'&&!e.repeat)toggleMap();else if(e.code==='Escape'&&wmOpen)toggleMap(false);});
+// ---------- the spellbook: pick the spell your attack casts ----------
+function openSpells(){const ml=lvlOf('magic'),cur=curSpell();
+  openSheet(`<h2>Spellbook</h2>${skillLine('magic')}<p class="lead small">With a staff in hand, your attack casts this spell. Combat spells need no runes: your staff powers them. Better staffs and robes hit harder.</p>
+   <div class="list">${Object.entries(SPELLS).map(([k,sp])=>{const lock=ml<sp.lvl;return `<button class="item spell${k===cur?' on':''}" data-sp="${k}" ${lock?'disabled':''} aria-pressed="${k===cur}"><i class="ic spic" style="--sc:${sp.col}">✦</i><span><b>${sp.n}${k===cur?' · selected':''}</b><small>${lock?'<span class="lockt">Needs Magic '+sp.lvl+'</span> · ':''}Hits up to ${spellMax(k)}${sp.aoe?' · hits everything close by':''}${sp.slow?' · slows':''}${sp.chain?' · chains':''}${sp.pierce?' · pierces '+sp.pierce:''}</small><small>${sp.d}</small></span></button>`;}).join('')}</div>
+   <div class="row"><button class="btn alt" id="back">Back</button></div>`);
+  $('back').onclick=()=>openHero();$('sheet').querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{S.spell=b.dataset.sp;save();sfx('cast');toast(SPELLS[S.spell].n+' ready','good');openSpells();});}
+// ---------- Enchanting (Magic): runes from the rune bag + a worn ring or amulet ----------
+const enchStat=en=>Object.entries(en.a).map(([a,v])=>ATTR_TXT[a](Math.round(v*100)/100)).join(' · ');
+function rollEnchant(sp){const E=ENCHANTS[sp],pool=E.pool.slice(),out={};
+  for(let i=0;i<E.k&&pool.length;i++){const k=pool.splice(ri(0,pool.length-1),1)[0],[lo,hi]=ENCH_ATTR[k],v=(lo+(hi-lo)*Math.pow(rand(),1.4))*E.tier;out[k]=v<1&&k!=='regen'?Math.max(1,Math.round(v)):k==='regen'?Math.round(v*100)/100:Math.round(v);}return out;}
+function openEnchant(slot){const k=S.gear[slot];if(!k)return openHero();const ml=lvlOf('magic'),en=S.ench[slot]&&S.ench[slot].id===k?S.ench[slot]:null;
+  const need=E=>Object.entries(E.runes).map(([r,n])=>`<span class="${runeN(r)>=n?'ok':'no'}">${iconImg(r+'_rune')}${runeN(r)}/${n}</span>`).join('');
+  openSheet(`<h2>Enchant your ${slot}</h2>${skillLine('magic')}
+   <div class="gear">${iconImg(k)}<span><small>${slot==='ring'?'Ring':'Amulet'}</small><b>${ITEMS[k].n}</b><small>${jewelStat(k)}</small>${en?`<small style="color:#c79bf2">Enchanted: ${enchStat(en)}</small>`:'<small>Not enchanted yet</small>'}</span></div>
+   <p class="lead small">Each spell rolls its own kind of bonus. Casting again rerolls it (the old roll is replaced). The enchantment stays on this ${slot} while you wear it, and fades if you take it off or swap it. Bonuses work everywhere except Wilderness fights.</p>
+   ${en?(()=>{const top=Object.keys(en.a).every(k=>en.a[k]>=enchTop(en.s,k)),prev=Object.keys(en.a).map(k=>ATTR_TXT[k](enchTop(en.s,k))).join(' · ');
+     return `<div class="recipe crown"><div class="rh">${iconImg(RELIC_CROWN)}<span><b>${top?'Crowned':'Crown this enchantment'}</b><small>${top?'Every bonus is at the most '+ENCHANTS[en.s].n+' can roll.':'Spend a Hollow Crown and every bonus rises to the most '+ENCHANTS[en.s].n+' can roll: '+prev+'. Casting a new enchantment replaces it.'}</small></span>${top?'':`<span class="mk"><button class="btn sm" id="crownB" ${has(RELIC_CROWN)?'':'disabled'}>Crown</button></span>`}</div>${top?'':`<div class="need"><span class="${has(RELIC_CROWN)?'ok':'no'}">${iconImg(RELIC_CROWN)}${avail(RELIC_CROWN)}/1</span></div>`}</div>`;})():''}
+   <div class="list">${Object.entries(ENCHANTS).map(([sp,E])=>{const lock=ml<E.lvl,can=!lock&&Object.entries(E.runes).every(([r,n])=>runeN(r)>=n);
+     return `<div class="recipe${lock?' locked':''}"><div class="rh"><i class="ic spic" style="--sc:#c79bf2">✧</i><span><b>${E.n}</b><small>${lock?'<span class="lockt">Needs Magic '+E.lvl+'</span> · ':''}${E.k} bonus${E.k>1?'es':''} from: ${E.pool.map(a=>({hp:'health',def:'defense',dmg:'damage',mag:'spell damage',luck:'loot luck',oil:'oil',light:'light',spd:'speed',regen:'regeneration',fishXp:'Fishing XP',chopXp:'Woodcutting XP'})[a]).join(', ')} · ${E.xp} xp</small></span><span class="mk"><button class="btn sm" data-en="${sp}" ${can?'':'disabled'}>Cast</button></span></div><div class="need">${need(E)}</div></div>`;}).join('')}</div>
+   <p class="lead small">Runes drop from monsters and chests (Soul and Star Runes only that way). Tallow sells Gale, Stone, Tide and Ember Runes.</p>
+   <div class="row"><button class="btn alt" id="back">Back</button></div>`);
+  $('back').onclick=()=>openHero();
+  if($('crownB'))$('crownB').onclick=()=>{const e=S.ench[slot];if(!e||e.id!==S.gear[slot]||!has(RELIC_CROWN))return;take(RELIC_CROWN,1);for(const a of Object.keys(e.a))e.a[a]=enchTop(e.s,a);bump('crowned');P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([40,30,40,30,90]);puff(P.x,P.y-12,'#ffcd75',26);SPFX.push({k:'cataclysm',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#ffcd75',c2:'#c79bf2'});toast('Crowned: '+enchStat(e),'rare r-legendary');save(true);openEnchant(slot);};
+  $('sheet').querySelectorAll('[data-en]').forEach(b=>b.onclick=()=>{const sp=b.dataset.en,E=ENCHANTS[sp];if(lvlOf('magic')<E.lvl||!Object.entries(E.runes).every(([r,n])=>runeN(r)>=n))return;
+    for(const [r,n] of Object.entries(E.runes)){S.runes[r+'_rune']-=n;if(S.runes[r+'_rune']<=0)delete S.runes[r+'_rune'];}
+    S.ench[slot]={id:k,s:sp,a:rollEnchant(sp)};skillXp('magic',E.xp);bump('enchants');S.flags.enchanted=true;P.hp=Math.min(P.hp,hpMax());
+    sfx('rare');buzz([30,40,30]);puff(P.x,P.y-12,'#c79bf2',22);SPFX.push({k:'starfall',x:P.x,y:P.y-8,t:0,life:.6,R:18,c:'#c79bf2',c2:'#f1e4ff'});save();toast(E.n+': '+enchStat(S.ench[slot]),'rare r-xrare');openEnchant(slot);});}
+function openRuneInfo(id){const k=ITEMS[id].rune,n=S.runes[id]||0,uses=Object.values(ENCHANTS).filter(E=>E.runes[k]).map(E=>E.n);
+  openSheet(`<div class="itemhd"><img class="big" alt="" src="${iconOf(id).toDataURL()}"><span><b>${ITEMS[id].n}</b><small>${fmt(n)} in your rune bag</small></span></div>
+   <ul class="info"><li>Used by: ${uses.join(', ')||'nothing yet'}</li><li>${k==='soul'||k==='star'?'Found only on monsters and in chests, more often deep down.':'Dropped by monsters, found in chests, sold by Tallow.'}</li><li>Runes live in your rune bag: they never take bank space and are never lost when you fall.</li></ul>
+   <div class="row"><button class="btn alt" id="back">Back to items</button></div>`);$('back').onclick=()=>openBag();}
+// ---------- the Abyssal Maw (the raid dungeon) and the Hollowmere sign ----------
+function openRaid(){bump('maw');sfx('boss');
+  openSheet(`<div class="rhead"><img alt="" src="${ART.maw[0].toDataURL()}"></div><h2>The Abyssal Maw</h2><p class="lead">The jaw of the great skull burns with violet fire. Something vast is breathing on the other side, and the stone hums under your feet.</p>
+   <div class="soon fnd"><b>Raids are coming in Season 1</b><p>The first raid of Lanternhold waits beyond the Maw: a dungeon for a full party, with its own bosses and its own treasure. Gather your party and get your gear ready.</p></div>
+   <p class="lead small">The plaza around the Maw is safe: no monster dens nearby. The Bank Chest beside it works just like the Bank.</p><div class="row"><button class="btn" id="sx">Step back</button></div>`);$('sx').onclick=closeSheet;}
+function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A moor at dusk around the Moonmere, the great lake. Lamp posts mark the roads.</p>
+   <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Meadows by the Hold: levels 3–6. The marsh (south-west): 9–14. The deepwood (south-east): 15–20.</li>
+   <li>Falling here costs nothing: you wake up at the Hold.</li><li>Fish for Moonfin off the dock in the middle of the Moonmere (Fishing 30).</li>
+   <li>In the far north-west stands the Abyssal Maw, the raid dungeon (Season 1), with a Bank Chest beside it.</li></ul><div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
 function openGuide(tab){goalTab=tab||goalTab;const d=goalsDone();
   const list=GOALS.filter(g=>g.cat===goalTab).map(g=>{const ok=!!S.goals[g.id],hid=g.secret&&!ok,pr=!ok&&g.prog?g.prog():null;
     return `<li class="${ok?'done':''}${hid?' secret':''}"><b>${hid?'???':g.t}</b><small>${ok?'Done':g.hint} · +${g.gold} gold</small>${pr?`<i class="xpb"><i style="width:${Math.round(pr[0]/pr[1]*100)}%;background:#ffcd75"></i></i><small>${fmt(Math.floor(pr[0]))} / ${fmt(pr[1])}</small>`:''}</li>`;}).join('');
@@ -1125,12 +1391,14 @@ function update(dt){
     if(P.swing<=0)P.dir=Math.abs(mx)>Math.abs(my)?(mx>0?'right':'left'):(my>0?'down':'up');}
   if(P.inv>0)P.inv-=dt;if(P.swingCD>0)P.swingCD-=dt;
   if(P.swing>0){P.swing-=dt;if(!P.hitDone&&P.swing<.14){P.hitDone=true;resolveSwing();}}
+  if(P.cast>0)P.cast-=dt;if(P.castLaunch>0){P.castLaunch-=dt;if(P.castLaunch<=0){const t=P.castTgt&&!P.castTgt.dead?P.castTgt:null,tip=staffTip(P.x,P.y,P.dir);launchBolt(P.castSp,tip,t?Math.atan2((t.y-(t.d.big?12:6))-tip.y,t.x-tip.x):P.castA,t,true);}}
+  updateBolts(dt);updateSpellFx(dt);
   // context
   const ctx=nearestAct();setActLabel(ctx);
-  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve')swing();else if(inWild())pvpSwing();}
+  if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve'||inWest())swing();else if(inWild())pvpSwing();}
   if(inWild()){if(retHeld&&P.hp>0){if(wildLvl(P.y)>RETURN_MAX){P.chan=0;if(time-whyT>2){whyT=time;toast('Too deep for the Return Flame. Head south of Wilderness level '+RETURN_MAX+'.','bad');}}else{P.chan+=dt;if(P.chan>=2){retHeld=false;P.chan=0;wildReturn();}}}else P.chan=0;}
   else if(scene==='hold')P.chan=0;
-  if(scene==='hold'){wildStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
+  if(scene==='hold'){wildStep(dt);westStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
   if(scene==='delve'){
     // lantern
@@ -1142,6 +1410,7 @@ function update(dt){
     // return flame
     if(retHeld&&P.hp>0){P.chan+=dt;if(P.chan>=2){retHeld=false;returnHome();return;}}else P.chan=0;
     updateEnemies(dt);
+    if(!MP.client())oreTick();
     updateDrops(dt);
   }
   for(const f of fx){f.t+=dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=90*dt;}fx=fx.filter(f=>f.t<f.life);
@@ -1150,6 +1419,7 @@ function update(dt){
   for(const k of slashes)k.t+=dt;if(slashes.length)slashes=slashes.filter(k=>k.t<.16);
   if(P.swing>0&&(S.gear.blade==='ember'||S.gear.blade==='cinder')&&!reduceMotion&&rand()<.7){const t=easeOut(1-P.swing/.2),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[P.dir]||0,a=base-1.2+t*2.4;
     fx.push({x:P.x+Math.cos(a)*14,y:P.y-6+Math.sin(a)*14,vx:(rand()-.5)*20,vy:-20-rand()*25,t:0,life:.3+rand()*.2,col:rand()<.5?'#ff9f3d':'#ffcd75'});}
+  if(wmOpen){wmT-=dt;if(wmT<=0){wmT=.25;drawMap();}}
   updateHud();
 }
 // a boss slam or starburst lands: everyone inside the ring is hit (through the normal contact damage, for 0.22 s)
@@ -1160,9 +1430,11 @@ function updateEnemies(dt){
   if(MP.client())return followEnemies(dt);
   for(const e of ents){if(e.dead)continue;e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;
     e.kb.x*=.82;e.kb.y*=.82;moveBody(e,e.kb.x*dt,e.kb.y*dt,e.r>6?8:4);
-    const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd;let vx=0,vy=0;
+    const TG=nearestTarget(e),dx=TG.x-e.x,dy=TG.y-e.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,sp=e.d.spd*(e.slowT>0?.5:1);let vx=0,vy=0;if(e.slowT>0)e.slowT-=dt;
+    if(e.d.proj){projStep(e,dt);continue;}
+    if(e.west&&westIdle(e,d,dt))continue;
     e.losT=(e.losT||0)-dt;if(e.losT<=0){e.losT=.25;e.los=d<(e.d.boss?400:130)&&lineOfSight(e.x,e.y-6,TG.x,TG.y-6);if(e.los)e.mem=3;}
-    e.mem=(e.mem||0)-dt;const sees=e.d.ai==='flutter'?d<130:(e.los||e.mem>0);
+    e.mem=(e.mem||0)-dt;const sees=e.west?true:e.d.ai==='flutter'?d<130:(e.los||e.mem>0);
     switch(e.d.ai){
       case 'hop':e.cd-=dt;if(e.st==='hop'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=.6+rand()*.5;}}else if(e.cd<=0&&sees){e.st='hop';e.cd=.35;e.vx=ux*sp*2.4;e.vy=uy*sp*2.4;}break;
       case 'flutter':if(sees){vx=ux*sp+Math.cos(e.t*6)*uy*30;vy=uy*sp-Math.cos(e.t*6)*ux*30;}else{vx=Math.cos(e.t)*15;vy=Math.sin(e.t*1.3)*15;}break;
@@ -1196,19 +1468,71 @@ function updateEnemies(dt){
         else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.6;}}
         else{vx=ux*sp;vy=uy*sp+Math.sin(e.t*2)*10;if(e.bl<=0&&d<200){e.st='blinkw';e.cd=.45;e.flash=.45;e.bl=fast?3.4:5.2;}}
         if(e.sm<=0){e.sm=fast?8:11;if(ents.filter(o=>o.type==='wraith'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('wraith',e.x+(i?22:-22),e.y,e.dmgSc));puff(e.x,e.y-12,'#73eff7',12);}break;}
+      // The Drowned Archmage: keeps its distance, throws fans of tide bolts at you, blinks away when you close in and
+      // freezes the floor around it (a ring of frost shows the reach). Calls grimoires. Below half health: wider fans, faster.
+      case 'archmage':{const fast=e.hp<e.max/2;e.cd-=dt;e.vo=(e.vo??2)-dt;e.nv=(e.nv??6)-dt;e.sm=(e.sm??8)-dt;e.bl=(e.bl??5)-dt;
+        if(e.st==='novaw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,50,'#73eff7');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.6;}}
+        else if(e.st==='volw'){if(e.cd<=0){const n=fast?5:3,a0=Math.atan2(dy,dx);for(let i=0;i<n;i++){const a=a0+(i-(n-1)/2)*.32;ents.push(projOf('orb',e.x+Math.cos(a)*10,e.y-8+Math.sin(a)*8,a,e.dmgSc));}sfx('cast');e.st='idle';e.cd=.4;}}
+        else{const want=d<70?-1:d>130?1:0;vx=ux*sp*want+(-uy)*sp*.6*Math.sin(e.t*.8);vy=uy*sp*want+ux*sp*.6*Math.sin(e.t*.8);
+          if(d<46&&e.bl<=0){const a=Math.atan2(e.y-TG.y,e.x-TG.x)+(rand()-.5),nx=TG.x+Math.cos(a)*110,ny=TG.y+Math.sin(a)*110;puff(e.x,e.y-12,'#73eff7',14);if(!blocked(nx,ny,8)){e.x=nx;e.y=ny;}puff(e.x,e.y-12,'#b8f7ff',14);sfx('stairs',.6);e.bl=fast?3:4.5;}
+          else if(e.nv<=0&&d<70){e.st='novaw';e.wind=e.cd=fast?.7:.9;e.tg=1;e.tgR=50;e.tgK=0;e.nv=fast?5:7;}
+          else if(e.vo<=0&&d<220){e.st='volw';e.cd=.35;e.flash=.35;e.vo=fast?1.6:2.4;}}
+        if(e.sm<=0){e.sm=fast?9:12;if(ents.filter(o=>o.type==='tome'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('tome',e.x+(i?22:-22),e.y,e.dmgSc));puff(e.x,e.y-12,'#73eff7',12);}break;}
+      // The Hollow King: walks you down, slams the floor (a violet ring), charges, and tears rifts open under your feet.
+      // Below half health it also throws rings of void bolts, and calls husks.
+      case 'hollowking':{const fast=e.hp<e.max/2;e.cd-=dt;e.sl=(e.sl??4)-dt;e.rf=(e.rf??3)-dt;e.rg=(e.rg??6)-dt;e.sm=(e.sm??9)-dt;
+        if(e.st==='slamw'){e.tgK=1-e.cd/e.wind;if(e.cd<=0)bossBlast(e,52,'#c79bf2');}
+        else if(e.st==='blast'){if(e.cd<=0){e.st='idle';e.tg=0;e.aoeR=0;e.cd=.8;}}
+        else if(e.st==='wind'){if(e.cd<=0){e.st='charge';e.cd=.55;e.vx=ux*sp*4.4;e.vy=uy*sp*4.4;}}
+        else if(e.st==='charge'){vx=e.vx;vy=e.vy;if(e.cd<=0){e.st='idle';e.cd=fast?1.4:2.2;}}
+        else{vx=ux*sp;vy=uy*sp;if(e.sl<=0&&d<100){e.st='slamw';e.wind=e.cd=fast?.7:.95;e.tg=1;e.tgR=52;e.tgK=0;e.sl=fast?3.4:4.8;}else if(e.cd<=0&&d<170&&d>60){e.st='wind';e.cd=.55;e.flash=.55;}}
+        if(e.rf<=0){e.rf=fast?2.2:3.2;const n=fast?3:2;for(let i=0;i<n;i++){const a=rand()*Math.PI*2,r=i?14+rand()*26:0;ents.push(projOf('rift',TG.x+Math.cos(a)*r,TG.y+Math.sin(a)*r,0,e.dmgSc));}}
+        if(fast&&e.rg<=0){e.rg=5;for(let i=0;i<10;i++){const a=i/10*Math.PI*2;ents.push(projOf('vorb',e.x+Math.cos(a)*12,e.y-10+Math.sin(a)*8,a,e.dmgSc));}sfx('boss');}
+        if(e.sm<=0){e.sm=fast?8:11;if(ents.filter(o=>o.type==='husk'&&!o.dead).length<3)for(let i=0;i<2;i++)ents.push(makeEnemy('husk',e.x+(i?22:-22),e.y+6,e.dmgSc));puff(e.x,e.y-12,'#c79bf2',12);}break;}
     }
     if(e.side>0){e.side-=dt;const px=-vy,py=vx;vx=vx*.3+px*e.sd;vy=vy*.3+py*e.sd;}
     const ox=e.x,oy=e.y;moveBody(e,vx*dt,vy*dt,e.r>6?8:4);
     if((vx||vy)&&Math.hypot(e.x-ox,e.y-oy)<Math.hypot(vx,vy)*dt*.2&&!(e.side>0)){e.side=.5;e.sd=rand()<.5?1:-1;}
     // contact
-    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;if(e.aoeR)dmg*=1.5;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<(e.aoeR||e.r)+6)hurtPlayer(dmg,e);if(OTH.size)MP.contact(e,dmg);
+    let dmg=e.d.dmg*(1+.08*(e.dmgSc-1)/.12);if(e.st==='charge')dmg*=1.4;if(e.aoeR)dmg*=1.5;const cd=Math.hypot(P.x-e.x,(P.y-4)-(e.y-e.r));if(cd<(e.aoeR||e.r)+6)hurtPlayer(dmg,e);if(OTH.size&&scene==='delve')MP.contact(e,dmg);
   }
   ents=ents.filter(e=>!e.dead);
 }
 
+// boss attacks that fly or open on the floor: they hurt whoever they touch and can't be hit back
+function projOf(type,x,y,a,sc){const e=makeEnemy(type,x,y,sc);e.a=a;e.life=type==='rift'?1.25:2.6;e.r=4;if(type==='rift'){e.tg=1;e.tgR=16;e.tgK=0;e.st='open';}return e;}
+function projStep(e,dt){e.t+=dt;e.life-=dt;
+  if(e.type==='rift'){if(e.st==='open'){e.tgK=Math.min(1,1-(e.life-.25)/1);if(e.life<=.25){e.st='burst';e.tg=2;e.aoeR=16;blastFx(e,16,'#c79bf2');}}
+    else if(e.life<=0)e.dead=true;if(e.st==='burst'&&Math.hypot(P.x-e.x,(P.y-4)-e.y)<20)hurtPlayer(e.d.dmg*(1+.08*(e.dmgSc-1)/.12),e);if(e.st==='burst'&&OTH.size&&scene==='delve')MP.contact(e,e.d.dmg*(1+.08*(e.dmgSc-1)/.12));return;}
+  const sp=e.d.spd;const nx=e.x+Math.cos(e.a)*sp*dt,ny=e.y+Math.sin(e.a)*sp*dt;if(solidAt(map,Math.floor(nx/T),Math.floor(ny/T))||e.life<=0){e.dead=true;puff(e.x,e.y-6,e.type==='vorb'?'#c79bf2':'#73eff7',5);return;}e.x=nx;e.y=ny;
+  if(Math.hypot(P.x-e.x,(P.y-6)-(e.y-4))<9){hurtPlayer(e.d.dmg*(1+.08*(e.dmgSc-1)/.12),e);e.dead=true;puff(e.x,e.y-6,'#ffffff',6);}else if(OTH.size&&scene==='delve')MP.contact(e,e.d.dmg*(1+.08*(e.dmgSc-1)/.12));}
+// ---------- Hollowmere: dens, aggro, respawns ----------
+const WEST_NAMES={wolf:'Moor Wolf',boar:'Bristleboar',bogling:'Bogling',mirewisp:'Mirewisp',treant:'Deepwood Treant'};
+let wasWest=false;
+function westStep(dt){const now=Date.now(),w=inWest();
+  if(w!==wasWest){wasWest=w;P.hp=Math.min(P.hp,hpMax());if(w){bump('hmvisit');if(!S.flags.hmseen){S.flags.hmseen=true;setTimeout(()=>toast('Hollowmere. Monsters here attack if you get close. The road and the Maw are safe.','good'),400);}}else for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}}
+  if(P.x>WEST_X+260&&!ents.length)return;
+  for(const d of HOLD.dens){if(d.e&&!d.e.dead)continue;if(d.e){d.e=null;d.next=now+(18+d.lvl*1.2)*1000;}
+    if(now>=(d.next||0)&&Math.hypot(d.x-P.x,d.y-P.y)>120){const sc=1+.1*(d.lvl-3),e=makeEnemy(d.type,d.x,d.y,sc);Object.assign(e,{west:true,den:d,home:{x:d.x,y:d.y},lvl:d.lvl,wt:rand()*2});ents.push(e);d.e=e;}}
+  if(inWest()&&P.hp>0&&time-(P.hitT??-99)>6&&P.hp<hpMax())P.hp=Math.min(hpMax(),P.hp+3*dt);
+  updateEnemies(dt);}
+// out of a fight a Hollowmere monster wanders near its den; get too close (or hit it) and it comes for you
+// the plaza of the Abyssal Maw is safe ground: monsters won't follow you onto it
+const mawSafe=()=>{const o=HOLD.maw||(HOLD.maw=HOLD.objs.find(q=>q.type==='maw'));return !!o&&Math.abs(P.x-o.x)<7*T&&P.y>o.y-6*T&&P.y<o.y+5*T;};
+function westIdle(e,d,dt){const fh=Math.hypot(e.x-e.home.x,e.y-e.home.y),sp=e.d.spd,safe=mawSafe();
+  if(e.aggro&&(fh>170||P.hp<=0||!inWest()||safe)){e.aggro=false;e.ret=true;}
+  if(!e.aggro&&!e.ret&&inWest()&&!safe&&P.hp>0&&d<44+e.lvl*1.4&&lineOfSight(e.x,e.y-6,P.x,P.y-6)){e.aggro=true;e.flash=.15;}
+  if(e.aggro)return false;
+  let vx=0,vy=0;if(e.ret){const a=Math.atan2(e.home.y-e.y,e.home.x-e.x);vx=Math.cos(a)*sp*.9;vy=Math.sin(a)*sp*.9;if(fh<8){e.ret=false;e.hp=e.max;e.st='idle';e.tg=0;}}
+  else{e.wt-=dt;if(e.wt<=0){e.wt=1.5+rand()*3;e.wa=rand()<.45?null:fh>40?Math.atan2(e.home.y-e.y,e.home.x-e.x):rand()*Math.PI*2;}if(e.wa!=null){vx=Math.cos(e.wa)*sp*.3;vy=Math.sin(e.wa)*sp*.3;}}
+  moveBody(e,vx*dt,vy*dt,4);return true;}
+function westDie(){setTimeout(()=>save(true),50);sfx('die');buzz(200);S.deaths++;bump('hmdeaths');FISHING=null;CHOP=null;BOLTS=[];
+  for(const e of ents)if(e.west){e.aggro=false;e.ret=true;}respawnHold();P.inv=2;save();
+  openSheet(`<h2>Knocked out in Hollowmere</h2><p class="lead">You woke up back at the Hold. Nothing was lost: out in Hollowmere a fall only costs you the walk back.</p><p class="lead small">The monsters there are levels 3 to 20. The meadows by the Hold are the gentlest; the marsh and the deepwood are not.</p><div class="row"><button class="btn" id="sx">Back on my feet</button></div>`);$('sx').onclick=closeSheet;}
 // ---------- HUD ----------
 let lastAct=null;
-function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
+function setActLabel(a){const lab=a?a.label:(scene==='delve'||inWest()?(staffOn()?'Cast':'Attack'):inWild()?'Attack':'');if(lab!==lastAct){lastAct=lab;$('bAl').textContent=lab;$('bA').classList.toggle('ctx',!!a);$('bA').classList.toggle('idle',!lab);}}
 const PT=['hpTxt','oilTxt','packN'];
 let quickKey='';
 function updateQuick(force){const key=S.quick.join(',')+'|'+S.quick.map(id=>id?S.bank[id]||0:'').join(',')+'|'+scene+'|'+(force?Math.random():'');if(key===quickKey)return;quickKey=key;
@@ -1222,7 +1546,7 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=hpMax();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
-  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):inWest()?'Hollowmere':'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
   const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!(dv||inWild());$('retRing').style.setProperty('--p',Math.min(1,P.chan/2));$('feed').hidden=dv;updateQuick(force);
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
@@ -1255,27 +1579,30 @@ function render(){TAGS.length=0;
   camX=cx;camY=cy;g.save();g.translate(-cx,-cy);
   g.drawImage(map.ground,0,0);
   const x0=Math.floor(cx/T),y0=Math.floor(cy/T),x1=Math.ceil((cx+VW)/T),y1=Math.ceil((cy+VH)/T),wf=Math.floor(time*2)%2;
-  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
-      if(tt===DOCK)g.drawImage(tAt(map,x,y+1)===WATER&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
+  if(scene==='hold'){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const tt=tAt(map,x,y);if(tt===MOON||tt===DOCK&&x<WEST_COLS){g.drawImage(ART.moonw[(wf+x+y)%2],x*T,y*T);if(tt===MOON){g.fillStyle='#b8a7ff';if(!isWater(tAt(map,x,y-1))&&tAt(map,x,y-1)!==DOCK)g.fillRect(x*T,y*T,T,1);g.fillStyle='#10223f';if(!isWater(tAt(map,x,y+1))&&tAt(map,x,y+1)!==DOCK)g.fillRect(x*T,y*T+T-2,T,2);}}else if(tt===WATER||tt===DOCK)g.drawImage(ART.water[(wf+x)%2],x*T,y*T);else if(tt===GLOOM){g.drawImage(ART.gloom[(wf+x)%2],x*T,y*T);g.fillStyle='#8a7aa8';if(!isWater(tAt(map,x,y-1)))g.fillRect(x*T,y*T,T,1);if(!isWater(tAt(map,x-1,y)))g.fillRect(x*T,y*T,1,T);if(!isWater(tAt(map,x+1,y)))g.fillRect(x*T+T-1,y*T,1,T);g.fillStyle='#1d1a2a';if(!isWater(tAt(map,x,y+1)))g.fillRect(x*T,y*T+T-2,T,2);}
+      if(tt===DOCK)g.drawImage(isWater(tAt(map,x,y+1))&&tAt(map,x-1,y)!==DOCK&&tAt(map,x+1,y)!==DOCK?ART.dock.walk:tAt(map,x-1,y)===DOCK||tAt(map,x+1,y)===DOCK?ART.dock.deck:ART.dock.walk,x*T,y*T);}
     for(const [lx,ly,lf] of map.lilies||[])g.drawImage(ART.lily[lf],lx*T+4+Math.round(Math.sin(time*.8+lx)*.6),ly*T+5);
     {const open=plotsOpen();for(const p of map.plots)if(p.i>=open&&!S.plots[p.i])g.drawImage(ART.soilLocked,p.tx*T,p.ty*T);}
     for(const p of map.plots){const st=S.plots[p.i];if(!st)continue;const gr=growth(st),stg=gr>=1?2:gr>=.5?1:0;spr(ART.crop[st.crop][stg],p.cx-8,p.cy-10);
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}
   const vis=o=>o.x>cx-60&&o.x<cx+VW+60&&o.y>cy-20&&o.y<cy+VH+70;
-  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);}
+  for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);else if(o.type==='reeds')spr(ART.reeds[o.v],o.x-8+(reduceMotion?0:Math.round(Math.sin(time*1.3+o.x*.1)*.6)),o.y-15);else if(o.type==='mushring')spr(ART.mushring,o.x-8,o.y-15);}
   if(scene==='hold'&&cy<WILD_Y)wildShade(cx,cy);
   for(const o of map.objs){if(!o.onWall||o.gone||!vis(o))continue;const [tx,ty]=o.tile;
-    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else if(o.kind==='starshard'){spr(ART.starOre[Math.floor(time*2+tx)%2],tx*T,ty*T);const ph=(time*.9+tx*.31)%1;g.globalAlpha=1-ph;g.fillStyle=ph<.5?'#fff3c4':'#73eff7';g.fillRect(Math.round(tx*T+8+Math.sin(time*2+tx)*4),Math.round(ty*T+5-ph*8),1,1);g.globalAlpha=1;}else spr(ART.ore[o.kind]||ART.ore.copper,tx*T,ty*T);}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
+    if(o.type==='ore'){if(o.kind==='ember'){spr(ART.emberOre[Math.floor(time*2.5+tx)%2],tx*T,ty*T);for(let k=0;k<2;k++){const ph=(time*.7+k*.5+tx*.37)%1;g.fillStyle=ph<.5?'#ffcd75':'#ff9f3d';g.globalAlpha=1-ph;g.fillRect(Math.round(tx*T+5+k*6+Math.sin(time*3+k+tx)*1.5),Math.round(ty*T+6-ph*10),1,1);}g.globalAlpha=1;}else if(o.kind==='starshard'){spr(ART.starOre[Math.floor(time*2+tx)%2],tx*T,ty*T);const ph=(time*.9+tx*.31)%1;g.globalAlpha=1-ph;g.fillStyle=ph<.5?'#fff3c4':'#73eff7';g.fillRect(Math.round(tx*T+8+Math.sin(time*2+tx)*4),Math.round(ty*T+5-ph*8),1,1);g.globalAlpha=1;}else{const SH=ORE_SHINE[o.kind];if(SH&&!reduceMotion){const pu=.5+.5*Math.sin(time*2.2+tx*1.3),X=tx*T+8,Y=ty*T+8,R=11+pu*3,gr=g.createRadialGradient(X,Y,0,X,Y,R);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,`rgba(${SH},${.22+.18*pu})`);gr.addColorStop(1,`rgba(${SH},0)`);g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.restore();}
+      spr(ART.ore[o.kind]||ART.ore.copper,tx*T,ty*T);const ph=(time*.8+tx*.37+ty*.21)%1.6;if(ph<.25){const k=1-Math.abs(ph-.125)/.125,gx=tx*T+5+((tx*7)%6),gy=ty*T+5+((ty*5)%5);g.globalAlpha=k;g.fillStyle='#ffffff';g.fillRect(gx,gy,1,1);g.fillRect(gx-1,gy,3,1);g.fillRect(gx,gy-1,1,3);g.globalAlpha=1;}}}else if(o.type==='torch')spr(ART.torch[Math.floor(time*6+tx)%2],tx*T+4,ty*T+2);}
   // y-sorted
   const list=[];
   for(const o of map.objs)if(!o.flat&&!o.onWall&&!o.gone&&vis(o))list.push({y:o.sortY??o.y,f:()=>drawObj(o)});   // sortY: drawn as if further back (the Delve Gate, so players walking into it stay on top)
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
-  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&o.y<WILD_Y,sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish,ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
+  for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&(o.y<WILD_Y||inHollowmere(o.x,o.y)),sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty';const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish&&!(o.castT>0),ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.castT>0)drawCastPose(ox,oy,o.dir,o.castT,o.castSp,bl);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
+  if(scene==='hold'&&cx<WEST_X)drawHollowmere(cx,cy,x0,y0,x1,y1);
+  drawBolts();
   if(scene==='hold'&&cy<WILD_Y&&!reduceMotion)wildAsh(cx,cy);
   for(const f of fx){g.fillStyle=f.col;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);}
   if(slashes.length)drawSlashes();
@@ -1299,6 +1626,27 @@ function drawDelveAmbient(cx,cy){const t=time;g.save();g.translate(-cx,-cy);
   for(const o of map.objs){if(o.type!=='torch'||Math.abs(o.x-P.x)>VW*.7||Math.abs(o.y-P.y)>VH*.7)continue;const [tx,ty]=o.tile;
     for(let k=0;k<3;k++){const ph=(t*.9+k/3+tx*.31)%1,x=tx*T+8+Math.sin(ph*9+k*2+tx)*2,y=ty*T+4-ph*14;g.globalAlpha=(1-ph)*.9;g.fillStyle=ph<.4?'#ffcd75':'#ff9f3d';g.fillRect(Math.round(x),Math.round(y),1,1);}}
   g.globalAlpha=1;g.restore();}
+// ---- Hollowmere at dusk: a cool twilight over the moor, fireflies, moonlight on the lake, the Maw breathing violet fire ----
+function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WEST_X),top=Math.max(cy,WILD_Y);if(right<=cx)return;
+  g.save();const gr=g.createLinearGradient(WEST_X-120,0,WEST_X,0);g.fillStyle='rgba(18,26,58,.22)';if(WEST_X-120>cx)g.fillRect(cx,top,Math.min(right,WEST_X-120)-cx,cy+VH-top);
+  gr.addColorStop(0,'rgba(18,26,58,.22)');gr.addColorStop(1,'rgba(18,26,58,0)');g.fillStyle=gr;const a0=Math.max(cx,WEST_X-120);if(right>a0)g.fillRect(a0,top,right-a0,cy+VH-top);
+  g.globalCompositeOperation='lighter';
+  const pool=(X,Y,R,c,a)=>{const q=g.createRadialGradient(X,Y,0,X,Y,R);q.addColorStop(0,`rgba(${c},${a})`);q.addColorStop(1,`rgba(${c},0)`);g.fillStyle=q;g.fillRect(X-R,Y-R,R*2,R*2);};
+  for(const o of map.objs){if(o.x>right+80||o.x<cx-80||o.y<cy-40||o.y>cy+VH+120)continue;
+    if(o.type==='maw'){const f=.85+.15*Math.sin(t*3);pool(o.x,o.y-26,52*f,'199,155,242',.34);pool(o.x-63,o.y-108,16*f,'199,155,242',.5);pool(o.x+63,o.y-108,16*f,'199,155,242',.5);pool(o.x-18,o.y-75,9,'255,77,109',.6*f);pool(o.x+18,o.y-75,9,'255,77,109',.6*f);
+      // embers and runes rising out of the portal, and a slow swirl in it
+      for(let k=0;k<14;k++){const ph=(t*.35+k/14)%1,x=o.x+Math.sin(ph*7+k*1.9)*16*(1-ph*.4),y=o.y-20-ph*70;g.globalAlpha=(1-ph)*.9;g.fillStyle=k%3?'#c79bf2':'#f1e4ff';g.fillRect(Math.round(x),Math.round(y),1,k%4?1:2);}
+      for(let k=0;k<10;k++){const a=t*1.6+k/10*Math.PI*2,r=6+(k%3)*4;g.globalAlpha=.6;g.fillStyle=k%2?'#f1e4ff':'#7a3b8f';g.fillRect(Math.round(o.x+Math.cos(a)*r*1.4),Math.round(o.y-24+Math.sin(a)*r*.7),1,1);}g.globalAlpha=1;}
+    else if(o.type==='campfire'){const f=.8+.2*Math.sin(t*11+Math.sin(t*5));pool(o.x,o.y-6,30*f,'255,150,70',.35);}
+    else if(o.type==='lpost'){const f=.85+.15*Math.sin(t*9+o.x);pool(o.x-1,o.y-24,18*f,'255,190,100',.3);}
+    else if(o.type==='mcrystal')pool(o.x,o.y-10,16+2*Math.sin(t*2+o.x),'184,167,255',.28);
+    else if(o.type==='menhir')pool(o.x,o.y-16,12,o.v?'199,155,242':'115,239,247',.22+.1*Math.sin(t*2+o.x));}
+  // fireflies drifting over the moor
+  for(let i=0;i<26;i++){const bx=(i*173.7)%(WEST_X-60)+30,by=WILD_Y+((i*97.3)%(HM_ROWS*T-60))+30,x=bx+Math.sin(t*.4+i)*22,y=by+Math.cos(t*.53+i*1.7)*14;if(x<cx-4||x>right||y<cy-4||y>cy+VH)continue;
+    const on=.5+.5*Math.sin(t*3+i*2.3);if(on<.25)continue;pool(x,y,4,'200,255,140',.35*on);g.globalAlpha=on;g.fillStyle='#e8ffb0';g.fillRect(Math.round(x),Math.round(y),1,1);g.globalAlpha=1;}
+  // moonlight glinting on the Moonmere
+  const tick=Math.floor(t*2);for(let y=Math.max(y0,HM_Y0);y<=y1;y++)for(let x=x0;x<=Math.min(x1,WEST_COLS);x++)if(tAt(map,x,y)===MOON&&((x*31+y*57+tick*5)%19)===0){g.globalAlpha=.8;g.fillStyle=(x+y)%2?'#f1e4ff':'#b8f7ff';g.fillRect(x*T+((x*5+tick)%12)+2,y*T+((y*3+tick*3)%12)+2,2,1);g.globalAlpha=1;}
+  g.restore();}
 // the Wilderness: the ground darkens past the wall (deeper = darker), and ash drifts down
 function wildShade(cx,cy){const top=Math.max(0,cy),bot=Math.min(WILD_Y,cy+VH);if(bot<=top)return;
   const gr=g.createLinearGradient(0,WILD_Y-14*T,0,WILD_Y);gr.addColorStop(0,'rgba(30,12,36,.2)');gr.addColorStop(1,'rgba(30,12,36,.04)');
@@ -1314,6 +1662,7 @@ function drawObj(o){
   else if(o.type==='forge')spr(ART.forge[Math.floor(time*4)%2],o.x-24,o.y-40);
   else if(o.type==='kitchen')spr(ART.kitchen[Math.floor(time*3)%2],o.x-16,o.y-32);
   else if(o.type==='press')spr(ART.press,o.x-16,o.y-32);
+  else if(o.type==='bench')spr(ART.bench[Math.floor(time*2)%2],o.x-16,o.y-26);
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
   else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
@@ -1335,7 +1684,16 @@ function drawObj(o){
   else if(o.type==='gate'){const fl=Math.floor(time*5+Math.sin(time*13))%2;spr(ART.gate[fl],o.x-32,o.y-52);spr(ART.lanternPost[fl],o.x-48,o.y-28);const pr=ART.lanternPost[1-fl];g.save();g.translate(Math.round(o.x+48),0);g.scale(-1,1);g.drawImage(pr,0,Math.round(o.y-28));g.restore();}
   else if(o.type==='well')spr(ART.well,o.x-16,o.y-32);
   else if(o.type==='fence')spr(ART.fence,o.x-8,o.y-14);
-  else if(o.type==='chest')spr(ART.chest[o.open?1:0],o.x-8,o.y-14);
+  else if(o.type==='chest'){if(o.tier==='u'){if(!o.open&&!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x),Y=Math.round(o.y-8),R=14+2*Math.sin(time*3),gr=g.createRadialGradient(X,Y,0,X,Y,R);gr.addColorStop(0,'rgba(167,240,112,.45)');gr.addColorStop(1,'rgba(167,240,112,0)');g.fillStyle=gr;g.fillRect(X-R,Y-R,R*2,R*2);g.restore();
+      for(let k=0;k<3;k++){const ph=(time*.6+k/3)%1;g.globalAlpha=1-ph;g.fillStyle=k%2?'#a7f070':'#e8fff8';g.fillRect(Math.round(o.x-5+k*5+Math.sin(ph*6+k)*1.5),Math.round(o.y-12-ph*12),1,1);}g.globalAlpha=1;}spr(ART.uchest[o.open?1:0],o.x-8,o.y-14);}else spr(ART.chest[o.open?1:0],o.x-8,o.y-14);}
+  else if(o.type==='maw'){const fl=Math.floor(time*3)%2;spr(ART.maw[fl],o.x-72,o.y-126);}
+  else if(o.type==='bankchest')spr(ART.bankChest,o.x-12,o.y-18);
+  else if(o.type==='campfire')spr(ART.campfire[Math.floor(time*6)%2],o.x-8,o.y-15);
+  else if(o.type==='menhir'){spr(ART.menhir[o.v],o.x-8,o.y-30);if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.25+.15*Math.sin(time*2+o.x);g.fillStyle=o.v?'#c79bf2':'#73eff7';g.fillRect(Math.round(o.x-2),Math.round(o.y-20),4,9);g.restore();}}
+  else if(o.type==='lpost'){const fl=Math.floor(time*5+o.x)%2;spr(ART.lanternPost[fl],o.x-7,o.y-28);}
+  else if(o.type==='hmsign')spr(ART.hmsign,o.x-9,o.y-22);
+  else if(o.type==='willow'){const sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16,o.y-38);}
+  else if(o.type==='mcrystal'){spr(ART.mcrystal[o.v],o.x-8,o.y-20);if(!reduceMotion){const ph=(time*.5+o.x*.013)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#f1e4ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-16-ph*10),1,1);g.globalAlpha=1;}}
   else if(o.type==='glowcap')spr(ART.glowcap,o.x-8,o.y-15);
 }
 // ---- life at the Hold: chimney smoke, kitchen steam, butterflies over the flowers, falling leaves, glints on the lake ----
@@ -1403,15 +1761,15 @@ function drawPlayer(){
 function drawPlayerAt(){
   const look=myLook(),d=P.dir,lan=(look.flame?ART.lanternF:ART.lantern)[S.gear.lantern]||ART.lantern.basic;
   const lx=d==='left'?-9:d==='right'?4:d==='up'?3:-9,ly=-9;
-  const dun=scene!=='hold',held=(dun||inWild()&&!CHOP&&!FISHING)&&!(P.swing>0);   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
-  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);
+  const dun=scene!=='hold',casting=P.cast>0&&staffOn(),held=(dun||(inWild()||inWest())&&!CHOP&&!FISHING)&&!(P.swing>0)&&!casting;   // in the Depths: lantern in one hand, blade in the other, always (the Wilderness: blade drawn)
+  if(d==='up'&&dun)spr(lan,P.x+lx,P.y+ly);if(casting&&d==='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
   if(held&&d!=='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
   if(P.swing>0&&(d==='up'||d==='left'))drawSwing();
   const axPh=CHOP?CHOP.sw/.85:0;if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
   drawHero(P.x,P.y,d,P.moving,P.anim,look,scene==='hold'&&S.name?S.name:null,null,true);if(CHOP&&axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look,true);
   if(P.say&&time<P.sayUntil)TAGS.push({x:P.x,y:P.y-(ADMIN_HATS[S.gear.helm]?28:18)-(ADMIN||SET.pnames||inWild()?5:0)-(inWild()?9:0),say:P.say});
   if(d!=='up'&&dun)spr(lan,P.x+lx,P.y+ly+Math.round(Math.sin(time*5)));
-  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);
+  if(held&&d==='down')drawHeldBlade(P.x,P.y,d,S.gear.blade,P.moving,P.anim);if(casting&&d!=='up')drawCastPose(P.x,P.y,d,P.cast,P.castSp,S.gear.blade);
   if(P.swing>0&&!(d==='up'||d==='left'))drawSwing();
   drawFishing();drawCook();if(CHOP&&!axeBehind(axPh))drawAxe(P.x,P.y,P.dir,axPh,look);
 }
@@ -1420,6 +1778,7 @@ function drawSwing(){drawSwingAt(P.x,P.y,P.dir,P.swing,S.gear.blade);}
 // Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
 const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
 function drawHeldBlade(x,y,dir,blade,moving,anim){const h=HELD[dir]||HELD.down,sw=ART.sword[blade]||ART.sword.rusty;
+  if(isStaff(blade)&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
   const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
   g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-14);g.restore();}
 function drawSwingAt(x,y,dir,left,blade){const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
@@ -1438,7 +1797,7 @@ function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.
   g.strokeStyle=k.col;g.lineWidth=1;g.beginPath();g.moveTo(cx-dy*L*.5,cy+dx*L*.5);g.lineTo(cx+dy*L*.5,cy-dx*L*.5);g.stroke();
   if(p<.35){g.fillStyle='#ffffff';g.fillRect(cx-1,cy-1,3,3);}g.restore();}}
 function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=e.d.big;
-  if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),warden=e.type==='warden',col=warden?'115,239,247':'255,110,40';g.save();
+  if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),col=e.type==='warden'||e.type==='archmage'?'115,239,247':e.type==='hollowking'||e.type==='rift'?'199,155,242':'255,110,40';g.save();
     if(e.tg===1){const k=Math.min(1,e.tgK||0);g.fillStyle=`rgba(${col},${.08+.1*k})`;g.beginPath();g.ellipse(X,Y,R*k,R*k*.6,0,0,Math.PI*2);g.fill();g.strokeStyle=`rgba(${col},${.5+.4*Math.sin(time*20)})`;g.lineWidth=1;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.stroke();}
     else{g.fillStyle=`rgba(${col},.35)`;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.fill();}g.restore();}
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(e.x-(big?10:4)),Math.round(e.y),big?20:8,1);
@@ -1446,6 +1805,9 @@ function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=
   const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
   if(e.flash>0&&Math.floor(e.flash*30)%2){g.save();g.filter='brightness(3)';spr(img,e.x-ox,e.y-oy);g.restore();}else spr(img,e.x-ox,e.y-oy);
   if(sq)g.restore();
+  if(e.d.proj){if(e.type!=='rift'&&!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(e.x),Y=Math.round(e.y-5),gr=g.createRadialGradient(X,Y,0,X,Y,9);gr.addColorStop(0,e.type==='vorb'?'rgba(199,155,242,.6)':'rgba(115,239,247,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(X-9,Y-9,18,18);g.restore();}return;}
+  if(e.west&&Math.hypot(e.x-P.x,e.y-P.y)<110)TAGS.push({x:e.x,y:e.y-oy-(e.hp<e.max?8:3),name:WEST_NAMES[e.type]||e.type,lv:e.lvl,mob:true});
+  if(e.slowT>0){g.save();g.globalAlpha=.35;g.fillStyle='#73eff7';g.fillRect(Math.round(e.x-5),Math.round(e.y-oy+3),10,10);g.restore();}
   if(!e.d.boss&&e.hp<e.max){const w=Math.max(0,Math.min(12,Math.round(12*e.hp/e.max)));g.fillStyle='#1a1c2c';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),12,2);if(w){g.fillStyle='#b13e53';g.fillRect(Math.round(e.x-6),Math.round(e.y-oy-4),w,2);}}
 }
 function drawLight(cx,cy){
@@ -1502,22 +1864,34 @@ MP.gateMember=()=>{const p=MP.party,lead=(p.members.find(m=>m.id===p.leader)||{}
   $('sx').onclick=closeSheet;if($('jp'))$('jp').onclick=()=>MP.enterInst(p.inst.room,p.inst.floor,p.inst.seed);$('lv').onclick=()=>{NET.lsend({t:'leave'});closeSheet();setTimeout(openGate,400);};};
 // ---- shared objects (chests, glowcaps, ore): the host decides who gets them ----
 function objTaken(o,by){const mine=by===MP.me();
-  if(o.type==='chest'){o.open=true;o.act=null;if(mine){sfx('chest');bump('chests');const f=run.floor;spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2]]);dropGear(o.x,o.y-4,'chest');}puff(o.x,o.y-6,'#ffcd75',10);}
+  if(o.type==='chest'){o.open=true;o.act=null;const u=o.tier==='u';if(u)o.light=null;
+    if(mine){sfx('chest');bump('chests');const f=run.floor,runes=(RUNE_DROPS[map.pack.id]||[]).map(([k,c,a,b])=>[k+'_rune',Math.min(1,c*(u?6:3)),a,b+(u?2:0)]);
+      if(u){bump('uchests');sfx('rare');spawnLoot(o.x,o.y-4,[['gold',1,(6+f*3)*2,(14+f*5)*2],[map.pack.ore+'_ore',1,3,6],['lampseed',.6,1,3],['gem',.5,1,2],['oil',.6,1,2],['moonpetal_seed',.3,1,2],['glowcap_spore',.4,1,3],...chestGems(f).map(([k,c,a,b])=>[k,c*2.5,a,b]),...runes,['oil2',.07,1,1]]);dropGear(o.x,o.y-4,'uchest');}
+      else{spawnLoot(o.x,o.y-4,[['gold',1,6+f*3,14+f*5],[map.pack.ore+'_ore',.8,1,3],['lampseed',.35,1,1],['gem',.2,1,1],['oil',.3,1,1],['glowcap_spore',.25,1,2],...chestGems(f),...runes]);dropGear(o.x,o.y-4,'chest');}}
+    puff(o.x,o.y-6,u?'#a7f070':'#ffcd75',u?18:10);}
   else if(o.type==='glowcap'){o.gone=true;o.light=null;o.act=null;if(mine)spawnLoot(o.x,o.y-4,[['glowcap_spore',1,1,2]]);puff(o.x,o.y-4,'#e86fd0',8);}
-  else if(o.type==='ore'){o.gone=true;o.light=null;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');const OR=ORES[o.kind]||ORES.copper;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,o.kind==='starshard'?1:2,o.kind==='starshard'?2:3],['gem',.06,1,1]]);skillXp('mining',OR.xp);floatText(ox+8,oy-6,'+'+OR.xp+' Mining xp','#c9a26b');}puff(ox+8,oy+12,'#ffcd75',10);}}
+  else if(o.type==='ore'){o.gone=true;o.light=null;o.back=Date.now()+(ORES[o.kind]||ORES.copper).respawn*1000;const ox=o.tile[0]*T,oy=o.tile[1]*T;if(mine){bump('ores');const OR=ORES[o.kind]||ORES.copper;spawnLoot(ox+8,oy+20,[[o.kind+'_ore',1,o.kind==='starshard'?1:2,o.kind==='starshard'?2:3],['gem',.06,1,1]]);skillXp('mining',OR.xp);floatText(ox+8,oy-6,'+'+OR.xp+' Mining xp','#c9a26b');}puff(ox+8,oy+12,'#ffcd75',10);}}
+// special gems in chests, for jewelry: rubies and sapphires anywhere, emeralds from floor 6, diamonds from floor 11
+const chestGems=f=>[['ruby',.07,1,1],['sapphire',.06,1,1]].concat(f>=6?[['emerald',.05,1,1]]:[],f>=11?[['diamond',.03,1,1]]:[]);
 function mineOre(o,i,who){if(o.gone)return;o.hp--;if(o.hp<=0){objTaken(o,who);MP.objOut(i,o,who);}else MP.objOut(i,o,null);}
+// mined-out veins grow back after a while (the harder the ore, the longer); the dungeon leader keeps the clock
+function oreRegrow(i,o){o.gone=false;o.hp=(ORES[o.kind]||ORES.copper).hp;o.light=o.light0||null;o.back=0;const ox=o.tile[0]*T,oy=o.tile[1]*T;puff(ox+8,oy+12,'#c9a26b',8);}
+// ores that would blend into the wall get a soft pulsing shine around them
+const ORE_SHINE={coal:'220,228,255',cobalt:'90,170,255',iron:'230,240,255',copper:'255,170,110'};
+function oreTick(){if(!map||!map.objs)return;const now=Date.now();map.objs.forEach((o,i)=>{if(o.type==='ore'&&o.gone&&o.back&&now>=o.back){oreRegrow(i,o);if(MP.shared())NET.send({t:'obj',o:i,open:0,gone:0,hp:o.hp,rs:1});}});}
 MP.objOut=(i,o,by)=>{if(MP.shared())NET.send({t:'obj',o:i,open:o.open?1:0,gone:o.gone?1:0,hp:o.hp,by});};
-function applyHit(e,d,a,who){e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
-function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
+function applyHit(e,d,a,who){if(e.west){e.aggro=true;e.ret=false;}e.hp-=d;e.dmgBy=e.dmgBy||{};e.dmgBy[who]=(e.dmgBy[who]||0)+d;e.flash=.12;const kk=e.d.boss?40:150;e.kb={x:Math.cos(a)*kk,y:Math.sin(a)*kk};if(e.hp<=0)killEnemy(e);}
+function nearestTarget(e){let best={x:P.x,y:P.y},bd=Math.hypot(P.x-e.x,P.y-e.y);if(scene==='hold')return best;/* Hollowmere's monsters are yours alone */for(const o of OTH.values()){const d=Math.hypot(o.x-e.x,o.y-e.y);if(d<bd){bd=d;best=o;}}return best;}
 MP.contact=(e,dmg)=>{const now=performance.now();e.hc=e.hc||{};for(const o of OTH.values()){if(Math.hypot(o.x-e.x,(o.y-4)-(e.y-e.r))<(e.aoeR||e.r)+6&&now-(e.hc[o.id]||0)>700){e.hc[o.id]=now;NET.send({t:'hurt',to:o.id,d:Math.round(dmg),x:Math.round(e.x),y:Math.round(e.y)});}}};
 MP.askDown=()=>{const h=OTH.get(MP.host);toast((h?h.name:'Your host')+' leads the way down. Wait at the stairs.');if(!MP.downT||time-MP.downT>4){MP.downT=time;NET.send({t:'down'});}};
-MP.floorOut=f=>{if(MP.shared())NET.send({t:'floor',f});};
+// the room always learns the floor (solo too): a reconnect asks the room which floor you're on, so it must never be stale
+MP.floorOut=f=>{if(netOn()&&MP.inInst()&&NET.roomOpen())NET.send({t:'floor',f});};
 // followers: monsters come from the host's snapshots and glide to their new spots
 function followEnemies(dt){for(const e of ents){e.t+=dt;if(e.flash>0)e.flash-=dt;if(e.sq>0)e.sq-=dt;if(e.tx!=null){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;}}ents=ents.filter(e=>!e.dead);}
 // ---- per-frame: send my position (10x a second at most, only when it changed), glide other players, host sends monsters ----
 MP.tick=dt=>{
   for(const o of OTH.values()){const k=Math.min(1,dt*10),dx=o.tx-o.x,dy=o.ty-o.y;if(Math.abs(dx)>40||Math.abs(dy)>40){o.x=o.tx;o.y=o.ty;}else{o.x+=dx*k;o.y+=dy*k;}
-    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;
+    if(o.moving)o.anim+=dt;if(o.sayT>0)o.sayT-=dt;if(o.fish)o.fish.t+=dt;if(o.chopT>0)o.chopT-=dt;if(o.swT>0)o.swT-=dt;if(o.castT>0)o.castT-=dt;
     if(o.hp!=null&&o.max&&o.hp<o.max&&time-(o.lc??-99)>8)o.hp=Math.min(o.max,o.hp+dt);}
   if(!netOn()||!NET.roomOpen()||!MP.room)return;
   MP.sendT-=dt;if(MP.sendT<=0){MP.sendT=.1;const key=Math.round(P.x)+','+Math.round(P.y)+','+P.dir+','+(P.moving?1:0);if(key!==MP.sent){MP.sent=key;NET.send({t:'s',x:Math.round(P.x*10)/10,y:Math.round(P.y*10)/10,d:P.dir,m:P.moving});}}
@@ -1564,7 +1938,9 @@ if(window.NET){
     if(MP.chatRoom&&MP.chatRoom!==m.room&&MP.chatLog.length){const msg={id:'sys'+Date.now(),sys:true,text:m.room[0]==='w'?'You’re in World '+m.room.slice(1):'You entered the Depths',at:Date.now()};MP.chatLog.push(msg);if(MP.chatCb)MP.chatCb([msg]);}MP.chatRoom=m.room;
     NET.lsend({t:'where',room:m.room,floor:m.room[0]==='d'?m.floor:undefined});
     if(m.room[0]==='d'){
-      if(run&&m.floor&&m.floor!==run.floor)enterFloor(m.floor);
+      // a reconnect: you lead the dungeon, so the room follows you (older rooms could remember an earlier floor);
+      // a party member follows the leader's floor
+      if(run&&m.floor&&m.floor!==run.floor){if(MP.host===MP.id){NET.send({t:'floor',f:run.floor});NET.lsend({t:'where',room:m.room,floor:run.floor});}else enterFloor(m.floor);}
       if(MP.host!==MP.id){ents=[];NET.send({t:'sync'});}
       else MP.nextEid=Math.max(MP.nextEid,...ents.map(e=>e.id+1),1);
     }});
@@ -1624,14 +2000,14 @@ if(window.NET){
     for(const e of ents)if(!seen.has(e.id))e.dead=true;});
   NET.onR('kill',m=>{if(!MP.client()||scene!=='delve')return;let e=ents.find(q=>q.id===m.e);
     if(!e){if(!ENEMIES[m.ty])return;e=makeEnemy(m.ty,m.x,m.y,1);}e.x=m.x;e.y=m.y;e.dead=true;onKilled(e,m.top,m.hit||[],m.xp|0);});
-  NET.onR('obj',m=>{if(scene!=='delve'||!map.objs)return;const o=map.objs[m.o];if(!o)return;if(m.hp!=null)o.hp=m.hp;
+  NET.onR('obj',m=>{if(scene!=='delve'||!map.objs)return;const o=map.objs[m.o];if(!o)return;if(m.rs&&o.type==='ore'){if(o.gone)oreRegrow(m.o,o);return;}if(m.hp!=null)o.hp=m.hp;
     if((m.gone&&!o.gone)||(m.open&&!o.open)){objTaken(o,m.by);const who=m.by&&m.by!==MP.me()&&OTH.get(m.by);if(who&&o.type==='chest'){floatText(o.x,o.y-18,who.name+' opened a chest','#ffcd75');if(Math.hypot(o.x-P.x,o.y-P.y)<200)sfx('chest',.5);}}o.req=0;});
   NET.onR('objs',m=>{if(scene!=='delve'||m.f!==run.floor)return;for(const [i,op,gn,hp] of m.s){const o=map.objs[i];if(!o)continue;if(op){o.open=true;o.act=null;}if(gn){o.gone=true;o.light=null;o.act=null;}if(hp!=null)o.hp=hp;}
     if(m.bd&&map.stairs&&map.stairs.hidden){map.stairs.hidden=false;bakeGround(map);}});
   NET.onR('floor',m=>{if(scene!=='delve'||m.f===run.floor)return;sfx('stairs');enterFloor(m.f);toast('Floor '+m.f+' · '+BIOMES[packOf(m.f).id].name);});
   NET.onR('hurt',m=>{if(scene==='delve')hurtPlayer(m.d,{x:m.x,y:m.y});});
   // player → host
-  NET.onR('hit',m=>{if(MP.client()||scene!=='delve')return;const e=ents.find(q=>q.id===m.e&&!q.dead);if(!e)return;applyHit(e,Math.max(1,Math.min(e.max,m.d|0)),+m.a||0,m.from);});
+  NET.onR('hit',m=>{if(MP.client()||scene!=='delve')return;const e=ents.find(q=>q.id===m.e&&!q.dead);if(!e)return;if(m.s===1)e.slowT=1.8;applyHit(e,Math.max(1,Math.min(e.max,m.d|0)),+m.a||0,m.from);});
   NET.onR('act',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||(o.type!=='chest'&&o.type!=='glowcap')||o.open||o.gone)return;objTaken(o,m.from);MP.objOut(m.o,o,m.from);const who=OTH.get(m.from);if(who&&o.type==='chest'){floatText(o.x,o.y-18,who.name+' opened a chest','#ffcd75');sfx('chest');}});
   NET.onR('mine',m=>{if(MP.client()||scene!=='delve')return;const o=map.objs[m.o];if(!o||o.type!=='ore')return;mineOre(o,m.o,m.from);});
   NET.onR('shade',m=>{if(MP.client()||scene!=='delve')return;if(ents.filter(e=>e.type==='shade'&&!e.dead).length>=8)return;if(!blocked(m.x,m.y,4))ents.push(makeEnemy('shade',m.x,m.y,1+.1*run.floor));});
@@ -1894,13 +2270,14 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 let posTick=0;setInterval(()=>{if(started){if(++posTick%3===0)notePos();save();}},10000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started){notePos();save();}});addEventListener('pagehide',()=>{if(started){notePos();save();}});
 // Admin loadout: the best gear equipped, one of every lantern, cape and top-tier piece in the bank, both relics, max bank space.
-function grantKit(){const old=S.gear,eq={blade:'cinder',mail:'steel',lantern:'wisp',cape:'mother',helm:HAT};
-  for(const sl of ['blade','mail','lantern','cape','helm']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
+function grantKit(){const old=S.gear,eq={blade:'cinder',mail:'steel',lantern:'wisp',cape:'mother',helm:HAT,ring:'diamond_ring',amulet:'star_amulet'};
+  for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const cur=old[sl];if(cur&&cur!==eq[sl]&&!(sl==='blade'&&cur==='rusty')&&!(sl==='mail'&&cur==='none')&&!(sl==='lantern'&&cur==='basic'))give(S.bank,gearId(sl,cur),1);}
   S.gear=Object.assign({},eq);S.bankBuys=BANK_BUYS.length;S.gold+=100000;
   const has=id=>(S.bank[id]||0)+(S.vault[id]||0)>0;
   for(const k of Object.keys(LANTERNS))if(k!=='wisp'&&k!=='basic'&&!has(k+'_lantern'))give(S.vault,k+'_lantern',1);
   for(const k of Object.keys(CAPES))if(k!=='mother'&&!has('cape_'+k))give(S.vault,'cape_'+k,1);
-  for(const id of ['ember_blade','ember_mail','ember_helm','steel_blade','steel_helm','star_helm','relic_crown','relic_sigil','relic_heart','relic_star'])if(!has(id))give(S.vault,id,1);
+  for(const id of ['ember_blade','ember_mail','ember_helm','steel_blade','steel_helm','gloam_blade','gloam_helm','gloam_mail','star_helm','relic_crown','relic_sigil','relic_heart','relic_star','relic_tome','relic_throne',
+    'apprentice_staff','blackwood_staff','ember_staff','gloam_staff','moon_staff','hollow_staff','tide_robe','void_robe',...Object.keys(JEWELS).filter(k=>k!=='diamond_ring'&&k!=='star_amulet')])if(!has(id))give(S.vault,id,1);
   for(const id of ['pondfin','stew','oil'])give(S.bank,id,20);
   S.quick=['stew','pondfin','oil','bread',null];S.flags.kit=true;P.hp=maxHp();save(true);}
 function applyAdmin(on,hat){ADMIN=!!on;HAT=ADMIN_HATS[hat]?hat:'partyhat';
@@ -1956,5 +2333,5 @@ $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
 window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake}};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},updateHud,hurtPlayer,killXp};
 })();
