@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.12.2 · updated October 27, 2026
+Season 0 (Beta) · build v0.12.4 · updated October 27, 2026
 
 ## Welcome
 
@@ -15,7 +15,7 @@ The game is in **Season 0 (Beta)**. Every player you meet is a real person, and 
 3. **Bring the loot home.** Light the Return Flame to get home with everything you found. If you fall, you lose about half of what you were carrying.
 4. **Grow stronger.** Better gear takes you deeper, deeper floors drop better loot, and goals reward you along the way.
 
-**At a glance:** 8 skills (Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic) plus a combat level, 30 dungeon floors across 6 biomes with a boss each, Hollowmere (a wild land west of the Hold), 85 goals (10 of them secret) and items from Common all the way up to Mythic.
+**At a glance:** 8 skills (Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic) plus a combat level, 30 dungeon floors across 6 biomes with a boss each, Hollowmere (a wild land west of the Hold), 86 goals (10 of them secret) and items from Common all the way up to Mythic.
 
 ## Getting started
 
@@ -109,6 +109,7 @@ Walk up to a tree and tap **Chop**. Each swing has a chance to give you 1 log an
 - A tree that was only partly cut grows its logs back by itself: 15 seconds after the last swing, it starts adding 1 log every 2 seconds until it's full.
 - Woodcutting XP is slow on purpose. Level 30 takes around 4 hours of chopping.
 - Logs sell for 2 gold each, but a future skill will use them, so it's worth stocking up.
+- **Willow trees** grow in Hollowmere (Woodcutting 30). Each holds 80 Willow Logs worth 18 gold each and gives **18 XP** per log. A fallen willow grows back in 60 seconds. Watch out: Hollowmere's monsters roam nearby.
 - **Blackwood trees** grow in the Wilderness (Woodcutting 15). Each holds 60 Blackwood Logs worth 9 gold each and gives **9 XP** per log, but they take 45 seconds to grow back and you can be attacked while you chop.
 
 ### Fishing
@@ -419,9 +420,17 @@ Defeating them trains Fighting (or Magic with a staff), drops gold and runes, an
 
 **Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here, not the reduced health of the Wilderness.
 
-**The Moonmere.** A great moonlit lake, bigger than the Hold's, with a long dock out to a fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
+**The Moonmere.** A great moonlit lake, bigger than the Hold's, with a dock two planks wide out to a big 5-by-5 fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
 
-**The Abyssal Maw.** The entrance to Lanternhold's future raids: a vast horned skull set into the cliffs, with a portal burning in its jaw. Raids arrive in **Season 1**; for now, step up to it and it tells you so. The plaza in front of the Maw is **safe**: no monster comes near it. A **Bank chest** stands by the campfire on the plaza, so you can bank your loot without walking home.
+**The Abyssal Maw.** The entrance to Lanternhold's raids: a vast horned skull set into the cliffs, with a portal burning in its jaw. The plaza in front of the Maw is **safe**: no monster comes near it. A **Bank chest** stands by the campfire on the plaza, so you can bank your loot without walking home.
+
+**Raids (Season 1).** Raids arrive in Season 1, and every raid is a **world event for the whole server**:
+
+- **One raid every hour.** When a raid goes live, the whole game hears about it.
+- **Every world, together.** Players from every world can join the same raid at the same time.
+- **The raid queue.** Join the queue at the Maw. A raid begins once at least **10 players** are queued.
+
+For now, step up to the Maw and it explains all of this.
 
 ## Items and gear
 
@@ -583,7 +592,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 
 ## Goals and secrets
 
-There are 85 goals: 75 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
+There are 86 goals: 76 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
 
 | Group | Goal | Gold |
 | --- | --- | --- |
@@ -638,6 +647,7 @@ There are 85 goals: 75 open goals in five groups and 10 hidden secrets. Each one
 | Life at the Hold | Buy more Bank space | 50 |
 | Life at the Hold | Hold 25,000 gold at once | 250 |
 | Life at the Hold | Walk into Hollowmere | 20 |
+| Life at the Hold | Cut a willow log | 60 |
 | Life at the Hold | Stand before the Abyssal Maw | 50 |
 | Life at the Hold | Defeat 100 monsters in Hollowmere | 200 |
 | Life at the Hold | Catch a Moonfin | 100 |
@@ -705,7 +715,7 @@ Your hero saves to your account automatically, so you can pick up where you left
 
 ## Coming next
 
-Season 1 brings the token, $LANTERN rewards, on-chain relics and the first **raids** through the Abyssal Maw in Hollowmere.
+Season 1 brings the token, $LANTERN rewards, on-chain relics and **world raids**: one every hour through the Abyssal Maw in Hollowmere, open to players from every world at once, starting once 10 players are queued.
 
 **Also on the way:** a new area beyond the east road with a new fishing pond, a new tree and a new skill that uses logs, and more goals each season.
 
