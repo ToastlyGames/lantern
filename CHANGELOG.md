@@ -1,6 +1,45 @@
 # Lanternhold changelog
 
-Current build: **v0.12.2** · Season 0 (Beta)
+Current build: **v0.13.1** · Season 0 (Beta)
+
+## v0.13.1 · A pumpkin head and a reaper’s scythe
+
+_2026-10-28_
+
+- All Hallows’ Lantern now rewards two cosmetics: the Jack-o’-Lantern, a carved pumpkin with a violet flame flickering through its grin, and the Reaper’s Scythe, Mordecai’s own soul-lit scythe.
+- The Cosmetics tab now has a head slot and a weapon slot. The Scythe shows over your blade or staff and swings with a wide soul-green arc; your weapon’s stats stay the same.
+- Already finished the quest? Your Reaper’s Shroud has become the Jack-o’-Lantern and the Scythe. If you were wearing the shroud, you’re now wearing both.
+- The Founder’s Lantern: 2,222 in all. Reach combat level 10 for your mint. 1,000 of them are being given away on X.
+
+## v0.13.0 · All Hallows’ Eve in a bigger Hollowmere
+
+_2026-10-27_
+
+- Hollowmere is more than four times bigger. Walk west out of the Hold and the Hold’s green grass and oaks run on into the Hollow Wood, where dusk falls slowly around you until you reach the moor. The Hold’s west tree line is gone.
+- New regions: the fens east of the Moonmere, the deepwood’s dead trees, and the Mossy Barrows in the far south-west, where mossy giants walk (levels 22–28). New monsters: carrion ravens at the wood’s edge, gloomstags in the fens and the mossy giants.
+- The Moonmere is bigger, and the Abyssal Maw now stands far off in the north-west. More willows to chop, more lamp posts on more roads.
+- A Halloween quest: All Hallows’ Lantern. Find Mordecai the Reaper where the Hollow Wood ends. You will need Tallow, Wick, a few wolves and three lost souls.
+- Quests: a new Quests tab on the Hero screen. A quest is red until it’s done, then green, and the steps you’ve finished are crossed out.
+- Cosmetics: a new Cosmetics tab with a head slot and a body slot. Cosmetics always show over your armour and helmet, which stay equipped underneath. They are soulbound: never traded, dropped or lost. The first one is the Reaper’s Shroud, the reward for All Hallows’ Lantern.
+- The hero looks sharper: softer outlines, more shading, arms that swing as you walk, and helmets that show your face.
+- A new goal: complete All Hallows’ Lantern.
+
+## v0.12.4 · Willows and a bigger dock
+
+_2026-10-27_
+
+- The willows of Hollowmere can be chopped: Woodcutting 30, 18 XP a log. Willow Logs sell well to Tallow. Like the oaks, every willow is shared with your world and grows back after it falls.
+- The Moonmere dock is bigger: the walkway is two planks wide and the platform in the middle is 5 by 5, with room for a crowd to fish.
+- In Hollowmere, when a monster comes for you, the action button fights instead of chopping or fishing.
+- A new goal: cut a willow log.
+
+## v0.12.3 · How raids will work
+
+_2026-10-27_
+
+- Raids arrive in Season 1, and every raid is a world event for the whole server.
+- One raid opens every hour at the Abyssal Maw. Players from every world can join the same raid at the same time.
+- A raid begins once at least 10 players are in the raid queue. The Maw in Hollowmere now explains it all.
 
 ## v0.12.2 · Relic-forging by item level
 
