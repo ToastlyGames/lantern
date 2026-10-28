@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.12.4 · updated October 27, 2026
+Season 0 (Beta) · build v0.13.1 · updated October 28, 2026
 
 ## Welcome
 
@@ -15,7 +15,7 @@ The game is in **Season 0 (Beta)**. Every player you meet is a real person, and 
 3. **Bring the loot home.** Light the Return Flame to get home with everything you found. If you fall, you lose about half of what you were carrying.
 4. **Grow stronger.** Better gear takes you deeper, deeper floors drop better loot, and goals reward you along the way.
 
-**At a glance:** 8 skills (Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic) plus a combat level, 30 dungeon floors across 6 biomes with a boss each, Hollowmere (a wild land west of the Hold), 86 goals (10 of them secret) and items from Common all the way up to Mythic.
+**At a glance:** 8 skills (Woodcutting, Fishing, Farming, Cooking, Smithing, Mining, Crafting and Magic) plus a combat level, 30 dungeon floors across 6 biomes with a boss each, Hollowmere (a wild land west of the Hold), 87 goals (10 of them secret) and items from Common all the way up to Mythic.
 
 ## Getting started
 
@@ -109,7 +109,7 @@ Walk up to a tree and tap **Chop**. Each swing has a chance to give you 1 log an
 - A tree that was only partly cut grows its logs back by itself: 15 seconds after the last swing, it starts adding 1 log every 2 seconds until it's full.
 - Woodcutting XP is slow on purpose. Level 30 takes around 4 hours of chopping.
 - Logs sell for 2 gold each, but a future skill will use them, so it's worth stocking up.
-- **Willow trees** grow in Hollowmere (Woodcutting 30). Each holds 80 Willow Logs worth 18 gold each and gives **18 XP** per log. A fallen willow grows back in 60 seconds. Watch out: Hollowmere's monsters roam nearby.
+- **Willow trees** grow all over the Hollowmere moor (Woodcutting 30). Each holds 80 Willow Logs worth 18 gold each and gives **18 XP** per log. A fallen willow grows back in 60 seconds. Watch out: Hollowmere's monsters roam nearby.
 - **Blackwood trees** grow in the Wilderness (Woodcutting 15). Each holds 60 Blackwood Logs worth 9 gold each and gives **9 XP** per log, but they take 45 seconds to grow back and you can be attacked while you chop.
 
 ### Fishing
@@ -406,23 +406,28 @@ The first expansion to Lanternhold. North of the Hold, past the old stone wall, 
 
 ## Hollowmere
 
-Take the road out through the **west wall** of the Hold and you're in **Hollowmere**, a wide twilight moor about four times the size of the Hold. Fireflies drift over the grass, willows hang over the water, and in the far north-west a great horned skull breathes violet fire.
+Walk out of the Hold to the west and its green grass and oaks run on into the **Hollow Wood**. Dusk falls a little more with every step, until the wood opens onto **Hollowmere**: a vast twilight moor, nearly twenty times the size of the Hold (96 by 120 tiles), with roads lit by lamp posts. Fireflies drift over the grass, willows hang over the water, and in the far north-west a great horned skull breathes violet fire.
 
-**Monsters.** Hollowmere's monsters live in dens and attack if you get too close. Back off far enough and they give up and wander home. Each shows its level, from **3 to 20**:
+**Monsters.** Hollowmere's monsters live in dens and attack if you get too close. Back off far enough and they give up and wander home. Each shows its level, from **2 to 28**:
 
 | Area | Monsters | Levels |
 | --- | --- | --- |
-| The meadows (by the Hold gate) | Moor Wolf, Bristleboar | 3 to 8 |
-| The marsh (west) | Bogling, Mirewisp | 9 to 14 |
-| The deepwood (south-east) | Deepwood Treant | 15 to 20 |
+| The edge of the Hollow Wood | Carrion Raven | 2 to 4 |
+| The meadows (north, past the wood) | Moor Wolf, Bristleboar | 3 to 8 |
+| The marsh (west, around the bog pools) | Bogling, Mirewisp | 9 to 14 |
+| The fens (east of the Moonmere) | Gloomstag | 12 to 16 |
+| The deepwood (south-east, among the dead trees) | Deepwood Treant | 15 to 20 |
+| The Mossy Barrows (far south-west) | **Mossy Giant** | 22 to 28 |
 
-Defeating them trains Fighting (or Magic with a staff), drops gold and runes, and treants drop logs and Blackwood Logs. There's no PvP in Hollowmere.
+Defeating them trains Fighting (or Magic with a staff) and drops gold and runes. Treants drop logs and Blackwood Logs; mossy giants drop gold, logs, glowcap spores and sometimes an Emerald. There's no PvP in Hollowmere. When a monster comes for you, the action button fights, even if you're next to a willow or the water.
+
+**Mordecai the Reaper** stands by the road where the Hollow Wood ends, among candle-lit pumpkins and old graves. Talk to him for the Halloween quest (see Quests).
 
 **Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here, not the reduced health of the Wilderness.
 
-**The Moonmere.** A great moonlit lake, bigger than the Hold's, with a dock two planks wide out to a big 5-by-5 fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
+**The Moonmere.** A great moonlit lake in the middle of the moor, far bigger than the Hold's, with a dock two planks wide out to a big 5-by-5 fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
 
-**The Abyssal Maw.** The entrance to Lanternhold's raids: a vast horned skull set into the cliffs, with a portal burning in its jaw. The plaza in front of the Maw is **safe**: no monster comes near it. A **Bank chest** stands by the campfire on the plaza, so you can bank your loot without walking home.
+**The Abyssal Maw.** The entrance to Lanternhold's raids, in the far north-west: a vast horned skull set into the cliffs, with a portal burning in its jaw. The plaza in front of the Maw is **safe**: no monster comes near it. A **Bank chest** stands by the campfire on the plaza, so you can bank your loot without walking home.
 
 **Raids (Season 1).** Raids arrive in Season 1, and every raid is a **world event for the whole server**:
 
@@ -431,6 +436,32 @@ Defeating them trains Fighting (or Magic with a staff), drops gold and runes, an
 - **The raid queue.** Join the queue at the Maw. A raid begins once at least **10 players** are queued.
 
 For now, step up to the Maw and it explains all of this.
+
+## Quests
+
+Quests are stories told by the people of Lanternhold. Open **Hero → Quests** to see them. A quest shows **red** until it's done and **green** once it's complete, and every step you've finished is crossed out. NPCs with something for you show a gold **!** (or a **?** when it's time to come back).
+
+**All Hallows' Lantern** (Halloween). Mordecai the Reaper leads the lost souls of Hollowmere home on All Hallows' Eve, but his lantern has gone out.
+
+1. Speak with Mordecai the Reaper, where the Hollow Wood ends.
+2. Ask Tallow, the trader at the Hold, for a hollow gourd.
+3. Ask Wick to light the gourd with his lantern.
+4. Drive off 6 Moor Wolves in the meadows.
+5. Gather 3 lost souls from the monsters of Hollowmere (any monster there can release one).
+6. Bring the lantern and the souls back to Mordecai.
+
+**Rewards:** the **Jack-o'-Lantern** and the **Reaper's Scythe**, two soulbound cosmetics. (Heroes who finished the quest in build 0.13.0 got the Reaper's Shroud, which has become these two: they're already in your Cosmetics tab.)
+
+## Cosmetics
+
+Open **Hero → Cosmetics**. There are two cosmetic slots, **head** and **weapon**. A head cosmetic always shows **over** your helmet, and a weapon cosmetic over your blade or staff. What you wear for stats stays equipped underneath, so you never trade power for looks. Everyone around you sees your cosmetics.
+
+Cosmetics are **soulbound** to your hero: they aren't items in your bag or Bank, so they can't be traded, dropped, sold or lost, even in the Wilderness. You earn them from quests.
+
+| Cosmetic | Slot | How to get it |
+| --- | --- | --- |
+| Jack-o'-Lantern | Head | Complete All Hallows' Lantern. A carved pumpkin lit by a violet flame that flickers through its grin, with violet embers rising from the stem. |
+| Reaper's Scythe | Weapon | Complete All Hallows' Lantern. Mordecai's own scythe: a crescent blade with a soul-lit edge and a violet soul-gem. Your swings leave a wide soul-green arc. |
 
 ## Items and gear
 
@@ -592,7 +623,7 @@ Everyone in your world shares the Hold. You see each other walk, fish, chop and 
 
 ## Goals and secrets
 
-There are 86 goals: 76 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
+There are 87 goals: 77 open goals in five groups and 10 hidden secrets. Each one pays gold once, the moment you complete it, and you can do them in any order. Tap the goals pill at the top of the screen to see them all with progress bars.
 
 | Group | Goal | Gold |
 | --- | --- | --- |
@@ -647,6 +678,7 @@ There are 86 goals: 76 open goals in five groups and 10 hidden secrets. Each one
 | Life at the Hold | Buy more Bank space | 50 |
 | Life at the Hold | Hold 25,000 gold at once | 250 |
 | Life at the Hold | Walk into Hollowmere | 20 |
+| Life at the Hold | Complete All Hallows' Lantern | 100 |
 | Life at the Hold | Cut a willow log | 60 |
 | Life at the Hold | Stand before the Abyssal Maw | 50 |
 | Life at the Hold | Defeat 100 monsters in Hollowmere | 200 |
@@ -677,11 +709,12 @@ There are 86 goals: 76 open goals in five groups and 10 hidden secrets. Each one
 
 ## Founder's Lantern
 
-The **Founder's Lantern** is a free NFT on Robinhood Chain for the **first 1,000 heroes** ever made who reach **combat level 10**. It can only be minted inside the game.
+The **Founder's Lantern** is a free NFT on Robinhood Chain: **2,222** in all, for heroes who reach **combat level 10**. It can only be minted inside the game. **1,000** of them are being given away on X: follow, repost and tag 3 friends on the giveaway post to enter.
 
 - **Hero numbers:** every hero has a number, in the order heroes were made. The very first hero is Hero #1. You can see yours on the Hero screen.
-- **The whitelist:** make a hero and play. If your hero number is 1,000 or lower, your spot is held; reach **combat level 10** to lock it in (combat level comes from Fighting plus all your skills, see Combat level). There's nothing else to sign up for.
-- **Your token's number is your hero number** (Founder's Lantern #123 for Hero #123), so there is only ever one of each, from #1 to #1,000. Every token shares the same art: the Founder's Lantern, burning violet.
+- **The whitelist:** make a hero and play. Reach **combat level 10** to unlock your mint (combat level comes from Fighting plus all your skills, see Combat level). There's nothing else to sign up for. Mints are first come, first served while they last.
+- **Giveaway winners:** if your hero wins one of the 1,000 X giveaway spots, a Lantern is held for you, so you can't miss out even when the rest are gone. Wick will tell you you're a winner. You still mint it the same way.
+- **Your token's number is your hero number** (Founder's Lantern #123 for Hero #123), so there is only ever one of each. Every token shares the same art: the Founder's Lantern, burning violet.
 - **Free to mint, in the game only:** you only pay a tiny gas fee in ETH on Robinhood Chain. It's **one per hero** (and one per wallet), minted to the wallet linked to your hero. Every mint needs a pass the game signs for that hero, so it can't be botted or faked, and the team gets no extras: the same one per hero as everyone.
 - **More to come:** as the game grows, the Founder's Lantern will unlock trinkets and easter eggs for its holders.
 - **Check your spot with Wick:** Wick, the keeper of the Founders' Ledger, stands by the road up to the Delve Gate. Talk to him and he'll look up your name. New heroes see a violet **!** over him until they've visited.
