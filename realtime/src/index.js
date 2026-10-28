@@ -9,7 +9,7 @@
 
 // The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
 // from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
-const MIN_CLIENT = '0.12.4';
+const MIN_CLIENT = '0.13.1';
 const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
@@ -355,7 +355,7 @@ const CAPE_PVP = { tattered: { hp: 6 }, grave: { def: 2, hp: 10 }, mother: { dmg
 export const pvpMax = l => 60 + 8 * (((l && l.lvl) || 1) - 1) + ((CAPE_PVP[l && l.cape] || {}).hp || 0);
 const SLOTS = new Set(['blade', 'mail', 'lantern', 'cape', 'helm', 'ring', 'amulet']);
 // The map grew west in v0.12 (Hollowmere): every Hold and Wilderness x moved right by WEST_X. Keep in step with world.js.
-const WEST_X = 704;
+const WEST_X = 1536;   // v0.13: Hollowmere grew to 96 columns
 const HOLD_SPAWN = { x: 208 + WEST_X, y: 800 };   // where a defeated hero wakes up (the Hold's spawn in client-src/world.js)
 const recent = (o, now, ms) => { const r = {}; let k = 0; for (const [id, t] of Object.entries(o || {})) if (now - t < ms && k++ < 12) r[id] = t; return r; };
 export class Room {
@@ -692,5 +692,5 @@ function cleanLook(l, hat, fd) {   // fd: holds a Founder's Lantern, so may show
   if (!l || typeof l !== 'object') return null;
   const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null;
   const helm = s(l.helm);
-  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1, flame: fd && l.flame === 'founder' ? 'founder' : null };
+  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), cw: s(l.cw), ch: s(l.ch), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1, flame: fd && l.flame === 'founder' ? 'founder' : null };
 }
