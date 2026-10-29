@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.13.1 · updated October 28, 2026
+Season 0 (Beta) · build v0.13.4 · updated October 28, 2026
 
 ## Welcome
 
@@ -57,7 +57,7 @@ The goals pill at the top of the screen always suggests a good next step.
 
 The game works with your phone upright or sideways.
 
-**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: a compass, Settings and Social, with a globe button under the compass that opens your world map. In the Wilderness a red badge shows the Wilderness level. The goals pill shows how many goals you've done. Tap it to open Goals.
+**On screen.** At the top: your level and health, plus your lantern's oil when you're in the Depths. Top right: a compass, Settings and Social, with a globe button under the compass that opens your world map. In the Wilderness a red badge shows the Wilderness level. The goals pill shows how many goals you've done. Tap it to open Goals. On the world map, pinch (phone) or scroll (computer) to zoom in, use the + and − buttons, double-tap to zoom in on a spot, and drag to look around.
 
 **World map.** Tap the globe (or press G) to see the whole world, the Hold, Hollowmere and the Wilderness, with a marker showing where you are. The map is see-through, so the game keeps going underneath. Tap anywhere on it (or press G or Escape) to close it. Other players near you show as white dots.
 
@@ -119,7 +119,7 @@ Stand at the edge of the lake, or out on the dock, and tap **Fish**. Your line a
 - **Pondfin:** Fishing 1, 10 XP each, in the Hold's lake.
 - **Gloomfin:** Fishing 15, 30 XP each, only in the **Gloom Pond** in the Wilderness. Cooked, it heals 55.
 - **Moonfin:** Fishing 30, 60 XP each, only in the **Moonmere** in Hollowmere. Walk out along its dock to the platform in the middle. Cooked, it heals 85.
-- The rare **Angler's Cape** can only be caught while fishing: about 1 in every 300 catches.
+- The **Angler's Cape** can only be caught while fishing, and it's extremely rare: about 1 in every 35,000 catches. There's always a chance on every catch.
 
 ### Farming
 
@@ -423,7 +423,7 @@ Defeating them trains Fighting (or Magic with a staff) and drops gold and runes.
 
 **Mordecai the Reaper** stands by the road where the Hollow Wood ends, among candle-lit pumpkins and old graves. Talk to him for the Halloween quest (see Quests).
 
-**Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here, not the reduced health of the Wilderness.
+**Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here and in the Hold. Only the Wilderness, north of the wall, lowers it: there your max health is your level plus your cape, the same rules for everyone.
 
 **The Moonmere.** A great moonlit lake in the middle of the moor, far bigger than the Hold's, with a dock two planks wide out to a big 5-by-5 fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
 
@@ -499,7 +499,7 @@ Nobody starts with a cape. Each one gives special bonuses.
 | --- | --- | --- | --- |
 | Tattered Cloak | Common | +6 max HP | The Depths |
 | Mossweave Cape | Uncommon | Oil lasts 10% longer, +5% speed | The Depths |
-| Angler's Cape | Uncommon | +10% Fishing XP, +6% catch chance | Fishing only |
+| Angler's Cape | Extremely Rare | +10% Fishing XP, +6% catch chance | Fishing only (1 in 35,000 catches) |
 | Gravecloth Mantle | Rare | +2 defence, +10 max HP | The Depths |
 | Hearthkeeper Cape | Rare | 50% less burnt food, regenerate 0.2 HP/s | The Depths |
 | Glowcap Shroud | Extremely Rare | +20% light, +12% Loot Luck | The Depths |
