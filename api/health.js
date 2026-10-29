@@ -2,6 +2,8 @@
 // Reports which settings are present and whether the database is reachable. Never shows secret values.
 import { rewardsOn, rewardsStart } from '../lib/rewards.js';
 import * as FDR from '../lib/founders.js';
+import * as COS from '../lib/cosnft.js';
+import * as MKT from '../lib/opensea.js';
 import { claimsOn, claimContract, signerAddress, vaultBalance } from '../lib/claim.js';
 import { db, supabaseUrl, supabaseKey } from '../lib/db.js';
 import { send, appDomain, appDomains, reqHost, hostAllowed } from '../lib/http.js';
@@ -63,5 +65,11 @@ export default async function handler(req, res) {
   const founders = { mint: FDR.mintOpen(), contract: FDR.foundersContract(), signer: FDR.signerAddress(), supply: FDR.FOUNDERS_SUPPLY, openPool: FDR.FOUNDERS_OPEN, reserved: FDR.FOUNDERS_RESERVED, serverLevelCheck: FDR.serverLevelCheck() };
   try { await db().heroByNo(1); founders.heroNumbers = 'ok'; } catch (e) { founders.heroNumbers = 'run supabase/founders.sql: ' + (e.message || e); }
   try { await db().foundersWinners(); founders.giveaway = 'ok'; } catch (e) { founders.giveaway = 'run supabase/founders-giveaway.sql: ' + (e.message || e); }
-  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, founders, node: process.version });
+  // cosmetic NFTs (Season 1): is the contract set, is minting switched on (COSMETICS_NFT=1), and is supabase/cosmetics-nft.sql run
+  const cosmetics = { minting: COS.cosNftOn(), contract: COS.cosContract(), switch: process.env.COSMETICS_NFT === '1' ? 'on' : 'off (set COSMETICS_NFT=1 in Season 1)' };
+  try { await db().cosMints('00000000-0000-0000-0000-000000000000'); cosmetics.database = 'ok'; } catch (e) { cosmetics.database = 'run supabase/cosmetics-nft.sql: ' + (e.message || e); }
+  // the Lantern Exchange (Season 1): MARKET_ON=1, OPENSEA_API_KEY and COSMETICS_CONTRACT
+  const market = { open: MKT.marketOn(), switch: process.env.MARKET_ON === '1' ? 'on' : 'off (set MARKET_ON=1 in Season 1)', openseaKey: process.env.OPENSEA_API_KEY ? 'set' : 'MISSING: OPENSEA_API_KEY', chain: MKT.osChain() };
+  if (market.open) { try { market.collection = await MKT.openseaUrl(); } catch (e) { market.collection = 'PROBLEM: ' + (e.message || e); } }
+  send(res, ok && rtEnabled() && rtReach === 'ok' ? 200 : 500, { ok: ok && rtEnabled() && rtReach === 'ok', host, env, database, realtime, google, x, rewards, founders, cosmetics, market, node: process.version });
 }

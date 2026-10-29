@@ -4,6 +4,16 @@ import { guard, send, fail } from '../lib/http.js';
 import { rtEnabled, rtUrl, rtTicket } from '../lib/rt.js';
 import { mintOpen, isHolder } from '../lib/founders.js';
 import { BUILD } from '../lib/build.js';
+import { sanitize } from '../lib/validate.js';
+import { COSMETICS } from '../lib/gamedata.js';
+import { cosState, cosxFor } from '../lib/cosx.js';
+
+// The cosmetic looks this hero may show to others: the ones they earned (still theirs) and the ones their wallet holds
+// as NFTs. The realtime server hides any other cosmetic look.
+async function cosLooks(accountId, st) {
+  try { if (!st.save) return []; const cs = await cosState(accountId, st.wallet), save = sanitize(st.save.data, { admin: !!st.hero.is_admin, hat: st.hero.hat, cosx: cosxFor(cs, st.save.data) });
+    return [...new Set([...save.cos.own, ...save.cos.held].map(k => COSMETICS[k] && COSMETICS[k].look).filter(Boolean))]; } catch { return null; }
+}
 
 // '0.9.10' vs '0.9.4': compare version numbers part by part
 export const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
@@ -31,6 +41,6 @@ export default async function handler(req, res) {
     // a game left open from before an update plays by old rules (old map, no PvP): it has to reload before it can join
     const v = new URL(req.url, 'http://x').searchParams.get('v');
     if (!v || !/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v) || older(v, BUILD.minClient)) return fail(res, 426, 'update', { version: BUILD.version, msg: 'A new version of Lanternhold is out. Reload to keep playing.' });
-    send(res, 200, { url: rtUrl(), ticket: await rtTicket(st.hero, { muted: !!st.muted, founder: st.hero.is_admin || await founder(s.accountId, st.wallet), v }) });
+    send(res, 200, { url: rtUrl(), ticket: await rtTicket(st.hero, { muted: !!st.muted, founder: st.hero.is_admin || await founder(s.accountId, st.wallet), v, co: await cosLooks(s.accountId, st) }) });
   } catch (e) { console.error(e); fail(res, 500, 'server_error'); }
 }
