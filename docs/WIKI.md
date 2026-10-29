@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.13.4 · updated October 28, 2026
+Season 0 (Beta) · build v0.13.6 · updated October 28, 2026
 
 ## Welcome
 
@@ -47,7 +47,7 @@ The goals pill at the top of the screen always suggests a good next step.
 | Attack, chop, fish, use | Big round action button | Space or left click |
 | See what something is | | Point at it with the mouse: its name shows above it |
 | Quick slots (food, oil) | 5 buttons around the action button | 1 to 5 |
-| Return Flame (leave the Depths) | Hold the flame button for 2 seconds | Hold R |
+| Return Flame (go home from the Depths, Hollowmere or the Wilderness) | Hold the flame button for 2 seconds | Hold R |
 | Bag | Chest button | B |
 | Hero | Face button above the Bag | H |
 | Skills | Scroll button above the Hero | K |
@@ -423,6 +423,8 @@ Defeating them trains Fighting (or Magic with a staff) and drops gold and runes.
 
 **Mordecai the Reaper** stands by the road where the Hollow Wood ends, among candle-lit pumpkins and old graves. Talk to him for the Halloween quest (see Quests).
 
+**Getting home from Hollowmere.** Hold the Return Flame button (or R) for 2 seconds to go straight home to the Hold. A monster's hit restarts it.
+
 **Falling in Hollowmere** costs nothing: you wake up in the Hold with everything you had. Your health is your full health here and in the Hold. Only the Wilderness, north of the wall, lowers it: there your max health is your level plus your cape, the same rules for everyone.
 
 **The Moonmere.** A great moonlit lake in the middle of the moor, far bigger than the Hold's, with a dock two planks wide out to a big 5-by-5 fishing platform in the middle. It's the only place to catch **Moonfin** (Fishing 30).
@@ -436,6 +438,21 @@ Defeating them trains Fighting (or Magic with a staff) and drops gold and runes.
 - **The raid queue.** Join the queue at the Maw. A raid begins once at least **10 players** are queued.
 
 For now, step up to the Maw and it explains all of this.
+
+## Coppergate
+
+A new town past the **Mossy Barrows** and the **deepwood**, at the bottom of the world map. From Hollowmere's long southern road (the one linking the barrows and the deepwood), take the road south through the forest. The road runs between the mossy giants and the treants, so come strong. Inside the town walls there are no monsters.
+
+Coppergate is **still being built**: scaffolding, timber frames going up, a lumber yard, a crane, market stalls under tarps and a monument under wraps. There's a **Bank Chest** by the gate.
+
+**Orrin Ledgerwright**, master builder, is putting up **the Lantern Exchange** on the north side of the square. Talk to him to hear what it will be: the in-game market for Lanternhold cosmetic NFTs, **opening in Season 1**. Once it's open you'll be able to:
+
+- **Browse** every Lanternhold cosmetic for sale, cheapest first
+- **List** a cosmetic NFT from your wallet at your own price
+- **Delist** it again any time
+- **Snipe** the cheapest one (of one cosmetic, or of the whole collection) in a single tap
+
+Every listing is a real OpenSea listing, so you can sell to anyone, in the game or on OpenSea.
 
 ## Quests
 
