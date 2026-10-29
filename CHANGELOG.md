@@ -1,6 +1,22 @@
 # Lanternhold changelog
 
-Current build: **v0.13.4** · Season 0 (Beta)
+Current build: **v0.13.6** · Season 0 (Beta)
+
+## v0.13.6 · Coppergate, a town under construction
+
+_2026-10-28_
+
+- A new town: Coppergate, past the Mossy Barrows and the deepwood. Take the road south from Hollowmere’s southern road, between the barrows and the dead trees.
+- It’s still being built: scaffolding, timber frames, a lumber yard, market stalls under tarps and a monument under wraps. No monsters inside the town, and there’s a Bank Chest by the gate.
+- Meet Orrin Ledgerwright, master builder. He’s building the Lantern Exchange, the in-game market for Lanternhold cosmetic NFTs, opening in Season 1: browse, list, delist and snipe them on OpenSea without leaving the game.
+- Coppergate is on the world map.
+
+## v0.13.5 · Return Flame in Hollowmere
+
+_2026-10-28_
+
+- Fixed: the Return Flame now works in Hollowmere. Hold the flame button (or R) for 2 seconds to go home to the Hold. A monster’s hit restarts it.
+- The Return Flame works everywhere except the Hold itself: the Depths, Hollowmere and the Wilderness (up to level 20).
 
 ## v0.13.4 · Zoom the world map
 
