@@ -86,6 +86,26 @@ async function contractTx(v,to,sel,what,words=5){
   return await pv.request({method:'eth_sendTransaction',params:[{from,to:v.to,data:v.data}]});}
 const claimTx=(v,vault)=>contractTx(v,vault,CLAIM_SEL,'rewards vault');
 const mintTx=(v,nft)=>contractTx(v,nft,MINT_SEL,'Founder’s Lantern',6);
+const cosTx=(v,c)=>contractTx(v,c,'0x704e92d0','Lanternhold Cosmetics',6);   // mint(uint256,bytes32,uint256,uint8,bytes32,bytes32) on the cosmetics contract
+// The Lantern Exchange: only ever a transaction to Seaport 1.6 (buy a listing, cancel your own) or to the cosmetics
+// contract (let OpenSea's conduit move your cosmetics when they sell), and the listing signature (shown in the wallet).
+const MKT_SEL={'0x00000000':'buy','0xfb0f3ee1':'buy','0xfd9f1e10':'cancel','0xa22cb465':'approve'};
+async function walletFor(wallet,chainId){const pv=savedWalletProvider()||(allWallets()[0]||{}).provider;if(!pv)throw {message:'No wallet found. Open the game in your wallet app’s browser to do this.'};
+  const accts=await pv.request({method:'eth_requestAccounts'}),from=(accts||[]).find(a=>String(a).toLowerCase()===String(wallet).toLowerCase());
+  if(!from)throw {message:'Switch your wallet to '+short(wallet)+', the wallet linked to your hero.'};
+  const want='0x'+Number(chainId).toString(16),cur=String(await pv.request({method:'eth_chainId'})).toLowerCase();
+  if(cur!==want){try{await pv.request({method:'wallet_switchEthereumChain',params:[{chainId:want}]});}catch(e){if(e&&e.code===4001)throw e;if(want===RH.chainId)await pv.request({method:'wallet_addEthereumChain',params:[RH]});else throw e;}}
+  return {pv,from};}
+async function marketTx(tx,M){const to=String(tx.to||'').toLowerCase(),sel=String(tx.data||'').slice(0,10);
+  if(to!==String(M.seaport).toLowerCase()&&to!==String(M.contract).toLowerCase())throw {message:'That isn’t a Lantern Exchange transaction.'};
+  if(!MKT_SEL[sel]||(MKT_SEL[sel]==='approve')!==(to===String(M.contract).toLowerCase()))throw {message:'That isn’t a Lantern Exchange transaction.'};
+  if(!/^\d+$/.test(String(tx.value||'0')))throw {message:'That isn’t a Lantern Exchange transaction.'};
+  const {pv,from}=await walletFor(M.wallet,M.chainId);
+  return await pv.request({method:'eth_sendTransaction',params:[{from,to:tx.to,data:tx.data,value:'0x'+BigInt(tx.value||'0').toString(16)}]});}
+async function signListing(typed,M){if(String(typed.domain.verifyingContract).toLowerCase()!==String(M.seaport).toLowerCase()||typed.primaryType!=='OrderComponents')throw {message:'That isn’t a Lantern Exchange listing.'};
+  const {pv,from}=await walletFor(M.wallet,M.chainId);
+  const data={types:Object.assign({EIP712Domain:[{name:'name',type:'string'},{name:'version',type:'string'},{name:'chainId',type:'uint256'},{name:'verifyingContract',type:'address'}]},typed.types),domain:typed.domain,primaryType:typed.primaryType,message:typed.message};
+  return await pv.request({method:'eth_signTypedData_v4',params:[from,JSON.stringify(data)]});}
 // If the wallet already shared an account with this site, wallets like MetaMask hand that same account back even after
 // you switch accounts. So we ask the wallet to show its account picker and use the account the player chooses.
 // Which account: the one the wallet has selected (eth_requestAccounts lists it first). If this site is already
@@ -245,7 +265,7 @@ window.ACC={open(){document.documentElement.classList.add('pre');box.hidden=fals
   // trading: save now, then hold further saves until the website has moved the items (it writes both saves itself)
   async tradeLock(){for(let i=0;i<20&&(cloudBusy||cloudPending);i++){await flushCloud();if(cloudBusy||cloudPending)await new Promise(r=>setTimeout(r,250));}held=true;return !cloudPending;},
   tradeUnlock(rev){held=false;if(Number.isInteger(rev)){ACC.rev=rev;lastSent=null;}retry(2500);},
-  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx,mintTx};
+  cloudSave,flush:flushCloud,get pid(){return ACC.pid;},online,api,claimTx,mintTx,cosTx,marketTx,signListing};
 
 // ---------- start ----------
 render();

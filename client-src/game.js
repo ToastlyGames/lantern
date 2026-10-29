@@ -11,7 +11,7 @@ const fmt=n=>Math.floor(n).toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 // ---------- save ----------
-const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{},quests:{},cos:{own:[],head:null,weapon:null}};
+const DEF={name:'',look:null,wallet:null,gold:40,bank:{wheat_seed:20,oil:3,bread:3},lvl:1,xp:0,gear:{blade:'rusty',mail:'none',lantern:'basic',cape:null,helm:null,ring:null,amulet:null},skills:{farming:0,fishing:0,cooking:0},caught:0,flags:{},guide:0,vault:{},bankBuys:0,quick:['oil','bread','pondfin','stew',null],lift:1,deepest:0,plots:Array(12).fill(null),plotBuys:0,kills:0,deaths:0,bosses:{},goals:{},cnt:{},runes:{},ench:{},spell:'spark',forged:{},quests:{},cos:{own:[],head:null,weapon:null,out:[],held:[]}};
 const BANK_BASE=16,BANK_BUYS=[250,750,2000,5000,10000,20000,40000,75000],BANK_BUY_SLOTS=4;
 const fresh=()=>JSON.parse(JSON.stringify(DEF));
 // Saves come from localStorage or the cloud, so treat them as untrusted: keep only known keys, valid ids and sane numbers.
@@ -54,9 +54,10 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.quests={};for(const [k,Q] of Object.entries(QUESTS)){const q=obj(obj(o.quests)[k]);const st=int(q.s,0,Q.steps.length,0);if(st)s.quests[k]={s:st,n:int(q.n,0,999,0),done:!!q.done&&st>=Q.steps.length};}
   {const c=obj(o.cos),raw=(Array.isArray(c.own)?c.own:[]).flatMap(k=>COS_OLD[k]||[k]);   // v0.13.0's Reaper's Shroud became the Jack-o'-Lantern and the Scythe
     for(const [k,Q] of Object.entries(QUESTS))if((s.quests[k]||{}).done)raw.push(...Q.rewards);   // a finished quest always gives all its rewards
-    const own=[...new Set(raw.filter(k=>COSMETICS[k]&&(!COSMETICS[k].quest||(s.quests[COSMETICS[k].quest]||{}).done)))];s.cos={own,head:null,weapon:null};
+    const keys=a=>[...new Set((Array.isArray(a)?a:[]).filter(k=>typeof k==='string'&&COSMETICS[k]))],out=keys(c.out),held=keys(c.held);   // out: turned into NFTs (left the hero); held: NFTs in your wallet (both from the server)
+    const own=[...new Set(raw.filter(k=>COSMETICS[k]&&!out.includes(k)&&(!COSMETICS[k].quest||(s.quests[COSMETICS[k].quest]||{}).done)))];s.cos={own,head:null,weapon:null,out,held};
     if(c.body&&COS_OLD[c.body]){c.head=c.head||COS_OLD[c.body][0];c.weapon=c.weapon||COS_OLD[c.body][1];}   // wearing the shroud: wear both
-    for(const sl of COS_SLOTS)if(own.includes(c[sl])&&COSMETICS[c[sl]].slot===sl)s.cos[sl]=c[sl];}   // quests and the cosmetics they reward
+    for(const sl of COS_SLOTS)if((own.includes(c[sl])||held.includes(c[sl]))&&COSMETICS[c[sl]].slot===sl)s.cos[sl]=c[sl];}   // quests and the cosmetics they reward
   s.spell=SPELLS[o.spell]?o.spell:'spark';
   return s;}
 let S=normalize({}),PID=null;
@@ -282,7 +283,7 @@ function nearestAct(){
 }
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');if(a.id==='bench')return openCraft('jewel');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return qStep('hallow')==='gourd'?openQuestTalk('tallow'):openMarket('shop',true);if(a.id==='wick')return qStep('hallow')==='light'?openQuestTalk('wick'):openWick();if(a.id==='reaper')return openReaper();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return qStep('hallow')==='gourd'?openQuestTalk('tallow'):openMarket('shop',true);if(a.id==='wick')return qStep('hallow')==='light'?openQuestTalk('wick'):openWick();if(a.id==='reaper')return openReaper();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();if(a.id==='orrin'||a.id==='exchange')return openExchange();if(a.id==='tsign')return openTownSign();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -659,7 +660,8 @@ function riskList(){const out=[],DEFG={blade:'rusty',mail:'none',lantern:'basic'
   for(const [id,n] of Object.entries(S.bank))if(ITEMS[id]&&tradable(id)&&n>0)out.push([id,n,0,ITEMS[id].v||0]);
   for(const sl of ['blade','mail','lantern','cape','helm','ring','amulet']){const t=S.gear[sl];if(!t||DEFG[sl]===t)continue;const id=gearId(sl,t);if(id&&tradable(id))out.push([id,1,sl,ITEMS[id].v||0]);}
   return out.sort((a,b)=>b[3]-a[3]).slice(0,80);}
-// the Return Flame (hold it for 2 s) works in the Wilderness up to level 20: home to the Hold. A hit interrupts it.
+// the Return Flame (hold it for 2 s) works everywhere but the Hold: the Depths, Hollowmere, and the Wilderness up to
+// level 20. It takes you home to the Hold. A hit interrupts it.
 function wildReturn(){FISHING=null;CHOP=null;const h=HOLD.spawn;P.x=h.x;P.y=h.y+8;P.dir='down';MP.aim=null;S.pos={x:P.x,y:P.y,v:3};
   if(roomUp()&&MP.pvpOn)NET.send({t:'home',x:Math.round(P.x),y:Math.round(P.y)});MP.sent='';sfx('flame');puff(P.x,P.y-10,'#ffcd75',16);toast('The Return Flame carries you home to the Hold.','good');save();}
 // back at the Hold after falling in the Wilderness (no new world: you stay where your friends are)
@@ -954,7 +956,7 @@ function openBag(tab){bagTab=tab||'items';
    ${scene==='delve'&&Object.keys(found).length?'<h3>Found this delve</h3>'+listItems(found):''}<p class="lead small">Everything here comes with you into the Depths, and about half is lost if you fall. ${scene==='hold'?'Keep valuables in the Bank.':'Your Bank at the Hold is safe.'}</p><h3>On you</h3><div class="grid">${items.length?items.map(([id,n])=>`<button class="cell" data-item="${id}" aria-label="${ITEMS[id].n}, ${n}" ${rc(id)?`style="--rc:${rc(id).c}"`:''}>${iconImg(id)}<b>${n}</b><small>${ITEMS[id].n}</small></button>`).join(''):'<p class="lead">Empty.</p>'}</div>`;}
   openSheet(`<h2>${{hero:'Hero',cos:'Hero',quests:'Hero',skills:'Skills'}[bagTab]||'Bag'}</h2>${body}<div class="row"><button class="btn" id="sx">Close</button></div>`);
   const q=$('sheet');$('sx').onclick=closeSheet;q.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>openBag(b.dataset.bt));
-  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));q.querySelectorAll('[data-cos]').forEach(b=>b.onclick=()=>{const [sl,k]=b.dataset.cos.split(':');S.cos[sl]=k||null;sfx(k?'rare':'pick');if(k)puff(P.x,P.y-12,'#c79bf2',16);save();openBag('cos');});if($('rewB'))$('rewB').onclick=()=>openRewards();
+  q.querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>openEquip(b.dataset.eq));cosHandlers(q);q.querySelectorAll('[data-cos]').forEach(b=>b.onclick=()=>{const [sl,k]=b.dataset.cos.split(':');S.cos[sl]=k||null;sfx(k?'rare':'pick');if(k)puff(P.x,P.y-12,'#c79bf2',16);save();openBag('cos');});if($('rewB'))$('rewB').onclick=()=>openRewards();
   q.querySelectorAll('[data-ench]').forEach(b=>b.onclick=()=>openEnchant(b.dataset.ench));if($('spB'))$('spB').onclick=openSpells;q.querySelectorAll('[data-rune]').forEach(b=>b.onclick=()=>openRuneInfo(b.dataset.rune));
   q.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>openItem(b.dataset.item));
   q.querySelectorAll('[data-qs]').forEach(b=>b.onclick=()=>openQuickPick(+b.dataset.qs));
@@ -1315,7 +1317,7 @@ function openEastSign(){openSheet(`<h2>The Road East</h2><p class="lead">The pat
    <p class="lead small">Keep stacking your logs and levelling your skills. You'll want them.</p><div class="row"><button class="btn" id="sx">Close</button></div>`);$('sx').onclick=closeSheet;}
 // ---------- the world map (the globe under the compass): see-through, so the game keeps going underneath ----------
 const WM_COL={[GRASS]:'#38b764',[PATH]:'#d9a066',[WATER]:'#3b5dc9',[SOIL]:'#6b3e26',[DOCK]:'#a0663b',[WILDG]:'#5a5634',[WPATH]:'#6e5844',[GLOOM]:'#2e2f5c',
-  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MOSS]:'#3a6a42',[WG1]:'#36a160',[WG2]:'#33895b',[WG3]:'#317a57',[WPATH2]:'#a08a68',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
+  [MGRASS]:'#2f6b55',[DGRASS]:'#243f45',[MOSS]:'#3a6a42',[WG1]:'#36a160',[WG2]:'#33895b',[WG3]:'#317a57',[WPATH2]:'#a08a68',[COBBLE]:'#a39a88',[SITE]:'#8f6c48',[MPATH]:'#8a8572',[PLAZA]:'#3d3856',[MOON]:'#3a5ab0',[CANOPY]:'#0f1f1c',[CLIFF]:'#1a1826',[FLOOR]:'#566c86',[WALL]:'#0d0e17'};
 function miniBase(m){if(m.mini)return m.mini;const c=document.createElement('canvas');c.width=m.w;c.height=m.h;const x=c.getContext('2d'),id=x.createImageData(m.w,m.h);
   for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){let t=tAt(m,i,y),col=WM_COL[t]||'#0d0e17';if(m.kind==='delve'){col=t===FLOOR?(BIOMES[m.biome]||BIOMES.moss).floor[2]:'#0b0c14';}
     else if(solidAt(m,i,y)&&(t===GRASS||t===PATH||t===MGRASS||t===WILDG||t===PLAZA||t===DGRASS))col='#1d2a24';const [r,g2,b]=hex(col);const k=(y*m.w+i)*4;id.data[k]=r;id.data[k+1]=g2;id.data[k+2]=b;id.data[k+3]=255;}
@@ -1343,16 +1345,16 @@ function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),d
   const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*kk,m.h*kk);
   const P2=(px,py)=>[px/T*kk,py/T*kk],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
   const label=(px,py,t,c,sz)=>{let [X,Y]=P2(px,py);x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;const hw=x.measureText(t).width/2+3;X=Math.max(hw,Math.min(cvm.width-hw,X));x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;x.textAlign='center';x.lineWidth=Math.max(2,k*.9);x.strokeStyle='rgba(10,12,24,.9)';x.strokeText(t,X,Y);x.fillStyle=c||'#f4f4f4';x.fillText(t,X,Y);};
-  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type)||o.npc==='reaper')dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'||o.npc==='reaper'?'#c79bf2':'#ffcd75');}
+  if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk','exchange'].includes(o.type)||o.npc==='reaper'||o.npc==='orrin')dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'||o.npc==='reaper'?'#c79bf2':o.type==='exchange'||o.npc==='orrin'?'#e08a52':'#ffcd75');}
     const W0=WEST_X,mid=W0+13*T;label(mid,WILD_Y+12*T,'The Hold','#ffcd75',1.1);label(mid,WILD_Y-20*T,'The Wilderness','#ff8a8a',1.1);label(mid,WILD_Y-4*T,'PvP north of the wall','#ff8a8a',.75);
     const HY=WILD_Y;label(40*T,HY+30*T,'Hollowmere','#a7f0c8',1.3);label(40*T,HY+66*T,'Moonmere','#d8d0ff',.9);label(9*T+8,HY+19*T,'Abyssal Maw','#c79bf2',.85);label(80*T,HY+20*T,'Hollow Wood','#a7f070',.8);
-    label(42*T,HY+4*T,'Meadows · Lv 3–8','#a7f070',.75);label(14*T,HY+60*T,'Marsh · Lv 9–14','#ffcd75',.75);label(67*T,HY+65*T,'Fens · Lv 12–16','#ffcd75',.75);label(75*T,HY+108*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(25*T,HY+118*T,'Mossy Barrows · Lv 22–28','#ff8a8a',.75);label(48*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);
+    label(42*T,HY+4*T,'Meadows · Lv 3–8','#a7f070',.75);label(14*T,HY+60*T,'Marsh · Lv 9–14','#ffcd75',.75);label(67*T,HY+65*T,'Fens · Lv 12–16','#ffcd75',.75);label(75*T,HY+108*T,'Deepwood · Lv 15–20','#ff8a8a',.75);label(25*T,HY+118*T,'Mossy Barrows · Lv 22–28','#ff8a8a',.75);label(48*T,WILD_Y-20*T,'Cliffs','#6d7391',.8);label(50*T,(TOWN_Y0+17)*T,'Coppergate','#e08a52',1.1);label(50*T,(TOWN_Y0+20)*T,'Under construction','#ffcd75',.7);
     const g0=m.objs.find(o=>o.type==='gate');if(g0)label(g0.x,g0.y-26,'Delve Gate','#ffcd75',.8);}
   else{if(m.stairs&&!m.stairs.hidden)dot(m.stairs.tx*T+8,m.stairs.ty*T+8,Math.max(3,k*1.2),'#ffffff','#1a1c2c');for(const o of m.objs)if(o.type==='chest'&&!o.open)dot(o.x,o.y-6,Math.max(2,k*.9),o.tier==='u'?'#a7f070':'#ffcd75');}
   for(const o of OTH.values())if(!o.pend)dot(o.x,o.y-4,Math.max(2.5,k*.9),'#f4f4f4','#1a1c2c');
   const pu=.6+.4*Math.sin(time*5);dot(P.x,P.y-4,Math.max(5,k*2.4)*(1+.25*pu),'rgba(255,205,117,.35)');dot(P.x,P.y-4,Math.max(3.5,k*1.4),'#ffcd75','#1a1c2c');
   {const [X,Y]=P2(P.x,P.y-4);x.font=`700 ${Math.max(12,Math.round(k*3.4))}px system-ui,sans-serif`;x.textAlign='center';x.lineWidth=3;x.strokeStyle='#1a1c2c';x.strokeText('You',X,Y-Math.max(8,k*3));x.fillStyle='#ffcd75';x.fillText('You',X,Y-Math.max(8,k*3));}
-  $('wmH').textContent=matchMedia('(pointer:coarse)').matches?'Pinch to zoom · drag to look around · double-tap to zoom':'Scroll to zoom · drag to look around · double-click to zoom';$('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inWest()?'You are in Hollowmere':'You are in the Hold';
+  $('wmH').textContent=matchMedia('(pointer:coarse)').matches?'Pinch to zoom · drag to look around · double-tap to zoom':'Scroll to zoom · drag to look around · double-click to zoom';$('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inTown(P.x,P.y)?'You are in Coppergate':inWest()?'You are in Hollowmere':'You are in the Hold';
   $('wmL').innerHTML=dl?'<span><i style="background:#ffcd75"></i>You</span><span><i style="background:#fff"></i>Stairs down</span><span><i style="background:#ffcd75"></i>Chest</span><span><i style="background:#a7f070"></i>Uncommon chest</span>'
     :'<span><i style="background:#ffcd75;box-shadow:0 0 0 2px #1a1c2c"></i>You</span><span><i style="background:#f4f4f4"></i>Other players</span><span><i style="background:#c79bf2"></i>Raid gate</span>';}
 $('mapB').addEventListener('click',()=>{if(started)toggleMap();});$('wmX').addEventListener('click',e=>{e.stopPropagation();toggleMap(false);});
@@ -1432,7 +1434,7 @@ function openReaper(){const q=qState('hallow'),Q=QUESTS.hallow,st=qStep('hallow'
       <p class="lead">“You have my thanks. Keep the lantern: wear it, and its flame will never go out. And take my scythe. I have carried it for a thousand Hallows’ Eves… I think I can spare it for one night.”</p>
       <div class="row"><button class="btn" id="qok">Take the lantern and the scythe</button></div>`);
     $('qok').onclick=()=>{q.s=Q.steps.length;q.done=true;q.n=0;for(const k of Q.rewards)if(!S.cos.own.includes(k))S.cos.own.push(k);bump('quests');sfx('rare');buzz([60,40,60,40,120]);puff(P.x,P.y-12,'#c79bf2',36);
-      floatText(P.x,P.y-40,'Quest complete!','#a7f070');save(true);
+      floatText(P.x,P.y-40,'Quest complete!','#a7f070');save(true);setTimeout(()=>{if(window.NET&&NET.reauth)NET.reauth();},3000);   // others see the new cosmetics once the save lands
       openSheet(`<h2>Quest complete</h2><div class="cosgift">${Q.rewards.map(k=>cosIcon(k,72)).join('')}</div><p class="lead">${Q.n}: done. The <b>Jack-o’-Lantern</b> and the <b>Reaper’s Scythe</b> are yours, bound to your hero. They can never be traded, dropped or lost.</p><p class="lead small">Cosmetics show over your helmet and weapon, and those still work underneath.</p>
         <div class="row"><button class="btn alt" id="sx">Later</button><button class="btn" id="qw">Wear it now</button></div>`);$('sx').onclick=closeSheet;$('qw').onclick=()=>{S.cos.head='jack_lantern';S.cos.weapon='reaper_scythe';save();sfx('rare');puff(P.x,P.y-12,'#c79bf2',22);openBag('cos');};};return;}
   if(q.done){openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">“The souls rest easier, thanks to you. ${S.cos.head==='jack_lantern'?'The lantern suits you. It grins like it knows a secret.':'Your lantern and scythe wait for you under Hero → Cosmetics.'} Mind the mist out there, little light.”</p><div class="row"><button class="btn" id="sx">Farewell</button></div>`);$('sx').onclick=closeSheet;return;}
@@ -1458,11 +1460,54 @@ const cosIcon=(k,w)=>{const C=COSMETICS[k],c=document.createElement('canvas');
 // the preview: you, with your weapon (or its cosmetic) at your side
 function cosPreview(){const c=document.createElement('canvas');c.width=32;c.height=28;const x=c.getContext('2d'),sw=S.cos.weapon?ART.scythe:ART.sword[S.gear.blade]||ART.sword.rusty;
   x.drawImage(heroImg(myLook(),'down',0),6,10);x.save();x.translate(21,22);x.rotate(-Math.PI/2+.45+Math.PI/4);x.drawImage(sw,-2,-(sw.hy||14));x.restore();return c.toDataURL();}
-function cosTab(){
-  const slot=sl=>{const cur=S.cos[sl],own=S.cos.own.filter(k=>COSMETICS[k].slot===sl);return `<div class="gear">${cur?cosIcon(cur):'<i class="ic blank"></i>'}<span><small>${sl==='head'?'Head (over your helmet)':'Weapon (over your blade or staff)'}</small><b>${cur?COSMETICS[cur].n:'Nothing'}</b><small>${cur?COSMETICS[cur].d:own.length?'You have '+own.length+' to wear':'No '+sl+' cosmetics yet'}</small></span>${cur?`<button class="btn alt sm" data-cos="${sl}:">Take off</button>`:''}</div>
-    ${own.filter(k=>k!==cur).map(k=>`<div class="gear">${cosIcon(k)}<span><small>Soulbound</small><b>${COSMETICS[k].n}</b><small>${COSMETICS[k].d}</small></span><button class="btn sm" data-cos="${sl}:${k}">Wear</button></div>`).join('')}`;};
-  return `<div class="hero cosprev"><img class="ic" alt="" src="${cosPreview()}" style="width:112px;height:98px"><span><b>How you look</b><small>Cosmetics always show over your helmet and weapon. What you wear for stats stays equipped underneath.</small></span></div>
-    <div class="gears">${COS_SLOTS.map(slot).join('')}</div><p class="lead small">Cosmetics are soulbound to your hero: they can’t be traded, dropped, sold or lost, even in the Wilderness. Complete quests to earn them.</p>`;}
+// ---- cosmetic NFTs (Season 1): a cosmetic you earned can become an NFT on Robinhood Chain. It leaves your hero for good;
+// whoever's linked wallet holds the NFT can wear it (S.cos.held, from the server), so it can be sold on OpenSea. ----
+let COSN=null,cosBusy=false;
+async function refreshCosNft(rerender){if(!window.ACC||!ACC.online())return;const r=await ACC.api.call(null,'cosmetics');if(!r.ok)return;cosApply(r.data,rerender);}
+function cosApply(d,rerender){COSN=d;if(!d||!d.mints)return;const held=Object.keys(d.held||{}).filter(k=>COSMETICS[k]);
+  const out=[...new Set(d.mints.map(m=>m.cos).filter(k=>COSMETICS[k]))],had=JSON.stringify([S.cos.held,S.cos.out]);
+  S.cos.held=held;S.cos.out=out;S.cos.own=S.cos.own.filter(k=>!out.includes(k));
+  for(const sl of COS_SLOTS)if(S.cos[sl]&&!S.cos.own.includes(S.cos[sl])&&!held.includes(S.cos[sl]))S.cos[sl]=null;   // sold it: it comes off
+  if(JSON.stringify([S.cos.held,S.cos.out])!==had){save();if(window.NET&&NET.reauth)NET.reauth();}
+  if(rerender&&!$('sheet').hidden&&$('cosTabOn'))openBag('cos');}
+const shortW=w=>w?w.slice(0,6)+'…'+w.slice(-4):'';
+function cosTab(){if(!COSN)refreshCosNft(true);
+  const on=COSN&&COSN.on,pend=k=>COSN&&COSN.mints&&COSN.mints.find(m=>m.cos===k&&m.status==='pending');
+  const row=(k,tag,btn)=>`<div class="gear">${cosIcon(k)}<span><small>${tag}</small><b>${COSMETICS[k].n}</b><small>${COSMETICS[k].d}</small></span><span class="btncol">${btn}</span></div>`;
+  const slot=sl=>{const cur=S.cos[sl],own=S.cos.own.filter(k=>COSMETICS[k].slot===sl),held=(S.cos.held||[]).filter(k=>COSMETICS[k].slot===sl&&!own.includes(k)),n=own.length+held.length;
+    const nftBtn=k=>on&&COSMETICS[k].nft?`<button class="btn alt sm" data-cosnft="${k}">Mint as NFT</button>`:'';
+    return `<div class="gear">${cur?cosIcon(cur):'<i class="ic blank"></i>'}<span><small>${sl==='head'?'Head (over your helmet)':'Weapon (over your blade or staff)'}</small><b>${cur?COSMETICS[cur].n:'Nothing'}</b><small>${cur?COSMETICS[cur].d+((S.cos.held||[]).includes(cur)&&!S.cos.own.includes(cur)?' <span class="nftb">NFT in your wallet</span>':''):n?'You have '+n+' to wear':'No '+sl+' cosmetics yet'}</small></span><span class="btncol">${cur?`<button class="btn alt sm" data-cos="${sl}:">Take off</button>`:''}${cur&&S.cos.own.includes(cur)?nftBtn(cur):''}</span></div>
+    ${own.filter(k=>k!==cur).map(k=>row(k,'Soulbound',`<button class="btn sm" data-cos="${sl}:${k}">Wear</button>${nftBtn(k)}`)).join('')}
+    ${held.filter(k=>k!==cur).map(k=>row(k,'<span class="nftb">NFT in your wallet</span>',`<button class="btn sm" data-cos="${sl}:${k}">Wear</button>`)).join('')}`;};
+  const pending=(COSN&&COSN.mints||[]).filter(m=>m.status==='pending'&&COSMETICS[m.cos]).map(m=>row(m.cos,'Minting as an NFT…',`<button class="btn sm" data-cosres="${m.mintId}">Finish</button><button class="btn alt sm" data-coscan="${m.mintId}">Cancel</button>`)).join('');
+  const note=on?`<p class="lead small">Want to trade one? <b>Mint as NFT</b> turns a cosmetic into an NFT in your wallet on Robinhood Chain. It leaves your hero for good, and whoever holds the NFT can wear it, so you can sell it on OpenSea. Bought one? Link that wallet to your hero and it shows up here.</p>`
+    :`<p class="lead small">Coming in Season 1: turn the cosmetics you earn into NFTs you can trade.</p>`;
+  return `<span id="cosTabOn" hidden></span><div class="hero cosprev"><img class="ic" alt="" src="${cosPreview()}" style="width:112px;height:98px"><span><b>How you look</b><small>Cosmetics always show over your helmet and weapon. What you wear for stats stays equipped underneath.</small></span></div>
+    <div class="gears">${COS_SLOTS.map(slot).join('')}${pending}</div><p class="lead small">Cosmetics you earn are soulbound to your hero: they can’t be dropped, sold or lost, even in the Wilderness. Complete quests to earn them.</p>${note}`;}
+function cosHandlers(q){
+  q.querySelectorAll('[data-cosnft]').forEach(b=>b.onclick=()=>openCosMint(b.dataset.cosnft));
+  q.querySelectorAll('[data-cosres]').forEach(b=>b.onclick=()=>cosResume(b.dataset.cosres));
+  q.querySelectorAll('[data-coscan]').forEach(b=>b.onclick=()=>cosCancel(b.dataset.coscan));}
+function openCosMint(k){const C=COSMETICS[k];if(!C||!COSN||!COSN.on)return;
+  if(!COSN.wallet){openSheet(`<h2>Mint as NFT</h2><p class="lead">Connect a wallet to your hero first (Hero screen). Your NFT is minted to it.</p><div class="row"><button class="btn alt" id="sx">Back</button><button class="btn" id="cmH">Open my hero</button></div>`);$('sx').onclick=()=>openBag('cos');$('cmH').onclick=()=>openHero();return;}
+  openSheet(`<h2>Mint ${C.n} as an NFT</h2><div class="cosgift">${cosIcon(k,96)}</div>
+    <div class="soon fnd"><b>Before you mint</b><ul><li><b>It leaves your hero for good.</b> The cosmetic becomes an NFT in your wallet ${chatEsc(shortW(COSN.wallet))} on Robinhood Chain.</li>
+    <li>Whoever’s wallet holds the NFT can wear it in the game. Keep it and you still can.</li><li>Sell or trade it on OpenSea. If you sell it, it comes off your hero.</li><li>Free: you only pay a tiny gas fee in ETH. You can only mint each cosmetic you earned once.</li></ul></div>
+    <div class="row"><button class="btn alt" id="sx">Not now</button><button class="btn" id="cmGo">Mint NFT</button></div>`);
+  $('sx').onclick=()=>openBag('cos');$('cmGo').onclick=async()=>{if(cosBusy)return;cosBusy=true;const g=$('cmGo');g.disabled=true;g.textContent='Preparing…';
+    const r=await ACC.api.call(null,'cosmetics',{method:'POST',body:{action:'mint',cos:k}});cosBusy=false;
+    if(!r.ok){toast(r.data.msg||'Couldn’t start the mint. Try again.','bad');return openBag('cos');}
+    cosApply(r.data);save(true);cosSend(r.data.voucher);};}
+async function cosSend(v){const C=COSMETICS[v.cos];openSheet(`<h2>Confirm in your wallet</h2><p class="lead">Minting your ${C.n} as an NFT. Confirm the transaction in your wallet.</p>`);let hash;
+  try{hash=await ACC.cosTx(v,COSN.contract);}catch(e){toast(e&&e.code===4001?'You cancelled in your wallet. Tap Finish in Cosmetics to try again.':(e&&e.message)||'The mint didn’t go through.','bad');return openBag('cos');}
+  openSheet(`<h2>Minting…</h2><p class="lead">Waiting for Robinhood Chain to confirm your ${C.n}…</p><p class="lead small"><a class="linkb" href="https://robinhoodchain.blockscout.com/tx/${chatEsc(hash)}" target="_blank" rel="noopener">View the transaction</a></p>`);
+  const r=await ACC.api.call(null,'cosmetics',{method:'POST',body:{action:'sync',tx:hash}});if(r.ok)cosApply(r.data);
+  if((S.cos.held||[]).includes(v.cos)){if(!S.cos[C.slot])S.cos[C.slot]=v.cos;save();sfx('rare');toast('Your '+C.n+' is now an NFT in your wallet.','rare');}
+  else toast('Sent! It can take a moment to show up. Check Cosmetics again soon.','good');
+  openBag('cos');}
+async function cosResume(id){const r=await ACC.api.call(null,'cosmetics',{method:'POST',body:{action:'voucher',mintId:id}});if(!r.ok){toast(r.data.msg||'Couldn’t continue the mint.','bad');return refreshCosNft(true);}cosSend(r.data.voucher);}
+async function cosCancel(id){const r=await ACC.api.call(null,'cosmetics',{method:'POST',body:{action:'cancel',mintId:id}});if(!r.ok){toast(r.data.msg||'Couldn’t cancel the mint.','bad');return refreshCosNft(true);}
+  cosApply(r.data);S.cos=normalize(JSON.parse(JSON.stringify(S))).cos;save();if(window.NET&&NET.reauth)NET.reauth();toast('Mint cancelled. Your cosmetic is back on your hero.','good');openBag('cos');}   // normalize gives the quest's reward back
 // ---------- the Abyssal Maw (the raid dungeon) and the Hollowmere sign ----------
 // Raids (Season 1), as designed: a world event for the whole server, one every hour. Players from every world join the
 // same raid; it starts only with at least 10 players in the raid queue. Admins can always enter, for testing.
@@ -1471,6 +1516,69 @@ function openRaid(){bump('maw');sfx('boss');
    <div class="soon fnd"><b>World raids are coming in Season 1</b><p>Beyond the Maw waits Lanternhold’s raid dungeon, with its own bosses and its own treasure. Every raid is a world event for the whole server.</p>
     <ul class="info"><li><b>One raid every hour.</b> When it goes live, everyone in the game hears about it.</li><li><b>Every world, together.</b> Players from every world can join the same raid at the same time.</li><li><b>Join the raid queue here.</b> A raid begins once at least 10 players are queued.</li></ul></div>
    <p class="lead small">The plaza around the Maw is safe: no monster dens nearby. The Bank Chest beside it works just like the Bank.</p><div class="row"><button class="btn" id="sx">Step back</button></div>`);$('sx').onclick=closeSheet;}
+// ---------- Coppergate and the Lantern Exchange (v0.13.6) ----------
+// Orrin Ledgerwright is building the Exchange: the in-game market for cosmetic NFTs, on OpenSea (list, delist, snipe).
+// Until it opens (Season 1, MARKET_ON on the server) he tells you about it; once it's open he runs it (openMarketNft).
+const orrinHd=q=>`<div class="npchd wick"><img alt="" src="${ART.orrin[0].toDataURL()}"><span><b>Orrin Ledgerwright</b><small>Master builder of the Lantern Exchange</small><em>“${chatEsc(q)}”</em></span></div>`;
+function openExchange(){sfx('pick');if(MKT&&MKT.on)return openMarketNft();refreshMkt().then(()=>{if(MKT&&MKT.on&&!$('sheet').hidden&&$('exSheet'))openMarketNft();});
+  openSheet(`<div id="exSheet"></div>${orrinHd('Mind the planks! You’ve found Coppergate before the paint’s dry. That’s the Lantern Exchange going up behind me.')}<h2>The Lantern Exchange</h2>
+    <p class="lead">“When she’s finished, every cosmetic NFT from Lanternhold will trade right here, on OpenSea, without you ever leaving the game.”</p>
+    <div class="soon fnd"><b>Opening in Season 1</b><ul><li><b>Browse</b> every Lanternhold cosmetic for sale, cheapest first</li><li><b>List</b> a cosmetic NFT from your wallet at your own price</li><li><b>Delist</b> it again any time</li><li><b>Snipe</b> the cheapest one in the collection in a single tap</li><li>Every listing is a real OpenSea listing: sell to anyone, here or on OpenSea</li></ul></div>
+    <p class="lead small">“Cosmetics become NFTs in Season 1 too. Earn one now, and you’ll have something to sell when the doors open.”</p>
+    <div class="row"><button class="btn" id="sx">I’ll be back</button></div>`);$('sx').onclick=closeSheet;}
+// the Exchange, once it's open: browse, snipe, list and delist Lanternhold cosmetics on OpenSea
+let MKT=null,mktTab='browse',mktBusy=false;
+async function refreshMkt(){if(!window.ACC||!ACC.online())return;const r=await ACC.api.call(null,'market');if(r.ok)MKT=r.data;}
+const mktName=k=>COSMETICS[k]?COSMETICS[k].n:k,ethS=e=>{const n=Number(e);return (n>=1?n.toFixed(3):n>=.001?n.toFixed(4):n.toPrecision(2)).replace(/\.?0+$/,'')+' ETH';};
+async function openMarketNft(tab){if(tab)mktTab=tab;if(!MKT||!MKT.listings){openSheet(`<div id="exSheet"></div>${orrinHd('One moment, I’m checking the ledgers…')}`);await refreshMkt();if(!MKT||!MKT.on)return openExchange();}
+  const M=MKT,L=M.listings||[],cos=Object.keys(COSMETICS).filter(k=>COSMETICS[k].nft),held=M.held||{},mine=L.filter(l=>l.mine);
+  const tabs=`<div class="tabs" role="tablist">${[['browse','Browse'],['sell','Sell'],['mine','My listings'+(mine.length?' ('+mine.length+')':'')]].map(([k,n])=>`<button class="tab" role="tab" aria-selected="${mktTab===k}" data-mt="${k}">${n}</button>`).join('')}</div>`;
+  let body='';
+  if(M.down)body=`<p class="lead">OpenSea isn’t answering right now. Try again in a moment.</p>`;
+  else if(mktTab==='browse'){
+    body=`<div class="gears">${cos.map(k=>{const f=M.floor&&M.floor[k];return `<div class="gear">${cosIcon(k)}<span><small>Floor</small><b>${mktName(k)}</b><small>${f?ethS(f.eth):'None for sale'}</small></span><span class="btncol">${f?`<button class="btn sm" data-snipe="${k}">Snipe floor</button>`:''}</span></div>`;}).join('')}</div>
+      ${L.some(l=>l.native&&!l.mine)?`<button class="btn big" data-snipe="">Snipe the collection’s cheapest</button>`:''}
+      <h3>For sale (${L.length})</h3><div class="gears">${L.length?L.slice(0,60).map(l=>`<div class="gear">${cosIcon(l.cos)}<span><small>${l.mine?'Your listing':'Seller '+chatEsc(shortW(l.maker))}</small><b>${mktName(l.cos)}</b><small>${l.native?ethS(l.eth):chatEsc((Number(l.wei)/10**l.decimals).toLocaleString('en-US',{maximumFractionDigits:4})+' '+l.currency)}</small></span><span class="btncol">${l.mine?`<button class="btn alt sm" data-delist="${l.hash}">Delist</button>`:l.native?`<button class="btn sm" data-buy="${l.hash}">Buy</button>`:`<a class="btn alt sm" href="${chatEsc(M.url)}" target="_blank" rel="noopener">On OpenSea</a>`}</span></div>`).join(''):'<p class="lead small">Nothing is for sale yet. Be the first: list one from the Sell tab.</p>'}</div>`;}
+  else if(mktTab==='sell'){const hk=cos.filter(k=>held[k]);
+    body=hk.length?`<p class="lead small">Your cosmetic NFTs, in your wallet ${chatEsc(shortW(M.wallet))}. A listing here is a real OpenSea listing: anyone can buy it, here or on OpenSea. You sign it in your wallet; listing is free.</p><div class="gears">${hk.map(k=>`<div class="gear">${cosIcon(k)}<span><small>You hold ${held[k]}</small><b>${mktName(k)}</b><small>${M.floor&&M.floor[k]?'Floor '+ethS(M.floor[k].eth):'No one else is selling one'}</small></span><span class="btncol"><button class="btn sm" data-sell="${k}">List</button></span></div>`).join('')}</div>`
+      :`<p class="lead">You don’t hold any Lanternhold cosmetic NFTs. Mint one from Hero → Cosmetics, or snipe one from the Browse tab.</p>`;}
+  else body=mine.length?`<div class="gears">${mine.map(l=>`<div class="gear">${cosIcon(l.cos)}<span><small>Listed${l.ends?' until '+new Date(l.ends*1000).toLocaleDateString([], {month:'short',day:'numeric'}):''}</small><b>${mktName(l.cos)}</b><small>${l.native?ethS(l.eth):l.currency}</small></span><span class="btncol"><button class="btn alt sm" data-delist="${l.hash}">Delist</button></span></div>`).join('')}</div>`:`<p class="lead">You have nothing listed.</p>`;
+  openSheet(`<div id="exSheet"></div>${orrinHd(mktTab==='sell'?'Name your price. I’ll hang the notice on the board.':'Welcome to the Lantern Exchange! Every Lanternhold cosmetic for sale, cheapest first.')}<h2>The Lantern Exchange</h2>${tabs}${body}
+    <p class="lead small"><a class="linkb" href="${chatEsc(M.url||'https://opensea.io')}" target="_blank" rel="noopener">The collection on OpenSea</a></p><div class="row"><button class="btn alt" id="mkR">Refresh</button><button class="btn" id="sx">Close</button></div>`);
+  $('sx').onclick=closeSheet;$('mkR').onclick=async()=>{await refreshMkt();openMarketNft();};
+  document.querySelectorAll('[data-mt]').forEach(b=>b.onclick=()=>openMarketNft(b.dataset.mt));
+  document.querySelectorAll('[data-snipe]').forEach(b=>b.onclick=()=>mktSnipe(b.dataset.snipe||null));
+  document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>mktBuy(b.dataset.buy));
+  document.querySelectorAll('[data-delist]').forEach(b=>b.onclick=()=>mktDelist(b.dataset.delist));
+  document.querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>mktSellForm(b.dataset.sell));}
+const mktCall=async body=>{if(mktBusy)return null;mktBusy=true;try{const r=await ACC.api.call(null,'market',{method:'POST',body});if(!r.ok){toast(r.data.msg||'Something went wrong. Try again.','bad');return null;}return r.data;}finally{mktBusy=false;}};
+const mktWait=t=>openSheet(`<div id="exSheet"></div>${orrinHd('Steady now…')}<h2>${t}</h2><p class="lead">Confirm in your wallet.</p>`);
+async function mktSend(tx){try{return await ACC.marketTx(tx,MKT);}catch(e){toast(e&&e.code===4001?'You cancelled in your wallet.':(e&&e.message)||'That didn’t go through.','bad');return null;}}
+function mktConfirmBuy(l,tx,title){openSheet(`<div id="exSheet"></div>${orrinHd('A fine piece. Shall I wrap it?')}<h2>${title}</h2><div class="cosgift">${cosIcon(l.cos,96)}</div>
+    <div class="soon fnd"><b>${mktName(l.cos)} for ${ethS(tx.eth||l.eth)}</b><ul><li>Bought on OpenSea from ${chatEsc(shortW(l.maker))}. You pay the price plus a tiny gas fee, in ETH on Robinhood Chain.</li><li>It goes to your wallet ${chatEsc(shortW(MKT.wallet))}, and your hero can wear it as soon as it lands.</li></ul></div>
+    <div class="row"><button class="btn alt" id="sx">Not now</button><button class="btn" id="mkGo">Buy for ${ethS(tx.eth||l.eth)}</button></div>`);
+  $('sx').onclick=()=>openMarketNft();$('mkGo').onclick=async()=>{mktWait('Buying '+mktName(l.cos));const h=await mktSend(tx);if(!h)return openMarketNft();
+    toast('Bought! Your '+mktName(l.cos)+' is on its way to your wallet.','rare');sfx('rare');
+    ACC.api.call(null,'cosmetics',{method:'POST',body:{action:'sync',tx:h}}).then(r=>{if(r.ok)cosApply(r.data);});MKT.listings=null;setTimeout(()=>refreshMkt(),4000);openMarketNft('browse');};}
+async function mktSnipe(k){const d=await mktCall({action:'snipe',cos:k||undefined});if(d)mktConfirmBuy(d.listing,d.tx,k?'Snipe the '+mktName(k)+' floor':'Snipe the cheapest');}
+async function mktBuy(h){const l=(MKT.listings||[]).find(x=>x.hash===h);const d=await mktCall({action:'buy',hash:h});if(d&&l)mktConfirmBuy(l,d.tx,'Buy');}
+async function mktDelist(h){const l=(MKT.listings||[]).find(x=>x.hash===h);const d=await mktCall({action:'delist',hash:h});if(!d)return;mktWait('Delisting '+(l?mktName(l.cos):''));
+  const tx=await mktSend(d.tx);if(!tx)return openMarketNft();toast('Delisted. Your NFT stays in your wallet.','good');MKT.listings=null;setTimeout(async()=>{await refreshMkt();},4000);openMarketNft('mine');}
+function mktSellForm(k){const f=MKT.floor&&MKT.floor[k];openSheet(`<div id="exSheet"></div>${orrinHd('Name your price. I’ll hang the notice on the board.')}<h2>List ${mktName(k)}</h2><div class="cosgift">${cosIcon(k,96)}</div>
+    <label class="lead small" for="mkP">Price in ETH${f?' (the floor is '+ethS(f.eth)+')':''}</label><input id="mkP" class="inp" inputmode="decimal" placeholder="0.01" value="${f?chatEsc(f.eth):''}">
+    <label class="lead small" for="mkD">For how long</label><select id="mkD" class="inp">${(MKT.days||[1,3,7,30]).map(d=>`<option value="${d}"${d===7?' selected':''}>${d} day${d>1?'s':''}</option>`).join('')}</select>
+    <p class="lead small">OpenSea takes its fee from the sale (shown before you sign). The first time, your wallet also asks to let OpenSea move your Lanternhold cosmetics when one sells: a one-time transaction.</p>
+    <div class="row"><button class="btn alt" id="sx">Back</button><button class="btn" id="mkGo">List it</button></div>`);
+  $('sx').onclick=()=>openMarketNft('sell');$('mkGo').onclick=async()=>{const price=$('mkP').value.trim().replace(',','.'),days=+$('mkD').value;
+    const d=await mktCall({action:'list',cos:k,price,days});if(!d)return;
+    if(d.approval){mktWait('Let OpenSea sell your cosmetics');const a=await mktSend(d.approval);if(!a)return openMarketNft('sell');toast('Approved. Now sign the listing.','good');}
+    openSheet(`<div id="exSheet"></div>${orrinHd('Sign here, and here…')}<h2>Sign your listing</h2><p class="lead">${mktName(k)} for ${ethS(price)}. You receive ${ethS(d.toSeller)}${d.fees.length?' after fees ('+d.fees.map(x=>(x.bps/100)+'%').join(' + ')+')':''}.</p><p class="lead small">Signing is free: it’s not a transaction.</p>`);
+    let sig;try{sig=await ACC.signListing(d.typed,MKT);}catch(e){toast(e&&e.code===4001?'You cancelled in your wallet.':(e&&e.message)||'The listing wasn’t signed.','bad');return openMarketNft('sell');}
+    const r=await mktCall({action:'submit',parameters:d.parameters,signature:sig});if(!r)return openMarketNft('sell');
+    sfx('rare');toast('Listed on OpenSea: '+mktName(k)+' for '+ethS(price)+'.','rare');MKT.listings=null;await refreshMkt();openMarketNft('mine');};}
+function openTownSign(){openSheet(`<h2>Coppergate</h2><p class="lead">A market town, past the Mossy Barrows and the deepwood. Still being built.</p>
+   <div class="soon"><b>What’s here</b><ul><li>The Lantern Exchange (opens in Season 1), north of the square. Talk to Orrin, the builder.</li><li>A Bank Chest by the gate.</li><li>No monsters inside the town. The road here runs between the Mossy Barrows and the deepwood, so come strong.</li></ul></div>
+   <div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
 function openHmSign(){openSheet(`<h2>Hollowmere</h2><p class="lead">A great moor at dusk, past the Hollow Wood, around the Moonmere lake. Lamp posts mark the roads.</p>
    <ul class="info"><li><b>Monsters roam here.</b> Get too close and they attack. Ravens at the wood's edge: levels 2–4. The meadows: 3–8. The marsh (west): 9–14. The fens (east of the lake): 12–16. The deepwood (south-east): 15–20. The Mossy Barrows (south-west), where the mossy giants walk: 22–28.</li>
    <li>Willows grow all over the moor (Woodcutting 30).</li>
@@ -1516,6 +1624,7 @@ function update(dt){
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve'||inWest())swing();else if(inWild())pvpSwing();}
   if(inWild()){if(retHeld&&P.hp>0){if(wildLvl(P.y)>RETURN_MAX){P.chan=0;if(time-whyT>2){whyT=time;toast('Too deep for the Return Flame. Head south of Wilderness level '+RETURN_MAX+'.','bad');}}else{P.chan+=dt;if(P.chan>=2){retHeld=false;P.chan=0;wildReturn();}}}else P.chan=0;}
+  else if(inWest()){if(retHeld&&P.hp>0){if(time-(P.hitT??-99)<.05)P.chan=0;else{P.chan+=dt;if(P.chan>=2){retHeld=false;P.chan=0;wildReturn();}}}else P.chan=0;}   // v0.13.5: Hollowmere too (a hit restarts it)
   else if(scene==='hold')P.chan=0;
   if(scene==='hold'){wildStep(dt);westStep(dt);updateFishing(dt);updateChop(dt);updateCook(dt);updateDrops(dt);for(const o of HOLD.trees||[])if(o.shake>0)o.shake-=dt;}
   updateGuide(dt);
@@ -1667,9 +1776,9 @@ function updateHud(force){
   if(force)PT.forEach(id=>{const e=$(id);if(e)e._pt=null;});
   const mh=hpMax();$('hpFill').style.width=Math.max(0,Math.min(1,P.hp/mh)*100)+'%';ptSet($('hpTxt'),Math.max(0,Math.ceil(P.hp))+'/'+mh,{font:'small',px:7});
   $('lvl').textContent='Lv '+S.lvl;goldHud();{const lk=JSON.stringify(myLook());if(lk!==updateHud.lk){updateHud.lk=lk;heroIcon();}}
-  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):inWest()?'Hollowmere':'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
+  $('where').textContent=scene==='hold'?(inWild()?'Wilderness '+wildLvl(P.y):inTown(P.x,P.y)?'Coppergate':inWest()?'Hollowmere':'The Hold')+(MP.room&&MP.room[0]==='w'?(NET.roomOpen()?' · World '+MP.room.slice(1):' · reconnecting…'):netOn()?' · connecting…':''):'F'+run.floor+' · '+BIOMES[map.biome].name+(MP.shared()?' · party':'');
   {const sb=$('socB');if(sb)sb.classList.toggle('off',!!MP.id&&netOn()&&!NET.roomOpen());}
-  const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!(dv||inWild());$('retRing').style.setProperty('--p',Math.min(1,P.chan/2));$('feed').hidden=dv;updateQuick(force);
+  const dv=scene==='delve';$('oilRow').hidden=!dv;$('bRet').hidden=!(dv||inWild()||inWest());$('retRing').style.setProperty('--p',Math.min(1,P.chan/2));$('feed').hidden=dv;updateQuick(force);
   if(dv){$('oilFill').style.width=run.oil+'%';$('oilFill').classList.toggle('low',run.oil<25);ptSet($('oilTxt'),Math.ceil(run.oil)+'%',{font:'small',px:7});
     
     const pn=Object.values(run.pack).reduce((a,b)=>a+b,0);$('packW').hidden=!pn;ptSet($('packN'),pn,{font:'small',px:9,color:'#c2d3e0'});
@@ -1761,6 +1870,7 @@ function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WES
       for(let k=0;k<10;k++){const a=t*1.6+k/10*Math.PI*2,r=6+(k%3)*4;g.globalAlpha=.6;g.fillStyle=k%2?'#f1e4ff':'#7a3b8f';g.fillRect(Math.round(o.x+Math.cos(a)*r*1.4),Math.round(o.y-24+Math.sin(a)*r*.7),1,1);}g.globalAlpha=1;}
     else if(o.type==='campfire'){const f=.8+.2*Math.sin(t*11+Math.sin(t*5));pool(o.x,o.y-6,30*f,'255,150,70',.35);}
     else if(o.type==='lpost'){const f=.85+.15*Math.sin(t*9+o.x);pool(o.x-1,o.y-24,18*f,'255,190,100',.3);}
+    else if(o.type==='exchange'){const f=.8+.2*Math.sin(t*9+Math.sin(t*3));pool(o.x-67,o.y-76,18*f,'255,205,117',.5);pool(o.x,o.y-58,10,'255,159,61',.25*f);}
     else if(o.type==='pumpkin'){const f=.75+.25*Math.sin(t*13+o.x+Math.sin(t*4));pool(o.x,o.y-6,16*f,'255,160,60',.42);}
     else if(o.npc==='reaper'){pool(o.x,o.y-22,24+3*Math.sin(t*2),'199,155,242',.22);pool(o.x-4,o.y-24,5,'232,208,255',.5+.3*Math.sin(t*3));}
     else if(o.type==='mcrystal')pool(o.x,o.y-10,16+2*Math.sin(t*2+o.x),'184,167,255',.28);
@@ -1790,7 +1900,7 @@ function drawObj(o){
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
   else if(o.type==='npc'&&o.npc==='reaper'){const fr=Math.floor(time*1.2)%2;spr(ART.reaper[fr],o.x-13,o.y-35);TAGS.push({x:o.x,y:o.y-43,name:o.name,npc:true});questMark(o);}
-  else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);questMark(o);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
+  else if(o.type==='npc'&&o.npc!=='orrin'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);questMark(o);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
     if(W){if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x-9),Y=Math.round(o.y-20),gr=g.createRadialGradient(X,Y,0,X,Y,10);gr.addColorStop(0,`rgba(${FLAMEC},${.35+.08*Math.sin(time*7)})`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(X-10,Y-10,20,20);g.restore();}
       if(!wickSeen()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-52+b),7,9);g.fillStyle='#b98cff';g.fillRect(Math.round(o.x-2),Math.round(o.y-51+b),5,7);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x),Math.round(o.y-50+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-46+b),1,1);}}
     if(time>(o.nextSay||0)){o.nextSay=time+14+Math.random()*10;o.sayT=4;o.say=W?WICK_SAY[ri(0,WICK_SAY.length-1)]:['Oil! Bread! Seeds!','Fine lanterns, finer prices.','Psst. Heard there\'s gold in the crypts.','Trade with Tallow!'][ri(0,3)];}
@@ -1819,6 +1929,22 @@ function drawObj(o){
   else if(o.type==='pumpkin')spr(ART.pumpkin[o.v],o.x-8,o.y-15);
   else if(o.type==='barrow')spr(ART.barrow[o.v],o.x,o.y-19);
   else if(o.type==='hmsign')spr(ART.hmsign,o.x-9,o.y-22);
+  // Coppergate (v0.13.6)
+  else if(o.type==='exchange')spr(ART.exchange[Math.floor(time*3+Math.sin(time*7))%2],o.x-88,o.y-126);
+  else if(o.type==='npc'&&o.npc==='orrin'){const fr=Math.floor(time*2.2)%4===0?1:0;spr(ART.orrin[fr],o.x-13,o.y-29);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
+    if(fr&&!o.tap){o.tap=1;if(Math.hypot(o.x-P.x,o.y-P.y)<110&&!reduceMotion)puff(o.x-12,o.y-22,'#d9c79a',2);}else if(!fr)o.tap=0;
+    if(time>(o.nextSay||0)){o.nextSay=time+12+Math.random()*10;o.sayT=4;o.say=['Mind the planks!','Season 1, I tell you. Season 1.','Another lantern for the arch…','Measure twice, cut once.','Copper on the roof by Friday!'][ri(0,4)];}
+    if(o.sayT>0){o.sayT-=1/60;TAGS.push({x:o.x,y:o.y-45,say:o.say});}}
+  else if(o.type==='plans')spr(ART.plans,o.x-12,o.y-18);
+  else if(o.type==='statue')spr(ART.statue,o.x-16,o.y-46);
+  else if(o.type==='notice')spr(ART.notice,o.x-9,o.y-22);
+  else if(o.type==='crane')spr(ART.crane[Math.floor(time*.8+o.x)%2],o.x-8,o.y-70);
+  else if(o.type==='sawhorse')spr(ART.sawhorse,o.x-10,o.y-12);
+  else if(o.type==='crate')spr(ART.crate[o.v],o.x-8,o.y-15);
+  else if(o.type==='frame')spr(ART.frame[o.v],o.x-24,o.y-46);
+  else if(o.type==='lumber')spr(ART.lumber[o.v],o.x-8,o.y-16);
+  else if(o.type==='tarpstall')spr(ART.tarpstall,o.x-24,o.y-32);
+  else if(o.type==='tsign')spr(ART.tsign,o.x-9,o.y-22);
   else if(o.type==='willow'){if(o.chop&&!treeUp(o))spr(ART.stump,o.x-16,o.y-30);else{const k=o.shake>0?Math.round(Math.sin(time*60)):0,sw=reduceMotion?0:Math.sin(time*.9+o.x*.05);spr(sw>.6?ART.willowSway[1]:sw<-.7?ART.willowSway[0]:ART.willow,o.x-16+k,o.y-38);
     if(o.chop&&(CHOP&&CHOP.o===o||o.shake>0)&&o.logs<TREES[o.kind].logs){const w=Math.round(20*o.logs/TREES[o.kind].logs);g.fillStyle='rgba(26,28,44,.8)';g.fillRect(o.x-11,o.y-42,22,4);g.fillStyle='#d9a066';g.fillRect(o.x-10,o.y-41,w,2);}}}
   else if(o.type==='mcrystal'){spr(ART.mcrystal[o.v],o.x-8,o.y-20);if(!reduceMotion){const ph=(time*.5+o.x*.013)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#f1e4ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-16-ph*10),1,1);g.globalAlpha=1;}}
@@ -2107,6 +2233,7 @@ if(window.NET){
     if(m.a===me)MP.lc=time;
     if(m.v===me){P.hp=m.hp;MP.lc=time;P.chan=0;if(m.hp<=0)MP.deadAt=time;if(m.d){sfx('hurt');buzz(40);if(SET.shake)shake=3;}if(FISHING||CHOP){FISHING=null;CHOP=null;}}
     else if(v){v.hp=m.hp;v.max=m.max;v.lc=time;if(m.a===me&&m.d)sfx('hit');}});
+  NET.onR('reauthed',()=>{MP.lookKey='';});   // the realtime server knows our cosmetics now: send the look again
   NET.onR('H',m=>{if(m.id===MP.id){if(inWild())P.hp=Math.min(hpMax(),m.hp);}else{const o=OTH.get(m.id);if(o){o.hp=m.hp;o.max=m.max;}}});
   NET.onR('SK',m=>{const until=m.left>0?Date.now()+m.left:0;if(m.id===MP.id){const was=skulled();S.skull=until;if(until&&!was){toast('You attacked first: you’re skulled for 20 minutes. Fall now and you lose everything.','bad');sfx('boss');}save();}else{const o=OTH.get(m.id);if(o)o.sk=until;}});
   NET.onR('PK',m=>{puff(m.x,m.y-8,'#b13e53',18);const who=m.a===MP.id?'You':m.an;
@@ -2476,7 +2603,7 @@ setInterval(()=>{if(chatOpen&&chatCh!==chatChannel())chatJoin();},500);
   $('chatIc').src=p.canvas().toDataURL();}
 $('chatB').onclick=()=>toggleChat();$('chatX').onclick=()=>toggleChat(false);$('chatGo').onclick=()=>{chatSend();if(!(window.matchMedia&&matchMedia('(hover:hover)').matches))$('chatIn').focus();};
 $('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();chatSend();}else if(e.key==='Escape'){e.preventDefault();toggleChat(false);}e.stopPropagation();});
-window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
+window.LH={heroName:()=>S.name,start(pid,data,o){document.documentElement.classList.remove('pre');PID=pid;S=normalize(data);COSN=null;setTimeout(()=>refreshCosNft(),5000);   /* cosmetic NFTs: what the wallet holds */if(!loadSet(S.settings))S.settings=Object.assign({},SET,{sound:!muted});/* v0.9.2: player names on for everyone, once (they can turn them off) */if(!S.flags.names){S.flags.names=true;SET.pnames=true;S.settings=Object.assign({},S.settings||SET,{pnames:true});saveSet();}applyAdmin(o&&o.admin,o&&o.hat);setTimeout(()=>{if(bulletinNew())toast('New update: v'+BUILD.version+'. Read the Bulletin at the crossroads.','good');},6000);migrateBank();lastCap=bankCap();P.hp=maxHp();started=true;enterHold();placeAt(S.pos);save();setTimeout(()=>refreshFounder(),2500);if(o.isNew){setTimeout(()=>toast('Welcome to the Hold, '+S.name+'!','good'),300);setTimeout(()=>toast('Visit Wick by the road to the Delve Gate to see if you’re a Founder.','good'),4200);}else toast('Welcome back, '+S.name,'good');},
   resume(){document.documentElement.classList.remove('pre');},setLook(l){S.look=Object.assign({},l);save();openBag();}};
-if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},openReaper,questKill,qStep,questTab,cosTab,normalize,updateHud,hurtPlayer,killXp};
+if(location.hostname==='localhost'||location.protocol==='file:')window.__lh={makeEnemy,save,openExchange,openMarketNft,refreshMkt,get MKT(){return MKT},inTown,TOWN_Y0,refreshCosNft,cosApply,get COSN(){return COSN},openCosMint,get drops(){return drops},get MP(){return MP},get OTH(){return OTH},openSocial:t=>openSocial(t),get S(){return S},get P(){return P},get run(){return run},get ents(){return ents},get map(){return map},get scene(){return scene},startDelve,enterFloor,setStick:(x,y)=>{stick={x,y,on:!!(x||y)};},press:()=>{aPressed=true;},hold:v=>{retHeld=v;},spawnLoot,dropItem:(id,n)=>{take(id,n);dropToGround(id,n);},act:()=>{const a=nearestAct();if(a)doAct(a);return a&&a.id;},fishSpot,startFishing,get FISHING(){return FISHING},T,get CHOP(){return CHOP},HOLD,startChop,openGuide,openHero,openSkills,openBag,GOALS,goalsDone,skillXp,lvlOf,get COOK(){return COOK},startCook,RECIPES,get cam(){return [camX,camY,VW,VH]},get SET(){return SET},openFounders,openWick,openBulletin,get FND(){return FND},get texts(){return texts},set FND(v){FND=v},myLook,closeSheet,riskList,applyPkDeath,pvpTarget,canHit,openWildWarn,inWild,hpMax,get TAGS(){return TAGS},openGate,openCraft,gainXp,gearDrops,openItem,openAdmin,get shake(){return shake},chestGems,get BOLTS(){return BOLTS},get SPFX(){return SPFX},cast,openSpells,openEnchant,openRaid,toggleMap,inWest,staffOn,spellMax,curSpell,equipItem,objTaken,useFlask,enterHold,westStep,get wmOpen(){return wmOpen},openReaper,questKill,qStep,questTab,cosTab,normalize,updateHud,hurtPlayer,killXp};
 })();

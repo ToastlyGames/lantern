@@ -140,9 +140,11 @@ const QUESTS={hallow:{n:'All Hallows’ Lantern',giver:'Mordecai the Reaper',tag
     {id:'return',t:'Bring the lantern and the souls back to Mordecai'}]}};
 // Cosmetics: soulbound to the hero (never items: they can't be traded, dropped, sold or lost). Two slots: the head one is
 // drawn over the helmet, the weapon one over the blade or staff; both stay equipped underneath with their stats.
-const COSMETICS={jack_lantern:{n:'Jack-o’-Lantern',slot:'head',look:'jack',quest:'hallow',d:'A carved pumpkin lit from inside by a cold violet flame that flickers through its grin. From Mordecai the Reaper, for All Hallows’ Eve.'},
-  reaper_scythe:{n:'Reaper’s Scythe',slot:'weapon',look:'scythe',quest:'hallow',d:'Mordecai’s own scythe: a crescent blade with a soul-lit edge and a violet soul-gem. Shown over your blade or staff.'}};
+const COSMETICS={jack_lantern:{n:'Jack-o’-Lantern',slot:'head',look:'jack',quest:'hallow',nft:1,d:'A carved pumpkin lit from inside by a cold violet flame that flickers through its grin. From Mordecai the Reaper, for All Hallows’ Eve.'},
+  reaper_scythe:{n:'Reaper’s Scythe',slot:'weapon',look:'scythe',quest:'hallow',nft:2,d:'Mordecai’s own scythe: a crescent blade with a soul-lit edge and a violet soul-gem. Shown over your blade or staff.'}};
 const COS_SLOTS=['head','weapon'];
+// Cosmetic NFTs (Season 1): each cosmetic's token ID on the Lanternhold Cosmetics contract is its nft number. Never reuse one.
+const COS_BY_NFT=Object.fromEntries(Object.entries(COSMETICS).filter(([,c])=>c.nft).map(([k,c])=>[c.nft,k]));
 const COS_OLD={reaper_shroud:['jack_lantern','reaper_scythe']};   // v0.13.0's quest reward became these two
 // ---------- Relic-forging (v0.12.1). Each boss has a rare chance (RELIC_CHANCE) to drop its relic. Relics are spent at the
 // Forge to empower a piece you wear, +1 to +5, each step taking the next boss's relic, gold and Smithing. The Hollow Crown

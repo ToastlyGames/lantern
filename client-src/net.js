@@ -74,6 +74,9 @@ window.NET={
   join(id){if(roomId===id&&room)return;const old=room;roomId=id;room=null;try{old&&old.close(1000,'leave');}catch(e){}retryR=0;busyR=false;openRoom(id);},
   leave(){const old=room;roomId=null;room=null;clearTimeout(timerR);try{old&&old.close(1000,'leave');}catch(e){}},
   refresh(){if(stopped)return;if(lobby)kill(lobby);if(room)kill(room);},   // reconnect with a fresh pass (e.g. just became a Founder)
+  // a fresh pass for the room without reconnecting (the hero just earned or bought a cosmetic), then the look again
+  async reauth(){if(stopped||!room||room.readyState!==1)return;const t=await ticket();if(!t||!room||room.readyState!==1)return;room.send(JSON.stringify({t:'re',tk:t.ticket}));
+    setTimeout(()=>emit(HR,'reauthed',{}),700);},
   _kill(which){kill(which==='lobby'?lobby:room);}   // tests only
 };
 })();

@@ -4,8 +4,16 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.13.4',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
+const BUILD={version:'0.13.6',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.6'};
 const CHANGELOG=[
+  {v:'0.13.6',date:'2026-10-28',title:'Coppergate, a town under construction',notes:[
+    'A new town: Coppergate, past the Mossy Barrows and the deepwood. Take the road south from Hollowmere’s southern road, between the barrows and the dead trees.',
+    'It’s still being built: scaffolding, timber frames, a lumber yard, market stalls under tarps and a monument under wraps. No monsters inside the town, and there’s a Bank Chest by the gate.',
+    'Meet Orrin Ledgerwright, master builder. He’s building the Lantern Exchange, the in-game market for Lanternhold cosmetic NFTs, opening in Season 1: browse, list, delist and snipe them on OpenSea without leaving the game.',
+    'Coppergate is on the world map.']},
+  {v:'0.13.5',date:'2026-10-28',title:'Return Flame in Hollowmere',notes:[
+    'Fixed: the Return Flame now works in Hollowmere. Hold the flame button (or R) for 2 seconds to go home to the Hold. A monster’s hit restarts it.',
+    'The Return Flame works everywhere except the Hold itself: the Depths, Hollowmere and the Wilderness (up to level 20).']},
   {v:'0.13.4',date:'2026-10-28',title:'Zoom the world map',notes:[
     'The world map zooms: pinch on a phone, scroll on a computer, or use the new + and − buttons. Double-tap a spot to zoom straight in on it.',
     'Drag to look around a zoomed map. It stays sharp at every zoom, and the labels stay easy to read.',

@@ -1,6 +1,7 @@
 // ===== Maps: the Hold (handmade) and the Depths (procedural) =====
 const T=16,WALL=0,FLOOR=1,GRASS=2,PATH=3,WATER=4,SOIL=5,DOCK=6,WILDG=7,WPATH=8,GLOOM=9,
-  MGRASS=10,DGRASS=11,MPATH=12,PLAZA=13,MOON=14,CANOPY=15,CLIFF=16,MOSS=17,WG1=18,WG2=19,WG3=20,WPATH2=21;   // Hollowmere (v0.12); moss, the wood's blends v0.13
+  MGRASS=10,DGRASS=11,MPATH=12,PLAZA=13,MOON=14,CANOPY=15,CLIFF=16,MOSS=17,WG1=18,WG2=19,WG3=20,WPATH2=21,   // Hollowmere (v0.12); moss, the wood's blends v0.13
+  COBBLE=22,SITE=23;   // Coppergate (v0.13.6): cobbled streets and the building sites' packed earth
 function newMap(w,h,kind,fill){return {w,h,kind,t:new Uint8Array(w*h).fill(fill),solid:new Uint8Array(w*h),objs:[],lights:[],seed:0};}
 const tAt=(m,x,y)=>x<0||y<0||x>=m.w||y>=m.h?WALL:m.t[y*m.w+x];
 const setT=(m,x,y,v)=>{if(x>=0&&y>=0&&x<m.w&&y<m.h)m.t[y*m.w+x]=v;};
@@ -23,7 +24,10 @@ const WEST_COLS=96,WEST_X=WEST_COLS*T,HM_ROWS=120,HM_Y0=WILD_ROWS,WEST_X_V2=704;
 const WOOD_COLS=30,WOOD_X=WEST_X-WOOD_COLS*T;   // the Hollow Wood: the Hold's bright woods fading into the moor
 const inHollowmere=(x,y)=>x<WEST_X&&y>=WILD_Y;
 const HM_ENTRY={x:66*T+8,y:(HM_Y0+12)*T+10};   // the road by Mordecai, where the Hollow Wood ends
-function buildHold(){const base=buildHoldBase(),DX=WEST_X,W=WEST_COLS+base.w,H=HM_Y0+HM_ROWS,m=newMap(W,H,'hold',CANOPY);
+// Coppergate (v0.13.6): a new town south of the Mossy Barrows and the deepwood, still being built. The map grows TOWN_ROWS
+// rows at the bottom (nothing above moves, so saved positions stay put).
+const TOWN_ROWS=30,TOWN_Y0=HM_Y0+HM_ROWS,inTown=(x,y)=>y>=TOWN_Y0*T;
+function buildHold(){const base=buildHoldBase(),DX=WEST_X,W=WEST_COLS+base.w,H=TOWN_Y0+TOWN_ROWS,m=newMap(W,H,'hold',CANOPY);
   m.solid.fill(1);
   for(let y=0;y<base.h;y++)for(let x=0;x<base.w;x++){m.t[y*W+x+WEST_COLS]=base.t[y*base.w+x];m.solid[y*W+x+WEST_COLS]=base.solid[y*base.w+x];}
   for(let y=0;y<HM_Y0;y++)for(let x=0;x<WEST_COLS;x++)m.t[y*W+x]=CLIFF;   // west of the Wilderness: sheer cliffs
@@ -34,7 +38,7 @@ function buildHold(){const base=buildHoldBase(),DX=WEST_X,W=WEST_COLS+base.w,H=H
   const gx=WEST_COLS,open=y=>y>=WILD_ROWS+1&&y<=WILD_ROWS+22;
   m.objs=m.objs.filter(o=>!(o.type==='tree'&&!o.chop&&o.block&&o.block.some(([x,y])=>x===gx&&open(y))));
   for(let y=WILD_ROWS+1;y<=WILD_ROWS+22;y++){setT(m,gx,y,y===WILD_ROWS+11||y===WILD_ROWS+12?PATH:GRASS);setSolid(m,gx,y,0);}
-  buildHollowmere(m);
+  buildHollowmere(m);buildTown(m);
   return m;}
 // Hollowmere, from the Hold westward:
 //  · the Hollow Wood: the Hold's green grass and oaks, darkening tile by tile into the moor (no monsters but ravens at its far edge)
@@ -117,6 +121,59 @@ function buildHollowmere(m){const X0=0,Y0=HM_Y0,WC=WEST_COLS,HR=HM_ROWS,r=rng(91
     ['mossgiant',10,97,22],['mossgiant',24,106,24],['mossgiant',37,95,25],['mossgiant',19,113,26],['mossgiant',41,109,28]]
     .map(([type,lx,ly,lvl],i)=>{const [x,y]=L(lx,ly);return {i,type,x:x*T+8,y:y*T+12,lvl};});
   m.hm={x0:X0,y0:Y0,w:WC,h:HR,entry:{x:L(66,12)[0]*T+8,y:L(66,12)[1]*T+10}};}
+// ---------- Coppergate: the town past the Mossy Barrows and the deepwood (still under construction) ----------
+// A road runs south from the long southern road of Hollowmere, through the forest, into the town. Orrin Ledgerwright is
+// building the Lantern Exchange on the north side of the square: the in-game market for cosmetic NFTs (Season 1).
+// Everything here is placed in map tiles (x across the whole map, y from the top). No monsters: the town is safe.
+function buildTown(m){const Y0=TOWN_Y0,r=rng(4417);
+  const put=(x,y,t,solid)=>{setT(m,x,y,t);setSolid(m,x,y,solid?1:0);};
+  const obj=(type,x,y,extra)=>addObj(m,Object.assign({type,x:x*T+8,y:y*T+14},extra||{}));
+  const blk=(x0,y0,x1,y1)=>{const b=[];for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)b.push([x,y]);return b;};
+  // the road south from Hollowmere (local x 50-51 from its southern road down through the forest)
+  const RX=50;for(let y=HM_Y0+100;y<Y0+4;y++)for(const x of [RX,RX+1]){const t=tAt(m,x,y);if(t===MOON)continue;put(x,y,y>=Y0?COBBLE:MPATH,0);}
+  // anything (not a choppable willow) sitting on that road is moved off it
+  const onRoad=(x,y)=>(x===RX||x===RX+1)&&y>=HM_Y0+100&&y<Y0+4,blocks=o=>o.block&&o.block.some(([x,y])=>onRoad(x,y));
+  for(const o of m.objs)if(!o.chop&&blocks(o))for(const [x,y] of o.block)setSolid(m,x,y,0);
+  m.objs=m.objs.filter(o=>o.chop||!(blocks(o)||(o.flat&&onRoad(Math.floor(o.x/T),Math.floor(o.y/T)))));
+  for(const d of m.dens||[])if(Math.abs(d.x/T-RX)<3&&d.y/T>=HM_Y0+100)d.x-=4*T;   // no monster den right on the road
+  // the ground: the Hold's bright grass, a deep-forest edge all round
+  const X0=20,X1=78,Y1=Y0+TOWN_ROWS-1;
+  for(let y=Y0;y<=Y1;y++)for(let x=X0;x<=X1;x++){const edge=Math.min(x-X0,X1-x,y-Y0,Y1-y),wob=((x*5+y*11)%4===0)?1:0;if(edge<2+wob&&!(x>=RX&&x<=RX+1&&y<Y0+4))continue;put(x,y,GRASS,0);}
+  // the square, the high street, and the building sites' packed earth
+  for(let y=Y0+12;y<=Y0+20;y++)for(let x=39;x<=65;x++)if(!((x<41||x>63)&&(y<Y0+13||y>Y0+19)))put(x,y,COBBLE,0);
+  for(const [x0,y0] of [[42,Y0+18],[60,Y0+18]])for(let y=y0;y<=y0+1;y++)for(let x=x0;x<=x0+2;x++)put(x,y,GRASS,0);   // two flower beds
+  for(let y=Y0;y<Y0+12;y++)for(const x of [RX,RX+1])put(x,y,COBBLE,0);
+  for(let y=Y0+3;y<=Y0+11;y++)for(let x=54;x<=68;x++)if(tAt(m,x,y)===GRASS)put(x,y,SITE,0);    // the Exchange's yard
+  for(let y=Y0+14;y<=Y0+25;y++)for(let x=24;x<=36;x++)if(tAt(m,x,y)===GRASS)put(x,y,SITE,0);   // the lumber yard
+  for(let y=Y0+4;y<=Y0+10;y++)for(let x=36;x<=47;x++)if(tAt(m,x,y)===GRASS)put(x,y,SITE,0);    // two houses going up
+  for(let y=Y0+21;y<=Y0+23;y++)for(let x=40;x<=64;x++)put(x,y,COBBLE,0);                      // the market row (tarped stalls)
+  // the Lantern Exchange: 11 tiles wide, 8 tall, scaffolding all over; its door faces the square
+  const EX=61,EY=Y0+11;obj('exchange',EX,EY,{sortY:(EY-1)*T,block:blk(EX-5,EY-6,EX+5,EY),act:{x:EX*T+8,y:(EY+1)*T+8,label:'Look',id:'exchange'}});
+  obj('npc',57,Y0+13,{npc:'orrin',name:'Orrin',block:[[57,Y0+13]],act:{x:57*T+8,y:(Y0+14)*T+8,label:'Talk',id:'orrin'},light:{r:20,c:'warm'}});
+  obj('plans',55,Y0+13,{block:[[55,Y0+13]]});
+  obj('notice',47,Y0+13,{block:[[47,Y0+13]],act:{x:47*T+8,y:(Y0+14)*T+6,label:'Read',id:'exchange'}});
+  obj('crane',68,Y0+8,{block:[[68,Y0+8],[69,Y0+8]]});
+  for(const [x,y] of [[55,Y0+11],[67,Y0+11],[54,Y0+6],[68,Y0+4]])obj('sawhorse',x,y,{block:[[x,y]]});
+  for(const [x,y,v] of [[56,Y0+4,0],[66,Y0+3,1],[54,Y0+9,2]])obj('crate',x,y,{v,block:[[x,y]]});
+  // two houses going up, timber frames on stone footings
+  obj('frame',39,Y0+9,{v:0,block:blk(38,Y0+8,40,Y0+9)});obj('frame',45,Y0+9,{v:1,block:blk(44,Y0+8,46,Y0+9)});
+  // the lumber yard: log piles, plank stacks, crates, a sawpit, and the workers' fire
+  for(const [x,y,v] of [[26,Y0+16,0],[30,Y0+16,1],[26,Y0+20,1],[33,Y0+19,0]])obj('lumber',x,y,{v,block:[[x,y],[x+1,y]]});
+  for(const [x,y,v] of [[35,Y0+15,0],[35,Y0+16,1],[29,Y0+23,2],[25,Y0+24,0]])obj('crate',x,y,{v,block:[[x,y]]});
+  obj('campfire',30,Y0+21,{block:[[30,Y0+21]],light:{r:30,c:'warm'}});
+  // the market row: stalls under tarps, waiting for Season 1
+  for(const x of [43,48,53,58,63])obj('tarpstall',x,Y0+22,{block:[[x-1,Y0+22],[x,Y0+22],[x+1,Y0+22]]});
+  // the town sign at the gate, lamp posts, a bank chest, a well
+  obj('tsign',RX-2,Y0+3,{block:[[RX-2,Y0+3]],act:{x:(RX-2)*T+8,y:(Y0+4)*T+4,label:'Read',id:'tsign'}});
+  obj('bankchest',RX+3,Y0+5,{block:[[RX+3,Y0+5]],act:{x:(RX+3)*T+8,y:(Y0+6)*T+4,label:'Bank',id:'bank'}});
+  for(const [x,y] of [[RX-1,Y0+7],[RX+2,Y0+10],[37,Y0+12],[67,Y0+19],[37,Y0+20],[46,Y0+19]])obj('lpost',x,y,{block:[[x,y]]});
+  obj('well',44,Y0+15,{block:[[43,Y0+15],[44,Y0+15]]});
+  obj('statue',51,Y0+17,{block:[[50,Y0+17],[51,Y0+17]]});   // a monument for the square, still under wraps
+  for(const [x,y] of [[42,Y0+18],[44,Y0+19],[60,Y0+19],[62,Y0+18],[43,Y0+19],[61,Y0+18]])m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:(x+y)%4,flat:true});
+  // trees and flowers on the open grass
+  const free=(x,y)=>tAt(m,x,y)===GRASS&&!solidAt(m,x,y)&&!m.objs.some(o=>o.block&&o.block.some(([a,b])=>Math.abs(a-x)<2&&Math.abs(b-y)<2));
+  for(let i=0;i<300;i++){const x=X0+3+(r()*(X1-X0-6)|0),y=Y0+3+(r()*(TOWN_ROWS-6)|0);if(!free(x,y)||(y>Y0+10&&y<Y0+25&&x>37&&x<67))continue;if(r()<.35)obj('tree',x,y,{spr:'tree',block:[[x,y]]});else m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:(r()*4|0),flat:true});}
+  m.town={x0:X0,x1:X1,y0:Y0,y1:Y1,gate:{x:RX*T+16,y:(Y0+2)*T}};}
 function buildHoldBase(){
   const O=WILD_ROWS,W=26,HH=24,H=HH+O,m=newMap(W,H,'hold',GRASS);
   for(let x=0;x<W;x++)for(let y=0;y<H;y++)if(x<1||y<1||x>=W-1||y>=H-1)setSolid(m,x,y,1);
@@ -291,7 +348,7 @@ function bakeGround(m){
   const r=rng(m.floor||3);
   for(let y=0;y<m.h;y++)for(let x=0;x<m.w;x++){const t=tAt(m,x,y),v=(x*7+y*13)%4;let s=null;
     if(m.kind==='hold'){if(t===GRASS)s=ART.grass[v];else if(t===PATH)s=ART.path[v%3];else if(t===SOIL)s=ART.soil;else if(t===WILDG)s=ART.wgrass[v];else if(t===WPATH)s=ART.wpath[v%3];
-      else if(t===MGRASS)s=ART.mgrass[v];else if(t===MOSS)s=ART.moss[v];else if(t===WG1||t===WG2||t===WG3)s=ART.wgblend[t-WG1][v];else if(t===WPATH2)s=ART.wpath2[v%3];else if(t===DGRASS)s=ART.dgrass[v];else if(t===MPATH)s=ART.mpath[v%3];else if(t===PLAZA)s=ART.plaza[(x*3+y*5)%5];else if(t===CANOPY)s=ART.canopy[v];else if(t===CLIFF)s=ART.cliff[v%2];else if(isWater(t))s=null;}
+      else if(t===MGRASS)s=ART.mgrass[v];else if(t===MOSS)s=ART.moss[v];else if(t===WG1||t===WG2||t===WG3)s=ART.wgblend[t-WG1][v];else if(t===WPATH2)s=ART.wpath2[v%3];else if(t===COBBLE)s=ART.cobble[v];else if(t===SITE)s=ART.site[v];else if(t===DGRASS)s=ART.dgrass[v];else if(t===MPATH)s=ART.mpath[v%3];else if(t===PLAZA)s=ART.plaza[(x*3+y*5)%5];else if(t===CANOPY)s=ART.canopy[v];else if(t===CLIFF)s=ART.cliff[v%2];else if(isWater(t))s=null;}
     else{if(t===FLOOR)s=ART.floor[m.biome][v];else if(m.faces.has(y*m.w+x))s=ART.face[m.biome][v%3];else{g.fillStyle='#0d0e17';g.fillRect(x*T,y*T,T,T);
         const fl=(dx,dy)=>tAt(m,x+dx,y+dy)===FLOOR||m.faces.has((y+dy)*m.w+x+dx);g.fillStyle={moss:'#3a4a4a',ember:'#4a2f33',star:'#2c3566',tide:'#24454d',void:'#2e2a42'}[m.biome]||'#45425f';
         if(fl(-1,0))g.fillRect(x*T,y*T,2,T);if(fl(1,0))g.fillRect(x*T+T-2,y*T,2,T);if(fl(0,-1))g.fillRect(x*T,y*T,T,2);if(fl(0,1))g.fillRect(x*T,y*T+T-2,T,2);

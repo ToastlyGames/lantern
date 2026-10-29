@@ -935,6 +935,128 @@ function bankChestSprite(){const p=new Px(24,20),I='#4b5068',I2='#6d7391',W='#5a
 function hmSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#3a2a24');p.rect(8,8,1,16,'#5a4236');p.rect(1,1,16,9,'#2e2a42');p.rect(1,1,16,1,'#45405e');p.rect(1,9,16,1,'#1d1a2a');
   p.rows(2,3,['..x..........','.xx.xxxxxxxx.','xxxxxxxxxxxx.','.xx.xxxxxxxx.','..x..........'],{x:'#c79bf2'});p.set(14,2,'#f1e4ff').set(13,3,'#f1e4ff');p.outline();return p.canvas();}
 function eyeIcon(){const p=new Px(16,16);p.ell(8,8,6,4,'#f4f4f4');p.ell(8,8,3,3,'#3b5dc9');p.ell(8,8,1.4,1.4,'#1a1c2c');p.set(6,6,'#ffffff');p.outline();return p.canvas();}
+// ===== Coppergate (v0.13.6): the town past the Mossy Barrows, still being built =====
+function cobbleTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#6f6658');
+  const rows=[[0,5],[5,5],[10,6]];for(const [y,h] of rows){let x=-(r()*4|0);while(x<16){const w=4+(r()*3|0),c=['#a39a88','#968c7a','#b0a792','#8c8270'][r()*4|0];
+    p.rect(x+1,y+1,w-1,h-1,c);p.rect(x+1,y+1,w-1,1,mix(c,'#ffffff',.18));p.rect(x+1,y+h-1,w-1,1,mix(c,'#3a3328',.25));x+=w;}}
+  if(r()<.3)p.set(r()*16,r()*16,'#4f7a3a');return p.canvas();}
+function siteTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#8f6c48');
+  for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#7d5c3c':'#a07c55');
+  for(let i=0;i<5;i++){const x=r()*15|0,y=r()*15|0;p.set(x,y,'#e0bf86').set(x+1,y,'#c99a62');}   // wood shavings
+  if(r()<.4){const x=r()*13|0,y=r()*13|0;p.rect(x,y,2,1,'#9a9484');p.set(x,y+1,'#6f6a5c');}return p.canvas();}
+// the Lantern Exchange, half built: a stone hall on a plinth, scaffolding, bare rafters with copper tiles going on, a banner
+// with the lantern emblem, a lamp burning on the top plank. 176x128 (11 x 8 tiles), the door in the middle of the front.
+function exchangeSprite(f){const p=new Px(176,128),S='#c9b99a',S2='#a8987a',S3='#e2d6bb',M='#8f7f62',W='#8a5a3a',W2='#6b3e26',W3='#b07c4f',CU='#c46a3a',CU2='#9a4f2a',CU3='#e08a52',D='#251c2c',G='#ffcd75';
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
+  // the plinth and the steps up to the door
+  p.rect(2,108,172,20,'#9a9484');for(let y=108;y<128;y+=5)for(let x=(y/5%2)*6;x<174;x+=12){p.rect(2+x,y,11,4,'#aea898');p.rect(2+x,y,11,1,'#c4bead');}
+  for(let k=0;k<3;k++)p.rect(64-k*4,116+k*4,48+k*8,4,k%2?'#b8b2a2':'#a7a191');
+  // the walls: built up high on the left, still low and ragged on the right
+  const top=x=>x<88?40:x<120?58+((x*7)%5):x<150?74+((x*3)%7):88;
+  for(let x=8;x<168;x++){const t=top(x);for(let y=t;y<108;y++)p.set(x,y,S);for(let y=t;y<108;y+=6)p.set(x,y,M);if((x+((Math.floor((108-top(x))/6))%2)*4)%8===0)for(let y=t;y<108;y++)if(((y-t)%12)<6)p.set(x,y,M);p.set(x,t,S3);}
+  for(let x=8;x<168;x+=1)if(x%8===4)for(let y=top(x)+3;y<108;y+=12)p.set(x,y,M);
+  // pillars: two finished with capitals, two still stumps
+  for(const [x,h] of [[20,40],[56,40],[120,70],[148,92]]){p.rect(x,h,10,108-h,S3);p.rect(x,h,1,108-h,'#f4ead4');p.rect(x+9,h,1,108-h,S2);if(h<60){p.rect(x-2,h-4,14,4,S2);p.rect(x-2,h-4,14,1,S3);}else p.rect(x,h,10,2,'#d8ccae');}
+  // windows (dark, arched) on the left wall
+  for(const x of [34,104]){const t=x<88?52:68;p.rect(x,t+4,10,16,D);p.ell(x+5,t+4,5,4,D);p.rect(x,t+20,10,2,S2);p.set(x+3,t+8,'#3a2a44');}
+  // the great doorway: a dark arch with a timber frame (the doors aren't hung yet)
+  p.rect(72,66,32,42,D);p.ell(88,66,16,12,D);for(let y=58;y<108;y++){p.set(70,y,W);p.set(71,y,W2);p.set(104,y,W);p.set(105,y,W2);}
+  for(let a=0;a<=Math.PI;a+=.02){p.set(Math.round(88+Math.cos(a)*17),Math.round(66-Math.sin(a)*13),W3);p.set(Math.round(88+Math.cos(a)*18),Math.round(66-Math.sin(a)*14),W2);}
+  p.rect(84,48,8,10,S3);p.set(87,50,G).set(88,50,G).set(87,51,G).set(88,51,G);   // the keystone, a little lantern carved in it
+  // the roof: bare rafters, copper tiles on the left half
+  for(let y=6;y<44;y++){const half=Math.round((y-6)*2.2);const l=88-half,rr=88+half;p.set(l,y,W2);p.set(l+1,y,W);p.set(rr,y,W2);p.set(rr-1,y,W);}
+  for(let x=12;x<165;x+=12){const h=Math.abs(x-88)/2.2;for(let y=Math.round(6+h);y<44;y++)p.set(x,y,W);}
+  row(43,8,168,W2);row(42,8,168,W3);
+  for(let y=8;y<42;y+=4){const half=Math.round((y-6)*2.2);for(let x=88-half+2;x<88&&x<88-half+2+Math.min(2*half,60);x++)p.set(x,y,((x+y)/2|0)%2?CU:CU2);for(let x=88-half+2;x<88;x+=6)p.set(x,y+1,CU3);for(let x=88-half+2;x<88;x++)if(y+2<42)p.set(x,y+2,((x+y)%3)?CU:CU2);}
+  // scaffolding: poles, two plank decks, braces, ladders
+  for(const x of [4,46,128,170]){p.rect(x,22,2,86,W2);p.set(x,22,W3);}
+  for(const y of [56,86]){p.rect(2,y,172,3,W3);p.rect(2,y+3,172,1,W2);for(let x=6;x<172;x+=10)p.set(x,y+1,W);}
+  for(const [x0,x1,y0,y1] of [[6,44,59,85],[130,168,59,85],[48,126,26,55]])p.line(x0,y0,x1,y1,W);
+  for(const x of [10,152]){p.rect(x,59,1,27,W2);p.rect(x+6,59,1,27,W2);for(let y=62;y<86;y+=4)p.rect(x,y,7,1,W3);}
+  // the banner hung from the upper deck: the Exchange's lantern emblem between two coins
+  p.rect(66,60,44,24,'#f4e4c1');p.rect(66,60,44,2,'#d9c79a');p.rect(66,83,44,1,'#c4b386');for(let x=66;x<110;x+=4)p.set(x+2,84,'#f4e4c1');
+  p.rect(84,64,8,2,G);p.rect(83,66,10,12,G);p.rect(85,67,6,10,'#2a1b45');p.rect(87,69-(f?1:0),2,6+(f?1:0),'#ff9f3d');p.set(87,72,'#fff3c4');p.rect(83,78,10,2,G);
+  for(const x of [72,102]){p.ell(x,72,4,4,G);p.ell(x,72,2.4,2.4,'#e0a93a');p.set(x-1,71,'#fff3c4');}
+  // a lamp burning on the top deck, a bucket, a coil of rope, a block of stone on a pallet
+  p.rect(20,48,3,8,'#3a3f55');p.rect(19,47,5,1,'#3a3f55');p.rect(20,50,3,4,f?'#ffe2a0':G);
+  p.rect(140,80,6,6,'#566c86');p.rect(140,80,6,1,'#94b0c2');p.ell(158,83,4,2.4,'#c2a26b');p.ell(158,83,2,1.2,'#8a6f30');
+  p.rect(30,100,14,8,S);p.rect(30,100,14,1,S3);p.rect(29,106,16,2,W);
+  p.outline();return p.canvas();}
+// Orrin Ledgerwright, master builder of the Exchange: stout, ginger-bearded, flat cap, rolled sleeves, a leather apron full
+// of tools, the plans under one arm and a hammer that taps (frame 1)
+function orrinSprite(f){const p=new Px(26,30),SK='#f0c8a0',SK2='#d9a37a',BE='#c86b3c',BE2='#9a4a28',SH='#3b5dc9',SH2='#29366f',AP='#8a5a3a',AP2='#6b3e26',CAP='#566c86',CAP2='#3e4a5c';
+  p.rect(8,26,4,3,'#3a2519').rect(14,26,4,3,'#3a2519');p.rect(8,25,10,2,'#4b3226');                                    // boots, breeches
+  p.rect(6,13,14,13,SH);p.rect(6,13,1,13,SH2);p.rect(19,13,1,13,SH2);                                                // a broad blue shirt
+  p.rect(8,15,10,12,AP);p.rect(8,15,10,1,'#a0663b');p.rect(8,26,10,1,AP2);p.rect(9,19,8,3,AP2);p.rect(9,19,8,1,AP);  // the apron and its tool pocket
+  p.set(10,18,'#94b0c2').set(10,17,'#94b0c2');p.set(13,18,'#ffcd75');p.set(15,17,'#c2a26b').set(15,18,'#c2a26b');     // a chisel, a pencil, a ruler
+  p.rect(6,22,14,1,'#4b3226');p.set(12,22,'#f7c64a');                                                                   // belt
+  // the right arm holds the rolled plans (blue, with white lines); the left swings a hammer
+  p.rect(19,15,3,3,SH);p.rect(20,18,2,2,SK);p.rect(17,17,8,3,'#41a6f6');p.rect(17,17,8,1,'#73eff7');p.set(19,18,'#f4f4f4').set(22,18,'#f4f4f4');p.rect(25,17,1,3,'#29366f');
+  if(f){p.rect(3,12,3,3,SH);p.rect(2,10,2,3,SK);p.rect(0,7,5,2,'#566c86');p.rect(1,9,1,4,'#8a5a3a');}
+  else{p.rect(3,15,3,4,SH);p.rect(3,19,2,2,SK);p.rect(1,20,5,2,'#566c86');p.rect(3,22,1,4,'#8a5a3a');}
+  // head: a round face, ginger beard and brows, a pencil behind the ear, a flat cap
+  p.rect(9,5,8,8,SK);p.rect(9,11,8,1,SK2);p.set(11,8,'#1a1c2c').set(15,8,'#1a1c2c');p.rect(10,7,2,1,BE2);p.rect(14,7,2,1,BE2);p.set(13,9,SK2);
+  p.rect(9,10,8,4,BE);p.rect(10,14,6,1,BE);p.set(9,13,BE2).set(16,13,BE2);p.rect(12,11,3,1,'#8f3b2a');
+  p.set(8,8,SK2);p.set(17,8,SK2);p.line(17,5,19,3,'#ffcd75');p.set(19,3,'#1a1c2c');
+  p.rect(8,2,10,3,CAP);p.rect(8,4,11,1,CAP2);p.rect(17,4,4,1,CAP2);p.rect(9,2,8,1,'#7d8fa3');
+  p.outline();return p.canvas();}
+// his plans on a trestle table: a big blueprint of the Exchange held down by a stone and a lamp
+function plansSprite(){const p=new Px(24,20);p.rect(2,8,20,3,'#a0663b');p.rect(2,8,20,1,'#c98a4a');p.rect(4,11,2,8,'#6b3e26');p.rect(18,11,2,8,'#6b3e26');p.line(5,12,18,18,'#8a5a3a');
+  p.rect(3,4,18,5,'#3b5dc9');p.rect(3,4,18,1,'#41a6f6');for(let x=5;x<19;x+=3)p.set(x,6,'#f4f4f4');p.rect(8,5,8,1,'#73eff7');p.rect(11,7,3,1,'#f4f4f4');
+  p.rect(4,3,3,2,'#94a0ad');p.rect(17,1,3,4,'#3a3f55');p.set(18,2,'#ffcd75');p.outline();return p.canvas();}
+// a sandwich board on the square: the lantern emblem and a big "1" (Season 1)
+function noticeSprite(){const p=new Px(18,24);p.line(3,23,6,2,'#6b3e26');p.line(14,23,11,2,'#6b3e26');p.rect(4,3,10,15,'#f4e4c1');p.rect(4,3,10,1,'#d9c79a');p.rect(4,17,10,1,'#c4b386');
+  p.rect(6,6,3,1,'#f7c64a');p.rect(5,7,5,6,'#f7c64a');p.rect(6,8,3,4,'#2a1b45');p.set(7,9,'#ff9f3d').set(7,10,'#ffcd75');p.rect(5,13,5,1,'#f7c64a');
+  p.rect(11,6,1,8,'#b13e53');p.set(10,7,'#b13e53');p.rect(10,14,3,1,'#b13e53');p.outline();return p.canvas();}
+// the square's monument, under wraps: a stone pedestal, a figure under a roped canvas, two poles and a ladder against it
+function statueSprite(){const p=new Px(32,48),S='#c9b99a',S2='#a8987a',C='#cdb88f',C2='#a8987a',R='#8a6f30',W='#8a5a3a';
+  p.rect(6,34,20,13,S);p.rect(6,34,20,1,'#e2d6bb');p.rect(4,44,24,4,S2);p.rect(4,44,24,1,'#c4bead');p.rect(13,38,6,4,'#e08a52');p.set(14,39,'#ffd09a');
+  for(let y=4;y<34;y++){const w=y<10?4+y:y<26?13:15;const l=16-Math.floor(w/2);for(let x=l;x<l+w;x++)p.set(x,y,((x*5+y*3)%9===0)?C2:C);}
+  p.ell(16,5,4,3.5,C);p.line(9,12,23,30,R);p.line(23,12,9,30,R);p.rect(8,22,16,1,R);
+  p.rect(2,6,2,40,W);p.rect(28,8,2,38,W);p.rect(2,20,28,2,'#b07c4f');for(let y=24;y<44;y+=4)p.rect(26,y,4,1,'#b07c4f');p.rect(26,22,1,22,W);
+  p.outline();return p.canvas();}
+// a treadwheel crane: a great wheel, a mast and a jib, a stone block hanging from the hook (it sways)
+function craneSprite(f){const p=new Px(40,72),W='#8a5a3a',W2='#6b3e26',W3='#b07c4f';
+  p.ell(12,58,10,10,W2);p.ell(12,58,8,8,null);for(let a=0;a<6.28;a+=.785){p.line(12,58,Math.round(12+Math.cos(a)*9),Math.round(58+Math.sin(a)*9),W);}p.ell(12,58,2,2,W3);
+  p.rect(22,10,3,60,W2);p.rect(23,10,1,60,W3);p.line(22,70,30,52,W);p.line(25,70,17,52,W);
+  p.line(23,12,38,4,W2);p.line(23,13,38,5,W);p.line(24,30,36,6,W);
+  const sw=f?1:0;p.rect(37+sw-1,6,1,30,'#d9c79a');p.rect(35+sw,36,5,2,'#566c86');p.rect(33+sw,38,9,7,'#c9b99a');p.rect(33+sw,38,9,1,'#e2d6bb');p.rect(33+sw,44,9,1,'#a8987a');
+  p.rect(20,68,8,3,W2);p.outline();return p.canvas();}
+// a builder's trestle barrier: striped bar, splayed legs, a little red flag
+function sawhorseSprite(){const p=new Px(20,14);for(let x=1;x<19;x++)p.rect(x,4,1,3,Math.floor((x-1)/3)%2?'#1a1c2c':'#ffcd75');p.line(3,7,1,13,'#6b3e26');p.line(5,7,7,13,'#6b3e26');p.line(14,7,12,13,'#6b3e26');p.line(16,7,18,13,'#6b3e26');
+  p.rect(16,0,1,4,'#4b3226');p.rect(17,0,3,2,'#b13e53');p.outline();return p.canvas();}
+function crateSprite(v){const p=new Px(16,16);
+  if(v===1){p.ell(8,9,5,6,'#8a5a3a');p.rect(3,5,11,9,'#8a5a3a');p.rect(3,5,1,9,'#6b3e26');p.rect(3,6,11,1,'#566c86');p.rect(3,12,11,1,'#566c86');p.ell(8,4,5,1.6,'#a0663b');p.rect(6,4,4,1,'#c98a4a');}   // a barrel
+  else if(v===2){p.ell(6,11,4.5,3.5,'#cdb88f');p.ell(11,10,4,4,'#d9c79a');p.set(11,6,'#8a6f30').set(6,8,'#8a6f30');p.rect(9,12,4,1,'#a8987a');}                                              // sacks of mortar
+  else{p.rect(2,4,12,11,'#a0663b');p.rect(2,4,12,1,'#c98a4a');p.rect(2,4,1,11,'#8a5a3a');p.rect(13,4,1,11,'#6b3e26');p.line(3,5,12,13,'#8a5a3a');p.rect(2,14,12,1,'#6b3e26');p.set(5,8,'#566c86');}  // a crate
+  p.outline();return p.canvas();}
+// a house going up: stone footing, timber posts and beams, braces and rafters (v1 has its walls half boarded, a window in)
+function frameSprite(v){const p=new Px(48,48),W='#a0663b',W2='#6b3e26',W3='#c98a4a',S='#9a9484';
+  p.rect(2,40,44,7,S);for(let x=2;x<46;x+=6)p.rect(x,40,5,3,'#aea898');p.rect(2,40,44,1,'#c4bead');
+  for(const x of [3,23,43]){p.rect(x,16,3,24,W);p.rect(x,16,1,24,W3);p.rect(x+2,16,1,24,W2);}
+  p.rect(3,16,43,2,W);p.rect(3,16,43,1,W3);p.rect(3,28,43,2,W2);
+  p.line(6,38,22,19,W2);p.line(26,19,42,38,W2);
+  for(let y=2;y<17;y++){const h=Math.round((y-2)*1.5);p.set(24-h,y,W2);p.set(24-h+1,y,W);p.set(24+h,y,W2);p.set(24+h-1,y,W);}p.rect(23,1,3,2,W2);
+  for(let x=10;x<40;x+=7){const h=Math.abs(x-24)/1.5;for(let y=Math.round(2+h);y<16;y++)p.set(x,y,W);}
+  if(v){for(let y=30;y<40;y+=2)p.rect(6,y,17,2,y%4?W3:'#b07c4f');p.rect(30,30,8,7,'#3b4a66');p.rect(30,30,8,1,'#566c86');p.rect(33,30,1,7,W2);p.rect(30,33,8,1,W2);
+    for(let y=4;y<15;y+=3){const h=Math.round((y-2)*1.5);p.rect(24-h+2,y,h-2,2,'#c46a3a');}}
+  p.outline();return p.canvas();}
+// timber for the builders: a stack of logs (v0) or planks (v1), 2 tiles wide
+function lumberSprite(v){const p=new Px(32,18);
+  if(v){for(let k=0;k<4;k++){p.rect(2+k,4+k*3,28-k*2,3,k%2?'#c98a4a':'#d9a066');p.rect(2+k,4+k*3,28-k*2,1,'#e7c08a');}p.rect(6,16,3,2,'#6b3e26');p.rect(24,16,3,2,'#6b3e26');}
+  else{for(const [x,y] of [[6,13],[13,13],[20,13],[27,13],[9,8],[16,8],[23,8],[13,3],[20,3]]){p.ell(x,y,3.5,3.5,'#8a5a3a');p.ell(x,y,2.3,2.3,'#d9a066');p.set(x,y,'#a0663b');}}
+  p.outline();return p.canvas();}
+// a market stall waiting for Season 1: the counter and awning under a roped-down canvas tarp (3 tiles wide)
+function tarpStallSprite(){const p=new Px(48,34),C='#cdb88f',C2='#a8987a',C3='#e2d6bb',R='#8a6f30';
+  p.rect(4,26,3,7,'#6b3e26');p.rect(41,26,3,7,'#6b3e26');
+  for(let y=4;y<28;y++){const w=y<8?18+y*3:44;const l=24-Math.floor(w/2);for(let x=l;x<l+w;x++)p.set(x,y,((x*3+y*5)%11===0)?C2:C);}
+  for(let x=3;x<45;x+=2)p.set(x,27+(x%4===1?1:0),C2);p.rect(4,8,40,1,C3);p.line(10,8,6,27,C2);p.line(38,8,42,27,C2);
+  for(const x of [14,34]){p.line(x,6,x-4,28,R);}p.line(4,16,44,16,R);
+  p.rect(18,14,12,6,'#b13e53');p.rect(18,14,12,1,'#d4566c');p.rect(23,15,2,4,'#f4e4c1');p.set(22,16,'#f4e4c1');p.rect(22,18,4,1,'#f4e4c1');   // a red tag: "1"
+  p.outline();return p.canvas();}
+// the town sign at the gate: a copper plaque with a hammer and a coin
+function townSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#5a4236');p.rect(8,8,1,16,'#6b4e3a');p.rect(1,1,16,9,'#a0663b');p.rect(1,1,16,1,'#c98a4a');p.rect(1,9,16,1,'#6b3e26');
+  p.ell(5,5,2.6,2.6,'#e08a52');p.ell(5,5,1.4,1.4,'#c46a3a');p.set(4,4,'#ffd09a');p.rect(9,3,6,2,'#94b0c2');p.rect(11,5,2,4,'#6b3e26');p.set(9,3,'#c9d6e3');p.outline();return p.canvas();}
 // THE ABYSSAL MAW: the raid gate. A colossal horned skull of black stone set into a cliff, its jaw a portal of violet
 // fire, flanked by two obsidian spires crowned with braziers. 112 x 104 px, two frames (the fire breathes).
 function mawSprite(f){const W=144,H=128,p=new Px(W,H),r=rng(77),cx=72;
@@ -1026,7 +1148,7 @@ function buildArt(){
   ART.mgrass=[51,52,53,54].map(moorGrassTile);ART.dgrass=[55,56,57,58].map(deepGrassTile);ART.mpath=[61,62,63].map(moorPathTile);ART.plaza=[64,65,66,67,68].map(plazaTile);
   ART.moonw=[0,1].map(moonWaterTile);ART.canopy=[71,72,73,74].map(canopyTile);ART.cliff=[75,76].map(cliffTile);
   ART.willow=willowSprite();ART.willowSway=[willowSprite(-.6),willowSprite(.6)];ART.menhir=[0,1].map(menhirSprite);ART.reeds=[0,1].map(reedsSprite);ART.mushring=mushRingSprite();
-  ART.mcrystal=[0,1].map(moonCrystalSprite);ART.campfire=[0,1].map(campfireSprite);ART.bankChest=bankChestSprite();ART.hmsign=hmSignSprite();ART.maw=[mawSprite(0),mawSprite(1)];
+  ART.mcrystal=[0,1].map(moonCrystalSprite);ART.campfire=[0,1].map(campfireSprite);ART.bankChest=bankChestSprite();ART.hmsign=hmSignSprite();ART.cobble=[61,62,63,64].map(cobbleTile);ART.site=[65,66,67,68].map(siteTile);ART.exchange=[exchangeSprite(0),exchangeSprite(1)];ART.orrin=[orrinSprite(0),orrinSprite(1)];ART.plans=plansSprite();ART.notice=noticeSprite();ART.crane=[craneSprite(0),craneSprite(1)];ART.sawhorse=sawhorseSprite();ART.crate=[0,1,2].map(crateSprite);ART.frame=[0,1].map(frameSprite);ART.lumber=[0,1].map(lumberSprite);ART.tarpstall=tarpStallSprite();ART.tsign=townSignSprite();ART.statue=statueSprite();ART.maw=[mawSprite(0),mawSprite(1)];
   ART.globe=globeIcon();ART.uchest=[uncommonChestSprite(false),uncommonChestSprite(true)];
   ART.icon={};
 }
