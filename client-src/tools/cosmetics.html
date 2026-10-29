@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Cosmetic NFTs setup</title>
+<style>
+:root{--ink:#1a1c2c;--bg:#0f1020;--panel:#20243a;--line:#3d4a66;--text:#eef1f5;--muted:#a9bdcc;--gold:#ffcd75;--green:#a7f070;--red:#ef7d57;--flame:#b98cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}h1{color:var(--flame);font-size:26px;margin:0 0 4px}h2{font-size:18px;margin:26px 0 6px;color:var(--gold)}
+p,li{color:var(--muted)}b{color:var(--text)}label{display:block;margin:12px 0 4px;font-weight:600}
+input,textarea{width:100%;font:15px ui-monospace,Menlo,monospace;padding:10px;background:var(--panel);color:var(--text);border:2px solid var(--line)}
+button{font:600 16px system-ui;padding:12px 16px;margin-top:12px;background:#3b5dc9;color:#fff;border:2px solid var(--ink);cursor:pointer;width:100%}button:disabled{opacity:.5}button.alt{background:#333c57}
+.box{background:var(--panel);border:2px solid var(--line);padding:12px 14px;margin:10px 0;word-break:break-all}.ok{color:var(--green)}.bad{color:var(--red)}code{color:var(--gold)}
+span.w{display:inline-block;margin:2px 8px 2px 0;color:var(--text)}span.w small{color:var(--muted)}img.art{width:140px;height:140px;image-rendering:pixelated;border:2px solid var(--flame);float:right;margin:0 0 10px 12px}
+</style></head><body><main>
+<p style="margin:0 0 10px"><a href="/tools" style="color:#a9bdcc">← Owner tools</a></p>
+<img class="art" src="/nft/cos/collection.png" alt="">
+<h1>Cosmetic NFTs setup</h1>
+<p>For the Lanternhold owner (Season 1). Players can turn cosmetics they earned in the game (the Jack-o'-Lantern, the Reaper's Scythe, and every cosmetic added later) into ERC-1155 NFTs on Robinhood Chain, tradeable on OpenSea. A minted cosmetic leaves the hero; whoever's linked wallet holds the NFT can wear it. Open this page in your wallet app's browser. The wallet you deploy with owns the collection and receives royalties (5%).</p>
+<div class="box" id="who">Not connected.</div>
+<button id="conn">Connect wallet</button>
+
+<h2>1. Deploy the collection</h2>
+<p>Creates the Lanternhold Cosmetics contract. Only vouchers the game signs can mint, one per cosmetic a hero earned. You can't mint any yourself.</p>
+<label for="sig">Signer address (the wallet whose private key is FOUNDERS_SIGNER_KEY or CLAIM_SIGNER_KEY in Vercel)</label><input id="sig" placeholder="0x…">
+<label for="base">Token metadata address (the token number is added to the end)</label><input id="base" value="">
+<button id="dep" disabled>Deploy the collection</button>
+<div class="box" id="depOut" hidden></div>
+
+<h2>2. Switch it on (Season 1)</h2>
+<p>Run <code>supabase/cosmetics-nft.sql</code> in Supabase once. Then in Vercel → Settings → Environment Variables: <code>COSMETICS_CONTRACT</code> = the collection's address. Players can wear cosmetic NFTs they hold from then on. When Season 1 starts, add <code>COSMETICS_NFT</code> = <code>1</code> and redeploy: the <b>Mint as NFT</b> buttons appear in the game. Check <code>/api/health</code> → <code>cosmetics</code>.</p>
+
+<h2>3. Owner controls</h2>
+<label for="nft">Collection address</label><input id="nft" placeholder="0x…">
+<div class="box" id="stat">–</div>
+<button id="refresh" class="alt" disabled>Refresh status</button>
+<button id="pause" class="alt" disabled>Pause / unpause minting</button>
+<div class="box" id="ctlOut" hidden></div>
+</main><script src="/tools/cosmetics.js"></script></body></html>
