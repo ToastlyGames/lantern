@@ -190,8 +190,8 @@ function cosmeticOver(p,dir,look,set,rect,step){
 // The Reaper's Scythe (24x24, the grip at 2,22): a long dark-wood snath with bone wraps, an iron collar set with a violet
 // soul-gem, and a great crescent blade whose inner edge burns soul-green. Same diagonal as the swords, so it swings,
 // rests and casts the same way.
-function scytheSprite(){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8a6446',bone='#e8dcc0',bone2='#b8a988',ir='#2a2438',ir2='#4a4560',gem='#c79bf2',gem2='#f3e3ff',
-  st='#3e4a5c',st2='#7d8fa3',st3='#a9bdcc',edge='#e8f4ff',soul='#9cf0d2';
+function scytheSprite(mir){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8a6446',bone='#e8dcc0',bone2='#b8a988',ir='#2a2438',ir2='#4a4560',gem='#c79bf2',gem2='#f3e3ff',
+  st='#5d6b80',st2='#a3b4c8',st3='#c9d6e3',edge='#e8f4ff',soul='#9cf0d2';   // a bright moonlit steel so it reads on dark ground
   for(let i=0;i<=14;i++){p.set(2+i,22-i,wd);if(i<14)p.set(3+i,22-i,i%4===1?wd3:wd2);}
   for(const i of [2,3,10]){p.set(2+i,22-i,bone2);p.set(3+i,22-i,bone);}
   p.set(1,23,bone).set(2,23,bone2).set(1,22,bone2);                                     // a bone cap at the butt
@@ -199,9 +199,10 @@ function scytheSprite(){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8
   p.set(13,11,ir).set(12,12,ir2);                                                         // a second grip (the nib)
   const spine=[[16,5],[15,4],[14,3],[13,2],[12,2],[11,2],[10,2],[9,2],[8,3],[7,4],[6,5],[5,6],[4,7]],wid=[4,4,4,4,3,3,3,2,2,2,1,1,0],
     eg=['#ffffff','#e8f4ff','#e8f4ff','#d6f7ee','#d6f7ee','#c0f5e2','#b4f3dc','#a9f2d8','#9cf0d2','#9cf0d2','#7fe0c0','#9cf0d2','#c8fff0'];
-  spine.forEach(([x,y],i)=>{const w=wid[i];p.set(x,y,ir2);for(let k=1;k<=w;k++)p.set(x,y+k,k===1?st2:k===w&&w>2?st3:st);p.set(x,y+w+1,eg[i]);});
+  spine.forEach(([x,y],i)=>{const w=wid[i];p.set(x,y,'#6a6385');for(let k=1;k<=w;k++)p.set(x,y+k,k===1?st2:k===w&&w>2?st3:st);p.set(x,y+w+1,eg[i]);});
   p.set(14,4,'#c9d6e3').set(12,3,'#c9d6e3').set(10,3,st3);                                // light across the flat
   p.set(3,9,soul).set(4,9,null);                                                          // the hooked tip
+  if(mir){const q=new Px(25,25);for(let y=0;y<24;y++)for(let x=0;x<24;x++){const c=p.get(x,y);if(c)q.set(24-y,24-x,c);}q.outline();const c=q.canvas();c.hy=22;return c;}   // flipped across the haft: the blade hooks the other way
   p.outline();const c=p.canvas();c.hy=22;return c;}
 function mix(a,b,t){const A=hex(a),B=hex(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
 // hair that hangs behind the body (drawn before the tunic)
@@ -893,8 +894,8 @@ function barrowSprite(v){const p=new Px(32,20),G='#3a6a42',G2='#2b5236',G3='#4f8
 // Mordecai the Reaper: a tall black-robed figure with a lantern-lit skull face and a scythe, the hem fraying into mist
 function reaperSprite(f){const p=new Px(26,32),R='#1f1b29',R2='#14111c',RH='#3a3350',BN='#e8dcc0',BN2='#b8a988',EY=f?'#c79bf2':'#e8d0ff',W='#6b4a32',BL='#c9d6e3',BL2='#7d8fa3',B=f?1:0;
   const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
-  // the scythe: a long crooked haft and a moonlit blade
-  p.line(21,4,20,31,W);p.set(21,31,'#4a3222');row(4,9,21,BL);row(5,8,12,BL2);row(3,13,21,BL2);p.set(8,6,BL2).set(9,6,BL);p.set(20,3,'#f4f4f4');
+  // the scythe's haft (the blade is added below, out to the side, so it never hides behind his hood)
+  p.line(21,3,20,31,W);p.set(21,31,'#4a3222');
   // the robe, flaring to the ground, its hem tattering into mist
   for(let y=13;y<=29;y++){const k=Math.floor((y-13)/3),l=8-k,r=17+k;row(y,l,r,R);p.set(l,y,R2);p.set(r,y,R2);}
   for(let y=16;y<=29;y++){p.set(12,y,RH);p.set(15+(y>24?1:0),y,R2);}
@@ -906,7 +907,15 @@ function reaperSprite(f){const p=new Px(26,32),R='#1f1b29',R2='#14111c',RH='#3a3
   for(let y=3;y<=11;y++){p.set(9,y+B,RH);p.set(16,y+B,R2);}row(2+B,11,14,RH);
   for(let y=4;y<=10;y++)row(y+B,10,15,R2);
   p.rect(11,5+B,4,4,BN);p.rect(11,8+B,4,1,BN2);p.set(11,6+B,EY).set(14,6+B,EY);p.set(12,6+B,'#14111c').set(13,6+B,'#14111c');p.set(12,9+B,BN).set(13,9+B,BN2);p.set(12,10+B,BN2);
-  p.outline();return p.canvas();}
+  // v0.13.2: a bigger canvas (34x36, Mordecai 4 rows down) so the blade can sweep out to his left side and away from his
+  // head: an iron collar with a soul-gem, then a great crescent curving down, its edge burning soul-green
+  const q=new Px(34,36);for(let y=0;y<32;y++)for(let x=0;x<26;x++){const c=p.get(x,y);if(c)q.set(x,y+4,c);}
+  const sp=[[22,6],[23,5],[24,4],[25,4],[26,4],[27,4],[28,5],[29,5],[30,6],[31,7],[32,8],[32,9],[33,10],[33,11]],wd=[2,3,3,3,3,3,3,3,2,2,2,1,1,0],
+    eg=['#e8f4ff','#e8f4ff','#ffffff','#e8f4ff','#d6f7ee','#d6f7ee','#c0f5e2','#b4f3dc','#a9f2d8','#9cf0d2','#9cf0d2','#9cf0d2','#9cf0d2','#c8fff0'];
+  sp.forEach(([x,y],i)=>{const w=wd[i];q.set(x,y,'#4a4560');for(let k=1;k<=w;k++)q.set(x,y+k,k===1?BL:BL2);q.set(x,y+w+1,eg[i]);});
+  q.set(25,5,'#f4f4f4').set(27,5,'#e8f4ff');                                                       // moonlight on the flat
+  q.rect(20,6,3,2,'#2a2438');q.set(21,6,'#c79bf2').set(22,7,'#f3e3ff');                           // the collar and its gem
+  q.outline();return q.canvas();}
 // ---- Hollowmere ground ----
 function moorGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#2f6b55');
   for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#285a48':'#3d8466');
@@ -1002,7 +1011,7 @@ function buildArt(){
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
   ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
   ART.sword={};for(const t of Object.keys(GEAR.blade))ART.sword[t]=swordSprite(t==='rusty'?'none':t);
-  ART.scythe=scytheSprite();
+  ART.scythe=scytheSprite();ART.scytheM=scytheSprite(true);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
   ART.mother=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime,true));
@@ -1116,10 +1125,12 @@ const LANTERNS={
 // ---------- capes: nobody starts with one; each carries special attributes ----------
 // attrs: hp (+max HP), def (+defense), dmg (% damage), oil (% slower oil burn), spd (% move speed), light (% light radius),
 //        luck (% better loot odds), regen (HP per second in the Depths), fishXp (% Fishing XP), catch (% catch chance), cookSafe (% less burning)
+// Skilling capes (src: a skill) can drop from that skill's every action, but only at a tiny chance: 1 in SKILL_CAPE_ODDS.
+const SKILL_CAPE_ODDS=35000;
 const CAPES={
   tattered:{n:'Tattered Cloak',r:'common',c1:'#8a6f30',c2:'#6b3e26',attr:{hp:6},v:30},
   moss:{n:'Mossweave Cape',r:'uncommon',c1:'#38b764',c2:'#2b4b3a',attr:{oil:10,spd:5},v:110},
-  angler:{n:"Angler's Cape",r:'uncommon',c1:'#41a6f6',c2:'#29366f',attr:{fishXp:10,catch:6},v:140,src:'fishing'},
+  angler:{n:"Angler's Cape",r:'xrare',c1:'#41a6f6',c2:'#29366f',attr:{fishXp:10,catch:6},v:1200,src:'fishing'},
   grave:{n:'Gravecloth Mantle',r:'rare',c1:'#94b0c2',c2:'#333c57',attr:{def:2,hp:10},v:320},
   hearth:{n:'Hearthkeeper Cape',r:'rare',c1:'#ef7d57',c2:'#b13e53',attr:{cookSafe:50,regen:.2},v:300},
   glow:{n:'Glowcap Shroud',r:'xrare',c1:'#e86fd0',c2:'#5d275d',attr:{light:20,luck:12},v:900},
@@ -1352,8 +1363,20 @@ const NAMES_X=0;const NAMES=['@mira_dig','@oakhand','@lumen_lou','@pitkid','@run
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.13.1',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
+const BUILD={version:'0.13.4',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
 const CHANGELOG=[
+  {v:'0.13.4',date:'2026-10-28',title:'Zoom the world map',notes:[
+    'The world map zooms: pinch on a phone, scroll on a computer, or use the new + and − buttons. Double-tap a spot to zoom straight in on it.',
+    'Drag to look around a zoomed map. It stays sharp at every zoom, and the labels stay easy to read.',
+    'Tapping on the map no longer closes it. Tap outside it, or the ×, to close.']},
+  {v:'0.13.3',date:'2026-10-28',title:'Skilling capes are extremely rare',notes:[
+    'Capes earned from skilling are now Extremely Rare. The Angler’s Cape can still come up on any catch, but only about 1 in 35,000 (it was 1 in 300). Loot luck still helps a little.',
+    'Every Angler’s Cape already caught keeps its stats, and is now marked Extremely Rare.']},
+  {v:'0.13.2',date:'2026-10-28',title:'Fixes: health, phone buttons, scythes',notes:[
+    'Fixed: walking between the Hold and Hollowmere no longer changes your health. You have your full health everywhere except the Wilderness, which still uses its own rules (and now tells you your max health there as you cross the wall).',
+    'Phones held sideways: the Hero, Skills and Bag buttons now sit beside the quick slots instead of on top of the compass, globe and settings. On very small screens the buttons shrink a little so nothing ever covers anything else.',
+    'The Reaper’s Scythe is easier to see in your hand: brighter steel, a stronger soul-glow, and the blade always hooks the right way whichever way you face.',
+    'Mordecai’s scythe now sweeps out beside him instead of hiding behind his hood.']},
   {v:'0.13.1',date:'2026-10-28',title:'A pumpkin head and a reaper’s scythe',notes:[
     'All Hallows’ Lantern now rewards two cosmetics: the Jack-o’-Lantern, a carved pumpkin with a violet flame flickering through its grin, and the Reaper’s Scythe, Mordecai’s own soul-lit scythe.',
     'The Cosmetics tab now has a head slot and a weapon slot. The Scythe shows over your blade or staff and swings with a wide soul-green arc; your weapon’s stats stay the same.',
@@ -2096,9 +2119,11 @@ const A=k=>(capeA()[k]||0)+((HELM_ATTR[S.gear.helm]||{})[k]||0)+jewA(k)+enchA(k)
 let ADMIN=false,HAT='partyhat';
 const LAN=()=>LANTERNS[S.gear.lantern]||LANTERNS.basic;
 const maxHp=()=>Math.round(60+8*(S.lvl-1)+A('hp'));
-// In the Hold and the Wilderness your health follows the Wilderness rules (the same for everyone: no admin-hat bonus)
+// Only in the Wilderness does your health follow the Wilderness rules (the same for everyone: level and cape, nothing else).
+// Everywhere else (the Hold, Hollowmere, the Depths) it's your full health. v0.13.2: the Hold used the Wilderness rules
+// too, so walking between the Hold and Hollowmere (with no visible border since v0.13) cut your health back.
 const pvpMaxHp=()=>60+8*(S.lvl-1)+((((CAPES[S.gear.cape]||{}).attr)||{}).hp||0);
-const hpMax=()=>scene==='hold'&&!inWest()?pvpMaxHp():maxHp();
+const hpMax=()=>inWild()?pvpMaxHp():maxHp();
 const inWild=()=>scene==='hold'&&P.y<WILD_Y;
 const inWest=()=>scene==='hold'&&inHollowmere(P.x,P.y);   // Hollowmere: monsters, no PvP, your full bonuses count
 const staffOn=()=>isStaff(S.gear.blade);
@@ -2151,8 +2176,16 @@ function fit(){
   cv.width=VW;cv.height=VH;cv.style.width=(VW*SCALE/dpr)+'px';cv.style.height=(VH*SCALE/dpr)+'px';
   g.imageSmoothingEnabled=false;light.width=VW;light.height=VH;
 }
+// The layout guard: on any screen, the on-screen controls must never cover each other. After every resize it checks the
+// buttons against each other and steps the controls down a size (.tight, then .tighter) until nothing overlaps.
+const UI_GROUPS=[['#side button'],['#mini button','#bRet'],['#quick .qs','#bA'],['#pad'],['#chatB'],['#vit']];
+function uiGuard(){const R=document.documentElement;R.classList.remove('tight','tighter');
+  const vis=e=>{if(!e||e.hidden)return null;const st=getComputedStyle(e);if(st.display==='none'||st.visibility==='hidden')return null;const r=e.getBoundingClientRect();return r.width?r:null;};
+  const hit=()=>{const G=UI_GROUPS.map(sel=>sel.flatMap(q=>[...document.querySelectorAll(q)]).map(vis).filter(Boolean));
+    for(let i=0;i<G.length;i++)for(let j=i+1;j<G.length;j++)for(const a of G[i])for(const b of G[j])if(a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1)return true;return false;};
+  if(!hit())return;R.classList.add('tight');if(!hit())return;R.classList.add('tighter');}
 const light=document.createElement('canvas'),lg=light.getContext('2d');
-let fitT=0;const refit=()=>{clearTimeout(fitT);fitT=setTimeout(()=>{fit();updateHud(true);},60);};
+let fitT=0;const refit=()=>{clearTimeout(fitT);fitT=setTimeout(()=>{fit();updateHud(true);requestAnimationFrame(uiGuard);},60);};
 window.addEventListener('resize',refit);window.addEventListener('orientationchange',refit);if(window.visualViewport)visualViewport.addEventListener('resize',refit);
 
 // ---------- input ----------
@@ -2408,7 +2441,7 @@ function spellImpact(b,x,y,e){const D=SPELLS[b.sp],R=D.aoe||0,mx=spellMax(b.sp);
   if(R)for(const q of ents){if(q.dead||q.d.proj||q===e)continue;if(Math.hypot(q.x-x,(q.y-6)-y)<R+q.r)spellHit(q,Math.round(roll()*.7),Math.atan2(q.y-y,q.x-x),D.col2);}
 }
 // the look of casting: the staff raised, a turning circle of runes at your feet, light gathering at the tip
-function drawCastPose(x,y,dir,left,sp,blade,cw){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=cw==='scythe'?ART.scythe:ART.sword[blade]||ART.sword.apprentice;
+function drawCastPose(x,y,dir,left,sp,blade,cw){const D=SPELLS[sp]||SPELLS.spark,k=1-left/.42,X=Math.round(x),Y=Math.round(y),tip=staffTip(x,y,dir),sw=cw==='scythe'?(dir==='right'?ART.scytheM:ART.scythe):ART.sword[blade]||ART.sword.apprentice;
   g.save();g.globalCompositeOperation='lighter';
   const ring=(R,al,rot,n)=>{for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rot;g.globalAlpha=al*(.6+.4*Math.sin(a*3+time*8));g.fillStyle=i%3?D.col:D.col2;g.fillRect(Math.round(X+Math.cos(a)*R),Math.round(Y+1+Math.sin(a)*R*.38),1,1);}};
   const fade=Math.min(1,k*3)*Math.min(1,(1-k)*4+.2);ring(11,fade,time*3,22);ring(7,fade*.8,-time*4,14);
@@ -2519,7 +2552,7 @@ function useQuick(i){const id=S.quick[i];if(!id){if(scene==='hold')openQuickPick
 function eatHold(id){if(P.hp>=hpMax()-.5){toast(inWild()?'Already at full health':'Save your food for the Depths');return;}
   if(!(S.bank[id]>0)){toast('No '+ITEMS[id].n+' in your bag','bad');return;}if(time-(MP.eatT||-9)<1.5)return;MP.eatT=time;
   S.bank[id]--;if(S.bank[id]<=0)delete S.bank[id];P.hp=Math.min(hpMax(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');sfx('pick');
-  if(roomUp()&&MP.pvpOn)NET.send({t:'eat',h:ITEMS[id].heal});updateHud();updateQuick(true);save();}
+  if(roomUp()&&MP.pvpOn&&inWild())NET.send({t:'eat',h:ITEMS[id].heal});updateHud();updateQuick(true);save();}
 function useFood(){if(scene==='hold'){const have=FOODS.filter(f=>S.bank[f]>0).sort((a,b)=>ITEMS[a].heal-ITEMS[b].heal);if(!have.length)return toast('No food in your bag','bad');const miss=hpMax()-P.hp;return eatHold(have.find(f=>ITEMS[f].heal>=miss)||have[have.length-1]);}if(scene!=='delve')return;const have=FOODS.filter(f=>has(f)).sort((a,b)=>ITEMS[a].heal-ITEMS[b].heal);if(!have.length){toast('No food. Cook at the Kitchen.','bad');return;}
   const miss=maxHp()-P.hp,id=have.find(f=>ITEMS[f].heal>=miss)||have[have.length-1];
   if(P.hp>=maxHp()){toast('Already at full health');return;}take(id,1);P.hp=Math.min(maxHp(),P.hp+ITEMS[id].heal);floatText(P.x,P.y-20,'+'+ITEMS[id].heal,'#a7f070');updateHud();}
@@ -2548,7 +2581,7 @@ function startFishing(sp){const W=WATERS[sp.w||'hold'];if(W.lvl&&lvlOf('fishing'
 let missRun=0;
 function landFish(hooked){missRun=0;{const h=new Date().getHours();if(h<3)secret('night');}const pool=WATERS[FISHING.w||'hold'].fish,F=FISH[pool[ri(0,pool.length-1)]];give(S.bank,F.item,1);S.caught=(S.caught||0)+1;if(F.item==='raw_gloomfin')bump('gloomfin');if(F.item==='raw_moonfin')bump('moonfin');
   sfx('pick');const x=skillXp('fishing',F.xp);floatText(P.x,P.y-24,(hooked?'Hooked! ':'')+'+1 '+F.n+' · '+Math.round(x)+' xp','#73eff7');puff(FISHING.bx,FISHING.by,'#73eff7',6);
-  if(rand()<(1/300)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
+  if(rand()<(1/SKILL_CAPE_ODDS)*(1+A('luck')/100)){give(S.bank,'cape_angler',1);rareFound('cape_angler');}save();}
 function updateFishing(dt){if(!FISHING)return;if(P.moving||scene!=='hold'||Math.hypot(P.x-FISHING.px,P.y-FISHING.py)>3){FISHING=null;return;}const f=FISHING;f.t+=dt;
   if(f.phase==='cast'&&f.t>.6){f.phase='wait';f.t=0;f.wait=biteWait();sfx('splash');}
   else if(f.phase==='wait'&&f.t>f.wait){f.phase='bite';f.t=0;sfx('bite');buzz(50);}
@@ -2650,7 +2683,7 @@ function pvpSwing(t){if(P.swingCD>0)return;CHOP=null;FISHING=null;const o=t||pvp
 function wildStep(dt){const w=P.y<WILD_Y;
   if(w&&!S.flags.wildok){P.y=WILD_Y+3;stick={x:0,y:0,on:false};knob.style.transform='';for(const k of ['ArrowUp','KeyW'])keys[k]=false;if(!paused)openWildWarn();return;}
   if(w!==wasWild){wasWild=w;document.documentElement.classList.toggle('inwild',w);MP.riskKey='';
-    if(started){if(w){toast('You enter the Wilderness. Other players can attack you here.','bad');buzz(30);}
+    if(started){if(w){const pm=pvpMaxHp();toast('You enter the Wilderness. Other players can attack you here.'+(maxHp()>pm?' Wilderness rules: your max health here is '+pm+'.':''),'bad');buzz(30);}
       else{toast('You leave the Wilderness.','good');if(closeCall&&P.hp>0&&P.hp<=hpMax()*.1)secret('closecall');}}closeCall=false;}
   if(w){const l=wildLvl(P.y);if(l>(S.cnt.wilddeep||0))S.cnt.wilddeep=l;if(P.hp<hpMax()*.1&&P.hp>0)closeCall=true;}
   // health climbs back 1 a second after 8 s out of a fight (the same rule the server uses)
@@ -3328,12 +3361,27 @@ function miniBase(m){if(m.mini)return m.mini;const c=document.createElement('can
     else if(solidAt(m,i,y)&&(t===GRASS||t===PATH||t===MGRASS||t===WILDG||t===PLAZA||t===DGRASS))col='#1d2a24';const [r,g2,b]=hex(col);const k=(y*m.w+i)*4;id.data[k]=r;id.data[k+1]=g2;id.data[k+2]=b;id.data[k+3]=255;}
   x.putImageData(id,0,0);m.mini=c;return c;}
 let wmOpen=false,wmT=0;
-function toggleMap(force){wmOpen=force===undefined?!wmOpen:force;$('wmap').hidden=!wmOpen;$('mapB').setAttribute('aria-pressed',String(wmOpen));if(wmOpen){drawMap();sfx('pick');}}
+// v0.13.4: the map zooms (pinch on a phone, the scroll wheel or the + / − buttons on a computer) and pans by dragging.
+// WM.z is the zoom (1 = the whole map), WM.tx/ty the offset in CSS pixels; WM.bw/bh the map's size at zoom 1.
+const WM={z:1,tx:0,ty:0,bw:0,bh:0,max:6};
+function toggleMap(force){wmOpen=force===undefined?!wmOpen:force;$('wmap').hidden=!wmOpen;$('mapB').setAttribute('aria-pressed',String(wmOpen));if(wmOpen){WM.z=1;WM.tx=WM.ty=0;drawMap();wmApply();sfx('pick');}}
+// keep the map inside its window, and show it at the current zoom
+function wmApply(){const v=$('wmV'),c=$('wmC');WM.tx=Math.min(0,Math.max(WM.bw-WM.bw*WM.z,WM.tx));WM.ty=Math.min(0,Math.max(WM.bh-WM.bh*WM.z,WM.ty));
+  c.style.transform=`translate(${WM.tx}px,${WM.ty}px) scale(${WM.z})`;v.style.width=WM.bw+'px';v.style.height=WM.bh+'px';
+  $('wmIn').disabled=WM.z>=WM.max-.01;$('wmOut').disabled=WM.z<=1.01;}
+// zoom to z, keeping the point (px,py) (CSS pixels inside the map window) where it is
+let wmRedraw=0;
+function wmZoom(z,px,py){z=Math.max(1,Math.min(WM.max,z));const mx=(px-WM.tx)/WM.z,my=(py-WM.ty)/WM.z;WM.z=z;WM.tx=px-mx*z;WM.ty=py-my*z;wmApply();
+  if(!wmRedraw)wmRedraw=requestAnimationFrame(()=>{wmRedraw=0;drawMap();});}
 function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),dl=scene==='delve';
-  const availW=Math.min(innerWidth*.9,760),availH=innerHeight*.66,k=Math.max(2,Math.floor(Math.min(availW/m.w,availH/m.h)*(window.devicePixelRatio||1)));
-  cvm.width=m.w*k;cvm.height=m.h*k;const dpr=window.devicePixelRatio||1;cvm.style.width=(m.w*k/dpr)+'px';cvm.style.height=(m.h*k/dpr)+'px';
-  const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*k,m.h*k);
-  const P2=(px,py)=>[px/T*k,py/T*k],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
+  const availW=Math.min(innerWidth*.9,760),availH=innerHeight*(innerHeight<500?.7:.66),k0=Math.max(2,Math.floor(Math.min(availW/m.w,availH/m.h)*(window.devicePixelRatio||1)));
+  // zoomed in, the map is drawn sharper (up to 4096 pixels across) so the land and the labels stay crisp; dots and labels
+  // keep the same size on screen at any zoom (u)
+  const dpr=window.devicePixelRatio||1,kk=Math.max(k0,Math.floor(k0*Math.min(WM.z,4096/(Math.max(m.w,m.h)*k0)))),u=kk/(k0*WM.z),k=k0*u;
+  WM.bw=m.w*k0/dpr;WM.bh=m.h*k0/dpr;
+  cvm.width=m.w*kk;cvm.height=m.h*kk;cvm.style.width=WM.bw+'px';cvm.style.height=WM.bh+'px';
+  const x=cvm.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(base,0,0,m.w*kk,m.h*kk);
+  const P2=(px,py)=>[px/T*kk,py/T*kk],dot=(px,py,r,c,ring)=>{const [X,Y]=P2(px,py);x.fillStyle=c;x.beginPath();x.arc(X,Y,r,0,Math.PI*2);x.fill();if(ring){x.strokeStyle=ring;x.lineWidth=Math.max(1,k/3);x.stroke();}};
   const label=(px,py,t,c,sz)=>{let [X,Y]=P2(px,py);x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;const hw=x.measureText(t).width/2+3;X=Math.max(hw,Math.min(cvm.width-hw,X));x.font=`600 ${Math.round((sz||1)*Math.max(11,k*3.4))}px system-ui,-apple-system,"Segoe UI",sans-serif`;x.textAlign='center';x.lineWidth=Math.max(2,k*.9);x.strokeStyle='rgba(10,12,24,.9)';x.strokeText(t,X,Y);x.fillStyle=c||'#f4f4f4';x.fillText(t,X,Y);};
   if(!dl){for(const o of m.objs){if(['bank','forge','kitchen','gate','bench','stall','press','board','maw','bankchest','obelisk'].includes(o.type)||o.npc==='reaper')dot(o.x,o.y-8,Math.max(2,k*.9),o.type==='maw'||o.npc==='reaper'?'#c79bf2':'#ffcd75');}
     const W0=WEST_X,mid=W0+13*T;label(mid,WILD_Y+12*T,'The Hold','#ffcd75',1.1);label(mid,WILD_Y-20*T,'The Wilderness','#ff8a8a',1.1);label(mid,WILD_Y-4*T,'PvP north of the wall','#ff8a8a',.75);
@@ -3344,10 +3392,27 @@ function drawMap(){if(!wmOpen)return;const m=map,base=miniBase(m),cvm=$('wmC'),d
   for(const o of OTH.values())if(!o.pend)dot(o.x,o.y-4,Math.max(2.5,k*.9),'#f4f4f4','#1a1c2c');
   const pu=.6+.4*Math.sin(time*5);dot(P.x,P.y-4,Math.max(5,k*2.4)*(1+.25*pu),'rgba(255,205,117,.35)');dot(P.x,P.y-4,Math.max(3.5,k*1.4),'#ffcd75','#1a1c2c');
   {const [X,Y]=P2(P.x,P.y-4);x.font=`700 ${Math.max(12,Math.round(k*3.4))}px system-ui,sans-serif`;x.textAlign='center';x.lineWidth=3;x.strokeStyle='#1a1c2c';x.strokeText('You',X,Y-Math.max(8,k*3));x.fillStyle='#ffcd75';x.fillText('You',X,Y-Math.max(8,k*3));}
-  $('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inWest()?'You are in Hollowmere':'You are in the Hold';
+  $('wmH').textContent=matchMedia('(pointer:coarse)').matches?'Pinch to zoom · drag to look around · double-tap to zoom':'Scroll to zoom · drag to look around · double-click to zoom';$('wmT').textContent=dl?'Floor '+run.floor:'World map';$('wmS').textContent=dl?BIOMES[m.biome].name:inWild()?'You are in the Wilderness, level '+wildLvl(P.y):inWest()?'You are in Hollowmere':'You are in the Hold';
   $('wmL').innerHTML=dl?'<span><i style="background:#ffcd75"></i>You</span><span><i style="background:#fff"></i>Stairs down</span><span><i style="background:#ffcd75"></i>Chest</span><span><i style="background:#a7f070"></i>Uncommon chest</span>'
     :'<span><i style="background:#ffcd75;box-shadow:0 0 0 2px #1a1c2c"></i>You</span><span><i style="background:#f4f4f4"></i>Other players</span><span><i style="background:#c79bf2"></i>Raid gate</span>';}
-$('mapB').addEventListener('click',()=>{if(started)toggleMap();});$('wmX').addEventListener('click',e=>{e.stopPropagation();toggleMap(false);});$('wmap').addEventListener('click',()=>toggleMap(false));
+$('mapB').addEventListener('click',()=>{if(started)toggleMap();});$('wmX').addEventListener('click',e=>{e.stopPropagation();toggleMap(false);});
+$('wmap').addEventListener('click',e=>{if(e.target===$('wmap'))toggleMap(false);});   // only a tap outside the map closes it
+$('wmIn').addEventListener('click',e=>{e.stopPropagation();wmZoom(WM.z*1.6,WM.bw/2,WM.bh/2);});$('wmOut').addEventListener('click',e=>{e.stopPropagation();wmZoom(WM.z/1.6,WM.bw/2,WM.bh/2);});
+{const v=$('wmV'),pts=new Map();let pinch=null,drag=null,lastTap=0;
+  const rel=e=>{const r=v.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+  // the scroll wheel (or a trackpad pinch, which arrives as a wheel with ctrlKey) zooms around the pointer
+  v.addEventListener('wheel',e=>{e.preventDefault();e.stopPropagation();const [px,py]=rel(e),d=e.deltaMode===1?e.deltaY*16:e.deltaY;wmZoom(WM.z*Math.exp(-d*(e.ctrlKey?.01:.0018)),px,py);},{passive:false});
+  v.addEventListener('pointerdown',e=>{e.preventDefault();v.setPointerCapture(e.pointerId);pts.set(e.pointerId,rel(e));
+    if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z:WM.z};drag=null;}
+    else if(pts.size===1){const [px,py]=rel(e),now=performance.now();
+      if(now-lastTap<300){wmZoom(WM.z>1.5?1:2.5,px,py);lastTap=0;return;}   // double tap: zoom in there, or back out
+      lastTap=now;drag={x:px,y:py,tx:WM.tx,ty:WM.ty};}});
+  v.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,rel(e));
+    if(pinch&&pts.size>=2){const [a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1])||1;wmZoom(pinch.z*d/pinch.d,(a[0]+b[0])/2,(a[1]+b[1])/2);}
+    else if(drag&&WM.z>1){const [px,py]=rel(e);WM.tx=drag.tx+px-drag.x;WM.ty=drag.ty+py-drag.y;v.classList.add('drag');wmApply();}});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!pts.size){drag=null;v.classList.remove('drag');}
+    else if(pts.size===1){const [p]=[...pts.values()];drag={x:p[0],y:p[1],tx:WM.tx,ty:WM.ty};}};
+  v.addEventListener('pointerup',up);v.addEventListener('pointercancel',up);v.addEventListener('click',e=>e.stopPropagation());}
 addEventListener('keydown',e=>{if(!started||e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'))return;if(e.code==='KeyG'&&!e.repeat)toggleMap();else if(e.code==='Escape'&&wmOpen)toggleMap(false);});
 // ---------- the spellbook: pick the spell your attack casts ----------
 function openSpells(){const ml=lvlOf('magic'),cur=curSpell();
@@ -3395,7 +3460,7 @@ function questKill(e){const st=qStep('hallow'),q=S.quests.hallow;if(!q)return;
 function questMark(o){const st=qStep('hallow');let m=null;
   if(o.npc==='reaper')m=st==='talk'?'!':st==='return'?'?':null;else if(o.npc==='wick')m=st==='light'?'!':null;else if(o.name==='Tallow')m=st==='gourd'?'!':null;
   if(!m)return;const b=Math.round(Math.sin(time*4)*1.5),y=o.y-(o.npc==='reaper'?54:o.npc==='wick'?62:50)+b;ptDraw(g,m,o.x+1,y,{font:'big',color:'#ffcd75',bg:'#1a1c2c'});}
-const reaperHead=()=>`<div class="rhead"><img alt="" src="${ART.reaper[0].toDataURL()}" style="width:104px;image-rendering:pixelated"></div>`;
+const reaperHead=()=>`<div class="rhead"><img alt="" src="${ART.reaper[0].toDataURL()}" style="width:136px;image-rendering:pixelated"></div>`;
 function openReaper(){const q=qState('hallow'),Q=QUESTS.hallow,st=qStep('hallow');sfx('pick');
   const steps=`<p class="lead small">Track it any time under Hero → Quests.</p>`;
   if(st==='talk'){openSheet(`${reaperHead()}<h2>Mordecai the Reaper</h2><p class="lead">“Ah. A living one, out on the edge of the wood. Don’t be afraid. On All Hallows’ Eve the veil grows thin, and the lost souls of Hollowmere wander out of the mist. It is my task to lead them home.”</p>
@@ -3764,7 +3829,7 @@ function drawObj(o){
   else if(o.type==='bench')spr(ART.bench[Math.floor(time*2)%2],o.x-16,o.y-26);
   else if(o.type==='board'){spr(ART.board,o.x-16,o.y-32);if(bulletinNew()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-46+b),7,9);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-2),Math.round(o.y-45+b),5,7);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x),Math.round(o.y-44+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-40+b),1,1);}}
   else if(o.type==='stall')spr(ART.stall,o.x-20,o.y-30);
-  else if(o.type==='npc'&&o.npc==='reaper'){const fr=Math.floor(time*1.2)%2;spr(ART.reaper[fr],o.x-13,o.y-31);TAGS.push({x:o.x,y:o.y-39,name:o.name,npc:true});questMark(o);}
+  else if(o.type==='npc'&&o.npc==='reaper'){const fr=Math.floor(time*1.2)%2;spr(ART.reaper[fr],o.x-13,o.y-35);TAGS.push({x:o.x,y:o.y-43,name:o.name,npc:true});questMark(o);}
   else if(o.type==='npc'){const W=o.npc==='wick',fr=Math.floor(time*1.6+Math.sin(time*.7)+(W?.5:0))%2;spr((W?ART.wick:ART.merchant)[fr],o.x-13,o.y-29);questMark(o);TAGS.push({x:o.x,y:o.y-37,name:o.name,npc:true});
     if(W){if(!reduceMotion){g.save();g.globalCompositeOperation='lighter';const X=Math.round(o.x-9),Y=Math.round(o.y-20),gr=g.createRadialGradient(X,Y,0,X,Y,10);gr.addColorStop(0,`rgba(${FLAMEC},${.35+.08*Math.sin(time*7)})`);gr.addColorStop(1,`rgba(${FLAMEC},0)`);g.fillStyle=gr;g.fillRect(X-10,Y-10,20,20);g.restore();}
       if(!wickSeen()){const b=Math.round(Math.sin(time*4)*1.5);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x-3),Math.round(o.y-52+b),7,9);g.fillStyle='#b98cff';g.fillRect(Math.round(o.x-2),Math.round(o.y-51+b),5,7);g.fillStyle='#1a1c2c';g.fillRect(Math.round(o.x),Math.round(o.y-50+b),1,3);g.fillRect(Math.round(o.x),Math.round(o.y-46+b),1,1);}}
@@ -3846,8 +3911,8 @@ function drawJack(x,y,dir,seed){if(dir==='up'&&reduceMotion)return;const X=Math.
   if(!reduceMotion){for(let i=0;i<2;i++){const ph=((time*.55+i*.5+seed)%1);if(ph>.7)continue;const ex=X+8+Math.sin((time+i)*3+seed)*1.5,ey=Y-1-ph*12;g.globalAlpha=(1-ph/.7)*.8;g.fillStyle=i?'#f3e3ff':'#b98cff';g.fillRect(Math.round(ex),Math.round(ey),1,1);}}
   g.restore();}
 // The Reaper's Scythe at rest: cold soul-light around the blade, with a wisp curling off it.
-function drawScytheGlow(hx,hy,a){const bx=hx+Math.cos(a)*15,by=hy+Math.sin(a)*15,p=.7+.3*Math.sin(time*3+hx*.1);
-  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(bx,by,0,bx,by,9);gr.addColorStop(0,'rgba(156,240,210,'+(.28*p)+')');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(bx-9,by-9,18,18);
+function drawScytheGlow(hx,hy,a){const bx=hx+Math.cos(a)*19,by=hy+Math.sin(a)*19,p=.7+.3*Math.sin(time*3+hx*.1);
+  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(bx,by,0,bx,by,12);gr.addColorStop(0,'rgba(156,240,210,'+(.42*p)+')');gr.addColorStop(.55,'rgba(164,108,245,'+(.14*p)+')');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(bx-12,by-12,24,24);
   const ph=(time*.7+hx*.013)%1;g.globalAlpha=(1-ph)*.7;g.fillStyle=ph<.5?'#9cf0d2':'#c79bf2';g.fillRect(Math.round(bx-3+Math.sin(time*4)*2),Math.round(by-2-ph*9),1,1);g.restore();}
 function drawHero(x,y,dir,moving,anim,look,name,npc,me){
   const fr=moving?1+Math.floor(anim*8)%2:0,img=heroImg(look,dir,fr);
@@ -3895,11 +3960,11 @@ const myCw=()=>S.cos&&S.cos.weapon?COSMETICS[S.cos.weapon].look:null;
 // The blade at rest in the free hand (the lantern is in the other): tilted up, bobbing with each step, swaying a little.
 // Facing down it's in front of the body; facing up or to the side it's held at the far side, behind.
 const HELD={down:[4.5,-3,-Math.PI/2+.45],up:[-4.5,-3,-Math.PI/2-.45],left:[2,-4,-Math.PI/2+.6],right:[-2,-4,-Math.PI/2-.6]};
-function drawHeldBlade(x,y,dir,blade,moving,anim,cw){const h=HELD[dir]||HELD.down,sc=cw==='scythe',sw=sc?ART.scythe:ART.sword[blade]||ART.sword.rusty;
+function drawHeldBlade(x,y,dir,blade,moving,anim,cw){const h=HELD[dir]||HELD.down,sc=cw==='scythe',sw=sc?(h[2]<-Math.PI/2?ART.scytheM:ART.scythe):ART.sword[blade]||ART.sword.rusty;   // the scythe's blade always hooks out over the tilt
   if(sc&&!reduceMotion)drawScytheGlow(x+h[0],y+h[1],h[2]);
   if(isStaff(blade)&&!sc&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
   const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
-  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);g.scale(.85,.85);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
+  g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);if(!sc)g.scale(.85,.85);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
 function drawSwingAt(x,y,dir,left,blade,cw){const sc=cw==='scythe';const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
   const sw=sc?ART.scythe:ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=sc?'#9cf0d2':BLADE_FX[blade]||'#f4f4f4',fade=1-t,rr=sc?1.35:1;
   // the smear: a crescent from where the swing started to the blade, brightest at the edge
@@ -4082,7 +4147,7 @@ if(window.NET){
     if(m.a===me)MP.lc=time;
     if(m.v===me){P.hp=m.hp;MP.lc=time;P.chan=0;if(m.hp<=0)MP.deadAt=time;if(m.d){sfx('hurt');buzz(40);if(SET.shake)shake=3;}if(FISHING||CHOP){FISHING=null;CHOP=null;}}
     else if(v){v.hp=m.hp;v.max=m.max;v.lc=time;if(m.a===me&&m.d)sfx('hit');}});
-  NET.onR('H',m=>{if(m.id===MP.id){P.hp=Math.min(hpMax(),m.hp);}else{const o=OTH.get(m.id);if(o){o.hp=m.hp;o.max=m.max;}}});
+  NET.onR('H',m=>{if(m.id===MP.id){if(inWild())P.hp=Math.min(hpMax(),m.hp);}else{const o=OTH.get(m.id);if(o){o.hp=m.hp;o.max=m.max;}}});
   NET.onR('SK',m=>{const until=m.left>0?Date.now()+m.left:0;if(m.id===MP.id){const was=skulled();S.skull=until;if(until&&!was){toast('You attacked first: you’re skulled for 20 minutes. Fall now and you lose everything.','bad');sfx('boss');}save();}else{const o=OTH.get(m.id);if(o)o.sk=until;}});
   NET.onR('PK',m=>{puff(m.x,m.y-8,'#b13e53',18);const who=m.a===MP.id?'You':m.an;
     if(m.a===MP.id){bump('pks');toast('You defeated '+m.vn+'! Their loot is yours to pick up for a minute.','good');MP.feed('pk',m.vn);sfx('boss');buzz([40,30,40]);}
@@ -4385,7 +4450,7 @@ $('socB').onclick=()=>{if(!$('sheet').hidden&&$('socialSheet')){socOpen=false;cl
 let last=0;
 function frame(ts){let dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(hitStop>0){hitStop-=dt;dt*=.12;}if(started)update(dt);else time+=dt;render();requestAnimationFrame(frame);}
 let started=false;
-fit();applySet();enterHold();requestAnimationFrame(frame);
+fit();applySet();enterHold();requestAnimationFrame(frame);setTimeout(uiGuard,400);setInterval(uiGuard,2000);   // buttons come and go (the Return Flame), so the guard keeps checking
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 let posTick=0;setInterval(()=>{if(started){if(++posTick%3===0)notePos();save();}},10000);
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&started){notePos();save();}});addEventListener('pagehide',()=>{if(started){notePos();save();}});
