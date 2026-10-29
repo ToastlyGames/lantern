@@ -1,6 +1,30 @@
 # Lanternhold changelog
 
-Current build: **v0.13.1** · Season 0 (Beta)
+Current build: **v0.13.4** · Season 0 (Beta)
+
+## v0.13.4 · Zoom the world map
+
+_2026-10-28_
+
+- The world map zooms: pinch on a phone, scroll on a computer, or use the new + and − buttons. Double-tap a spot to zoom straight in on it.
+- Drag to look around a zoomed map. It stays sharp at every zoom, and the labels stay easy to read.
+- Tapping on the map no longer closes it. Tap outside it, or the ×, to close.
+
+## v0.13.3 · Skilling capes are extremely rare
+
+_2026-10-28_
+
+- Capes earned from skilling are now Extremely Rare. The Angler’s Cape can still come up on any catch, but only about 1 in 35,000 (it was 1 in 300). Loot luck still helps a little.
+- Every Angler’s Cape already caught keeps its stats, and is now marked Extremely Rare.
+
+## v0.13.2 · Fixes: health, phone buttons, scythes
+
+_2026-10-28_
+
+- Fixed: walking between the Hold and Hollowmere no longer changes your health. You have your full health everywhere except the Wilderness, which still uses its own rules (and now tells you your max health there as you cross the wall).
+- Phones held sideways: the Hero, Skills and Bag buttons now sit beside the quick slots instead of on top of the compass, globe and settings. On very small screens the buttons shrink a little so nothing ever covers anything else.
+- The Reaper’s Scythe is easier to see in your hand: brighter steel, a stronger soul-glow, and the blade always hooks the right way whichever way you face.
+- Mordecai’s scythe now sweeps out beside him instead of hiding behind his hood.
 
 ## v0.13.1 · A pumpkin head and a reaper’s scythe
 
