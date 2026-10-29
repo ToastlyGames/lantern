@@ -9,7 +9,7 @@
 
 // The oldest game version allowed in (keep in step with BUILD.minClient in client-src/changelog.js). A tab left open
 // from before an update plays by old rules (an old map, no PvP), so it's turned away and told to reload.
-const MIN_CLIENT = '0.13.1';
+const MIN_CLIENT = '0.13.6';
 const older = (a, b) => { const x = String(a || '0').split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); } return false; };
 const WORLD_CAP = 50, PARTY_MAX = 4, INVITE_MS = 90e3, OFFLINE_GRACE_MS = 120e3;
 const ROOM_RE = /^(w[1-9][0-9]{0,2}|d-[a-z0-9]{12})$/;
@@ -29,7 +29,7 @@ async function verifyTicket(token, secret) {
     if (JSON.parse(new TextDecoder().decode(b64uDecode(h))).alg !== 'HS256') return null;
     const c = JSON.parse(new TextDecoder().decode(b64uDecode(p)));
     if (c.iss !== 'lanternhold-rt' || !(c.exp > Date.now() / 1000) || !/^[a-z0-9_]{3,16}$/.test(c.sub) || typeof c.n !== 'string' || c.n.toLowerCase() !== c.sub) return null;
-    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu, fd: !!c.adm || !!c.fd, v: typeof c.v === 'string' ? c.v : null };
+    return { id: c.sub, name: c.n, adm: !!c.adm, hat: c.adm ? (c.hat === 'greenhat' ? 'greenhat' : 'partyhat') : null, mu: !c.adm && !!c.mu, fd: !!c.adm || !!c.fd, v: typeof c.v === 'string' ? c.v : null, co: Array.isArray(c.co) ? c.co.filter(x => typeof x === 'string').slice(0, 40) : null };
   } catch { return null; }
 }
 export function cleanText(t) {
@@ -377,7 +377,7 @@ export class Room {
       }
     });
   }
-  att(p) { if (p.ghost) return; try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, fd: !!p.fd, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null,
+  att(p) { if (p.ghost) return; try { p.ws.serializeAttachment({ id: p.id, name: p.name, adm: p.adm, hat: p.hat, mu: !!p.mu, fd: !!p.fd, co: p.co || null, x: p.x, y: p.y, d: p.d, m: p.m, look: p.look, joined: p.joined, seen: p.seen, fish: p.fish || null,
     rd: !!p.rd, hp: p.hp ?? null, hpAt: p.hpAt || 0, lc: p.lc || 0, sk: p.sk || 0, safe: p.safe || 0, ag: p.ag || null, dmg: p.dmg ? Object.fromEntries(Object.entries(p.dmg).slice(0, 8)) : null }); } catch { } }
   async fetch(req) {
     const url = new URL(req.url);
@@ -603,7 +603,7 @@ export class Room {
   join(who, ws) {
     const old = this.players.get(who.id), now = Date.now();
     if (old) { clearTimeout(old.ghostT); if (!old.ghost) try { old.ws.close(4000, 'replaced'); } catch { } }
-    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, fd: !!who.fd, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : now + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: now, seen: now,
+    const p = { id: who.id, name: who.name, adm: who.adm, hat: who.hat, mu: !!who.mu, fd: !!who.fd, co: who.co || null, ws, x: old ? old.x : 0, y: old ? old.y : 0, d: 'down', m: false, look: old ? old.look : null, joined: old ? old.joined : now + (this.seq++) / 1000, dirty: false, tok: 50, tokAt: now, seen: now,
       // a Hold world only shows a hero to others once they've said where they are (no faceless heroes flickering at the spawn)
       rd: this.inst || !!(old && old.rd) };
     if (old && !this.inst) for (const k of ['hp', 'hpAt', 'lc', 'sk', 'ag', 'dmg', 'risk', 'safe']) p[k] = old[k];   // back mid-fight: same health, same skull
@@ -633,7 +633,9 @@ export class Room {
       if (!this.flushT) this.flushT = setTimeout(() => this.flush(), 100);
       return;
     }
-    if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd); this.att(p); if (p.rd) this.all({ t: 'L', id: p.id, look: p.look }, p.id); return; }
+    // a fresh pass mid-session (the hero earned or bought a cosmetic): update what they may show
+    if (t === 're' && typeof m.tk === 'string') { verifyTicket(m.tk, this.env.RT_SECRET).then(who => { if (who && who.id === p.id) { p.co = who.co; p.fd = who.fd; this.att(p); } }).catch(() => { }); return; }
+    if (t === 'look') { p.look = cleanLook(m.look, p.hat, p.fd, p.co); this.att(p); if (p.rd) this.all({ t: 'L', id: p.id, look: p.look }, p.id); return; }
     if (t === 'atk') return this.onAtk(p, m);
     if (t === 'home') return this.onHome(p, m);
     if (t === 'risk' && !this.inst) {   // what this hero would drop if they fell in the Wilderness, most valuable first
@@ -688,9 +690,9 @@ export class Room {
   }
 }
 const ADMIN_HATS = ['partyhat', 'greenhat'];
-function cleanLook(l, hat, fd) {   // fd: holds a Founder's Lantern, so may show the Founder's Flame
+function cleanLook(l, hat, fd, co) {   // fd: holds a Founder's Lantern, so may show the Founder's Flame; co: the cosmetic looks the hero may show (null: an old pass, anything)
   if (!l || typeof l !== 'object') return null;
-  const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null;
+  const i = v => Number.isInteger(v) && v >= 0 && v < 40 ? v : 0, s = v => typeof v === 'string' && /^[a-z]{1,12}$/.test(v) ? v : null, c = v => { v = s(v); return v && (!co || co.includes(v)) ? v : null; };
   const helm = s(l.helm);
-  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), cw: s(l.cw), ch: s(l.ch), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1, flame: fd && l.flame === 'founder' ? 'founder' : null };
+  return { skin: i(l.skin), hair: i(l.hair), cloth: i(l.cloth), style: i(l.style), armor: s(l.armor), cape: s(l.cape), cw: c(l.cw), ch: c(l.ch), helm: ADMIN_HATS.includes(helm) && helm !== hat ? null : helm, lan: s(l.lan), blade: s(l.blade), lvl: Number.isInteger(l.lvl) && l.lvl >= 1 && l.lvl <= 200 ? l.lvl : 1, flame: fd && l.flame === 'founder' ? 'founder' : null };
 }
