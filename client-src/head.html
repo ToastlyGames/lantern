@@ -105,7 +105,10 @@ canvas.pt{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 #wmap .wmbox{display:grid;gap:6px;justify-items:center;max-width:94vw;padding:8px 10px 10px;border-radius:4px;background:rgba(18,20,38,.62);box-shadow:0 0 0 2px rgba(115,239,247,.35),0 6px 24px rgba(0,0,0,.5)}
 #wmap header{display:flex;align-items:baseline;gap:10px;width:100%;color:#f4f4f4}#wmap header b{font-size:22px;font-weight:600}#wmap header small{color:#c2d3e0;font-size:15px;flex:1}
 #wmX{margin-left:auto;background:none;border:0;color:#f4f4f4;font-size:28px;line-height:1;cursor:pointer;padding:0 4px}
-#wmC{image-rendering:pixelated;opacity:.86;max-width:90vw;max-height:72vh;border-radius:2px}
+#wmV{position:relative;overflow:hidden;border-radius:2px;touch-action:none;cursor:grab;max-width:90vw;max-height:72vh}#wmV.drag{cursor:grabbing}
+#wmC{display:block;image-rendering:pixelated;opacity:.86;transform-origin:0 0;will-change:transform}
+#wmap .wmz{display:flex;gap:4px}#wmap .wmz button{width:30px;height:30px;font:600 20px/1 system-ui,sans-serif;color:#f4f4f4;background:rgba(40,44,70,.85);border:1px solid rgba(115,239,247,.35);border-radius:3px;cursor:pointer;padding:0}
+#wmap .wmz button:disabled{opacity:.35;cursor:default}#wmH{color:#8fa3b5;font-size:13px}
 #wmap footer{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;color:#c2d3e0;font-size:14px}#wmap footer i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 /* v0.12: spells, the rune bag, the raid gate */
 .ic.spic{display:grid;place-items:center;font-style:normal;font-size:20px;color:var(--sc);text-shadow:0 0 6px var(--sc),1px 1px 0 #1a1c2c;background:rgba(26,28,44,.6);border-radius:3px}
@@ -362,6 +365,14 @@ small{font-size:17px;color:var(--muted)}
   :root #bRet{position:absolute;left:calc(40px - 168px - 24px);top:calc(40px - 24px);width:48px;height:48px}
   :root #mini{position:absolute;left:16px;bottom:184px;top:auto;display:flex;flex-direction:column;align-items:center;gap:7px;width:48px}
   .land :root #mini,.land #mini{gap:5px}.land .rb.sm{width:38px;height:38px}
+  /* v0.13.2: phones held sideways are short, so Hero / Skills / Bag sit in a column just left of the quick-slot arc
+     (bottom-aligned with Attack) instead of stacked above it, where they ran into the compass and settings */
+  .land #mini{left:-150px;bottom:0;top:auto}
+  .land #bRet{left:-214px;top:16px}
+  /* the layout guard (uiGuard in game.js) adds these when something would still overlap on a very small screen */
+  .tight #acts{transform:scale(.78);transform-origin:100% 100%}.tight #side{transform:scale(.85);transform-origin:100% 0}
+  .tight #pad{transform:scale(.85);transform-origin:0 100%}
+  .tighter #acts{transform:scale(.66)}.tighter #side{transform:scale(.72)}.tighter #pad{transform:scale(.72)}
   :root #bBag{width:48px;height:48px}
   .short #acts{transform:scale(.88);transform-origin:100% 100%}
   /* upright phones: the bottom row is full (joystick, quick slots, Attack), so the Return Flame sits just above the

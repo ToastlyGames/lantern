@@ -32,7 +32,7 @@
 <section id="chat" hidden aria-label="Chat"><header><span class="ctabs" role="tablist"><button class="ctab" id="ctW" role="tab" aria-selected="true">World<i hidden></i></button><button class="ctab" id="ctP" role="tab" aria-selected="false">Party<i hidden></i></button></span><b id="chatWhere">the Hold</b><button id="chatX" aria-label="Close chat">×</button></header>
   <div id="chatLog" aria-live="polite"></div>
   <div class="chatRow"><input id="chatIn" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="Say something…" aria-label="Message"><button id="chatGo" class="btn sm">Send</button></div></section>
-<div id="wmap" hidden role="dialog" aria-label="World map"><div class="wmbox"><header><b id="wmT">World map</b><small id="wmS"></small><button id="wmX" aria-label="Close the map">×</button></header><canvas id="wmC"></canvas><footer id="wmL"></footer></div></div>
+<div id="wmap" hidden role="dialog" aria-label="World map"><div class="wmbox"><header><b id="wmT">World map</b><small id="wmS"></small><span class="wmz"><button id="wmOut" aria-label="Zoom out">−</button><button id="wmIn" aria-label="Zoom in">+</button></span><button id="wmX" aria-label="Close the map">×</button></header><div id="wmV"><canvas id="wmC"></canvas></div><footer id="wmL"></footer><small id="wmH"></small></div></div>
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="sheet" hidden><div id="sheetBody" role="dialog" aria-modal="true"></div></div>
 <div id="acct"><div id="acctBody"></div></div>

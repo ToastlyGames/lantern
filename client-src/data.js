@@ -70,10 +70,12 @@ const LANTERNS={
 // ---------- capes: nobody starts with one; each carries special attributes ----------
 // attrs: hp (+max HP), def (+defense), dmg (% damage), oil (% slower oil burn), spd (% move speed), light (% light radius),
 //        luck (% better loot odds), regen (HP per second in the Depths), fishXp (% Fishing XP), catch (% catch chance), cookSafe (% less burning)
+// Skilling capes (src: a skill) can drop from that skill's every action, but only at a tiny chance: 1 in SKILL_CAPE_ODDS.
+const SKILL_CAPE_ODDS=35000;
 const CAPES={
   tattered:{n:'Tattered Cloak',r:'common',c1:'#8a6f30',c2:'#6b3e26',attr:{hp:6},v:30},
   moss:{n:'Mossweave Cape',r:'uncommon',c1:'#38b764',c2:'#2b4b3a',attr:{oil:10,spd:5},v:110},
-  angler:{n:"Angler's Cape",r:'uncommon',c1:'#41a6f6',c2:'#29366f',attr:{fishXp:10,catch:6},v:140,src:'fishing'},
+  angler:{n:"Angler's Cape",r:'xrare',c1:'#41a6f6',c2:'#29366f',attr:{fishXp:10,catch:6},v:1200,src:'fishing'},
   grave:{n:'Gravecloth Mantle',r:'rare',c1:'#94b0c2',c2:'#333c57',attr:{def:2,hp:10},v:320},
   hearth:{n:'Hearthkeeper Cape',r:'rare',c1:'#ef7d57',c2:'#b13e53',attr:{cookSafe:50,regen:.2},v:300},
   glow:{n:'Glowcap Shroud',r:'xrare',c1:'#e86fd0',c2:'#5d275d',attr:{light:20,luck:12},v:900},

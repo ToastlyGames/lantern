@@ -4,8 +4,20 @@
 // minClient: the oldest game version allowed into the shared world (worlds, parties, PvP). Raise it whenever the map or
 // the realtime messages change, so a tab left open from before an update can't play by old rules. Keep MIN_CLIENT in
 // realtime/src/index.js in step.
-const BUILD={version:'0.13.1',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
+const BUILD={version:'0.13.4',season:'Season 0 (Beta)',date:'2026-10-28',minClient:'0.13.1'};
 const CHANGELOG=[
+  {v:'0.13.4',date:'2026-10-28',title:'Zoom the world map',notes:[
+    'The world map zooms: pinch on a phone, scroll on a computer, or use the new + and − buttons. Double-tap a spot to zoom straight in on it.',
+    'Drag to look around a zoomed map. It stays sharp at every zoom, and the labels stay easy to read.',
+    'Tapping on the map no longer closes it. Tap outside it, or the ×, to close.']},
+  {v:'0.13.3',date:'2026-10-28',title:'Skilling capes are extremely rare',notes:[
+    'Capes earned from skilling are now Extremely Rare. The Angler’s Cape can still come up on any catch, but only about 1 in 35,000 (it was 1 in 300). Loot luck still helps a little.',
+    'Every Angler’s Cape already caught keeps its stats, and is now marked Extremely Rare.']},
+  {v:'0.13.2',date:'2026-10-28',title:'Fixes: health, phone buttons, scythes',notes:[
+    'Fixed: walking between the Hold and Hollowmere no longer changes your health. You have your full health everywhere except the Wilderness, which still uses its own rules (and now tells you your max health there as you cross the wall).',
+    'Phones held sideways: the Hero, Skills and Bag buttons now sit beside the quick slots instead of on top of the compass, globe and settings. On very small screens the buttons shrink a little so nothing ever covers anything else.',
+    'The Reaper’s Scythe is easier to see in your hand: brighter steel, a stronger soul-glow, and the blade always hooks the right way whichever way you face.',
+    'Mordecai’s scythe now sweeps out beside him instead of hiding behind his hood.']},
   {v:'0.13.1',date:'2026-10-28',title:'A pumpkin head and a reaper’s scythe',notes:[
     'All Hallows’ Lantern now rewards two cosmetics: the Jack-o’-Lantern, a carved pumpkin with a violet flame flickering through its grin, and the Reaper’s Scythe, Mordecai’s own soul-lit scythe.',
     'The Cosmetics tab now has a head slot and a weapon slot. The Scythe shows over your blade or staff and swings with a wide soul-green arc; your weapon’s stats stay the same.',

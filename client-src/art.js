@@ -169,8 +169,8 @@ function cosmeticOver(p,dir,look,set,rect,step){
 // The Reaper's Scythe (24x24, the grip at 2,22): a long dark-wood snath with bone wraps, an iron collar set with a violet
 // soul-gem, and a great crescent blade whose inner edge burns soul-green. Same diagonal as the swords, so it swings,
 // rests and casts the same way.
-function scytheSprite(){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8a6446',bone='#e8dcc0',bone2='#b8a988',ir='#2a2438',ir2='#4a4560',gem='#c79bf2',gem2='#f3e3ff',
-  st='#3e4a5c',st2='#7d8fa3',st3='#a9bdcc',edge='#e8f4ff',soul='#9cf0d2';
+function scytheSprite(mir){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8a6446',bone='#e8dcc0',bone2='#b8a988',ir='#2a2438',ir2='#4a4560',gem='#c79bf2',gem2='#f3e3ff',
+  st='#5d6b80',st2='#a3b4c8',st3='#c9d6e3',edge='#e8f4ff',soul='#9cf0d2';   // a bright moonlit steel so it reads on dark ground
   for(let i=0;i<=14;i++){p.set(2+i,22-i,wd);if(i<14)p.set(3+i,22-i,i%4===1?wd3:wd2);}
   for(const i of [2,3,10]){p.set(2+i,22-i,bone2);p.set(3+i,22-i,bone);}
   p.set(1,23,bone).set(2,23,bone2).set(1,22,bone2);                                     // a bone cap at the butt
@@ -178,9 +178,10 @@ function scytheSprite(){const p=new Px(24,24),wd='#3b2a20',wd2='#6b4a33',wd3='#8
   p.set(13,11,ir).set(12,12,ir2);                                                         // a second grip (the nib)
   const spine=[[16,5],[15,4],[14,3],[13,2],[12,2],[11,2],[10,2],[9,2],[8,3],[7,4],[6,5],[5,6],[4,7]],wid=[4,4,4,4,3,3,3,2,2,2,1,1,0],
     eg=['#ffffff','#e8f4ff','#e8f4ff','#d6f7ee','#d6f7ee','#c0f5e2','#b4f3dc','#a9f2d8','#9cf0d2','#9cf0d2','#7fe0c0','#9cf0d2','#c8fff0'];
-  spine.forEach(([x,y],i)=>{const w=wid[i];p.set(x,y,ir2);for(let k=1;k<=w;k++)p.set(x,y+k,k===1?st2:k===w&&w>2?st3:st);p.set(x,y+w+1,eg[i]);});
+  spine.forEach(([x,y],i)=>{const w=wid[i];p.set(x,y,'#6a6385');for(let k=1;k<=w;k++)p.set(x,y+k,k===1?st2:k===w&&w>2?st3:st);p.set(x,y+w+1,eg[i]);});
   p.set(14,4,'#c9d6e3').set(12,3,'#c9d6e3').set(10,3,st3);                                // light across the flat
   p.set(3,9,soul).set(4,9,null);                                                          // the hooked tip
+  if(mir){const q=new Px(25,25);for(let y=0;y<24;y++)for(let x=0;x<24;x++){const c=p.get(x,y);if(c)q.set(24-y,24-x,c);}q.outline();const c=q.canvas();c.hy=22;return c;}   // flipped across the haft: the blade hooks the other way
   p.outline();const c=p.canvas();c.hy=22;return c;}
 function mix(a,b,t){const A=hex(a),B=hex(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
 // hair that hangs behind the body (drawn before the tunic)
@@ -872,8 +873,8 @@ function barrowSprite(v){const p=new Px(32,20),G='#3a6a42',G2='#2b5236',G3='#4f8
 // Mordecai the Reaper: a tall black-robed figure with a lantern-lit skull face and a scythe, the hem fraying into mist
 function reaperSprite(f){const p=new Px(26,32),R='#1f1b29',R2='#14111c',RH='#3a3350',BN='#e8dcc0',BN2='#b8a988',EY=f?'#c79bf2':'#e8d0ff',W='#6b4a32',BL='#c9d6e3',BL2='#7d8fa3',B=f?1:0;
   const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
-  // the scythe: a long crooked haft and a moonlit blade
-  p.line(21,4,20,31,W);p.set(21,31,'#4a3222');row(4,9,21,BL);row(5,8,12,BL2);row(3,13,21,BL2);p.set(8,6,BL2).set(9,6,BL);p.set(20,3,'#f4f4f4');
+  // the scythe's haft (the blade is added below, out to the side, so it never hides behind his hood)
+  p.line(21,3,20,31,W);p.set(21,31,'#4a3222');
   // the robe, flaring to the ground, its hem tattering into mist
   for(let y=13;y<=29;y++){const k=Math.floor((y-13)/3),l=8-k,r=17+k;row(y,l,r,R);p.set(l,y,R2);p.set(r,y,R2);}
   for(let y=16;y<=29;y++){p.set(12,y,RH);p.set(15+(y>24?1:0),y,R2);}
@@ -885,7 +886,15 @@ function reaperSprite(f){const p=new Px(26,32),R='#1f1b29',R2='#14111c',RH='#3a3
   for(let y=3;y<=11;y++){p.set(9,y+B,RH);p.set(16,y+B,R2);}row(2+B,11,14,RH);
   for(let y=4;y<=10;y++)row(y+B,10,15,R2);
   p.rect(11,5+B,4,4,BN);p.rect(11,8+B,4,1,BN2);p.set(11,6+B,EY).set(14,6+B,EY);p.set(12,6+B,'#14111c').set(13,6+B,'#14111c');p.set(12,9+B,BN).set(13,9+B,BN2);p.set(12,10+B,BN2);
-  p.outline();return p.canvas();}
+  // v0.13.2: a bigger canvas (34x36, Mordecai 4 rows down) so the blade can sweep out to his left side and away from his
+  // head: an iron collar with a soul-gem, then a great crescent curving down, its edge burning soul-green
+  const q=new Px(34,36);for(let y=0;y<32;y++)for(let x=0;x<26;x++){const c=p.get(x,y);if(c)q.set(x,y+4,c);}
+  const sp=[[22,6],[23,5],[24,4],[25,4],[26,4],[27,4],[28,5],[29,5],[30,6],[31,7],[32,8],[32,9],[33,10],[33,11]],wd=[2,3,3,3,3,3,3,3,2,2,2,1,1,0],
+    eg=['#e8f4ff','#e8f4ff','#ffffff','#e8f4ff','#d6f7ee','#d6f7ee','#c0f5e2','#b4f3dc','#a9f2d8','#9cf0d2','#9cf0d2','#9cf0d2','#9cf0d2','#c8fff0'];
+  sp.forEach(([x,y],i)=>{const w=wd[i];q.set(x,y,'#4a4560');for(let k=1;k<=w;k++)q.set(x,y+k,k===1?BL:BL2);q.set(x,y+w+1,eg[i]);});
+  q.set(25,5,'#f4f4f4').set(27,5,'#e8f4ff');                                                       // moonlight on the flat
+  q.rect(20,6,3,2,'#2a2438');q.set(21,6,'#c79bf2').set(22,7,'#f3e3ff');                           // the collar and its gem
+  q.outline();return q.canvas();}
 // ---- Hollowmere ground ----
 function moorGrassTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#2f6b55');
   for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#285a48':'#3d8466');
@@ -981,7 +990,7 @@ function buildArt(){
   ART.lantern={};for(const t of Object.keys(LANTERNS))ART.lantern[t]=lanternSprite(t);ART.lantern.none=ART.lantern.basic;
   ART.lanternF={};for(const t of Object.keys(LANTERNS))ART.lanternF[t]=lanternSprite(t,'#b98cff');
   ART.sword={};for(const t of Object.keys(GEAR.blade))ART.sword[t]=swordSprite(t==='rusty'?'none':t);
-  ART.scythe=scytheSprite();
+  ART.scythe=scytheSprite();ART.scytheM=scytheSprite(true);
   ART.slime=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime));
   ART.gelling=[0,1].map(f=>slimeFrame(f,PAL.lime,PAL.white));
   ART.mother=[0,1].map(f=>slimeFrame(f,PAL.green,PAL.lime,true));
