@@ -1,6 +1,6 @@
 # Lanternhold Wiki
 
-Season 0 (Beta) · build v0.13.6 · updated October 28, 2026
+Season 0 (Beta) · build v0.13.8 · updated October 30, 2026
 
 ## Welcome
 
@@ -245,6 +245,8 @@ Make rings and amulets at the **Jeweler's Bench**, the little workbench between 
 
 Magic is a combat skill of its own. **Wield a staff** and your attacks become spells: the action button says **Cast**, and every monster you defeat with a staff in hand trains **Magic instead of Fighting** (twice the monster's XP). Put a blade back on and you're training Fighting again. Magic never trains Fighting, and Fighting never trains Magic. Facing an ore vein, your staff works as a pick, so you don't need to swap to mine.
 
+**Lock-on.** Cast once and your staff **locks onto** the monster you hit (or the nearest one, if none is in front of you) and keeps casting at it by itself, turning you to face it. Violet corners mark your target. When it falls, the lock jumps to the next monster close by. You can walk while it casts. It lets go when nothing is in reach, you leave, or you swap the staff for a blade.
+
 **Spells.** Open Hero (H) while holding a staff and tap **Spellbook** to pick the spell your attack casts. Combat spells need no runes: your staff powers them. Low spells hit low; each new spell hits harder.
 
 | Spell | Magic | Hits up to | Special |
@@ -443,7 +445,11 @@ For now, step up to the Maw and it explains all of this.
 
 A new town past the **Mossy Barrows** and the **deepwood**, at the bottom of the world map. From Hollowmere's long southern road (the one linking the barrows and the deepwood), take the road south through the forest. The road runs between the mossy giants and the treants, so come strong. Inside the town walls there are no monsters.
 
-Coppergate is **still being built**: scaffolding, timber frames going up, a lumber yard, a crane, market stalls under tarps and a monument under wraps. There's a **Bank Chest** by the gate.
+Coppergate is **still being built**: scaffolding, timber frames going up, a lumber yard, a great treadwheel crane hoisting stone over the Exchange's roof, and market stalls under tarps. Builders are at work all over town: hammering on the scaffolding, carrying planks and stone, sawing timber. There's a **Bank Chest** by the gate.
+
+**The Wyrmbane Monument** stands in the middle of the square: a bronze knight with a lantern raised high and a boot on a dragon's skull. Its plaque honours Aldren Coppergate, who drove the dragon **Cindermaw** under Cinderpeak. Read it (look for the **!**) to hear about the second quest.
+
+**Quest 2: The Wyrm of Cinderpeak (coming soon).** Follow the scorch marks out of Coppergate, climb Cinderpeak and slay **Cindermaw, the Ashen Wyrm**, a massive dragon. Its attacks: **fire breath** (a sweeping cone: get out of it), **stomp** (a shockwave ring: get clear), **ember rain** once it's badly hurt (keep moving) and a **tail sweep** if you stand behind it. Reward: the **Cindermaw Crown**, a horned dragon-skull helm cosmetic with ember-lit eyes. The quest isn't open yet; it's listed under Hero → Quests.
 
 **Orrin Ledgerwright**, master builder, is putting up **the Lantern Exchange** on the north side of the square. Talk to him to hear what it will be: the in-game market for Lanternhold cosmetic NFTs, **opening in Season 1**. Once it's open you'll be able to:
 
