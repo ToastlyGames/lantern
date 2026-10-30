@@ -936,10 +936,14 @@ function hmSignSprite(){const p=new Px(18,24);p.rect(8,8,2,16,'#3a2a24');p.rect(
   p.rows(2,3,['..x..........','.xx.xxxxxxxx.','xxxxxxxxxxxx.','.xx.xxxxxxxx.','..x..........'],{x:'#c79bf2'});p.set(14,2,'#f1e4ff').set(13,3,'#f1e4ff');p.outline();return p.canvas();}
 function eyeIcon(){const p=new Px(16,16);p.ell(8,8,6,4,'#f4f4f4');p.ell(8,8,3,3,'#3b5dc9');p.ell(8,8,1.4,1.4,'#1a1c2c');p.set(6,6,'#ffffff');p.outline();return p.canvas();}
 // ===== Coppergate (v0.13.6): the town past the Mossy Barrows, still being built =====
-function cobbleTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#6f6658');
-  const rows=[[0,5],[5,5],[10,6]];for(const [y,h] of rows){let x=-(r()*4|0);while(x<16){const w=4+(r()*3|0),c=['#a39a88','#968c7a','#b0a792','#8c8270'][r()*4|0];
-    p.rect(x+1,y+1,w-1,h-1,c);p.rect(x+1,y+1,w-1,1,mix(c,'#ffffff',.18));p.rect(x+1,y+h-1,w-1,1,mix(c,'#3a3328',.25));x+=w;}}
-  if(r()<.3)p.set(r()*16,r()*16,'#4f7a3a');return p.canvas();}
+function cobbleTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#675f52');
+  const C=['#a39a88','#968c7a','#aca38e','#8f8573','#9f9683'];
+  [[0,5],[5,5],[10,6]].forEach(([y,h],j)=>{let x=-((r()*4|0)+(j===1?2:0));while(x<16){const w=5+(r()*3|0),c=C[r()*C.length|0];
+    p.rect(x+1,y+1,w-1,h-1,c);p.set(x+1,y+1,'#675f52');p.set(x+w-1,y+h-1,'#675f52');                 // two corners knocked off: worn, rounded setts
+    for(let xx=x+2;xx<x+w;xx++)p.set(xx,y+1,mix(c,'#ffffff',.14));p.set(x+1,y+2,mix(c,'#ffffff',.08));
+    for(let xx=x+1;xx<x+w-1;xx++)p.set(xx,y+h-1,mix(c,'#2e2a22',.22));x+=w;}});
+  if(r()<.3){const x=r()*14|0,y=[0,5,10][r()*3|0];p.set(x,y,'#4f7a3a').set(x+1,y,'#5f8f45');}
+  return p.canvas();}
 function siteTile(seed){const p=new Px(16,16),r=rng(seed);p.rect(0,0,16,16,'#8f6c48');
   for(let i=0;i<16;i++)p.set(r()*16,r()*16,r()<.5?'#7d5c3c':'#a07c55');
   for(let i=0;i<5;i++){const x=r()*15|0,y=r()*15|0;p.set(x,y,'#e0bf86').set(x+1,y,'#c99a62');}   // wood shavings
@@ -1015,13 +1019,95 @@ function statueSprite(){const p=new Px(32,48),S='#c9b99a',S2='#a8987a',C='#cdb88
   p.ell(16,5,4,3.5,C);p.line(9,12,23,30,R);p.line(23,12,9,30,R);p.rect(8,22,16,1,R);
   p.rect(2,6,2,40,W);p.rect(28,8,2,38,W);p.rect(2,20,28,2,'#b07c4f');for(let y=24;y<44;y+=4)p.rect(26,y,4,1,'#b07c4f');p.rect(26,22,1,22,W);
   p.outline();return p.canvas();}
-// a treadwheel crane: a great wheel, a mast and a jib, a stone block hanging from the hook (it sways)
-function craneSprite(f){const p=new Px(40,72),W='#8a5a3a',W2='#6b3e26',W3='#b07c4f';
-  p.ell(12,58,10,10,W2);p.ell(12,58,8,8,null);for(let a=0;a<6.28;a+=.785){p.line(12,58,Math.round(12+Math.cos(a)*9),Math.round(58+Math.sin(a)*9),W);}p.ell(12,58,2,2,W3);
-  p.rect(22,10,3,60,W2);p.rect(23,10,1,60,W3);p.line(22,70,30,52,W);p.line(25,70,17,52,W);
-  p.line(23,12,38,4,W2);p.line(23,13,38,5,W);p.line(24,30,36,6,W);
-  const sw=f?1:0;p.rect(37+sw-1,6,1,30,'#d9c79a');p.rect(35+sw,36,5,2,'#566c86');p.rect(33+sw,38,9,7,'#c9b99a');p.rect(33+sw,38,9,1,'#e2d6bb');p.rect(33+sw,44,9,1,'#a8987a');
-  p.rect(20,68,8,3,W2);p.outline();return p.canvas();}
+// a treadwheel crane, in two parts so the jib can hang over the Exchange's roof: the base (sill beams, the great wheel
+// with its tread slats, the mast and braces) and the top (the jib, its stays and the pulley block). The rope and the load
+// are drawn live by the game so the load rises and falls.  Mast at x 48 of a 72-wide canvas.
+function craneBaseSprite(f){const p=new Px(72,112),W='#8a5a3a',W2='#6b3e26',W3='#b07c4f',W4='#c98a4a',I='#566c86';
+  p.rect(30,104,40,4,W2);p.rect(30,104,40,1,W4);p.rect(36,108,32,3,'#5a3a26');                                 // sill beams
+  p.rect(47,8,4,100,W2);p.rect(48,8,1,100,W4);p.rect(50,8,1,100,'#4b3226');for(let y=14;y<104;y+=9)p.rect(47,y,4,1,'#4b3226');   // the mast, pegged
+  p.line(40,104,48,74,W);p.line(41,104,49,74,W2);p.line(58,104,50,74,W);p.line(57,104,49,74,W2);p.line(36,104,48,58,W2);          // braces
+  const cx=58,cy=86,R=13;p.ell(cx,cy,R,R,W2);p.ell(cx,cy,R-2,R-2,null);p.ell(cx,cy,R-1,R-1,null);
+  for(let a=0;a<6.283;a+=Math.PI/14){const x=Math.round(cx+Math.cos(a+f*.11)*(R-.5)),y=Math.round(cy+Math.sin(a+f*.11)*(R-.5));p.set(x,y,W4);}   // tread slats catch the light
+  for(let a=0;a<6.28;a+=Math.PI/4){const b=a+f*.39;p.line(cx,cy,Math.round(cx+Math.cos(b)*(R-1)),Math.round(cy+Math.sin(b)*(R-1)),W);}
+  p.ell(cx,cy,2.5,2.5,I);p.set(cx,cy,'#94b0c2');p.rect(51,cy-1,cx-51,2,W2);
+  p.rect(54,99,10,6,W2);p.rect(54,99,10,1,W3);                                                                       // the wheel's cradle
+  p.rect(44,48,10,3,W2);p.rect(44,48,10,1,W3);p.rect(52,44,2,8,I);p.ell(53,44,2.2,2.2,'#94b0c2');                    // the winch drum
+  p.outline();return p.canvas();}
+function craneTopSprite(){const p=new Px(72,40),W='#8a5a3a',W2='#6b3e26',W4='#c98a4a',I='#566c86';
+  p.line(50,26,2,6,W2);p.line(50,27,2,7,W);p.line(50,28,3,8,W4);                                                     // the jib, three timbers
+  for(let x=8;x<48;x+=8){const y=Math.round(6+(x-2)*20/48);p.line(x,y,x+4,y+3,W2);}
+  p.line(49,0,4,6,'#9a8a6a');p.line(49,0,49,28,W2);p.rect(47,0,4,3,W2);                                                  // the stay and the mast head
+  p.rect(1,5,5,4,I);p.ell(3,7,1.6,1.6,'#94b0c2');p.set(3,7,'#c9d6e3');                                                  // the pulley at the tip
+  p.outline();return p.canvas();}
+// the hanging load: a slung stone block (v0) or a bundle of planks (v1)
+function craneLoadSprite(v){const p=new Px(16,12);if(v){for(let y=3;y<11;y+=2)p.rect(1,y,14,2,y%4===3?'#c98a4a':'#a0663b');p.rect(1,3,14,1,'#e0a868');p.rect(4,2,1,9,'#566c86');p.rect(11,2,1,9,'#566c86');}
+  else{p.rect(2,3,12,8,'#c9c1ad');p.rect(2,3,12,1,'#e6dfcc');p.rect(2,10,12,1,'#a39a88');p.rect(13,3,1,8,'#a39a88');p.set(5,6,'#b0a792').set(9,8,'#b0a792');p.line(2,3,8,0,'#8a6f30');p.line(13,3,8,0,'#8a6f30');}
+  p.outline();return p.canvas();}
+// The Wyrmbane Monument, unveiled: a bronze knight (long since gone green) with a plumed helm and a cape streaming behind,
+// one boot on a dragon's skull, a lantern raised high in one hand and a greatsword planted point-down in the other; on a
+// stepped stone plinth with copper trim and a copper plaque, the old wrapping cloth pooled at its foot. 64x104.
+// f: the lantern flame flickers. Light falls from the upper left.
+function monumentSprite(f){const p=new Px(64,104),B='#3f8f7a',B2='#2a6457',B1='#1f4d43',B3='#6cc4a6',B4='#a8ecd0',S='#c9c1ad',S2='#a39a88',S3='#e6dfcc',S4='#7d7464',CU='#c46a3a',CU2='#9a4f2a',CU3='#e08a52';
+  const row=(y,x0,x1,c)=>{for(let x=x0;x<=x1;x++)p.set(x,y,c);};
+  // the plinth: two broad steps, a pedestal with corner pillars, an overhanging cap, a copper plaque
+  p.rect(2,94,60,9,S2);p.rect(2,94,60,1,S3);p.rect(2,102,60,1,S4);for(let x=5;x<60;x+=9)p.rect(x,96,1,6,S4);
+  p.rect(7,86,50,8,S);p.rect(7,86,50,1,S3);p.rect(7,93,50,1,S4);p.rect(7,86,1,8,S3);p.rect(56,86,1,8,S4);
+  p.rect(13,64,38,22,S);p.rect(13,64,4,22,S3);p.rect(47,64,4,22,S2);p.rect(17,64,1,22,S2);p.rect(46,64,1,22,S4);p.rect(13,85,38,1,S4);
+  p.rect(10,60,44,4,S2);p.rect(10,60,44,1,S3);p.rect(10,63,44,1,S4);row(64,13,50,CU2);row(84,13,50,CU2);
+  p.rect(22,68,20,13,CU2);p.rect(23,69,18,11,CU);p.rect(23,69,18,1,CU3);for(const y of [72,75,78])row(y,26,38,CU2);p.set(32,70,'#ffd09a');
+  p.ell(53,92,7,2.6,'#cdb88f');p.rect(47,91,12,1,'#e2d6bb');p.line(46,93,59,93,'#a8987a');p.rect(9,92,7,2,'#cdb88f');p.rect(9,92,7,1,'#e2d6bb');   // the old wraps
+  // the cape, streaming back and down to the left behind the knight
+  for(let y=24;y<=59;y++){const k=(y-24)/35,l=Math.round(25-k*k*15-k*3),r2=Math.round(30-k*6);for(let x=l;x<=r2;x++)p.set(x,y,x<=l+1?B3:((x-l)%5===2?B1:B2));}
+  for(const [y,x] of [[44,14],[50,11],[55,9]])p.line(x,y,x+3,y+4,B1);row(59,9,24,B1);
+  // the dragon's skull under the right boot: a long snout, a swept horn, an ember still glowing in the eye
+  p.ell(44,56,10,4,B2);p.ell(43,55,9,3,B);row(53,36,50,B3);p.rect(48,57,9,2,B2);for(let x=47;x<57;x+=2)p.set(x,59,B3);p.ell(55,56,2.5,2,B);
+  p.line(37,54,31,49,B2);p.line(37,53,32,48,B3);p.set(31,48,B4);p.ell(41,54,1.6,1.2,'#1a1622');p.set(41,54,'#ff6d3a');
+  // legs: the left planted on the plinth, the right bent up onto the skull; armoured greaves and boots
+  p.rect(25,45,5,15,B2);p.rect(25,45,2,15,B);p.set(25,45,B3);p.rect(23,57,8,3,B2);p.rect(23,57,8,1,B3);p.rect(25,50,5,1,B1);
+  p.line(32,45,38,49,B2);p.line(32,46,38,50,B);p.rect(36,48,5,5,B2);p.rect(36,48,2,4,B);p.rect(35,52,8,2,B2);p.rect(35,52,8,1,B3);
+  // tassets and breastplate, a belt with a copper buckle, pauldrons
+  p.rect(23,41,15,5,B2);for(let x=23;x<38;x+=3)p.rect(x,41,1,5,B1);row(41,23,37,B);
+  p.rect(24,26,13,15,B);p.rect(24,26,3,15,B3);p.rect(34,26,3,15,B2);p.set(25,27,B4).set(26,28,B4);row(33,26,34,B2);row(39,24,36,'#9a4f2a');p.set(30,39,'#e08a52');
+  p.ell(23,27,3.4,2.6,B);p.ell(22,26,2,1.4,B3);p.ell(38,27,3.4,2.6,B2);p.ell(37,26,2,1.4,B);
+  // the head in a plumed helm, visor up
+  p.ell(30,19,4.5,5,B);p.ell(29,18,2.8,3.5,B3);p.rect(27,20,7,2,B1);p.set(28,21,B2).set(32,21,B2);p.rect(28,23,5,2,B2);
+  for(let i=0;i<9;i++){p.set(30-i,13-Math.round(Math.sin(i/9*2.6)*4)+i%2,i<4?B3:B);p.set(30-i,14-Math.round(Math.sin(i/9*2.6)*4)+i%2,B2);}   // the plume sweeps back
+  // the raised right arm and the lantern held high
+  p.line(39,28,44,13,B2);p.line(40,28,45,13,B);p.line(41,28,46,14,B2);p.ell(45,12,2,2,B);
+  p.rect(41,0,9,2,B2);p.set(45,0,B3);p.rect(41,2,9,10,B2);p.rect(42,3,7,8,'#ffcd75');p.rect(44,4,3,6,'#fff3c4');p.set(45,3+f,'#ffffff');p.rect(41,6,9,1,B2);p.rect(45,2,1,10,B2);p.rect(40,11,11,1,B);
+  // the left arm down at the side, the greatsword planted point-down in front of the knight
+  p.line(22,29,20,38,B);p.line(23,29,21,38,B2);
+  p.rect(19,33,2,3,B2);p.set(19,32,B3);p.rect(15,36,10,2,B);p.rect(15,36,10,1,B3);p.rect(18,38,4,22,B4);p.rect(18,38,1,22,'#d6fff0');p.rect(21,38,1,22,B3);p.set(19,60,B3).set(20,60,B3);
+  p.outline();return p.canvas();}
+// a builder's wheelbarrow-free load: a stack of dressed stone blocks
+function stonePileSprite(){const p=new Px(24,18);const blk=(x,y,w,h)=>{p.rect(x,y,w,h,'#c9c1ad');p.rect(x,y,w,1,'#e6dfcc');p.rect(x,y+h-1,w,1,'#a39a88');p.rect(x+w-1,y,1,h,'#a39a88');};
+  blk(1,10,10,7);blk(11,10,11,7);blk(5,4,11,6);blk(14,5,6,5);p.set(4,13,'#b0a792').set(16,13,'#b0a792');p.outline();return p.canvas();}
+// scaffolding against a house frame: poles, two planks, a ladder
+function scaffoldSprite(){const p=new Px(20,44),W='#8a5a3a',W2='#6b3e26',W3='#c98a4a';
+  for(const x of [2,16])p.rect(x,2,2,42,W2);p.rect(0,14,20,2,W);p.rect(0,14,20,1,W3);p.rect(0,30,20,2,W);p.rect(0,30,20,1,W3);
+  p.line(4,16,15,29,W2);for(let y=4;y<44;y+=4)p.rect(7,y,6,1,W);p.rect(6,2,1,42,W2);p.rect(13,2,1,42,W2);p.outline();return p.canvas();}
+// a tool rack: saws, a mallet, a pick and a shovel hung on a little frame
+function toolRackSprite(){const p=new Px(26,22),W='#8a5a3a',W2='#6b3e26',I='#94b0c2',I2='#566c86';
+  p.rect(1,4,24,2,W);p.rect(1,4,24,1,'#c98a4a');p.rect(2,4,2,18,W2);p.rect(22,4,2,18,W2);
+  p.rect(5,6,1,10,W2);p.rect(4,15,3,4,I);p.set(4,15,'#c9d6e3');p.rect(9,6,6,5,I2);p.rect(9,6,6,1,I);for(let x=9;x<15;x+=2)p.set(x,11,I);p.rect(11,6,2,1,W);
+  p.rect(17,6,1,11,W2);p.rect(15,15,5,3,I);p.rect(20,6,1,9,W2);p.rect(19,14,3,2,'#9a8a6a');p.outline();return p.canvas();}
+// a little dragon head for the quest card: ash-black scales, ember eyes, fire curling from the jaws
+function dragonHeadSprite(){const p=new Px(80,48),K='#2b2433',K2='#1a1622',K3='#4a3a52',K4='#6b5577',R='#7a2a33',E='#ff6d3a',E2='#ffcd75',H='#e6d6b0',H2='#b9a27a',F='#ff9f3d';
+  // the neck and skull, a long snout, a heavy lower jaw hanging open
+  p.ell(14,34,10,12,K);p.ell(24,22,14,11,K);p.ell(22,19,10,7,K3);p.ell(40,24,15,6,K);p.ell(40,22,12,3.5,K3);row2(p,26,52,20,K4);
+  p.ell(36,33,13,4,K2);p.ell(36,32,11,2.5,R);for(let x=27;x<50;x+=3){p.set(x,27,H);p.set(x+1,28,H2);p.set(x+1,31,H);}
+  p.ell(52,24,4,3,K);p.set(54,23,K2);p.set(55,23,E);                                                   // the nostril, an ember in it
+  // the eye, a heavy brow over it
+  p.ell(27,19,3.6,2.4,E);p.rect(26,19,4,1,E2);p.set(28,18,'#ffffff');p.line(22,15,32,17,K2);p.line(22,16,32,18,K);
+  // horns sweeping back, and a crest of spikes down the back of the head and neck
+  for(const [x0,y0,x1,y1] of [[18,13,2,4],[20,12,6,1],[23,12,15,2]]){p.line(x0,y0,x1,y1,H2);p.line(x0+1,y0,x1+1,y1,H);}
+  for(let i=0;i<6;i++){const x=8+i*3,y=24-i*2;p.line(x,y,x-4,y-5,K3);p.set(x-4,y-5,K4);}
+  for(let i=0;i<5;i++)p.line(4+i,36+i*2,0+i,38+i*2,K3);                                                // scales on the neck
+  // fire curling out of the jaws
+  for(let i=0;i<22;i++){const x=50+i,w=1+i*.32,y=30+Math.sin(i*.55)*1.5;p.ell(x,y,1.2,w,i<6?E2:i<14?F:E);}
+  p.ell(54,30,3,1.6,'#fff3c4');for(const [x,y] of [[70,22],[74,26],[66,38],[76,33]])p.set(x,y,F);
+  p.outline();return p.canvas();
+  function row2(p,x0,x1,y,c){for(let x=x0;x<=x1;x++)p.set(x,y,c);}}
 // a builder's trestle barrier: striped bar, splayed legs, a little red flag
 function sawhorseSprite(){const p=new Px(20,14);for(let x=1;x<19;x++)p.rect(x,4,1,3,Math.floor((x-1)/3)%2?'#1a1c2c':'#ffcd75');p.line(3,7,1,13,'#6b3e26');p.line(5,7,7,13,'#6b3e26');p.line(14,7,12,13,'#6b3e26');p.line(16,7,18,13,'#6b3e26');
   p.rect(16,0,1,4,'#4b3226');p.rect(17,0,3,2,'#b13e53');p.outline();return p.canvas();}
@@ -1148,7 +1234,7 @@ function buildArt(){
   ART.mgrass=[51,52,53,54].map(moorGrassTile);ART.dgrass=[55,56,57,58].map(deepGrassTile);ART.mpath=[61,62,63].map(moorPathTile);ART.plaza=[64,65,66,67,68].map(plazaTile);
   ART.moonw=[0,1].map(moonWaterTile);ART.canopy=[71,72,73,74].map(canopyTile);ART.cliff=[75,76].map(cliffTile);
   ART.willow=willowSprite();ART.willowSway=[willowSprite(-.6),willowSprite(.6)];ART.menhir=[0,1].map(menhirSprite);ART.reeds=[0,1].map(reedsSprite);ART.mushring=mushRingSprite();
-  ART.mcrystal=[0,1].map(moonCrystalSprite);ART.campfire=[0,1].map(campfireSprite);ART.bankChest=bankChestSprite();ART.hmsign=hmSignSprite();ART.cobble=[61,62,63,64].map(cobbleTile);ART.site=[65,66,67,68].map(siteTile);ART.exchange=[exchangeSprite(0),exchangeSprite(1)];ART.orrin=[orrinSprite(0),orrinSprite(1)];ART.plans=plansSprite();ART.notice=noticeSprite();ART.crane=[craneSprite(0),craneSprite(1)];ART.sawhorse=sawhorseSprite();ART.crate=[0,1,2].map(crateSprite);ART.frame=[0,1].map(frameSprite);ART.lumber=[0,1].map(lumberSprite);ART.tarpstall=tarpStallSprite();ART.tsign=townSignSprite();ART.statue=statueSprite();ART.maw=[mawSprite(0),mawSprite(1)];
+  ART.mcrystal=[0,1].map(moonCrystalSprite);ART.campfire=[0,1].map(campfireSprite);ART.bankChest=bankChestSprite();ART.hmsign=hmSignSprite();ART.cobble=[61,62,63,64].map(cobbleTile);ART.site=[65,66,67,68].map(siteTile);ART.exchange=[exchangeSprite(0),exchangeSprite(1)];ART.orrin=[orrinSprite(0),orrinSprite(1)];ART.plans=plansSprite();ART.notice=noticeSprite();ART.craneBase=[0,1,2,3].map(craneBaseSprite);ART.craneTop=craneTopSprite();ART.craneLoad=[0,1].map(craneLoadSprite);ART.monument=[0,1].map(monumentSprite);ART.stones=stonePileSprite();ART.scaffold=scaffoldSprite();ART.toolrack=toolRackSprite();ART.dragonHead=dragonHeadSprite();ART.sawhorse=sawhorseSprite();ART.crate=[0,1,2].map(crateSprite);ART.frame=[0,1].map(frameSprite);ART.lumber=[0,1].map(lumberSprite);ART.tarpstall=tarpStallSprite();ART.tsign=townSignSprite();ART.statue=statueSprite();ART.maw=[mawSprite(0),mawSprite(1)];
   ART.globe=globeIcon();ART.uchest=[uncommonChestSprite(false),uncommonChestSprite(true)];
   ART.icon={};
 }

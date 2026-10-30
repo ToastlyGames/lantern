@@ -29,7 +29,7 @@ function normalize(raw){const o=obj(raw),s=fresh();
   s.gold=int(o.gold,0,1e10,DEF.gold);s.lvl=int(o.lvl,1,200,1);s.xp=int(o.xp,0,1e9,0);s.kills=int(o.kills,0,1e9,0);s.deaths=int(o.deaths,0,1e9,0);s.caught=int(o.caught,0,1e9,0);
   s.deepest=int(o.deepest,0,PACKS[PACKS.length-1].to,0);s.savedAt=int(o.savedAt,0,9e15,0);
   s.vault={};for(const [k,v] of Object.entries(obj(o.vault)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.vault[k]=n;}s.bankBuys=int(o.bankBuys,0,BANK_BUYS.length,0);
-  if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}}
+  if(o.bank!==undefined){s.bank={};for(const [k,v] of Object.entries(obj(o.bank)))if(ITEMS[k]&&k!=='gold'){const n=int(v,0,1e7,0);if(n>0)s.bank[k]=n;}s.gold+=int(obj(o.bank).gold,0,1e7,0);}   // gold an older game put in the bag (v0.13.7 fix)
   const G=obj(o.gear);s.gear={blade:GEAR.blade[G.blade]?G.blade:'rusty',mail:GEAR.mail[G.mail]?G.mail:'none',lantern:LANTERNS[G.lantern]?G.lantern:'basic',cape:CAPES[G.cape]?G.cape:null,helm:GEAR.helm[G.helm]?G.helm:null,ring:JEWELS[G.ring]&&JEWELS[G.ring].slot==='ring'?G.ring:null,amulet:JEWELS[G.amulet]&&JEWELS[G.amulet].slot==='amulet'?G.amulet:null};
   const K=obj(o.skills);s.skills={};for(const k of Object.keys(SKILLS))s.skills[k]=num(K[k],0,200e6,0);
   Object.assign(s,cleanPlots(o,Date.now()));
@@ -244,7 +244,10 @@ let toastT=0;function toast(msg,kind){const t=$('toast');t.textContent=msg;t.cla
 function floatText(x,y,txt,col){texts.push({x,y,txt,col:col||'#f4f4f4',t:0});}
 
 // ---------- scenes ----------
-function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];for(const d of HOLD.dens||[])d.e=null;P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;P.dir='down';P.chan=0;run=null;P.hp=hpMax();
+// v0.13.8: if you logged out on a spot that's since been built on (a new statue, a stone pile), step out to the nearest open tile
+function unstick(){const tx=Math.floor(P.x/T),ty=Math.floor((P.y-2)/T);if(!solidAt(map,tx,ty))return;
+  for(let r=1;r<8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(!solidAt(map,tx+dx,ty+dy)){P.x=(tx+dx)*T+8;P.y=(ty+dy)*T+10;return;}}}
+function enterHold(at){FISHING=null;CHOP=null;COOK=null;scene='hold';map=HOLD;ents=[];drops=[];fx=[];slashes=[];BOLTS=[];SPFX=[];for(const d of HOLD.dens||[])d.e=null;P.x=at?at.x:HOLD.spawn.x;P.y=at?at.y:HOLD.spawn.y+8;unstick();P.dir='down';P.chan=0;run=null;P.hp=hpMax();
   updateHud();MP.toHold();}
 // where you are, kept in your save so you sign back in on the same spot (in the Depths: the entrance you went in by)
 function notePos(){if(started&&scene==='hold'&&P.hp>0)S.pos={x:Math.round(P.x),y:Math.round(P.y),v:3};}
@@ -283,7 +286,7 @@ function nearestAct(){
 }
 function doAct(a){
   if(a.id==='gate')return openGate();if(a.id==='house')return openHero();if(a.id==='bank')return openBank();if(a.id==='forge')return openCraft('forge');if(a.id==='bench')return openCraft('jewel');
-  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return qStep('hallow')==='gourd'?openQuestTalk('tallow'):openMarket('shop',true);if(a.id==='wick')return qStep('hallow')==='light'?openQuestTalk('wick'):openWick();if(a.id==='reaper')return openReaper();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();if(a.id==='orrin'||a.id==='exchange')return openExchange();if(a.id==='tsign')return openTownSign();
+  if(a.id==='kitchen')return openKitchen();if(a.id==='press')return openCraft('press');if(a.id==='market')return qStep('hallow')==='gourd'?openQuestTalk('tallow'):openMarket('shop',true);if(a.id==='wick')return qStep('hallow')==='light'?openQuestTalk('wick'):openWick();if(a.id==='reaper')return openReaper();if(a.id==='bulletin')return openBulletin();if(a.id==='eastsign')return openEastSign();if(a.id==='raid')return openRaid();if(a.id==='hmsign')return openHmSign();if(a.id==='orrin'||a.id==='exchange')return openExchange();if(a.id==='tsign')return openTownSign();if(a.id==='monument')return openMonument();
   if(a.id==='pickup')return claimDrop(a.d);if(a.id==='pvp')return pvpSwing(a.o);if(a.id==='wildsign')return openWildSign();if(a.id==='chop')return startChop(a.o);if(a.id==='cookstop')return stopCook('stopped');if(a.id==='noop')return;
   if(a.id==='plot')return openFarm();if(a.id==='fish')return startFishing(a.sp);if(a.id==='hook')return hookFish();
   if(a.id==='chest'||a.id==='glowcap'){const o=a.o,i=map.objs.indexOf(o);if(MP.client()){if(!o.req){o.req=1;NET.send({t:'act',o:i});setTimeout(()=>o.req=0,1500);}return;}objTaken(o,MP.me());MP.objOut(i,o,MP.me());return;}
@@ -309,7 +312,7 @@ function resolveSwing(){
   const b=hitBox(),dmg=dmgOf(),hits=[];let ore=-1;
   for(const e of ents){if(e.dead||e.d.proj)continue;const r=e.r;if(e.x+r>b.x&&e.x-r<b.x+b.w&&e.y>b.y&&e.y-r*2<b.y+b.h){
     const d=Math.round(dmg*(.9+rand()*.2)),a=Math.atan2(e.y-P.y,e.x-P.x);floatText(e.x,e.y-(e.d.big?28:16),String(d),'#ffcd75');sfx('hit');e.flash=.12;e.sq=.16;
-    impact(e.x,e.y-(e.d.big?12:6),a,BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
+    impact(e.x,e.y-(e.d.big?12:6),a,myCw()==='scythe'?'#9cf0d2':BLADE_FX[S.gear.blade]||'#f4f4f4',!!e.d.big,true);
     hits.push([e.id,d]);
     if(MP.client()){e.hp=Math.max(0,e.hp-d);NET.send({t:'hit',e:e.id,d,a:Math.round(a*100)/100});continue;}
     applyHit(e,d,a,MP.me());}}
@@ -325,7 +328,7 @@ function resolveSwing(){
 function peerSwing(m){const o=OTH.get(m.id);if(!o||!(scene==='delve'||scene==='hold'&&(o.y<WILD_Y||o.x<WEST_X)))return;o.dir=m.d||o.dir;
   if(m.c&&SPELLS[m.c]){o.castT=.42;o.castSp=m.c;setTimeout(()=>{const tip=staffTip(o.x,o.y,o.dir);launchBolt(m.c,tip,typeof m.a==='number'?m.a:0,null,false,o.id);},130);return;}
   o.swT=.2;   // a plain swing: a blade, or a staff used as a club (Wilderness) or a pick (ore)
-  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}
+  for(const [eid,d] of m.h||[]){const e=ents.find(q=>q.id===eid&&!q.dead);if(e){floatText(e.x,e.y-(e.d.big?28:16),String(d),'#f4f4f4');e.flash=.12;e.sq=.16;impact(e.x,e.y-(e.d.big?12:6),Math.atan2(e.y-o.y,e.x-o.x),o.look&&o.look.cw==='scythe'?'#9cf0d2':BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',!!e.d.big,false);}
     else{const f=fallen.get(eid);if(f&&time-f.t<2){floatText(f.x,f.y-(f.big?28:16),String(d),'#f4f4f4');impact(f.x,f.y-(f.big?12:6),Math.atan2(f.y-o.y,f.x-o.x),BLADE_FX[(o.look&&o.look.blade)||'rusty']||'#f4f4f4',f.big,false);}}}
   if(m.o>=0&&map.objs&&map.objs[m.o]&&map.objs[m.o].type==='ore'){const q=map.objs[m.o],ox=q.tile[0]*T,oy=q.tile[1]*T;puff(ox+8,oy+12,'#94b0c2',4);floatText(ox+8,oy+4,'chip','#94b0c2');}
   if(Math.hypot(o.x-P.x,o.y-P.y)<160)sfx((m.h&&m.h.length)?'hit':'swing',.5);}
@@ -368,10 +371,24 @@ const SKY=new Set(['starfall','cataclysm']);
 function staffTip(x,y,dir){return {x:x+(dir==='left'?-7:dir==='right'?7:dir==='up'?5:-6),y:y-(dir==='up'?21:19)};}
 function cast(){if(P.swingCD>0)return;const sp=curSpell(),D=SPELLS[sp];P.swingCD=.55;P.cast=.42;P.castSp=sp;FISHING=null;CHOP=null;
   const f={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[P.dir],tip=staffTip(P.x,P.y,P.dir);
-  let tgt=null,bd=170;for(const e of ents){if(e.dead||e.d.proj)continue;const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);if(d<bd&&(dx*f[0]+dy*f[1])>d*.3){bd=d;tgt=e;}}
+  let tgt=lockOk(P.lock)?P.lock:null,bd=170;
+  if(!tgt)for(const e of ents){if(!foe(e))continue;const dx=e.x-P.x,dy=e.y-P.y,d=Math.hypot(dx,dy);if(d<bd&&(dx*f[0]+dy*f[1])>d*.3){bd=d;tgt=e;}}
+  if(!tgt)tgt=nearestFoe(LOCK_PICK);   // nothing ahead: lock onto whatever is closest, any direction
+  P.lock=tgt;if(tgt&&P.swing<=0){const dx=tgt.x-P.x,dy=tgt.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
   const a=tgt?Math.atan2((tgt.y-(tgt.d.big?12:6))-tip.y,tgt.x-tip.x):Math.atan2(f[1],f[0]);
   P.castA=a;P.castTip=tip;P.castLaunch=.13;P.castTgt=tgt;sfx('cast');
   if(MP.shared()||inWest()&&roomUp())NET.send({t:'sw',d:P.dir,h:[],o:-1,c:sp,a:Math.round(a*100)/100});}   // the party (or anyone in Hollowmere) sees the cast
+// v0.13.8 Magic lock-on: one cast locks your staff onto a monster and it keeps casting at it on its own, turning you
+// to face it. When it falls, it locks onto the next monster close by. It lets go when nothing is in reach, you put the
+// staff away, or you leave. Walk freely while it casts.
+const LOCK_PICK=140,LOCK_KEEP=210;
+const foe=e=>e&&!e.dead&&!(e.d&&e.d.proj);
+const nearestFoe=r=>{let b=null,bd=r;for(const e of ents){if(!foe(e))continue;const d=Math.hypot(e.x-P.x,e.y-P.y);if(d<bd){bd=d;b=e;}}return b;};
+const lockOk=e=>foe(e)&&ents.includes(e)&&Math.hypot(e.x-P.x,e.y-P.y)<LOCK_KEEP;
+function lockStep(){if(!P.lock)return;
+  if(!staffOn()||!(scene==='delve'||inWest())||P.hp<=0||CHOP||FISHING){P.lock=null;return;}
+  if(!lockOk(P.lock)){const was=P.lock;P.lock=was&&was.dead?nearestFoe(LOCK_PICK):null;if(!P.lock)return;}
+  if(P.swingCD<=0&&!paused)cast();}
 function launchBolt(sp,tip,a,tgt,mine,who){const D=SPELLS[sp];
   if(SKY.has(sp)){const tx=tgt?tgt.x:tip.x+Math.cos(a)*80,ty=tgt?tgt.y-4:tip.y+19+Math.sin(a)*80;BOLTS.push({sp,sky:true,x:tx-26,y:ty-120,sx:tx-26,sy:ty-120,tx,ty,t:0,life:.42,mine,who,hit:new Set()});}
   else BOLTS.push({sp,x:tip.x,y:tip.y,a,v:D.spd,t:0,life:1.05,mine,who,pierce:D.pierce||1,hit:new Set(),tr:[]});
@@ -474,7 +491,9 @@ function addDrop(d,bag,own){d.ref='r'+(++dropRef);d.bag=!!bag;d.own=!!own&&MP.sh
 function netDrop(v,settled){if(drops.some(d=>d.did===v.did))return;if(scene==='delve'?(!run||v.f!==run.floor):v.f!=null)return;if(!ITEMS[v.it]&&v.it!=='gold')return;
   drops.push({pk:!!v.pk,x:v.x,y:v.y,id:v.it,n:v.n,vx:settled||v.bag?0:v.vx,vy:settled||v.bag?0:v.vy,z:0,vz:settled||v.bag?0:70,t:settled||v.bag?1:0,did:v.did,bag:!!v.bag,net:true,showAt:Date.now()+(v.wait||0),expAt:v.left!=null?Date.now()+v.left:null});}
 const dropShown=d=>!d.showAt||Date.now()>=d.showAt;
-function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;giveAny(into,d.id,d.n);
+// v0.13.7 fix: gold picked up outside the Depths goes straight to your gold (it used to land in the bag as an "item" the
+// server threw away, so monster gold in Hollowmere vanished on the next save). In the Depths it joins the haul, as before.
+function grantDrop(d){d.taken=true;const into=scene==='delve'&&run?run.pack:S.bank;if(d.id==='gold'&&into===S.bank)S.gold+=d.n;else giveAny(into,d.id,d.n);
   if(ITEMS[d.id]&&ITEMS[d.id].rarity)rareFound(d.id);else sfx(d.id==='gold'?'coin':'pick');
   floatText(P.x,P.y-24,'+'+d.n+' '+(d.id==='gold'?'gold':ITEMS[d.id].n),d.id==='gold'?'#ffcd75':'#a7f070');if(scene==='hold')save();}
 function claimDrop(d){if(d.taken)return;
@@ -1450,7 +1469,10 @@ function openQuestTalk(who){const Q=QUESTS.hallow;
 function questTab(){return `<p class="lead small">Quests are stories told by the people of Lanternhold. Talk to them to start one; finished steps are crossed out.</p>`+Object.entries(QUESTS).map(([k,Q])=>{const q=S.quests[k]||{s:0,n:0},done=!!q.done,C=Q.rewards.map(r=>COSMETICS[r].n).join(' and ');
   return `<div class="quest ${done?'qdone':'qtodo'}"><div class="qh"><b>${Q.n}</b><span class="qtag">${Q.tag}</span><small>${done?'Completed':q.s?'In progress':'Not started'}</small></div><p class="small">From ${Q.giver}${q.s?'':' · find him where the Hollow Wood ends, west of the Hold'}</p>
     <ol class="qsteps">${Q.steps.map((st,i)=>`<li class="${done||i<q.s?'qx':i===q.s?'qcur':'qnext'}">${st.t}${st.n&&i===q.s&&!done?` <em>${q.n}/${st.n}</em>`:''}</li>`).join('')}</ol>
-    <p class="small">Rewards: <b>${C}</b>, soulbound cosmetics${done?' · <span style="color:#a7f070">received</span>':''}</p></div>`;}).join('');}
+    <p class="small">Rewards: <b>${C}</b>, soulbound cosmetics${done?' · <span style="color:#a7f070">received</span>':''}</p></div>`;}).join('')+
+  `<div class="quest qtodo"><div class="qh"><b>${WYRM.n}</b><span class="qtag">${WYRM.tag}</span><small>Coming soon</small></div><p class="small">From ${WYRM.giver} · slay ${WYRM.boss}</p>
+    <ol class="qsteps">${WYRM.steps.map((t,i)=>`<li class="${i===0&&S.flags.wyrmseen?'qx':'qnext'}">${t}</li>`).join('')}</ol>
+    <p class="small">Reward: <b>${WYRM.reward}</b>, a soulbound cosmetic</p></div>`;}
 // the Cosmetics tab: two slots shown over your gear (your armour and helmet stay on underneath)
 // a cosmetic's picture: the hero wearing it (head), or the scythe itself (weapon)
 const cosIcon=(k,w)=>{const C=COSMETICS[k],c=document.createElement('canvas');
@@ -1576,6 +1598,22 @@ function mktSellForm(k){const f=MKT.floor&&MKT.floor[k];openSheet(`<div id="exSh
     let sig;try{sig=await ACC.signListing(d.typed,MKT);}catch(e){toast(e&&e.code===4001?'You cancelled in your wallet.':(e&&e.message)||'The listing wasn’t signed.','bad');return openMarketNft('sell');}
     const r=await mktCall({action:'submit',parameters:d.parameters,signature:sig});if(!r)return openMarketNft('sell');
     sfx('rare');toast('Listed on OpenSea: '+mktName(k)+' for '+ethS(price)+'.','rare');MKT.listings=null;await refreshMkt();openMarketNft('mine');};}
+// ---- The second quest (coming soon): The Wyrm of Cinderpeak. Started at the Wyrmbane Monument in Coppergate's square. ----
+const WYRM={n:'The Wyrm of Cinderpeak',tag:'Quest 2',giver:'the Wyrmbane Monument in Coppergate',boss:'Cindermaw, the Ashen Wyrm',reward:'Cindermaw Crown',
+  steps:['Read the plaque on the Wyrmbane Monument','Ask Orrin about the scorched stones his builders keep digging up','Follow the scorch marks into the deepwood (0/3)','Have an Emberward Charm made, to stand the heat','Climb Cinderpeak and slay Cindermaw'],
+  attacks:[['Fire breath','It rears back and breathes a sweeping cone of fire. Watch its head and get out of the cone.'],['Stomp','It slams the ground and a shockwave rolls out in a ring. Get clear, or be knocked flat.'],
+    ['Ember rain','Badly hurt, it takes to the air and burning embers fall all around. Keep moving.'],['Tail sweep','Stand behind it and the tail comes round.']]};
+const dragonHead=()=>`<div class="rhead"><img alt="" src="${ART.dragonHead.toDataURL()}" style="width:220px;image-rendering:pixelated"></div>`;
+function openMonument(){sfx('pick');const first=!S.flags.wyrmseen;if(first){S.flags.wyrmseen=true;save();}
+  openSheet(`${dragonHead()}<h2>The Wyrmbane Monument</h2>
+   <div class="soon"><p class="lead" style="margin:0"><i>“Here stood ALDREN COPPERGATE, who drove the dragon CINDERMAW down into the fires beneath Cinderpeak. While this lantern is lit, may the wyrm sleep.”</i></p></div>
+   <p class="lead">Orrin’s builders pulled the wraps off this morning. Digging the footings, they keep turning up stones scorched black, and a scale as wide as a shield. The ground under the square is warm to the touch.</p>
+   <div class="soon fnd"><b>${WYRM.tag}: ${WYRM.n} · coming soon</b>
+     <p>Cindermaw is stirring. When this quest opens you’ll follow the scorch marks out of Coppergate and climb Cinderpeak to face <b>${WYRM.boss}</b>, a massive dragon:</p>
+     <ul class="info">${WYRM.attacks.map(([a,d])=>`<li><b>${a}.</b> ${d}</li>`).join('')}</ul>
+     <p>Reward: the <b>${WYRM.reward}</b>, a new cosmetic: a horned dragon-skull helm with ember-lit eyes, worn over your helmet.</p></div>
+   <p class="lead small">The quest isn’t open yet. Track it under Hero → Quests.</p>
+   <div class="row"><button class="btn" id="sx">${first?'I’ll be ready':'Close'}</button></div>`);$('sx').onclick=closeSheet;}
 function openTownSign(){openSheet(`<h2>Coppergate</h2><p class="lead">A market town, past the Mossy Barrows and the deepwood. Still being built.</p>
    <div class="soon"><b>What’s here</b><ul><li>The Lantern Exchange (opens in Season 1), north of the square. Talk to Orrin, the builder.</li><li>A Bank Chest by the gate.</li><li>No monsters inside the town. The road here runs between the Mossy Barrows and the deepwood, so come strong.</li></ul></div>
    <div class="row"><button class="btn" id="sx">Onward</button></div>`);$('sx').onclick=closeSheet;}
@@ -1619,7 +1657,7 @@ function update(dt){
   if(P.inv>0)P.inv-=dt;if(P.swingCD>0)P.swingCD-=dt;
   if(P.swing>0){P.swing-=dt;if(!P.hitDone&&P.swing<.14){P.hitDone=true;resolveSwing();}}
   if(P.cast>0)P.cast-=dt;if(P.castLaunch>0){P.castLaunch-=dt;if(P.castLaunch<=0){const t=P.castTgt&&!P.castTgt.dead?P.castTgt:null,tip=staffTip(P.x,P.y,P.dir);launchBolt(P.castSp,tip,t?Math.atan2((t.y-(t.d.big?12:6))-tip.y,t.x-tip.x):P.castA,t,true);}}
-  updateBolts(dt);updateSpellFx(dt);
+  lockStep();updateBolts(dt);updateSpellFx(dt);
   // context
   const ctx=nearestAct();setActLabel(ctx);
   if(aPressed){aPressed=false;if(ctx)doAct(ctx);else if(scene==='delve'||inWest())swing();else if(inWild())pvpSwing();}
@@ -1816,7 +1854,7 @@ function render(){TAGS.length=0;
     for(const p of map.plots){const st=S.plots[p.i];if(!st)continue;const gr=growth(st),stg=gr>=1?2:gr>=.5?1:0;spr(ART.crop[st.crop][stg],p.cx-8,p.cy-10);
       if(gr>=1&&Math.floor(time*3)%2)g.fillStyle='#f4f4f4',g.fillRect(p.cx+5,p.cy-12,1,1);
       else if(gr<1){g.fillStyle='#1a1c2c';g.fillRect(p.cx-8,p.cy+6,16,2);g.fillStyle='#a7f070';g.fillRect(p.cx-8,p.cy+6,Math.round(16*gr),2);}}}
-  const vis=o=>o.x>cx-60&&o.x<cx+VW+60&&o.y>cy-20&&o.y<cy+VH+70;
+  const vis=o=>o.x>cx-110&&o.x<cx+VW+110&&o.y>cy-20&&o.y<cy+VH+140;
   for(const o of map.objs){if(!o.flat||!vis(o))continue;if(o.type==='flowers')spr(ART.flowers[o.v],o.x-8,o.y-15);else if(o.type==='bones')spr(ART.bones,o.x-8,o.y-15);else if(o.type==='wbones')spr(ART.wbones[o.v],o.x-8,o.y-15);else if(o.type==='weed')spr(ART.weed[o.v],o.x-8,o.y-15);else if(o.type==='cinders')spr(ART.cinders[(o.v+Math.floor(time*2+o.x))%2],o.x-8,o.y-15);else if(o.type==='reeds')spr(ART.reeds[o.v],o.x-8+(reduceMotion?0:Math.round(Math.sin(time*1.3+o.x*.1)*.6)),o.y-15);else if(o.type==='mushring')spr(ART.mushring,o.x-8,o.y-15);}
   if(scene==='hold'&&cy<WILD_Y)wildShade(cx,cy);
   for(const o of map.objs){if(!o.onWall||o.gone||!vis(o))continue;const [tx,ty]=o.tile;
@@ -1828,6 +1866,7 @@ function render(){TAGS.length=0;
   for(const e of ents)list.push({y:e.y,f:()=>drawEnemy(e)});
   for(const o of OTH.values())if(!o.pend)list.push({y:o.y,f:()=>{const ax=o.chopT>0&&scene==='hold',ph=time/.85+o.id.length*.3;if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);const wb=scene==='hold'&&(o.y<WILD_Y||inHollowmere(o.x,o.y)),sw=o.swT>0&&(scene==='delve'||wb),swB=sw&&(o.dir==='up'||o.dir==='left'),bl=(o.look&&o.look.blade)||'rusty',ocw=o.look&&o.look.cw;const [lx,ly]=sw&&!reduceMotion?lungeOff(o.dir,o.swT):[0,0],dun=scene==='delve',hd=(dun||wb)&&!sw&&!ax&&!o.fish&&!(o.castT>0),ox=o.x+lx,oy=o.y+ly,ol=dun&&((o.look&&o.look.flame==='founder'?ART.lanternF:ART.lantern)[(o.look&&o.look.lan)||'basic']||ART.lantern.basic),llx=o.dir==='left'?-9:o.dir==='right'?4:o.dir==='up'?3:-9;if(ol&&o.dir==='up')spr(ol,ox+llx,oy-9);if(hd&&o.dir!=='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim,ocw);if(swB)drawSwingAt(ox,oy,o.dir,o.swT,bl,ocw);drawHero(ox,oy,o.dir,o.moving,o.anim,o.look,o.name,o);if(o.castT>0)drawCastPose(ox,oy,o.dir,o.castT,o.castSp,bl,ocw);if(ol&&o.dir!=='up')spr(ol,ox+llx,oy-9+Math.round(Math.sin(time*5+o.x)));if(hd&&o.dir==='down')drawHeldBlade(ox,oy,o.dir,bl,o.moving,o.anim,ocw);if(sw&&!swB)drawSwingAt(ox,oy,o.dir,o.swT,bl,ocw);if(ax&&axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look,true);if(o.fish&&scene==='hold')drawFishing(o.fish,o.x,o.y);if(ax&&!axeBehind(ph))drawAxe(o.x,o.y,o.dir,ph,o.look);}});
   for(const d of drops)if(dropShown(d))list.push({y:d.y,f:()=>{const b=Math.sin(d.t*6)*1;const R=rc(d.id);if(R){g.globalAlpha=.28+.12*Math.sin(time*4);g.fillStyle=R.c;g.fillRect(Math.round(d.x-1),Math.round(d.y-44),3,40);g.globalAlpha=.5;g.fillRect(Math.round(d.x-4),Math.round(d.y-1),9,2);g.globalAlpha=1;}g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(d.x-3),Math.round(d.y),6,1);spr(iconOf(d.id),d.x-8,d.y-14-d.z+b);}});
+  if(scene==='hold'&&map.workers&&P.y>TOWN_Y0*T-VH)for(const w of map.workers){const q=w.path?workerPos(w):w;if(q.x>cx-40&&q.x<cx+VW+40&&q.y>cy-20&&q.y<cy+VH+40)list.push({y:w.sortY??q.y,f:()=>drawWorker(w)});}
   list.push({y:P.y,f:drawPlayer});
   list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(scene==='hold'&&!reduceMotion)drawAmbient(cx,cy,x0,y0,x1,y1);
@@ -1870,6 +1909,7 @@ function drawHollowmere(cx,cy,x0,y0,x1,y1){const t=time,right=Math.min(cx+VW,WES
       for(let k=0;k<10;k++){const a=t*1.6+k/10*Math.PI*2,r=6+(k%3)*4;g.globalAlpha=.6;g.fillStyle=k%2?'#f1e4ff':'#7a3b8f';g.fillRect(Math.round(o.x+Math.cos(a)*r*1.4),Math.round(o.y-24+Math.sin(a)*r*.7),1,1);}g.globalAlpha=1;}
     else if(o.type==='campfire'){const f=.8+.2*Math.sin(t*11+Math.sin(t*5));pool(o.x,o.y-6,30*f,'255,150,70',.35);}
     else if(o.type==='lpost'){const f=.85+.15*Math.sin(t*9+o.x);pool(o.x-1,o.y-24,18*f,'255,190,100',.3);}
+    else if(o.type==='monument'){const f=.85+.15*Math.sin(t*8+Math.sin(t*3));pool(o.x+13,o.y-96,22*f,'255,205,117',.42);pool(o.x+9,o.y-48,4,'255,109,58',.5+.3*Math.sin(t*2));}
     else if(o.type==='exchange'){const f=.8+.2*Math.sin(t*9+Math.sin(t*3));pool(o.x-67,o.y-76,18*f,'255,205,117',.5);pool(o.x,o.y-58,10,'255,159,61',.25*f);}
     else if(o.type==='pumpkin'){const f=.75+.25*Math.sin(t*13+o.x+Math.sin(t*4));pool(o.x,o.y-6,16*f,'255,160,60',.42);}
     else if(o.npc==='reaper'){pool(o.x,o.y-22,24+3*Math.sin(t*2),'199,155,242',.22);pool(o.x-4,o.y-24,5,'232,208,255',.5+.3*Math.sin(t*3));}
@@ -1937,6 +1977,16 @@ function drawObj(o){
     if(o.sayT>0){o.sayT-=1/60;TAGS.push({x:o.x,y:o.y-45,say:o.say});}}
   else if(o.type==='plans')spr(ART.plans,o.x-12,o.y-18);
   else if(o.type==='statue')spr(ART.statue,o.x-16,o.y-46);
+  else if(o.type==='monument'){spr(ART.monument[Math.floor(time*7+Math.sin(time*3))%2],o.x-32,o.y-102);
+    if(!S.flags.wyrmseen){const b=Math.round(Math.sin(time*4)*1.5);ptDraw(g,'!',o.x+13,o.y-116+b,{font:'big',color:'#ffcd75',bg:'#1a1c2c'});}}
+  else if(o.type==='crane'){const ph=craneLift(o),fr=reduceMotion?0:Math.floor(ph.turn*4)&3;spr(ART.craneBase[fr],o.x-49,o.y-110);}
+  else if(o.type==='cranetop'){const ph=craneLift(o),tx=Math.round(o.x-46),ty=Math.round(o.y-102),L=Math.round(ph.len);spr(ART.craneTop,o.x-49,o.y-110);
+    g.fillStyle='#9a8a6a';g.fillRect(tx,ty,1,L);g.fillStyle='#566c86';g.fillRect(tx-1,ty+L,3,2);spr(ART.craneLoad[ph.v],tx-8+Math.round(ph.sway),ty+L+1);}
+  else if(o.type==='stones')spr(ART.stones,o.x-12,o.y-17);
+  else if(o.type==='scaffold')spr(ART.scaffold,o.x-10,o.y-43);
+  else if(o.type==='toolrack')spr(ART.toolrack,o.x-17,o.y-21);
+  else if(o.type==='bpole'){g.fillStyle='#6b3e26';g.fillRect(Math.round(o.x-1),Math.round(o.y-34),2,34);g.fillStyle='#b13e53';g.fillRect(Math.round(o.x+1),Math.round(o.y-34),5,3);g.fillStyle='#ffcd75';g.fillRect(Math.round(o.x-1),Math.round(o.y-35),2,1);}
+  else if(o.type==='bunting')drawBunting(o);
   else if(o.type==='notice')spr(ART.notice,o.x-9,o.y-22);
   else if(o.type==='crane')spr(ART.crane[Math.floor(time*.8+o.x)%2],o.x-8,o.y-70);
   else if(o.type==='sawhorse')spr(ART.sawhorse,o.x-10,o.y-12);
@@ -1950,6 +2000,40 @@ function drawObj(o){
   else if(o.type==='mcrystal'){spr(ART.mcrystal[o.v],o.x-8,o.y-20);if(!reduceMotion){const ph=(time*.5+o.x*.013)%1;g.globalAlpha=(1-ph)*.9;g.fillStyle='#f1e4ff';g.fillRect(Math.round(o.x-3+o.v*5),Math.round(o.y-16-ph*10),1,1);g.globalAlpha=1;}}
   else if(o.type==='glowcap')spr(ART.glowcap,o.x-8,o.y-15);
 }
+// ---- Coppergate at work (v0.13.8) ----
+// the crane hoists a load up to the roof and lets it down again, the wheel turning while it moves
+function craneLift(o){const C=14,t=((time+o.x*.01)%C)/C;let k;   // k: 0 = load down at the ground pile, 1 = up at the roof
+  if(t<.15)k=0;else if(t<.45)k=(t-.15)/.3;else if(t<.6)k=1;else if(t<.9)k=1-(t-.6)/.3;else k=0;
+  const ease=k*k*(3-2*k),moving=(t>=.15&&t<.45)||(t>=.6&&t<.9),v=Math.floor((time+o.x*.01)/C)%2;
+  return {len:62-ease*44,turn:moving?time*1.5:Math.floor(time/C)*.5,sway:reduceMotion?0:Math.sin(time*1.7)*(moving?1.4:.5),v};}
+// bunting: a sagging string of little triangle flags between two poles
+function drawBunting(o){const n=Math.max(6,Math.round(Math.hypot(o.x1-o.x0,o.y1-o.y0)/9)),cols=['#b13e53','#ffcd75','#3b5dc9','#38b764','#ef7d57','#c79bf2'],sag=10,wv=reduceMotion?0:1;
+  const at=k=>[o.x0+(o.x1-o.x0)*k,o.y0-33+(o.y1-o.y0)*k+Math.sin(k*Math.PI)*sag];
+  g.strokeStyle='#4b3226';g.lineWidth=1;g.beginPath();for(let i=0;i<=24;i++){const [x,y]=at(i/24);if(i)g.lineTo(x,y+.5);else g.moveTo(x,y+.5);}g.stroke();
+  for(let i=1;i<n;i++){const [x,y]=at(i/n),fl=Math.round(Math.sin(time*3+i)*wv);g.fillStyle=cols[i%cols.length];g.beginPath();g.moveTo(Math.round(x)-2,Math.round(y)+1);g.lineTo(Math.round(x)+3,Math.round(y)+1);g.lineTo(Math.round(x)+fl,Math.round(y)+6);g.closePath();g.fill();}}
+// the builders: where each one is right now (carriers walk their path out and back, pausing at each end to load up)
+function workerPos(w){if(!w.path)return {x:w.x,y:w.y,dir:w.dir,moving:false,carry:false};
+  if(!w.L){w.seg=[];w.L=0;for(let i=1;i<w.path.length;i++){const [ax,ay]=w.path[i-1],[bx,by]=w.path[i],d=Math.hypot(bx-ax,by-ay);w.seg.push([ax,ay,bx,by,d]);w.L+=d;}}
+  const V=22,PA=1.6,cyc=2*w.L/V+2*PA,t=(time+w.name.length*1.7)%cyc;let back=false,d;
+  if(t<PA)d=0;else if(t<PA+w.L/V)d=(t-PA)*V;else if(t<2*PA+w.L/V){d=w.L;back=true;}else{d=w.L-(t-2*PA-w.L/V)*V;back=true;}
+  const moving=(t>=PA&&t<PA+w.L/V)||t>=2*PA+w.L/V;let x=w.path[0][0],y=w.path[0][1],dir='down';
+  for(const [ax,ay,bx,by,sl] of w.seg){if(d<=sl){const k=sl?d/sl:0;x=ax+(bx-ax)*k;y=ay+(by-ay)*k;const dx=(bx-ax)*(back?-1:1),dy=(by-ay)*(back?-1:1);dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');break;}d-=sl;}
+  return {x,y,dir:moving?dir:(back?'down':'up'),moving,carry:!back};}   // they carry the load out, and walk back empty
+const WORKER_SAY=['Heave!','Mind your head!','Nearly there…','Who’s got my hammer?','Season 1, Orrin says.','Hot work, this.','Hand me that plank!','Straight and true.'];
+function drawWorker(w){const p=workerPos(w),X=Math.round(p.x),Y=Math.round(p.y),look=Object.assign({},w.look);
+  drawHero(X,Y,p.dir,p.moving,time+w.name.length,look,null,null,false);
+  g.fillStyle='#d9a066';g.fillRect(X-4,Y-15,8,2);g.fillStyle='#b07c4f';g.fillRect(X-4,Y-14,8,1);g.fillStyle='#c98a4a';g.fillRect(p.dir==='left'?X-6:p.dir==='right'?X+2:X-5,Y-13,4,1);   // a felt work cap
+  if(w.k==='hammer'){const T0=.75,ph=((time+w.name.length*.37)%T0)/T0,up=ph<.55,ang=up?-2.3+ph*.6:-.4,side=p.dir==='left'?-1:1,hx=X+(p.dir==='up'?4:5*side),hy=Y-7;
+    g.save();g.translate(hx,hy);g.scale(side,1);g.rotate(ang);g.fillStyle='#8a5a3a';g.fillRect(0,-1,7,1);g.fillStyle='#94b0c2';g.fillRect(6,-3,2,5);g.fillStyle='#c9d6e3';g.fillRect(6,-3,1,1);g.restore();
+    if(!up&&!w.hit){w.hit=1;const fx2=X+(p.dir==='up'?4:p.dir==='down'?4:9*side),fy2=Y-(p.dir==='up'?12:4);if(!reduceMotion)puff(fx2,fy2,'#e0bf86',3);if(Math.hypot(X-P.x,Y-P.y)<70)tone(620+rand()*80,.04,'square',.012);}else if(up)w.hit=0;}
+  else if(w.k==='saw'){const off=reduceMotion?0:Math.round(Math.sin(time*9)*3);g.fillStyle='#94b0c2';g.fillRect(X-4+off,Y-13,9,2);g.fillStyle='#c9d6e3';g.fillRect(X-4+off,Y-13,9,1);g.fillStyle='#8a5a3a';g.fillRect(X+5+off,Y-14,3,3);
+    if(!reduceMotion&&rand()<.25)fx.push({x:X+off,y:Y-12,vx:(rand()-.5)*10,vy:6+rand()*8,t:0,life:.4,col:'#e0bf86'});}
+  else if(p.carry){if(w.k==='plank'){g.fillStyle='#a0663b';g.fillRect(X-10,Y-19,20,3);g.fillStyle='#c98a4a';g.fillRect(X-10,Y-19,20,1);g.fillStyle='#6b3e26';g.fillRect(X-10,Y-17,20,1);}
+    else if(w.k==='stone'){g.fillStyle='#c9c1ad';g.fillRect(X-4,Y-21,8,6);g.fillStyle='#e6dfcc';g.fillRect(X-4,Y-21,8,1);g.fillStyle='#a39a88';g.fillRect(X+3,Y-21,1,6);}
+    else{g.fillStyle='#a0663b';g.fillRect(X-5,Y-22,10,7);g.fillStyle='#c98a4a';g.fillRect(X-5,Y-22,10,1);g.fillStyle='#8a5a3a';g.fillRect(X-5,Y-19,10,1);}}
+  if(Math.hypot(X-P.x,Y-P.y)<72)TAGS.push({x:X,y:Y-22,name:w.name,npc:true});
+  if(time>(w.nextSay??(w.nextSay=time+6+w.name.length*3))){w.nextSay=time+18+Math.random()*16;w.sayT=time+3.5;w.say=WORKER_SAY[ri(0,WORKER_SAY.length-1)];}
+  if(w.sayT>time&&Math.hypot(X-P.x,Y-P.y)<170)TAGS.push({x:X,y:Y-30,say:w.say});}
 // ---- life at the Hold: chimney smoke, kitchen steam, butterflies over the flowers, falling leaves, glints on the lake ----
 function drawAmbient(cx,cy,x0,y0,x1,y1){const t=time;
   const inView=(x,y,m=40)=>x>cx-m&&x<cx+VW+m&&y>cy-m&&y<cy+VH+m;
@@ -2051,28 +2135,37 @@ function drawHeldBlade(x,y,dir,blade,moving,anim,cw){const h=HELD[dir]||HELD.dow
   if(isStaff(blade)&&!sc&&!reduceMotion){const S2=STAFF_ART[blade]||STAFF_ART.apprentice,tx=x+h[0]+(dir==='left'?-4:dir==='right'?4:dir==='up'?-3:3),ty=y+h[1]-11,gr=g.createRadialGradient(tx,ty,0,tx,ty,6);g.save();g.globalCompositeOperation='lighter';gr.addColorStop(0,S2.g);gr.addColorStop(1,'rgba(0,0,0,0)');g.globalAlpha=.45+.2*Math.sin(time*4+x);g.fillStyle=gr;g.fillRect(tx-6,ty-6,12,12);g.restore();}
   const bob=moving&&!reduceMotion?-(Math.floor(anim*16)%2):0,a=h[2]+(reduceMotion?0:moving?Math.sin(anim*16)*.09:Math.sin(time*1.8+x*.1)*.04);
   g.save();g.translate(Math.round(x+h[0]),Math.round(y+h[1]+bob));g.rotate(a+Math.PI/4);if(!sc)g.scale(.85,.85);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
-function drawSwingAt(x,y,dir,left,blade,cw){const sc=cw==='scythe';const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,a0=base-1.2,a=a0+t*2.4;
+function drawSwingAt(x,y,dir,left,blade,cw){const sc=cw==='scythe';const t=easeOut(Math.min(1,1-left/.2)),base={down:Math.PI*.5,up:-Math.PI*.5,left:Math.PI,right:0}[dir]||0,arc=sc?3.0:2.4,a0=base-arc/2,a=a0+t*arc;
   const sw=sc?ART.scythe:ART.sword[blade]||ART.sword.rusty,X=Math.round(x),Y=Math.round(y-6),col=sc?'#9cf0d2':BLADE_FX[blade]||'#f4f4f4',fade=1-t,rr=sc?1.35:1;
   // the smear: a crescent from where the swing started to the blade, brightest at the edge
-  if(!reduceMotion&&a-a0>.15){g.save();g.globalCompositeOperation='lighter';
-    for(const [r,w,al] of [[15,3,.22],[12,2,.32],[16,1,.6]]){g.strokeStyle=col;g.globalAlpha=al*fade+.05;g.lineWidth=w;g.beginPath();g.arc(X,Y,r*rr,Math.max(a0,a-1.5),a);g.stroke();}
-    if(sc){g.strokeStyle='#c79bf2';g.globalAlpha=.45*fade;g.lineWidth=2;g.beginPath();g.arc(X,Y,18,Math.max(a0,a-1.1),a);g.stroke();}   // the scythe: a wide soul-green crescent with a violet edge
-    g.restore();
-    // afterimages of the blade
-    for(const [k,al] of [[.5,.35],[1,.15]]){const b=a-k;if(b<a0)continue;g.save();g.globalAlpha=al*fade;g.translate(X,Y);g.rotate(b+Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}}
+  if(sc)drawReap(X,Y,a0,a,fade,t);   // the scythe's reaping arc shows even with Reduce Motion on: it's the whole point of the cosmetic
+  else if(!reduceMotion&&a-a0>.15){g.save();g.globalCompositeOperation='lighter';
+    for(const [r,w,al] of [[15,3,.22],[12,2,.32],[16,1,.6]]){g.strokeStyle=col;g.globalAlpha=al*fade+.05;g.lineWidth=w;g.beginPath();g.arc(X,Y,r,Math.max(a0,a-1.5),a);g.stroke();}
+    g.restore();}
+  // afterimages of the blade (the scythe leaves three)
+  if(!reduceMotion&&a-a0>.15)for(const [k,al] of (sc?[[.45,.4],[.9,.2],[1.35,.1]]:[[.5,.35],[1,.15]])){const b=a-k;if(b<a0)continue;g.save();g.globalAlpha=al*fade;g.translate(X,Y);g.rotate(b+Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();}
   g.save();g.translate(X,Y);g.rotate(a+Math.PI/4);g.drawImage(sw,-2,-(sw.hy||14));g.restore();
   if(t<.85){g.fillStyle=sc?'#9cf0d2':'#fff3c4';g.globalAlpha=fade;g.fillRect(Math.round(X+Math.cos(a)*15*rr),Math.round(Y+Math.sin(a)*15*rr),1,1);g.globalAlpha=1;}}   // a glint at the tip
+// The Reaper's Scythe: a wide soul-green crescent with a violet rim, and soul wisps peeling off the edge. In Reduce Motion it's
+// drawn once, steady (no afterimages, no flicker), so the attack still reads.
+function drawReap(X,Y,a0,a,fade,t){if(a-a0<.12)return;const from=Math.max(a0,a-2.2);g.save();g.globalCompositeOperation='lighter';
+  for(const [r,w,al,c] of [[20,4,.18,'#9cf0d2'],[17,3,.3,'#9cf0d2'],[21,1,.7,'#e8fff6'],[23,2,.4,'#c79bf2']]){g.strokeStyle=c;g.globalAlpha=al*(reduceMotion?.9:fade)+.08;g.lineWidth=w;g.beginPath();g.arc(X,Y,r,from,a);g.stroke();}
+  if(!reduceMotion)for(let i=0;i<6;i++){const b=from+(a-from)*(i/6),r=19+((i*7)%5),wob=Math.sin(time*18+i)*1.5;g.globalAlpha=(.25+.5*(i/6))*fade;g.fillStyle=i%2?'#c79bf2':'#9cf0d2';g.fillRect(Math.round(X+Math.cos(b)*(r+wob)),Math.round(Y+Math.sin(b)*(r+wob)-t*3),1,1);}
+  g.restore();}
 // a hit: a bright slash across the target that flashes and fades
 function drawSlashes(){for(const k of slashes){const p=k.t/.16,L=(k.big?14:9)*(.6+p*.6),cx=Math.round(k.x),cy=Math.round(k.y),dx=Math.cos(k.a),dy=Math.sin(k.a);
   g.save();g.globalCompositeOperation='lighter';g.globalAlpha=1-p;g.strokeStyle='#fff3c4';g.lineWidth=p<.4?2:1;g.beginPath();g.moveTo(cx-dx*L,cy-dy*L);g.lineTo(cx+dx*L,cy+dy*L);g.stroke();
   g.strokeStyle=k.col;g.lineWidth=1;g.beginPath();g.moveTo(cx-dy*L*.5,cy+dx*L*.5);g.lineTo(cx+dy*L*.5,cy-dx*L*.5);g.stroke();
   if(p<.35){g.fillStyle='#ffffff';g.fillRect(cx-1,cy-1,3,3);}g.restore();}}
+// the lock-on mark: four violet corners around the monster your staff is locked onto, closing in a little as it pulses
+function drawLockMark(e,ox,oy){const p=reduceMotion?0:Math.round(Math.sin(time*6)),X=Math.round(e.x),Y=Math.round(e.y-oy/2-1),w=ox+3-p,h=Math.round(oy/2)+3-p,L=3;
+  g.save();g.fillStyle='#c79bf2';g.globalAlpha=.9;for(const [sx,sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const cx=X+sx*w,cy=Y+sy*h;g.fillRect(sx<0?cx:cx-L+1,cy,L,1);g.fillRect(cx,sy<0?cy:cy-L+1,1,L);}g.restore();}
 function drawEnemy(e){const a=ART[e.d.art],fr=Math.floor(e.t*4)%2,img=a[fr],big=e.d.big;
   if(e.tg){const R=e.tgR||44,X=Math.round(e.x),Y=Math.round(e.y-4),col=e.type==='warden'||e.type==='archmage'?'115,239,247':e.type==='hollowking'||e.type==='rift'?'199,155,242':'255,110,40';g.save();
     if(e.tg===1){const k=Math.min(1,e.tgK||0);g.fillStyle=`rgba(${col},${.08+.1*k})`;g.beginPath();g.ellipse(X,Y,R*k,R*k*.6,0,0,Math.PI*2);g.fill();g.strokeStyle=`rgba(${col},${.5+.4*Math.sin(time*20)})`;g.lineWidth=1;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.stroke();}
     else{g.fillStyle=`rgba(${col},.35)`;g.beginPath();g.ellipse(X,Y,R,R*.6,0,0,Math.PI*2);g.fill();}g.restore();}
   g.fillStyle='rgba(0,0,0,.35)';g.fillRect(Math.round(e.x-(big?10:4)),Math.round(e.y),big?20:8,1);
-  const ox=big?16:8,oy=big?31:15;
+  const ox=big?16:8,oy=big?31:15;if(e===P.lock&&staffOn())drawLockMark(e,ox,oy);
   const sq=e.sq>0&&!reduceMotion?e.sq/.16:0;if(sq){g.save();g.translate(Math.round(e.x),Math.round(e.y));g.scale(1+sq*.25,1-sq*.2);g.translate(-Math.round(e.x),-Math.round(e.y));}
   if(e.flash>0&&Math.floor(e.flash*30)%2){g.save();g.filter='brightness(3)';spr(img,e.x-ox,e.y-oy);g.restore();}else spr(img,e.x-ox,e.y-oy);
   if(sq)g.restore();

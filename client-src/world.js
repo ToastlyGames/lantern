@@ -152,14 +152,18 @@ function buildTown(m){const Y0=TOWN_Y0,r=rng(4417);
   obj('npc',57,Y0+13,{npc:'orrin',name:'Orrin',block:[[57,Y0+13]],act:{x:57*T+8,y:(Y0+14)*T+8,label:'Talk',id:'orrin'},light:{r:20,c:'warm'}});
   obj('plans',55,Y0+13,{block:[[55,Y0+13]]});
   obj('notice',47,Y0+13,{block:[[47,Y0+13]],act:{x:47*T+8,y:(Y0+14)*T+6,label:'Read',id:'exchange'}});
-  obj('crane',68,Y0+8,{block:[[68,Y0+8],[69,Y0+8]]});
-  for(const [x,y] of [[55,Y0+11],[67,Y0+11],[54,Y0+6],[68,Y0+4]])obj('sawhorse',x,y,{block:[[x,y]]});
+  // the crane: its base stands beside the Exchange, its jib (a separate object, drawn after the Exchange) reaches over the roof
+  obj('crane',68,Y0+8,{block:[[68,Y0+8],[69,Y0+8],[70,Y0+8]]});obj('cranetop',68,Y0+8,{sortY:(EY+1)*T+15});
+  for(const [x,y] of [[55,Y0+11],[67,Y0+11],[54,Y0+6],[71,Y0+5]])obj('sawhorse',x,y,{block:[[x,y]]});
+  obj('stones',53,Y0+9,{block:[[52,Y0+9],[53,Y0+9]]});obj('stones',67,Y0+6,{block:[[66,Y0+6],[67,Y0+6]]});
   for(const [x,y,v] of [[56,Y0+4,0],[66,Y0+3,1],[54,Y0+9,2]])obj('crate',x,y,{v,block:[[x,y]]});
   // two houses going up, timber frames on stone footings
   obj('frame',39,Y0+9,{v:0,block:blk(38,Y0+8,40,Y0+9)});obj('frame',45,Y0+9,{v:1,block:blk(44,Y0+8,46,Y0+9)});
+  obj('scaffold',47,Y0+9,{block:[[47,Y0+9]]});obj('toolrack',42,Y0+5,{block:[[41,Y0+5],[42,Y0+5]]});obj('stones',36,Y0+7,{block:[[35,Y0+7],[36,Y0+7]]});
   // the lumber yard: log piles, plank stacks, crates, a sawpit, and the workers' fire
   for(const [x,y,v] of [[26,Y0+16,0],[30,Y0+16,1],[26,Y0+20,1],[33,Y0+19,0]])obj('lumber',x,y,{v,block:[[x,y],[x+1,y]]});
   for(const [x,y,v] of [[35,Y0+15,0],[35,Y0+16,1],[29,Y0+23,2],[25,Y0+24,0]])obj('crate',x,y,{v,block:[[x,y]]});
+  obj('sawhorse',29,Y0+18,{block:[[29,Y0+18]]});obj('toolrack',33,Y0+14,{block:[[32,Y0+14],[33,Y0+14]]});
   obj('campfire',30,Y0+21,{block:[[30,Y0+21]],light:{r:30,c:'warm'}});
   // the market row: stalls under tarps, waiting for Season 1
   for(const x of [43,48,53,58,63])obj('tarpstall',x,Y0+22,{block:[[x-1,Y0+22],[x,Y0+22],[x+1,Y0+22]]});
@@ -168,11 +172,26 @@ function buildTown(m){const Y0=TOWN_Y0,r=rng(4417);
   obj('bankchest',RX+3,Y0+5,{block:[[RX+3,Y0+5]],act:{x:(RX+3)*T+8,y:(Y0+6)*T+4,label:'Bank',id:'bank'}});
   for(const [x,y] of [[RX-1,Y0+7],[RX+2,Y0+10],[37,Y0+12],[67,Y0+19],[37,Y0+20],[46,Y0+19]])obj('lpost',x,y,{block:[[x,y]]});
   obj('well',44,Y0+15,{block:[[43,Y0+15],[44,Y0+15]]});
-  obj('statue',51,Y0+17,{block:[[50,Y0+17],[51,Y0+17]]});   // a monument for the square, still under wraps
+  // the Wyrmbane Monument, unveiled in the middle of the square (v0.13.8): read its plaque to hear of the second quest
+  obj('monument',52,Y0+17,{block:blk(50,Y0+16,53,Y0+17),act:{x:52*T,y:(Y0+18)*T+8,label:'Read',id:'monument'},light:{r:26,c:'warm'}});
+  // bunting strung across the square and over the market row
+  for(const [x0,y0,x1,y1] of [[41,Y0+13,51,Y0+13],[39,Y0+21,65,Y0+21]]){obj('bpole',x0,y0,{block:[[x0,y0]]});obj('bpole',x1,y1,{block:[[x1,y1]]});
+    m.objs.push({type:'bunting',x:(x0+x1)/2*T+8,y:Math.max(y0,y1)*T+15,sortY:(Math.max(y0,y1)+3)*T,x0:x0*T+8,y0:y0*T+14,x1:x1*T+8,y1:y1*T+14});}
   for(const [x,y] of [[42,Y0+18],[44,Y0+19],[60,Y0+19],[62,Y0+18],[43,Y0+19],[61,Y0+18]])m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:(x+y)%4,flat:true});
   // trees and flowers on the open grass
   const free=(x,y)=>tAt(m,x,y)===GRASS&&!solidAt(m,x,y)&&!m.objs.some(o=>o.block&&o.block.some(([a,b])=>Math.abs(a-x)<2&&Math.abs(b-y)<2));
   for(let i=0;i<300;i++){const x=X0+3+(r()*(X1-X0-6)|0),y=Y0+3+(r()*(TOWN_ROWS-6)|0);if(!free(x,y)||(y>Y0+10&&y<Y0+25&&x>37&&x<67))continue;if(r()<.35)obj('tree',x,y,{spr:'tree',block:[[x,y]]});else m.objs.push({type:'flowers',x:x*T+8,y:y*T+15,spr:'flowers',v:(r()*4|0),flat:true});}
+  // the builders at work (drawn by the game, they don't block anyone). Carriers walk their path back and forth.
+  const ex=61*T+8,ey=EY*T+14,P_=(x,y)=>[x*T+8,y*T+12];
+  m.workers=[
+    {k:'hammer',name:'Bram',x:39*T+8,y:(Y0+10)*T+10,dir:'up',look:{skin:2,hair:0,cloth:5,style:0}},
+    {k:'hammer',name:'Hilde',x:47*T+8,y:(Y0+9)*T-18,dir:'left',lift:true,sortY:(Y0+9)*T+16,look:{skin:0,hair:3,cloth:1,style:5}},
+    {k:'plank',name:'Tobin',path:[P_(34,Y0+18),P_(38,Y0+18),P_(38,Y0+11),P_(41,Y0+11)],look:{skin:3,hair:2,cloth:2,style:2}},
+    {k:'saw',name:'Greta',x:29*T+8,y:(Y0+19)*T+8,dir:'up',look:{skin:1,hair:9,cloth:3,style:6}},
+    {k:'stone',name:'Osric',path:[P_(53,Y0+10),P_(53,Y0+12),P_(58,Y0+12)],look:{skin:4,hair:0,cloth:6,style:0}},
+    {k:'hammer',name:'Pell',x:ex+52,y:ey-70,dir:'down',lift:true,sortY:ey+3,look:{skin:1,hair:1,cloth:8,style:7}},
+    {k:'hammer',name:'Marta',x:ex-58,y:ey-40,dir:'up',lift:true,sortY:ey+3,look:{skin:5,hair:0,cloth:4,style:1}},
+    {k:'crate',name:'Jory',path:[P_(44,Y0+20),P_(62,Y0+20)],look:{skin:2,hair:5,cloth:0,style:2}}];
   m.town={x0:X0,x1:X1,y0:Y0,y1:Y1,gate:{x:RX*T+16,y:(Y0+2)*T}};}
 function buildHoldBase(){
   const O=WILD_ROWS,W=26,HH=24,H=HH+O,m=newMap(W,H,'hold',GRASS);
