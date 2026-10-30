@@ -84,6 +84,8 @@ d1.gold += 1600; d1.bank = { gloam_ore: 14, gem: 9, emerald: 2, diamond: 2, oil2
 ok(plausible(d0, sanitize(d1), 12).ok && !plausible(hp0, sanitize(d1), 12).ok, 'a big floor-30 haul carried in the save gets home without a jump in wealth (and would be one without it)');
 const lc = sanitize({ gear: { ring: 'copper_ring' }, ench: { ring: { id: 'copper_ring', s: 'lesser', a: { dmg: 4, mag: 5, hp: 8, luck: 3 } } } });
 ok(JSON.stringify(lc.ench.ring.a) === '{"hp":8}', 'an enchantment keeps only bonuses its spell can roll, and only as many as it rolls (' + JSON.stringify(lc.ench.ring.a) + ')');
+// v0.13.7: gold an older game put in the bag (monster gold outside the Depths) counts as gold, not a lost item
+{ const gb = sanitize({ gold: 100, bank: { gold: 50, bread: 2 } }); ok(gb.gold === 150 && !gb.bank.gold && gb.bank.bread === 2, 'gold in the bag becomes gold (' + gb.gold + ')'); }
 // v0.13: quests, soulbound cosmetics, positions on the bigger map
 const q0 = sanitize({ cos: { own: ['jack_lantern', 'reaper_scythe'], head: 'jack_lantern', weapon: 'reaper_scythe' }, quests: { hallow: { s: 3, n: 2 } } });
 ok(!q0.cos.own.length && q0.cos.head === null && q0.cos.weapon === null && q0.quests.hallow.s === 3, 'no Halloween cosmetics before All Hallows’ Lantern is done (' + JSON.stringify(q0.cos) + ')');
