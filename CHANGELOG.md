@@ -1,6 +1,27 @@
 # Lanternhold changelog
 
-Current build: **v0.13.6** · Season 0 (Beta)
+Current build: **v0.13.8** · Season 0 (Beta)
+
+## v0.13.8 · Magic lock-on, the Wyrmbane Monument, a busier Coppergate
+
+_2026-10-30_
+
+- Magic now locks on. Cast once at a monster and your staff keeps casting at it by itself, turning you to face it. When it falls, it locks onto the next monster close by. Violet corners mark the one you’re locked onto. Walk freely while it casts; it lets go when nothing is in reach or you put the staff away.
+- The Reaper’s Scythe swing now always shows its wide soul-green arc, even with your phone’s Reduce Motion setting on (that setting used to hide it). Scythe hits now flash soul-green.
+- Coppergate’s monument is unveiled: the Wyrmbane Monument, a bronze knight with a lantern raised high and a boot on a dragon’s skull. Read its plaque (look for the !) to hear about the second quest.
+- Coming soon: Quest 2, The Wyrm of Cinderpeak. Climb Cinderpeak and slay Cindermaw, a massive dragon that breathes fire and stomps the ground. Reward: the Cindermaw Crown cosmetic. It’s listed under Hero → Quests.
+- Builders are at work all over Coppergate: hammering on the scaffolding, carrying planks and stone, sawing timber in the lumber yard. They chat, too.
+- The crane is rebuilt: taller, with a long jib over the Exchange’s roof that hoists stone and planks up and down. It no longer gets cut off.
+- More detail in town: rounder, worn cobbles, bunting over the square and the market row, stone piles, scaffolding, tool racks.
+- Fixed: tall buildings like the Exchange could vanish at the edge of the screen while still in view.
+- If you logged out on a spot that’s now built on, you step out onto the nearest open ground when you come back.
+
+## v0.13.7 · Fix: monster gold keeps
+
+_2026-10-29_
+
+- Fixed: gold from monsters in Hollowmere (and loot gold picked up in the Hold and the Wilderness) disappeared after the game saved. It now goes straight to your gold and stays.
+- If your game still had some of that gold waiting, it’s added to your gold the next time you save.
 
 ## v0.13.6 · Coppergate, a town under construction
 
